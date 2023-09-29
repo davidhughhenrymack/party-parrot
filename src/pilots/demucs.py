@@ -1,18 +1,26 @@
 #!/usr/bin/env ipython
 
 import pyaudio
-import struct
-import math
 import numpy as np
 from scipy import signal
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import time
-from scipy.io.wavfile import write
+import torch
+from torchaudio.pipelines import HDEMUCS_HIGH_MUSDB_PLUS
+
+print(f"mps avail {torch.backends.mps.is_available()}") #the MacOS is higher than 12.3+
+print(f"mps build {torch.backends.mps.is_built()}") #MPS is activated
+
+bundle = HDEMUCS_HIGH_MUSDB_PLUS
+model = bundle.get_model()
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+model.to(device)
+sample_rate = bundle.sample_rate
+
 
 THRESHOLD = 0 # dB
-RATE = 44100
+RATE = sample_rate
 INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms
 INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)
 INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
@@ -46,11 +54,11 @@ class AudioHandler(object):
         device_index = None
         for i in range( self.pa.get_device_count() ):
             devinfo = self.pa.get_device_info_by_index(i)
-            print('Device %{}: %{}'.format(i, devinfo['name']))
+            # print('Device %{}: %{}'.format(i, devinfo['name']))
 
             for keyword in ['mic','input']:
                 if keyword in devinfo['name'].lower():
-                    print('Found an input: device {} - {}'.format(i, devinfo['name']))
+                    # print('Found an input: device {} - {}'.format(i, devinfo['name']))
                     device_index = i
                     return device_index
 
@@ -71,87 +79,30 @@ class AudioHandler(object):
         stream.start_stream()
         return stream
 
-    def processBlockSpectrum(self, snd_block):
-        f, t, Sxx = signal.spectrogram(snd_block, RATE)
-        zmin = Sxx.min()
-        zmax = Sxx.max()
-        
-        plt.clf()
-        plt.pcolormesh(t, f, Sxx, cmap='RdBu', norm=LogNorm(vmin=zmin, vmax=zmax))
-        plt.ylabel('Frequency [Hz]')
-        plt.xlabel('Time [sec]')
-        plt.axis([t.min(), t.max(), f.min(), f.max()])
-        plt.colorbar()
-        plt.draw()
-        plt.pause(0.001)
-        # plt.show(block=False)
-        # plt.savefig('output/spec{}.png'.format(self.plot_counter), bbox_inches='tight')
-        # plt.close()
-        # write('output/audio{}.wav'.format(self.plot_counter),RATE,snd_block)
-        self.plot_counter += 1
+  
 
     def processBlockPower(self, snd_block, spectrogram_block):
-
-
-        # edscale = (
-        #     Median[
-        #         Table[
-        #             edenergy[[i+1]]/(edenergy[[i]]+1/Pi^3),
-        #             {i,Length[edenergy]-1}
-        #         ]
-        #     ]
-        # ) ^ (
-        #     Pi^3 / (
-        #         Sqrt[
-        #             Median[
-        #                 Table[
-        #                     edenergy[[i+1]]/(edenergy[[i]]+1/Pi^3),
-        #                     {i,Length[edenergy]-1}
-        #                 ]
-        #             ]
-        #         ]
-        #     )
-        # ) 
-
-        x = np.sum(np.abs(spectrogram_block[:,-8000:,]), axis=0)
-        N = round(RATE / 150)
-        x = np.convolve(x, np.ones(N)/N, mode='valid')
-        # xs = np.convolve(x, np.ones(500)/500, mode='valid')
-
-        # LB = 100
-        # x_diff = x[500-1:-LB] - xs[LB:]
-        # x_up = np.where(x_diff > 20, 1, 0)
-        # x_down = np.where(x_diff < -20, 1, 0)
-
-        # x_ = np.gradient(x)
-
-        # self.power_max = max(self.power_max, x.max())
-        # self.power_min = min(self.power_min, x.min())
-
-        # x_extra_smooth = np.convolve(x, np.ones(N*10)/N/10, mode='valid')
-        # x_ = np.gradient(x_extra_smooth)
-
-        # self.fig.clf()
-        plt.clf()
+        # batch, channels, length = mix.shape
+        snd_tensor = torch.from_numpy(snd_block[:-round(RATE/10)]).float() \
+            .unsqueeze(0) \
+            .repeat(2,1)\
+            .unsqueeze(0)\
+            .to(device)
         
-        plt.plot(x, label='Power')
-        # plt.plot(x_diff, label='Power')
-        # plt.plot(x_up, label='Up')
-        # plt.plot(x_down, label='Down')
-
+        # print(f"snd_tensor: {snd_tensor.shape} {snd_tensor.dtype}")
+        sources = model.forward(snd_tensor)
+        sources_list = model.sources
+        sources = list(sources.squeeze(0))
+        audios = dict(zip(sources_list, sources))
+        # print(audios["vocals"][0].detach().numpy())
+        vocal_one_channel = audios["vocals"][0].detach().numpy()
+        plt.clf()
+        plt.plot(vocal_one_channel, label='Amplitude')
         plt.ylabel('Power')
         plt.xlabel('Time [sec]')
-
-        # plt.plot(x_, label='Gradient', )
-        # plt.axis([t.min(), t.max(), self.power_min, self.power_max])
-        # plt.pcolormesh(t, f, Sxx, cmap='RdBu', norm=LogNorm(vmin=zmin, vmax=zmax))
-    
-        # self.fig.tight_layout()
         plt.draw()
         plt.pause(0.001)
-        # plt.show(block=False)
-        # plt.show()
-        # self.fig.show()
+
 
     def listen(self):
         try:
@@ -189,7 +140,7 @@ class AudioHandler(object):
             # print(f"t_snd_blk: {len(self.t_snd_block)} snd_block: {len(snd_block)}")
             self.processBlockPower(full_snd_block, full_spectrogram_block)
         except Exception as e:
-            print('Error recording: {}'.format(e))
+            print(e)
             return
 
        
