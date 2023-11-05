@@ -7,31 +7,25 @@ import matplotlib
 import matplotlib.pyplot as plt
 import time
 import torch
-from torchaudio.pipelines import HDEMUCS_HIGH_MUSDB_PLUS
+
 from scipy.io.wavfile import write
 
-# print(f"mps avail {torch.backends.mps.is_available()}") #the MacOS is higher than 12.3+
-# print(f"mps build {torch.backends.mps.is_built()}") #MPS is activated
-
-bundle = HDEMUCS_HIGH_MUSDB_PLUS
-model = bundle.get_model()
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model.to(device)
-sample_rate = bundle.sample_rate
-sources_list = model.sources
 
 
 THRESHOLD = 0 # dB
-RATE = sample_rate
+RATE = 44100
 INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms
 INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)
 INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
 TIME_IN_GRAPH = 1000
 BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)
 
-ACCEPTED_LATENCY = 0.001 * 60 # 60 ms
-
 matplotlib.use('macosx')
+
+from spleeter.separator import Separator
+
+# Using embedded configuration.
+separator = Separator('spleeter:2stems')
 
 def get_rms(block):
     return np.sqrt(np.mean(np.square(block)))
@@ -51,18 +45,6 @@ class AudioHandler(object):
         self.spectrogram_blocks = []
         self.power_max = 0
         self.power_min = 99999999999999999
-
-        self.stem_blocks = {
-            i: [] for i in model.sources
-        }
-
-        self.stem_spec_blocks = {
-            i: [] for i in model.sources
-        }
-
-        self.stem_power_blocks = {
-            i: [] for i in model.sources
-        }
 
     def stop(self):
         self.stream.close()
@@ -98,37 +80,22 @@ class AudioHandler(object):
 
 
     def stem(self, snd_block):
+        prediction = separator.separate(snd_block)
+        return prediction
 
-        ref = snd_block
-        two_channel = np.vstack([snd_block, snd_block])
-        normalized = (two_channel - ref.mean()) / ref.std()  # normalization
-        
-        # batch, channels, length = mix.shape
-        snd_tensor = torch.from_numpy(normalized).float() \
-            .unsqueeze(0) \
-            .to(device)
-        
-        sources = model.forward(snd_tensor)
-        sources = sources * ref.std() + ref.mean()  # denormalization
-        sources = list(sources.squeeze(0))
+    def processBlockPower(self, snd_block, spectrogram_block):
+        stems = self.stem(snd_block)
 
-        stems = {}
-        for i, source in enumerate(sources_list):
-            one_channel = sources[i][0].detach().numpy()
-            stems[source] = one_channel
-
-        return stems
-
-    def displayGraph(self):
-
+        for (source, one_channel) in stems.items():
+            self.stem_blocks[source].append(one_channel)
 
         # print(audios["vocals"][0].detach().numpy())
 
         plt.clf()
 
-        for (source, blocks) in self.stem_power_blocks.items():
-            one_channel = np.hstack(blocks[-40:])
-            plt.plot(one_channel, label=source, color=f"C{list(sources_list).index(source)}") 
+        for i, source in enumerate(sources_list):
+            one_channel = np.hstack(self.stem_blocks[source][-10:])
+            plt.plot(one_channel, label=source, color=f"C{i}")
             plt.ylabel('Amplitude')
             plt.xlabel('Time [sec]')
 
@@ -139,7 +106,11 @@ class AudioHandler(object):
 
     def listen(self):
         try:
+            # print("start", self.stream.is_active(), self.stream.is_stopped())
+            #raw_block = self.stream.read(INPUT_FRAMES_PER_BLOCK, exception_on_overflow = False)
+
             total = 0
+
             frame_buffer = []
             
             while total < INPUT_FRAMES_PER_BLOCK:
@@ -155,25 +126,28 @@ class AudioHandler(object):
             snd_block = np.hstack(frame_buffer)
             self.snd_blocks.append(snd_block)
 
-            stems = self.stem(snd_block)
-            for (source, one_channel) in stems.items():
-                self.stem_blocks[source].append(one_channel)
-                f,t,Sxx = signal.spectrogram(one_channel, RATE)
-                self.stem_spec_blocks[source].append(Sxx)
-                x = np.sum(np.abs(Sxx), axis=0)
-                self.stem_power_blocks[source].append(x)
+            f,t,Sxx = signal.spectrogram(self.snd_blocks[-1], RATE)
+            self.spectrogram_blocks.append(Sxx)
+            
+            # print(f"snd blocks: {[i.shape for i in self.snd_blocks]}")
+            full_snd_block = np.hstack(self.snd_blocks)
+            # print(f"full_snd_block: {full_snd_block.shape}")
+            
+            # print(f"specs: {[i.shape for i in self.spectrogram_blocks]}")
+            full_spectrogram_block = np.hstack(self.spectrogram_blocks)
+            # print(f"full_spectrogram_block: {full_spectrogram_block.shape}")
 
+            # print(f"t_snd_blk: {len(self.t_snd_block)} snd_block: {len(snd_block)}")
+            # self.processBlockPower(full_snd_block, full_spectrogram_block)
 
-            self.displayGraph()
-
-            # listen_time = time.time() - self.start_time
-            # if listen_time > 5: 
-            #     write(f"./output/full.wav", RATE, full_snd_block)
-            #     stems = self.stem(full_snd_block)
-            #     for (source, one_channel) in stems.items():
-            #         write(f"./output/{source}.wav", RATE, one_channel.astype(np.int16))
-            #     self.start_time = time.time()
-            #     print("wrote files")
+            listen_time = time.time() - self.start_time
+            if listen_time > 10: 
+                write(f"./output/full_{time.time()}.wav", RATE, full_snd_block)
+                stems = self.stem(full_snd_block)
+                for (source, one_channel) in stems.items():
+                    write(f"./output/{source}_{time.time()}.wav", RATE, one_channel)
+                self.start_time = time.time()
+                print("wrote files")
                 
         except Exception as e:
             print(e)
