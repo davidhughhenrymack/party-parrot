@@ -51,7 +51,7 @@ class Motionstrip38(BaseFixture):
                 self.values[8 + i * 4] = color.blue * 255
                 self.values[9 + i * 4] = 0
 
-    def set_color(self, color: Color, bulb: int):
+    def set_bulb_color(self, bulb: int, color: Color):
         if bulb < 0 or bulb > 7:
             raise ValueError("bulb must be between 0 and 7")
         
