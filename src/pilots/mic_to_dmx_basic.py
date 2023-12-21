@@ -9,8 +9,9 @@ from matplotlib.colors import LogNorm
 import time
 
 import math
-from DMXEnttecPro import Controller
 from director.director import Director
+from director.director import Frame
+from utils.dmx_utils import get_controller
 
 THRESHOLD = 0 # dB
 RATE = 44100
@@ -20,8 +21,6 @@ INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
 TIME_IN_GRAPH = 1000
 BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)
 
-usb_path = "/dev/cu.usbserial-EN419206"
-par_patch = 19
 
 matplotlib.use('macosx')
 
@@ -45,7 +44,7 @@ class MicToDmxBasic(object):
         self.power_max = 0
         self.power_min = 99999999999999999
 
-        self.dmx = Controller(usb_path)  # Typical of Linux
+        self.dmx = get_controller()
         self.director = Director()
         self.frame = 0
 
@@ -104,46 +103,26 @@ class MicToDmxBasic(object):
 
     def processBlockPower(self, snd_block, spectrogram_block, frame):
 
+        ranges = {
+            "intensity": (0, 129),
+            "vocals": (40, 129),
+            "other": (60, 129),
+            "drums": (0, 129),
+            "bass": (0, 60),
+        }
 
-        # edscale = (
-        #     Median[
-        #         Table[
-        #             edenergy[[i+1]]/(edenergy[[i]]+1/Pi^3),
-        #             {i,Length[edenergy]-1}
-        #         ]
-        #     ]
-        # ) ^ (
-        #     Pi^3 / (
-        #         Sqrt[
-        #             Median[
-        #                 Table[
-        #                     edenergy[[i+1]]/(edenergy[[i]]+1/Pi^3),
-        #                     {i,Length[edenergy]-1}
-        #                 ]
-        #             ]
-        #         ]
-        #     )
-        # ) 
+        values = {}
 
-        x = np.sum(np.abs(spectrogram_block[:,-20000:,]), axis=0)
-        N = round(RATE / 5000)
-        x = np.convolve(x, np.ones(N)/N, mode='valid')
-        # xs = np.convolve(x, np.ones(500)/500, mode='valid')
+        for name, range in ranges.items():
+            x = np.sum(np.abs(spectrogram_block[range[0]:range[1],-10000:]), axis=0)
+            N = round(RATE / 5000)
+            x = np.convolve(x, np.ones(N)/N, mode='valid')
+            v = (x[-1] - x.min()) / (x.max() - x.min())
+            values[name] = v
 
-        # LB = 100
-        # x_diff = x[500-1:-LB] - xs[LB:]
-        # x_up = np.where(x_diff > 20, 1, 0)
-        # x_down = np.where(x_diff < -20, 1, 0)
-
-        # x_ = np.gradient(x)
-
-        # self.power_max = max(self.power_max, x.max())
-        # self.power_min = min(self.power_min, x.min())
-
-        intensity = (x[-1] - x.min()) / (x.max() - x.min()) * 255
-        slow_intensity = (np.average(x[:-20]) - x.min()) / (x.max() - x.min()) * 255
-
-        self.director.step(intensity, slow_intensity, time.time())
+        self.director.step(Frame(
+            values["intensity"], time.time(), values["vocals"], values["other"], values["drums"], values["bass"]
+        ))
         self.director.render(self.dmx)
 
 
@@ -171,9 +150,6 @@ class MicToDmxBasic(object):
         # plt.show(block=False)
         # plt.show()
         # self.fig.show()
-
-
-        self.dmx.submit()
 
     def listen(self):
           

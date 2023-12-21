@@ -9,6 +9,8 @@ import time
 import torch
 from torchaudio.pipelines import HDEMUCS_HIGH_MUSDB_PLUS
 from scipy.io.wavfile import write
+from director.director import Director, Frame
+from utils.dmx_utils import get_controller
 
 # print(f"mps avail {torch.backends.mps.is_available()}") #the MacOS is higher than 12.3+
 # print(f"mps build {torch.backends.mps.is_built()}") #MPS is activated
@@ -23,7 +25,7 @@ sources_list = model.sources
 
 THRESHOLD = 0 # dB
 RATE = sample_rate
-INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms
+INPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms
 INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)
 INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
 TIME_IN_GRAPH = 1000
@@ -36,7 +38,7 @@ matplotlib.use('macosx')
 def get_rms(block):
     return np.sqrt(np.mean(np.square(block)))
 
-class AudioHandler(object):
+class Demucs(object):
     def __init__(self):
         self.start_time = time.time()
         self.pa = pyaudio.PyAudio()
@@ -63,6 +65,9 @@ class AudioHandler(object):
         self.stem_power_blocks = {
             i: [] for i in model.sources
         }
+
+        self.dmx = get_controller()
+        self.director = Director()
 
     def stop(self):
         self.stream.close()
@@ -138,50 +143,53 @@ class AudioHandler(object):
 
 
     def listen(self):
-        try:
-            total = 0
-            frame_buffer = []
-            
-            while total < INPUT_FRAMES_PER_BLOCK:
-                while self.stream.get_read_available() <= 0:
-                #   print('waiting')
-                  time.sleep(0.01)
-                while self.stream.get_read_available() > 0 and total < INPUT_FRAMES_PER_BLOCK:
-                    raw_block = self.stream.read(self.stream.get_read_available(), exception_on_overflow = False)
-                    count = len(raw_block) / 2
-                    total = total + count
-                    frame_buffer.append(np.fromstring(raw_block,dtype=np.int16))
+    
+        total = 0
+        frame_buffer = []
+        
+        while total < INPUT_FRAMES_PER_BLOCK:
+            while self.stream.get_read_available() <= 0:
+            #   print('waiting')
+                time.sleep(0.01)
+            while self.stream.get_read_available() > 0 and total < INPUT_FRAMES_PER_BLOCK:
+                raw_block = self.stream.read(self.stream.get_read_available(), exception_on_overflow = False)
+                count = len(raw_block) / 2
+                total = total + count
+                frame_buffer.append(np.fromstring(raw_block,dtype=np.int16))
 
-            snd_block = np.hstack(frame_buffer)
-            self.snd_blocks.append(snd_block)
+        snd_block = np.hstack(frame_buffer)
+        self.snd_blocks.append(snd_block)
 
-            stems = self.stem(snd_block)
-            for (source, one_channel) in stems.items():
-                self.stem_blocks[source].append(one_channel)
-                f,t,Sxx = signal.spectrogram(one_channel, RATE)
-                self.stem_spec_blocks[source].append(Sxx)
-                x = np.sum(np.abs(Sxx), axis=0)
-                self.stem_power_blocks[source].append(x)
+        N = round(RATE / 5000)
 
+        stems = self.stem(snd_block)
+        for (source, one_channel) in stems.items():
+            self.stem_blocks[source].append(one_channel)
+            f,t,Sxx = signal.spectrogram(one_channel, RATE)
+            self.stem_spec_blocks[source].append(Sxx)
+            x = np.sum(np.abs(Sxx), axis=0)
+            x = np.convolve(x, np.ones(N)/N, mode='valid')
+            self.stem_power_blocks[source].append(x)
 
-            self.displayGraph()
+        f,t,Sxx = signal.spectrogram(one_channel, RATE)
+        x = np.sum(np.abs(Sxx[:,-10000:,]), axis=0)
+        x = np.convolve(x, np.ones(N)/N, mode='valid')
+        intensity = (x[-1] - x.min()) / (x.max() - x.min())
 
-            # listen_time = time.time() - self.start_time
-            # if listen_time > 5: 
-            #     write(f"./output/full.wav", RATE, full_snd_block)
-            #     stems = self.stem(full_snd_block)
-            #     for (source, one_channel) in stems.items():
-            #         write(f"./output/{source}.wav", RATE, one_channel.astype(np.int16))
-            #     self.start_time = time.time()
-            #     print("wrote files")
-                
-        except Exception as e:
-            print(e)
-            return
+        max_power = 0
+        for (source, blocks) in self.stem_power_blocks.items():
+            one_channel = np.hstack(blocks[-100:])
+            max_power = max(max_power, np.max(one_channel))
 
-       
+        frame = Frame(
+            intensity=intensity,
+            time=time.time(),
+            vocals=np.average(self.stem_power_blocks["vocals"][-1][-10:]) / max_power,
+            other=np.average(self.stem_power_blocks["other"][-1][-10:]) / max_power,
+            drums=np.average(self.stem_power_blocks["drums"][-1][-10:]) / max_power,
+            bass=np.average(self.stem_power_blocks["bass"][-1][-10:]) / max_power,
+        )
+        self.director.step(frame)
+        self.director.render(self.dmx)
 
-if __name__ == '__main__':
-    audio = AudioHandler()
-    while True:
-        audio.listen()
+        self.displayGraph()

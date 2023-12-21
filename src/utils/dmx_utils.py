@@ -1,6 +1,4 @@
-
-
-
+from DMXEnttecPro import Controller
 import math
 
 
@@ -19,3 +17,8 @@ def dmx_clamp(n):
 
 def dmx_clamp_list(items):
     return [int(clamp(item, 0, 255)) for item in items]
+
+usb_path = "/dev/cu.usbserial-EN419206"
+
+def get_controller():
+    return Controller(usb_path)  # Typical of Linux

@@ -965,11 +965,43 @@
         "documentation": {}
     },
     {
+        "label": "Color",
+        "importPath": "utils.colour",
+        "description": "utils.colour",
+        "isExtraImport": true,
+        "detail": "utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "RGB",
+        "importPath": "utils.colour",
+        "description": "utils.colour",
+        "isExtraImport": true,
+        "detail": "utils.colour",
+        "documentation": {}
+    },
+    {
         "label": "ColorScheme",
         "importPath": "director.color_scheme",
         "description": "director.color_scheme",
         "isExtraImport": true,
         "detail": "director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot160",
+        "importPath": "patch.chauvet",
+        "description": "patch.chauvet",
+        "isExtraImport": true,
+        "detail": "patch.chauvet",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot160",
+        "importPath": "patch.chauvet",
+        "description": "patch.chauvet",
+        "isExtraImport": true,
+        "detail": "patch.chauvet",
         "documentation": {}
     },
     {
@@ -1046,6 +1078,22 @@
     },
     {
         "label": "dmx_clamp_list",
+        "importPath": "utils.dmx_utils",
+        "description": "utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_controller",
+        "importPath": "utils.dmx_utils",
+        "description": "utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_controller",
         "importPath": "utils.dmx_utils",
         "description": "utils.dmx_utils",
         "isExtraImport": true,
@@ -1135,6 +1183,38 @@
         "documentation": {}
     },
     {
+        "label": "Director",
+        "importPath": "director.director",
+        "description": "director.director",
+        "isExtraImport": true,
+        "detail": "director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "director.director",
+        "description": "director.director",
+        "isExtraImport": true,
+        "detail": "director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Director",
+        "importPath": "director.director",
+        "description": "director.director",
+        "isExtraImport": true,
+        "detail": "director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "director.director",
+        "description": "director.director",
+        "isExtraImport": true,
+        "detail": "director.director",
+        "documentation": {}
+    },
+    {
         "label": "Controller",
         "importPath": "DMXEnttecPro",
         "description": "DMXEnttecPro",
@@ -1176,14 +1256,6 @@
         "documentation": {}
     },
     {
-        "label": "Director",
-        "importPath": "director.director",
-        "description": "director.director",
-        "isExtraImport": true,
-        "detail": "director.director",
-        "documentation": {}
-    },
-    {
         "label": "Separator",
         "importPath": "spleeter.separator",
         "description": "spleeter.separator",
@@ -1222,6 +1294,14 @@
         "description": "pilots.mic_to_dmx_basic",
         "isExtraImport": true,
         "detail": "pilots.mic_to_dmx_basic",
+        "documentation": {}
+    },
+    {
+        "label": "Demucs",
+        "importPath": "pilots.demucs",
+        "description": "pilots.demucs",
+        "isExtraImport": true,
+        "detail": "pilots.demucs",
         "documentation": {}
     },
     {
@@ -4582,11 +4662,20 @@
         "documentation": {}
     },
     {
+        "label": "Frame",
+        "kind": 6,
+        "importPath": "src.director.director",
+        "description": "src.director.director",
+        "peekOfCode": "class Frame:\n    def __init__(self, intensity, time, vocals, other, drums, bass):\n        self.intensity = intensity\n        self.time = time\n        self.vocals = vocals\n        self.other = other\n        self.drums = drums\n        self.bass = bass\n    def __str__(self):\n        return f\"Frame(intensity={int(self.intensity*100)}, vocals={int(self.vocals* 100)}, other={int(self.other* 100)}, drums={int(self.drums* 100)}, bass={int(self.bass* 100)})\"",
+        "detail": "src.director.director",
+        "documentation": {}
+    },
+    {
         "label": "Director",
         "kind": 6,
         "importPath": "src.director.director",
         "description": "src.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self):\n        self.scheme = ColorScheme(\n            Color('white'),\n            Color('red'),\n            Color('blue')\n        )\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        # assign phase in radians based off index\n        self.pars_with_phase = [(i, math.pi * 2 / len(pars) * index) for (index, i) in enumerate(pars)]",
+        "peekOfCode": "class Director:\n    def __init__(self):\n        self.scheme = ColorScheme(\n            Color('green'),\n            Color('blue'),\n            Color('blue')\n        )\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        # assign phase in radians based off index\n        self.pars_with_phase = [(i, math.pi * 2 / len(pars) * index) for (index, i) in enumerate(pars)]",
         "detail": "src.director.director",
         "documentation": {}
     },
@@ -4597,6 +4686,42 @@
         "description": "src.patch.base",
         "peekOfCode": "class BaseFixture: \n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n    def set_color(self, color: Color):\n        raise NotImplementedError()\n    def set_dimmer(self, value):\n        raise NotImplementedError()",
         "detail": "src.patch.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorWheelEntry",
+        "kind": 6,
+        "importPath": "src.patch.chauvet",
+        "description": "src.patch.chauvet",
+        "peekOfCode": "class ColorWheelEntry:\n    def __init__(self, color: Color, dmx_value: int):\n        self.color = color\n        self.dmx_value = dmx_value\ncolor_wheel = [\n    ColorWheelEntry(Color('white'), 0),\n    ColorWheelEntry(Color('red'), 10),\n    ColorWheelEntry(Color('orange'), 16),\n    ColorWheelEntry(Color('yellow'), 22),\n    ColorWheelEntry(Color('green'), 30),",
+        "detail": "src.patch.chauvet",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot160",
+        "kind": 6,
+        "importPath": "src.patch.chauvet",
+        "description": "src.patch.chauvet",
+        "peekOfCode": "class ChauvetSpot160(BaseFixture):\n    def __init__(self, patch, pan_lower, pan_upper, tilt_lower, tilt_upper, dimmer_upper=255):\n        super().__init__(patch, \"chauvet intimidator 160\", 11)\n        self.pan_lower = pan_lower / 540 * 255\n        self.pan_upper = pan_upper / 540 * 255\n        self.pan_range = self.pan_upper - self.pan_lower\n        self.tilt_lower = tilt_lower / 229 * 255\n        self.tilt_upper = tilt_upper / 229 * 255\n        self.tilt_range = self.tilt_upper - self.tilt_lower\n        self.dimmer_upper = dimmer_upper",
+        "detail": "src.patch.chauvet",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_layout",
+        "kind": 5,
+        "importPath": "src.patch.chauvet",
+        "description": "src.patch.chauvet",
+        "peekOfCode": "dmx_layout = [\n    \"pan 0 -540\",\n    \"fine pan\",\n    \"tilt 0 - 229\",\n    \"fine tilt\",\n    \"pan/tilt speed\",\n    \"color wheel\",\n    \"gobo wheel\",\n    \"dimmer\",\n    \"shutter\",",
+        "detail": "src.patch.chauvet",
+        "documentation": {}
+    },
+    {
+        "label": "color_wheel",
+        "kind": 5,
+        "importPath": "src.patch.chauvet",
+        "description": "src.patch.chauvet",
+        "peekOfCode": "color_wheel = [\n    ColorWheelEntry(Color('white'), 0),\n    ColorWheelEntry(Color('red'), 10),\n    ColorWheelEntry(Color('orange'), 16),\n    ColorWheelEntry(Color('yellow'), 22),\n    ColorWheelEntry(Color('green'), 30),\n    ColorWheelEntry(Color('blue'), 37),\n    ColorWheelEntry(Color('AntiqueWhite'), 46),\n    ColorWheelEntry(Color('cyan'), 52),\n    ColorWheelEntry(Color('magenta'), 58),",
+        "detail": "src.patch.chauvet",
         "documentation": {}
     },
     {
@@ -4631,16 +4756,16 @@
         "kind": 5,
         "importPath": "src.patch.patch_bay",
         "description": "src.patch.patch_bay",
-        "peekOfCode": "patch_bay = [\n    LedPar(19),\n    LedPar(12),\n    LedPar(26),\n    Motionstrip38(59, 0, 128)\n]",
+        "peekOfCode": "patch_bay = [\n    ChauvetSpot160(1, 90, 270, 20, 100, 40),\n    LedPar(19),\n    LedPar(12),\n    LedPar(26),\n    LedPar(33),\n    Motionstrip38(59, 0, 128)\n]",
         "detail": "src.patch.patch_bay",
         "documentation": {}
     },
     {
-        "label": "AudioHandler",
+        "label": "Demucs",
         "kind": 6,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "class AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()\n        self.ax2 = self.ax1.twinx() \n        self.snd_blocks = []",
+        "peekOfCode": "class Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()\n        self.ax2 = self.ax1.twinx() \n        self.snd_blocks = []",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4649,7 +4774,7 @@
         "kind": 2,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()",
+        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4658,7 +4783,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "bundle = HDEMUCS_HIGH_MUSDB_PLUS\nmodel = bundle.get_model()\ndevice = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)",
+        "peekOfCode": "bundle = HDEMUCS_HIGH_MUSDB_PLUS\nmodel = bundle.get_model()\ndevice = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4667,7 +4792,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "model = bundle.get_model()\ndevice = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)",
+        "peekOfCode": "model = bundle.get_model()\ndevice = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4676,7 +4801,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "device = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000",
+        "peekOfCode": "device = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4685,7 +4810,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "sample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms",
+        "peekOfCode": "sample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4694,7 +4819,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "sources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')",
+        "peekOfCode": "sources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4703,7 +4828,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "THRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):",
+        "peekOfCode": "THRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4712,7 +4837,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "RATE = sample_rate\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "peekOfCode": "RATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4721,7 +4846,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):",
+        "peekOfCode": "INPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4730,7 +4855,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4739,7 +4864,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4748,7 +4873,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()",
+        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4757,7 +4882,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4766,7 +4891,7 @@
         "kind": 5,
         "importPath": "src.pilots.demucs",
         "description": "src.pilots.demucs",
-        "peekOfCode": "ACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
+        "peekOfCode": "ACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
         "detail": "src.pilots.demucs",
         "documentation": {}
     },
@@ -4991,7 +5116,7 @@
         "kind": 5,
         "importPath": "src.pilots.mic_to_dmx_basic",
         "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "THRESHOLD = 0 # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nusb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')",
+        "peekOfCode": "THRESHOLD = 0 # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
         "detail": "src.pilots.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5000,7 +5125,7 @@
         "kind": 5,
         "importPath": "src.pilots.mic_to_dmx_basic",
         "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nusb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):",
         "detail": "src.pilots.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5009,7 +5134,7 @@
         "kind": 5,
         "importPath": "src.pilots.mic_to_dmx_basic",
         "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nusb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):",
         "detail": "src.pilots.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5018,7 +5143,7 @@
         "kind": 5,
         "importPath": "src.pilots.mic_to_dmx_basic",
         "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nusb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
         "detail": "src.pilots.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5027,7 +5152,7 @@
         "kind": 5,
         "importPath": "src.pilots.mic_to_dmx_basic",
         "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nusb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
         "detail": "src.pilots.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5036,7 +5161,7 @@
         "kind": 5,
         "importPath": "src.pilots.mic_to_dmx_basic",
         "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nusb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
         "detail": "src.pilots.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5045,25 +5170,7 @@
         "kind": 5,
         "importPath": "src.pilots.mic_to_dmx_basic",
         "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nusb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
-        "detail": "src.pilots.mic_to_dmx_basic",
-        "documentation": {}
-    },
-    {
-        "label": "usb_path",
-        "kind": 5,
-        "importPath": "src.pilots.mic_to_dmx_basic",
-        "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\npar_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
-        "detail": "src.pilots.mic_to_dmx_basic",
-        "documentation": {}
-    },
-    {
-        "label": "par_patch",
-        "kind": 5,
-        "importPath": "src.pilots.mic_to_dmx_basic",
-        "description": "src.pilots.mic_to_dmx_basic",
-        "peekOfCode": "par_patch = 19\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0",
+        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0",
         "detail": "src.pilots.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5441,7 +5548,7 @@
         "kind": 2,
         "importPath": "src.utils.dmx_utils",
         "description": "src.utils.dmx_utils",
-        "peekOfCode": "def dmx_clamp(n):\n    if math.isnan(n):\n        return 0\n    return int(clamp(n, 0, 255))\ndef dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]",
+        "peekOfCode": "def dmx_clamp(n):\n    if math.isnan(n):\n        return 0\n    return int(clamp(n, 0, 255))\ndef dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    return Controller(usb_path)  # Typical of Linux",
         "detail": "src.utils.dmx_utils",
         "documentation": {}
     },
@@ -5450,7 +5557,25 @@
         "kind": 2,
         "importPath": "src.utils.dmx_utils",
         "description": "src.utils.dmx_utils",
-        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]",
+        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    return Controller(usb_path)  # Typical of Linux",
+        "detail": "src.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_controller",
+        "kind": 2,
+        "importPath": "src.utils.dmx_utils",
+        "description": "src.utils.dmx_utils",
+        "peekOfCode": "def get_controller():\n    return Controller(usb_path)  # Typical of Linux",
+        "detail": "src.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "usb_path",
+        "kind": 5,
+        "importPath": "src.utils.dmx_utils",
+        "description": "src.utils.dmx_utils",
+        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    return Controller(usb_path)  # Typical of Linux",
         "detail": "src.utils.dmx_utils",
         "documentation": {}
     },
