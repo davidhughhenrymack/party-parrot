@@ -1,7 +1,7 @@
+from .base import FixtureBase
 
-from .base import BaseFixture
 
-class LedPar(BaseFixture):
+class LedPar(FixtureBase):
     def __init__(self, patch):
         super().__init__(patch, "led par", 7)
 
@@ -12,7 +12,7 @@ class LedPar(BaseFixture):
         self.values[4] = value
 
     def set_color(self, color):
+        super().set_color(color)
         self.values[1] = color.red * 255
         self.values[2] = color.green * 255
         self.values[3] = color.blue * 255
-

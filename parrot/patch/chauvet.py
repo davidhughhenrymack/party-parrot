@@ -1,7 +1,5 @@
-
-from utils.colour import Color
-from utils.colour import RGB
-from .base import BaseFixture
+from parrot.utils.colour import Color
+from .base import FixtureBase
 
 
 # DMX layout:
@@ -19,26 +17,31 @@ dmx_layout = [
     "movement macro",
 ]
 
+
 class ColorWheelEntry:
     def __init__(self, color: Color, dmx_value: int):
         self.color = color
         self.dmx_value = dmx_value
 
+
 color_wheel = [
-    ColorWheelEntry(Color('white'), 0),
-    ColorWheelEntry(Color('red'), 10),
-    ColorWheelEntry(Color('orange'), 16),
-    ColorWheelEntry(Color('yellow'), 22),
-    ColorWheelEntry(Color('green'), 30),
-    ColorWheelEntry(Color('blue'), 37),
-    ColorWheelEntry(Color('AntiqueWhite'), 46),
-    ColorWheelEntry(Color('cyan'), 52),
-    ColorWheelEntry(Color('magenta'), 58),
-    ColorWheelEntry(Color('lime'), 64),
+    ColorWheelEntry(Color("white"), 0),
+    ColorWheelEntry(Color("red"), 10),
+    ColorWheelEntry(Color("orange"), 16),
+    ColorWheelEntry(Color("yellow"), 22),
+    ColorWheelEntry(Color("green"), 30),
+    ColorWheelEntry(Color("blue"), 37),
+    ColorWheelEntry(Color("AntiqueWhite"), 46),
+    ColorWheelEntry(Color("cyan"), 52),
+    ColorWheelEntry(Color("magenta"), 58),
+    ColorWheelEntry(Color("lime"), 64),
 ]
 
-class ChauvetSpot160(BaseFixture):
-    def __init__(self, patch, pan_lower, pan_upper, tilt_lower, tilt_upper, dimmer_upper=255):
+
+class ChauvetSpot160(FixtureBase):
+    def __init__(
+        self, patch, pan_lower, pan_upper, tilt_lower, tilt_upper, dimmer_upper=255
+    ):
         super().__init__(patch, "chauvet intimidator 160", 11)
         self.pan_lower = pan_lower / 540 * 255
         self.pan_upper = pan_upper / 540 * 255
@@ -70,11 +73,13 @@ class ChauvetSpot160(BaseFixture):
         self.values[4] = value
 
     def set_color(self, color: Color):
-
+        super().set_color(color)
         # Find the closest color in the color wheel
         closest = None
         for entry in color_wheel:
-            if closest == None or abs(entry.color.hue - color.hue) < abs(closest.color.hue - color.hue):
+            if closest == None or abs(entry.color.hue - color.hue) < abs(
+                closest.color.hue - color.hue
+            ):
                 closest = entry
 
         # Set the color wheel value
