@@ -49,8 +49,8 @@ class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
 
         if frame[self.signal] > 0.6:
             self.subject.set_color(scheme.fg)
-            self.subject.set_dimmer(127 + 127 * math.sin(frame.time * 2))
-        if frame[self.signal] > 0.4:
+            self.subject.set_dimmer(255 * math.sin(frame.time * 30))
+        elif frame[self.signal] > 0.4:
             self.render_bulb_chase(frame, scheme)
             self.subject.set_dimmer(255)
         else:

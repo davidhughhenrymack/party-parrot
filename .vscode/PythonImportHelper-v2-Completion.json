@@ -1523,14 +1523,6 @@
         "documentation": {}
     },
     {
-        "label": "ColorRGB",
-        "importPath": "colorist",
-        "description": "colorist",
-        "isExtraImport": true,
-        "detail": "colorist",
-        "documentation": {}
-    },
-    {
         "label": "with_statement",
         "importPath": "__future__",
         "description": "__future__",

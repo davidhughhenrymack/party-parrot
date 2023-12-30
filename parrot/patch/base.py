@@ -1,8 +1,6 @@
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp
 
-from colorist import ColorRGB
-
 
 class FixtureBase:
     def __init__(self, address, name, width):
