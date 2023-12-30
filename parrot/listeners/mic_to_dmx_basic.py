@@ -1,6 +1,7 @@
 #!/usr/bin/env ipython
 
 import os
+import sys
 import pyaudio
 import numpy as np
 from scipy import signal
@@ -61,11 +62,11 @@ class MicToDmxBasic(object):
         device_index = None
         for i in range(self.pa.get_device_count()):
             devinfo = self.pa.get_device_info_by_index(i)
-            print("Device %{}: %{}".format(i, devinfo["name"]))
+            # print("Device %{}: %{}".format(i, devinfo["name"]))
 
             for keyword in ["mic", "input"]:
                 if keyword in devinfo["name"].lower():
-                    print("Found an input: device {} - {}".format(i, devinfo["name"]))
+                    # print("Found an input: device {} - {}".format(i, devinfo["name"]))
                     device_index = i
                     return device_index
 
@@ -125,7 +126,7 @@ class MicToDmxBasic(object):
             # Discard outliers and clamp to 0-1
             x_min = np.percentile(x, 5)
             x_max = np.percentile(x, 95)
-            x = (x - x_min) / (x_max - x_min)
+            x = (x - x_min) / (x_max - x_min + sys.float_info.epsilon)
             x = np.clip(x, 0, 1)
 
             timeseries[name] = x
@@ -134,7 +135,7 @@ class MicToDmxBasic(object):
                 v = 0
             values[name] = v
 
-        sustained = timeseries["bass"][-100:].mean()
+        sustained = timeseries["bass"][-200:].mean()
         values["sustained"] = sustained
         self.sustain_buffer.append(sustained)
         self.sustain_buffer = self.sustain_buffer[-self.lookback_buffer_size :]

@@ -26,7 +26,7 @@ class LedParSlowRespond(InterpreterBase[LedParGroup]):
                 par.set_color(scheme.bg_contrast)
 
             par.set_dimmer(self.dimmer_memory * 255)
-            par.set_strobe(200 if frame["sustained"] > 0.6 else 0)
+            par.set_strobe(200 if frame["sustained"] > 0.65 else 0)
 
     @classmethod
     def category(cls) -> InterpretorCategory:

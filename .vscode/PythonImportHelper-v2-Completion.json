@@ -5048,7 +5048,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"sustained\"\n        self.dimmer_memory = 0\n        self.decay_rate = 0.1\n    def step(self, frame, scheme):\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        if frame[self.signal] > 0.2:\n            self.dimmer_memory = lerp(",
+        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"sustained\"\n        self.dimmer_memory = 0\n        self.decay_rate = 0.24\n    def step(self, frame, scheme):\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        if frame[self.signal] > 0.2:\n            self.dimmer_memory = lerp(",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },

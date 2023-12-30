@@ -33,7 +33,7 @@ class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
         super().__init__(subject)
         self.signal = "sustained"
         self.dimmer_memory = 0
-        self.decay_rate = 0.1
+        self.decay_rate = 0.24
 
     def step(self, frame, scheme):
         self.subject.set_pan(math.cos(frame.time) * 127 + 128)
@@ -45,6 +45,11 @@ class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
         else:
             self.dimmer_memory = lerp(self.dimmer_memory, 0, self.decay_rate)
 
+        # print(self.dimmer_memory)
+
+        if frame[self.signal] > 0.6:
+            self.subject.set_color(scheme.fg)
+            self.subject.set_dimmer(127 + 127 * math.sin(frame.time * 2))
         if frame[self.signal] > 0.4:
             self.render_bulb_chase(frame, scheme)
             self.subject.set_dimmer(255)
