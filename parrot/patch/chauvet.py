@@ -1,4 +1,5 @@
 from parrot.utils.colour import Color
+from parrot.utils.color_extra import color_distance
 from .base import FixtureBase
 
 
@@ -77,8 +78,8 @@ class ChauvetSpot160(FixtureBase):
         # Find the closest color in the color wheel
         closest = None
         for entry in color_wheel:
-            if closest == None or abs(entry.color.hue - color.hue) < abs(
-                closest.color.hue - color.hue
+            if closest == None or color_distance(entry.color, color) < color_distance(
+                closest.color, color
             ):
                 closest = entry
 
