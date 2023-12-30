@@ -9,7 +9,17 @@ class MoverBeat(InterpreterBase[ChauvetSpot160]):
         self.signal = "drums"
 
     def step(self, frame, scheme):
-        self.subject.set_dimmer(frame[self.signal] * 255)
         self.subject.set_color(scheme.fg)
+
+        if frame["sustained"] > 0.7:
+            self.subject.set_dimmer(100)
+            self.subject.set_strobe(200)
+        elif frame[self.signal] > 0.2:
+            self.subject.set_dimmer(frame[self.signal] * 255)
+            self.subject.set_strobe(0)
+        else:
+            self.subject.set_dimmer(0)
+            self.subject.set_strobe(0)
+
         self.subject.set_pan(math.cos(frame.time) * 127 + 128)
         self.subject.set_tilt(math.sin(frame.time) * 127 + 128)

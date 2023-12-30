@@ -1,5 +1,6 @@
 #!/usr/bin/env ipython
 
+import os
 import pyaudio
 import numpy as np
 from scipy import signal
@@ -22,8 +23,10 @@ INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
 TIME_IN_GRAPH = 1000
 BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)
 
+SHOW_PLOT = os.environ.get("SHOW_PLOT", False)
 
-matplotlib.use("macosx")
+if SHOW_PLOT:
+    matplotlib.use("macosx")
 
 
 def get_rms(block):
@@ -39,10 +42,13 @@ class MicToDmxBasic(object):
 
         # self.fig, (self.ax1, self.ax2) = plt.subplots(nrows=2, sharex=False)
 
-        self.snd_blocks = []
-        self.spectrogram_blocks = []
         self.power_max = 0
         self.power_min = 99999999999999999
+
+        self.spectrogram_buffer = None
+        self.lookback_buffer_size = 10000
+
+        self.sustain_buffer = []
 
         self.dmx = get_controller()
         self.director = Director()
@@ -101,34 +107,40 @@ class MicToDmxBasic(object):
         # write('output/audio{}.wav'.format(self.plot_counter),RATE,snd_block)
         self.plot_counter += 1
 
-    def processBlockPower(self, snd_block, spectrogram_block, frame):
+    def processBlockPower(self, spectrogram_block):
         ranges = {
-            "vocals": (40, 129),
-            "other": (60, 129),
-            "drums": (0, 129),
+            "all": (0, 129),
+            "drums": (60, 129),
             "bass": (0, 60),
         }
 
         values = {}
         timeseries = {}
 
-        lookback = 10000
-
         for name, range in ranges.items():
-            x = np.sum(
-                np.abs(spectrogram_block[range[0] : range[1], -lookback:]), axis=0
-            )
+            x = np.sum(np.abs(spectrogram_block[range[0] : range[1], :]), axis=0)
             N = round(RATE / 5000)
             x = np.convolve(x, np.ones(N) / N, mode="valid")
-            x = (x - x.min()) / (x.max() - x.min())
+
+            # Discard outliers and clamp to 0-1
+            x_min = np.percentile(x, 5)
+            x_max = np.percentile(x, 95)
+            x = (x - x_min) / (x_max - x_min)
+            x = np.clip(x, 0, 1)
+
             timeseries[name] = x
             v = x[-1]
             if math.isnan(v):
                 v = 0
             values[name] = v
 
+        sustained = timeseries["bass"][-100:].mean()
+        values["sustained"] = sustained
+        self.sustain_buffer.append(sustained)
+        self.sustain_buffer = self.sustain_buffer[-self.lookback_buffer_size :]
+
         spectrum_bins = 4
-        log_spectrogram = np.log10(spectrogram_block[:, -lookback:])
+        log_spectrogram = np.log10(spectrogram_block)
         log_spectrogram = (log_spectrogram - log_spectrogram.min()) / (
             log_spectrogram.max() - log_spectrogram.min()
         )
@@ -147,24 +159,22 @@ class MicToDmxBasic(object):
         )
         self.director.render(self.dmx)
 
-        # self.fig.clf()
-        plt.clf()
+        if SHOW_PLOT:
+            plt.clf()
+            plt.subplot(2, 1, 1)
 
-        plt.subplot(2, 1, 1)
+            for name, x in timeseries.items():
+                plt.plot(x, label=name)
+            plt.legend(loc="upper left")
+            plt.ylabel("Power")
+            plt.xlabel("Time [sec]")
 
-        for name, x in timeseries.items():
-            plt.plot(x, label=name)
-        plt.legend()
-        plt.ylabel("Power")
-        plt.xlabel("Time [sec]")
+            plt.subplot(2, 1, 2)
+            plt.plot(self.sustain_buffer, label="Sustained")
+            # plt.pcolormesh(log_spectrogram, label="Spectrogram")
 
-        plt.subplot(2, 1, 2)
-        plt.pcolormesh(log_spectrogram, label="Spectrogram")
-
-        # self.fig.tight_layout()
-        # self.fig.draw()
-        plt.draw()
-        plt.pause(0.001)
+            plt.draw()
+            plt.pause(0.001)
 
     def listen(self):
         # try:
@@ -177,7 +187,6 @@ class MicToDmxBasic(object):
 
         while total < INPUT_FRAMES_PER_BLOCK:
             while self.stream.get_read_available() <= 0:
-                #   print('waiting')
                 time.sleep(0.01)
             while (
                 self.stream.get_read_available() > 0 and total < INPUT_FRAMES_PER_BLOCK
@@ -190,23 +199,27 @@ class MicToDmxBasic(object):
                 frame_buffer.append(np.fromstring(raw_block, dtype=np.int16))
 
         snd_block = np.hstack(frame_buffer)
-        self.snd_blocks.append(snd_block)
 
-        f, t, Sxx = signal.spectrogram(self.snd_blocks[-1], RATE)
-        self.spectrogram_blocks.append(Sxx)
+        # f : ndarray
+        #     Array of sample frequencies.
+        # t : ndarray
+        #     Array of segment times.
+        # Sxx : ndarray
+        #     Spectrogram of x. By default, the last axis of Sxx corresponds
+        #     to the segment times.
+        f, t, Sxx = signal.spectrogram(snd_block, RATE)
 
-        # print(f"snd blocks: {[i.shape for i in self.snd_blocks]}")
-        full_snd_block = np.hstack(self.snd_blocks)
-        # print(f"full_snd_block: {full_snd_block.shape}")
+        if self.spectrogram_buffer is None:
+            self.spectrogram_buffer = Sxx
+        else:
+            self.spectrogram_buffer = np.concatenate(
+                [self.spectrogram_buffer, Sxx], axis=1
+            )
 
-        # print(f"specs: {[i.shape for i in self.spectrogram_blocks]}")
-        full_spectrogram_block = np.hstack(self.spectrogram_blocks)
-        # print(f"full_spectrogram_block: {full_spectrogram_block.shape}")
-
-        # print(f"t_snd_blk: {len(self.t_snd_block)} snd_block: {len(snd_block)}")
-        self.processBlockPower(full_snd_block, full_spectrogram_block, self.frame)
-
-        self.frame += 1
+        self.spectrogram_buffer = self.spectrogram_buffer[
+            :, -self.lookback_buffer_size :
+        ]
+        self.processBlockPower(self.spectrogram_buffer)
 
     # except Exception as e:
     #     print('Error recording: {}'.format(e))

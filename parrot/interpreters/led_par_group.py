@@ -2,7 +2,7 @@ from typing import List
 from parrot.director.frame import Frame
 from parrot.patch.led_par import LedPar
 from parrot.interpreters.base import InterpreterBase, InterpretorCategory
-from parrot.utils.math import lerp
+from parrot.utils.lerp import lerp
 from parrot.director.color_scheme import ColorScheme
 
 
@@ -17,7 +17,7 @@ class LedParSlowRespond(InterpreterBase[LedParGroup]):
         self.dimmer_memory = 0
 
     def step(self, frame: Frame, scheme: ColorScheme):
-        self.dimmer_memory = lerp(self.dimmer_memory, frame.other, 0.5)
+        self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)
 
         for idx, par in enumerate(self.subject.par_group):
             if idx % 2 == 0:
@@ -25,7 +25,8 @@ class LedParSlowRespond(InterpreterBase[LedParGroup]):
             else:
                 par.set_color(scheme.bg_contrast)
 
-            par.set_dimmer(self.dimmer_memory)
+            par.set_dimmer(self.dimmer_memory * 255)
+            par.set_strobe(200 if frame["sustained"] > 0.6 else 0)
 
     @classmethod
     def category(cls) -> InterpretorCategory:
@@ -38,7 +39,7 @@ class LedParSlowDecay(InterpreterBase[LedParGroup]):
         self.dimmer_memory = 0
 
     def step(self, frame: Frame, scheme: ColorScheme):
-        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.other)
+        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.all)
 
         for idx, par in enumerate(self.subject.par_group):
             if idx % 2 == 0:
@@ -46,7 +47,7 @@ class LedParSlowDecay(InterpreterBase[LedParGroup]):
             else:
                 par.set_color(scheme.bg_contrast)
 
-            par.set_dimmer(self.dimmer_memory)
+            par.set_dimmer(self.dimmer_memory * 255)
 
     @classmethod
     def category(cls) -> InterpretorCategory:

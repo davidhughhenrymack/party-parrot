@@ -26,7 +26,7 @@ class ColorWheelEntry:
 
 color_wheel = [
     ColorWheelEntry(Color("white"), 0),
-    ColorWheelEntry(Color("red"), 10),
+    ColorWheelEntry(Color("red"), 12),
     ColorWheelEntry(Color("orange"), 16),
     ColorWheelEntry(Color("yellow"), 22),
     ColorWheelEntry(Color("green"), 30),

@@ -338,6 +338,15 @@
         "documentation": {}
     },
     {
+        "label": "traceback",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "traceback",
+        "description": "traceback",
+        "detail": "traceback",
+        "documentation": {}
+    },
+    {
         "label": "format_exc",
         "importPath": "traceback",
         "description": "traceback",
@@ -975,6 +984,62 @@
         "documentation": {}
     },
     {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Lerpable",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "LerpAnimator",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
@@ -1084,6 +1149,14 @@
         "description": "parrot.interpreters.led_par_group",
         "isExtraImport": true,
         "detail": "parrot.interpreters.led_par_group",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripSlowRespond",
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
     {
@@ -1252,14 +1325,6 @@
         "description": "parrot.patch.base",
         "isExtraImport": true,
         "detail": "parrot.patch.base",
-        "documentation": {}
-    },
-    {
-        "label": "lerp",
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "isExtraImport": true,
-        "detail": "parrot.utils.math",
         "documentation": {}
     },
     {
@@ -4875,7 +4940,7 @@
         "kind": 6,
         "importPath": "parrot.director.color_scheme",
         "description": "parrot.director.color_scheme",
-        "peekOfCode": "class ColorScheme:\n    def __init__(self, fg: Color, bg: Color, bg_contrast: Color):\n        self.fg = fg\n        self.bg = bg\n        self.bg_contrast = bg_contrast",
+        "peekOfCode": "class ColorScheme(Lerpable):\n    def __init__(self, fg: Color, bg: Color, bg_contrast: Color):\n        self.fg = fg\n        self.bg = bg\n        self.bg_contrast = bg_contrast\n    def lerp(self, other, t):\n        return ColorScheme(\n            lerp_color(self.fg, other.fg, t),\n            lerp_color(self.bg, other.bg, t),\n            lerp_color(self.bg_contrast, other.bg_contrast, t),",
         "detail": "parrot.director.color_scheme",
         "documentation": {}
     },
@@ -4884,7 +4949,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self):\n        self.shift()\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        self.motionstrips = [i for i in patch_bay if isinstance(i, Motionstrip38)]\n        self.movers = [i for i in patch_bay if isinstance(i, ChauvetSpot160)]\n        self.interpreters: List[InterpreterBase] = [\n            LedParSlowRespond(LedParGroup(pars)),\n            *[MotionstripWaveform(i) for i in self.motionstrips],\n            *[MoverBeat(i) for i in self.movers],",
+        "peekOfCode": "class Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        self.motionstrips = [i for i in patch_bay if isinstance(i, Motionstrip38)]\n        self.movers = [i for i in patch_bay if isinstance(i, ChauvetSpot160)]\n        self.interpreters: List[InterpreterBase] = [\n            LedParSlowRespond(LedParGroup(pars)),\n            *[MotionstripSlowRespond(i) for i in self.motionstrips],",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -4893,7 +4958,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "SHIFT_AFTER = 3 * 60\nclass Director:\n    def __init__(self):\n        self.shift()\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        self.motionstrips = [i for i in patch_bay if isinstance(i, Motionstrip38)]\n        self.movers = [i for i in patch_bay if isinstance(i, ChauvetSpot160)]\n        self.interpreters: List[InterpreterBase] = [\n            LedParSlowRespond(LedParGroup(pars)),\n            *[MotionstripWaveform(i) for i in self.motionstrips],",
+        "peekOfCode": "SHIFT_AFTER = 2 * 60\nclass Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        self.motionstrips = [i for i in patch_bay if isinstance(i, Motionstrip38)]\n        self.movers = [i for i in patch_bay if isinstance(i, ChauvetSpot160)]\n        self.interpreters: List[InterpreterBase] = [\n            LedParSlowRespond(LedParGroup(pars)),",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -4902,7 +4967,7 @@
         "kind": 6,
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
-        "peekOfCode": "class Frame:\n    def __init__(self, **kwargs):\n        self.time = time.time()\n        self.vocals = kwargs.get(\"vocals\", 0)\n        self.other = kwargs.get(\"other\", 0)\n        self.drums = kwargs.get(\"drums\", 0)\n        self.bass = kwargs.get(\"bass\", 0)\n        self.kwargs = kwargs\n    def __getitem__(self, __name: str) -> Any:\n        return self.kwargs.get(__name)",
+        "peekOfCode": "class Frame:\n    def __init__(self, **kwargs):\n        self.time = time.time()\n        self.all = kwargs.get(\"all\", 0)\n        self.drums = kwargs.get(\"drums\", 0)\n        self.bass = kwargs.get(\"bass\", 0)\n        self.kwargs = kwargs\n    def __getitem__(self, __name: str) -> Any:\n        return self.kwargs.get(__name)\n    def __str__(self):",
         "detail": "parrot.director.frame",
         "documentation": {}
     },
@@ -4947,7 +5012,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.led_par_group",
         "description": "parrot.interpreters.led_par_group",
-        "peekOfCode": "class LedParGroup:\n    def __init__(self, par_group: List[LedPar]):\n        self.par_group = par_group\nclass LedParSlowRespond(InterpreterBase[LedParGroup]):\n    def __init__(self, subject: LedParGroup):\n        super().__init__(subject)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame.other, 0.5)\n        for idx, par in enumerate(self.subject.par_group):",
+        "peekOfCode": "class LedParGroup:\n    def __init__(self, par_group: List[LedPar]):\n        self.par_group = par_group\nclass LedParSlowRespond(InterpreterBase[LedParGroup]):\n    def __init__(self, subject: LedParGroup):\n        super().__init__(subject)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)\n        for idx, par in enumerate(self.subject.par_group):",
         "detail": "parrot.interpreters.led_par_group",
         "documentation": {}
     },
@@ -4956,7 +5021,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.led_par_group",
         "description": "parrot.interpreters.led_par_group",
-        "peekOfCode": "class LedParSlowRespond(InterpreterBase[LedParGroup]):\n    def __init__(self, subject: LedParGroup):\n        super().__init__(subject)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame.other, 0.5)\n        for idx, par in enumerate(self.subject.par_group):\n            if idx % 2 == 0:\n                par.set_color(scheme.bg)\n            else:",
+        "peekOfCode": "class LedParSlowRespond(InterpreterBase[LedParGroup]):\n    def __init__(self, subject: LedParGroup):\n        super().__init__(subject)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)\n        for idx, par in enumerate(self.subject.par_group):\n            if idx % 2 == 0:\n                par.set_color(scheme.bg)\n            else:",
         "detail": "parrot.interpreters.led_par_group",
         "documentation": {}
     },
@@ -4965,7 +5030,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.led_par_group",
         "description": "parrot.interpreters.led_par_group",
-        "peekOfCode": "class LedParSlowDecay(InterpreterBase[LedParGroup]):\n    def __init__(self, subject: LedParGroup):\n        super().__init__(subject)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.other)\n        for idx, par in enumerate(self.subject.par_group):\n            if idx % 2 == 0:\n                par.set_color(scheme.bg)\n            else:",
+        "peekOfCode": "class LedParSlowDecay(InterpreterBase[LedParGroup]):\n    def __init__(self, subject: LedParGroup):\n        super().__init__(subject)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.all)\n        for idx, par in enumerate(self.subject.par_group):\n            if idx % 2 == 0:\n                par.set_color(scheme.bg)\n            else:",
         "detail": "parrot.interpreters.led_par_group",
         "documentation": {}
     },
@@ -4974,7 +5039,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        for i in range(parts):\n            low = i * 1 / parts",
+        "peekOfCode": "class MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        self.subject.set_dimmer(255)\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        for i in range(parts):",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -4983,7 +5048,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        self.subject.set_color(scheme.fg)\n        self.subject.set_dimmer(frame[self.signal] * 255)",
+        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"sustained\"\n        self.dimmer_memory = 0\n        self.decay_rate = 0.1\n    def step(self, frame, scheme):\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        if frame[self.signal] > 0.2:\n            self.dimmer_memory = lerp(",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -4992,7 +5057,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "class MoverBeat(InterpreterBase[ChauvetSpot160]):\n    def __init__(self, subject: ChauvetSpot160):\n        super().__init__(subject)\n        self.signal = \"drums\"\n    def step(self, frame, scheme):\n        self.subject.set_dimmer(frame[self.signal] * 255)\n        self.subject.set_color(scheme.fg)\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        self.subject.set_tilt(math.sin(frame.time) * 127 + 128)",
+        "peekOfCode": "class MoverBeat(InterpreterBase[ChauvetSpot160]):\n    def __init__(self, subject: ChauvetSpot160):\n        super().__init__(subject)\n        self.signal = \"drums\"\n    def step(self, frame, scheme):\n        self.subject.set_color(scheme.fg)\n        if frame[\"sustained\"] > 0.7:\n            self.subject.set_dimmer(100)\n            self.subject.set_strobe(200)\n        elif frame[self.signal] > 0.2:",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -5334,7 +5399,7 @@
         "kind": 6,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "class MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        # self.fig, (self.ax1, self.ax2) = plt.subplots(nrows=2, sharex=False)\n        self.snd_blocks = []\n        self.spectrogram_blocks = []\n        self.power_max = 0",
+        "peekOfCode": "class MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        # self.fig, (self.ax1, self.ax2) = plt.subplots(nrows=2, sharex=False)\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5343,7 +5408,7 @@
         "kind": 2,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        # self.fig, (self.ax1, self.ax2) = plt.subplots(nrows=2, sharex=False)\n        self.snd_blocks = []",
+        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        # self.fig, (self.ax1, self.ax2) = plt.subplots(nrows=2, sharex=False)\n        self.power_max = 0",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5352,7 +5417,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5361,7 +5426,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5370,7 +5435,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5379,7 +5444,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5388,7 +5453,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5397,7 +5462,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
+        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5406,7 +5471,16 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx_basic",
         "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0",
+        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "documentation": {}
+    },
+    {
+        "label": "SHOW_PLOT",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx_basic",
+        "description": "parrot.listeners.mic_to_dmx_basic",
+        "peekOfCode": "SHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
         "detail": "parrot.listeners.mic_to_dmx_basic",
         "documentation": {}
     },
@@ -5514,7 +5588,7 @@
         "kind": 6,
         "importPath": "parrot.patch.chauvet",
         "description": "parrot.patch.chauvet",
-        "peekOfCode": "class ColorWheelEntry:\n    def __init__(self, color: Color, dmx_value: int):\n        self.color = color\n        self.dmx_value = dmx_value\ncolor_wheel = [\n    ColorWheelEntry(Color(\"white\"), 0),\n    ColorWheelEntry(Color(\"red\"), 10),\n    ColorWheelEntry(Color(\"orange\"), 16),\n    ColorWheelEntry(Color(\"yellow\"), 22),\n    ColorWheelEntry(Color(\"green\"), 30),",
+        "peekOfCode": "class ColorWheelEntry:\n    def __init__(self, color: Color, dmx_value: int):\n        self.color = color\n        self.dmx_value = dmx_value\ncolor_wheel = [\n    ColorWheelEntry(Color(\"white\"), 0),\n    ColorWheelEntry(Color(\"red\"), 12),\n    ColorWheelEntry(Color(\"orange\"), 16),\n    ColorWheelEntry(Color(\"yellow\"), 22),\n    ColorWheelEntry(Color(\"green\"), 30),",
         "detail": "parrot.patch.chauvet",
         "documentation": {}
     },
@@ -5541,7 +5615,7 @@
         "kind": 5,
         "importPath": "parrot.patch.chauvet",
         "description": "parrot.patch.chauvet",
-        "peekOfCode": "color_wheel = [\n    ColorWheelEntry(Color(\"white\"), 0),\n    ColorWheelEntry(Color(\"red\"), 10),\n    ColorWheelEntry(Color(\"orange\"), 16),\n    ColorWheelEntry(Color(\"yellow\"), 22),\n    ColorWheelEntry(Color(\"green\"), 30),\n    ColorWheelEntry(Color(\"blue\"), 37),\n    ColorWheelEntry(Color(\"AntiqueWhite\"), 46),\n    ColorWheelEntry(Color(\"cyan\"), 52),\n    ColorWheelEntry(Color(\"magenta\"), 58),",
+        "peekOfCode": "color_wheel = [\n    ColorWheelEntry(Color(\"white\"), 0),\n    ColorWheelEntry(Color(\"red\"), 12),\n    ColorWheelEntry(Color(\"orange\"), 16),\n    ColorWheelEntry(Color(\"yellow\"), 22),\n    ColorWheelEntry(Color(\"green\"), 30),\n    ColorWheelEntry(Color(\"blue\"), 37),\n    ColorWheelEntry(Color(\"AntiqueWhite\"), 46),\n    ColorWheelEntry(Color(\"cyan\"), 52),\n    ColorWheelEntry(Color(\"magenta\"), 58),",
         "detail": "parrot.patch.chauvet",
         "documentation": {}
     },
@@ -5588,6 +5662,15 @@
         "description": "parrot.patch.patch_bay",
         "peekOfCode": "patch_bay = [\n    ChauvetSpot160(1, 90, 270, 20, 100, 40),\n    LedPar(19),\n    LedPar(12),\n    LedPar(26),\n    LedPar(33),\n    Motionstrip38(59, 0, 128),\n]",
         "detail": "parrot.patch.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "lerp_color",
+        "kind": 2,
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "peekOfCode": "def lerp_color(a: Color, b: Color, t: float) -> Color:\n    return Color(\n        rgb=(lerp(a.red, b.red, t), lerp(a.green, b.green, t), lerp(a.blue, b.blue, t))\n    )",
+        "detail": "parrot.utils.color_extra",
         "documentation": {}
     },
     {
@@ -5906,21 +5989,39 @@
         "documentation": {}
     },
     {
+        "label": "Lerpable",
+        "kind": 6,
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "class Lerpable:\n    def lerp(self, other, t):\n        raise NotImplementedError()\nclass LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject\n        self.target = None\n        self.duration = duration\n        self.start_time = None\n    def push(self, target):",
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "LerpAnimator",
+        "kind": 6,
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "class LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject\n        self.target = None\n        self.duration = duration\n        self.start_time = None\n    def push(self, target):\n        self.target = target\n        self.start_time = time.time()\n    def render(self):",
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
         "label": "lerp",
         "kind": 2,
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "peekOfCode": "def lerp(a, b, t):\n    return a + (b - a) * t\ndef lerp_list(a, b, t):\n    return [lerp(i, j, t) for i, j in zip(a, b)]",
-        "detail": "parrot.utils.math",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "def lerp(a, b, t):\n    return a + (b - a) * t\ndef lerp_list(a, b, t):\n    return [lerp(i, j, t) for i, j in zip(a, b)]\nclass Lerpable:\n    def lerp(self, other, t):\n        raise NotImplementedError()\nclass LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject",
+        "detail": "parrot.utils.lerp",
         "documentation": {}
     },
     {
         "label": "lerp_list",
         "kind": 2,
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "peekOfCode": "def lerp_list(a, b, t):\n    return [lerp(i, j, t) for i, j in zip(a, b)]",
-        "detail": "parrot.utils.math",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "def lerp_list(a, b, t):\n    return [lerp(i, j, t) for i, j in zip(a, b)]\nclass Lerpable:\n    def lerp(self, other, t):\n        raise NotImplementedError()\nclass LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject\n        self.target = None\n        self.duration = duration",
+        "detail": "parrot.utils.lerp",
         "documentation": {}
     },
     {
