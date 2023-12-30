@@ -1499,14 +1499,6 @@
         "documentation": {}
     },
     {
-        "label": "RegularGridInterpolator",
-        "importPath": "scipy.interpolate",
-        "description": "scipy.interpolate",
-        "isExtraImport": true,
-        "detail": "scipy.interpolate",
-        "documentation": {}
-    },
-    {
         "label": "Director",
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",

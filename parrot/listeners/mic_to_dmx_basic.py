@@ -5,7 +5,6 @@ import sys
 import pyaudio
 import numpy as np
 from scipy import signal
-from scipy.interpolate import RegularGridInterpolator
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
