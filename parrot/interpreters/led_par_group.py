@@ -4,6 +4,8 @@ from parrot.patch.led_par import LedPar
 from parrot.interpreters.base import InterpreterBase, InterpretorCategory
 from parrot.utils.lerp import lerp
 from parrot.director.color_scheme import ColorScheme
+import math
+import time
 
 
 class LedParGroup:
@@ -15,6 +17,7 @@ class LedParSlowRespond(InterpreterBase[LedParGroup]):
     def __init__(self, subject: LedParGroup):
         super().__init__(subject)
         self.dimmer_memory = 0
+        self.signal = "sustained"
 
     def step(self, frame: Frame, scheme: ColorScheme):
         self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)
@@ -25,8 +28,20 @@ class LedParSlowRespond(InterpreterBase[LedParGroup]):
             else:
                 par.set_color(scheme.bg_contrast)
 
-            par.set_dimmer(self.dimmer_memory * 255)
-            par.set_strobe(200 if frame["sustained"] > 0.65 else 0)
+            if frame[self.signal] > 0.65:
+                par.set_strobe(200)
+            elif frame[self.signal] > 0.5:
+                par.set_dimmer(
+                    50
+                    + (255 - 50)
+                    * math.sin(
+                        time.time() * 5 + math.pi * idx / len(self.subject.par_group)
+                    )
+                )
+                par.set_strobe(0)
+            else:
+                par.set_dimmer(self.dimmer_memory * 255)
+                par.set_strobe(0)
 
     @classmethod
     def category(cls) -> InterpretorCategory:

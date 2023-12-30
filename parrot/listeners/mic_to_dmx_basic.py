@@ -139,11 +139,11 @@ class MicToDmxBasic(object):
         self.sustain_buffer.append(sustained)
         self.sustain_buffer = self.sustain_buffer[-self.lookback_buffer_size :]
 
-        spectrum_bins = 4
-        log_spectrogram = np.log10(spectrogram_block)
-        log_spectrogram = (log_spectrogram - log_spectrogram.min()) / (
-            log_spectrogram.max() - log_spectrogram.min()
-        )
+        # spectrum_bins = 4
+        # log_spectrogram = np.log10(spectrogram_block)
+        # log_spectrogram = (log_spectrogram - log_spectrogram.min()) / (
+        #     log_spectrogram.max() - log_spectrogram.min()
+        # )
         # log_spectrogram = log_spectrogram[
         #     : int(log_spectrogram.shape[0] / spectrum_bins) * spectrum_bins, :
         # ]
