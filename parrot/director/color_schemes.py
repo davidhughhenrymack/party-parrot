@@ -7,6 +7,7 @@ color_schemes = [
     ColorScheme(Color("white"), Color("blue"), Color("purple")),
     ColorScheme(Color("white"), Color("red"), Color("red")),
     ColorScheme(Color("white"), Color("red"), Color("purple")),
-    ColorScheme(Color("white"), Color("blue"), Color("blue")),
     ColorScheme(Color("red"), Color("blue"), Color("blue")),
+    ColorScheme(Color("magenta"), Color("blue"), Color("purple")),
+    ColorScheme(Color("blue"), Color("purple"), Color("purple")),
 ]

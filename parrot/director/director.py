@@ -11,7 +11,7 @@ from parrot.patch.patch_bay import patch_bay
 from parrot.patch.chauvet import ChauvetSpot160
 from parrot.patch.led_par import LedPar
 from parrot.patch.motionstrip import Motionstrip38
-from parrot.director.schemes import color_schemes
+from parrot.director.color_schemes import color_schemes
 from parrot.interpreters.movers import MoverBeat
 from parrot.interpreters.base import InterpreterBase
 from parrot.utils.lerp import LerpAnimator

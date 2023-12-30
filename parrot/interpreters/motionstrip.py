@@ -36,7 +36,8 @@ class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
         self.decay_rate = 0.24
 
     def step(self, frame, scheme):
-        self.subject.set_pan(math.cos(frame.time) * 127 + 128)
+        pan = math.cos(frame.time) * 127 + 128
+        self.subject.set_pan(pan)
 
         if frame[self.signal] > 0.2:
             self.dimmer_memory = lerp(
