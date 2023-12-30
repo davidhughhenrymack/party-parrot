@@ -1,6 +1,6 @@
 from typing import List
 from parrot.director.frame import Frame
-from parrot.patch.led_par import LedPar
+from parrot.fixtures.led_par import LedPar
 from parrot.interpreters.base import InterpreterBase, InterpretorCategory
 from parrot.utils.lerp import lerp
 from parrot.director.color_scheme import ColorScheme

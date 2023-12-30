@@ -1,6 +1,6 @@
 import math
 from parrot.interpreters.base import InterpreterBase
-from parrot.patch.motionstrip import color_to_rgbw, Motionstrip38
+from parrot.fixtures.motionstrip import color_to_rgbw, Motionstrip38
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import clamp
 from parrot.utils.lerp import lerp

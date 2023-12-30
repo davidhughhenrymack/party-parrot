@@ -1,6 +1,6 @@
 import math
 from parrot.interpreters.base import InterpreterBase
-from parrot.patch.chauvet import ChauvetSpot160
+from parrot.fixtures.chauvet import ChauvetSpot160
 
 
 class MoverBeat(InterpreterBase[ChauvetSpot160]):
