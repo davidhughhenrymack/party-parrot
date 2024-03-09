@@ -6,12 +6,19 @@ from parrot.fixtures.oultia.laser import TwoBeamLaser
 
 
 patch_bay = [
-    ChauvetSpot160(1, 90, 270, 20, 100, 40),
+    ChauvetSpot160(
+        patch=1,
+        pan_lower=180 + 90,
+        pan_upper=180 + 90 + 180,
+        tilt_lower=0,
+        tilt_upper=90,
+        dimmer_upper=255,
+    ),
     LedPar(12),
     LedPar(19),
     LedPar(26),
     LedPar(33),
-    Motionstrip38(59, 0, 128),
+    Motionstrip38(59, 128, 256),
     FiveBeamLaser(100),
     TwoBeamLaser(120),
 ]

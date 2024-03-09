@@ -15,3 +15,8 @@ class Frame:
 
     def __str__(self):
         return f"Frame(vocals={int(self.vocals* 100)}, other={int(self.other* 100)}, drums={int(self.drums* 100)}, bass={int(self.bass* 100)})"
+
+    def __mul__(self, factor):
+        return Frame(
+            **{k: v * factor for k, v in self.kwargs.items()},
+        )

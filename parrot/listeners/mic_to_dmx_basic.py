@@ -136,8 +136,6 @@ class MicToDmxBasic(object):
 
         sustained = timeseries["bass"][-200:].mean()
         values["sustained"] = sustained
-        # self.sustain_buffer.append(sustained)
-        # self.sustain_buffer = self.sustain_buffer[-self.lookback_buffer_size :]
 
         # spectrum_bins = 4
         # log_spectrogram = np.log10(spectrogram_block)
@@ -160,6 +158,9 @@ class MicToDmxBasic(object):
         self.director.render(self.dmx)
 
         if SHOW_PLOT:
+            self.sustain_buffer.append(sustained)
+            self.sustain_buffer = self.sustain_buffer[-self.lookback_buffer_size :]
+
             plt.clf()
             plt.subplot(2, 1, 1)
 

@@ -30,7 +30,7 @@ class LedParSlowRespond(InterpreterBase[LedParGroup]):
 
             if frame[self.signal] > 0.65:
                 par.set_strobe(200)
-            elif frame[self.signal] > 0.5:
+            if frame[self.signal] > 0.5:
                 par.set_dimmer(
                     50
                     + (255 - 50)

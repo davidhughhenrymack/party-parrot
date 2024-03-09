@@ -3,6 +3,16 @@ from parrot.interpreters.base import InterpreterBase
 from parrot.fixtures.chauvet import ChauvetSpot160
 
 
+class MoverCircleAndColor(InterpreterBase[ChauvetSpot160]):
+    def __init__(self, subject: ChauvetSpot160):
+        super().__init__(subject)
+
+    def step(self, frame, scheme):
+        self.subject.set_color(scheme.fg)
+        self.subject.set_pan(math.cos(frame.time) * 127 + 128)
+        self.subject.set_tilt(math.sin(frame.time) * 127 + 128)
+
+
 class MoverBeat(InterpreterBase[ChauvetSpot160]):
     def __init__(self, subject: ChauvetSpot160):
         super().__init__(subject)

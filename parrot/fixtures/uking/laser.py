@@ -23,9 +23,10 @@ class FiveBeamLaser(FixtureBase):
         super().__init__(address, "uking 5 beam laser", 13)
 
         self.set_mode(0)
-        self.set_pan(210)
-        self.set_tilt(210)
+        self.set_pan(0)
+        self.set_tilt(0)
         self.set_pattern(50)
+        self.values[10] = 200
 
     def set_mode(self, value):
         # 0 - Manual
