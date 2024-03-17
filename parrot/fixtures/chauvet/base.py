@@ -41,6 +41,7 @@ class ChauvetSpot_12Ch(MovingHead):
                 self.values[self.dmx_layout[name]] = value
 
     def set_dimmer(self, value):
+        super().set_dimmer(value)
         self.set("dimmer", value / 255 * self.dimmer_upper)
 
     # 0 - 255

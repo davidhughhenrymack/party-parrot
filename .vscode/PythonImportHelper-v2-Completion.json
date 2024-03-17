@@ -144,6 +144,22 @@
         "documentation": {}
     },
     {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
         "label": "ColorScheme",
         "importPath": "parrot.director.color_scheme",
         "description": "parrot.director.color_scheme",
@@ -375,6 +391,14 @@
         "description": "parrot.director.frame",
         "isExtraImport": true,
         "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "patch_bay",
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "isExtraImport": true,
+        "detail": "parrot.patch_bay",
         "documentation": {}
     },
     {
@@ -1645,7 +1669,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
-        "peekOfCode": "class FixtureBase:\n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n        self.color = Color(\"black\")\n    def set_color(self, color: Color):\n        self.color = color\n    def set_dimmer(self, value):",
+        "peekOfCode": "class FixtureBase:\n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n        self.color_value = Color(\"black\")\n    def set_color(self, color: Color):\n        self.color_value = color\n    def get_color(self):",
         "detail": "parrot.fixtures.base",
         "documentation": {}
     },
@@ -1681,7 +1705,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.led_par",
         "description": "parrot.fixtures.led_par",
-        "peekOfCode": "class LedPar(FixtureBase):\n    def __init__(self, patch):\n        super().__init__(patch, \"led par\", 7)\n    def set_dimmer(self, value):\n        self.values[0] = value\n    def set_strobe(self, value):\n        self.values[4] = value\n    def set_color(self, color):\n        super().set_color(color)\n        self.values[1] = color.red * 255",
+        "peekOfCode": "class LedPar(FixtureBase):\n    def __init__(self, patch):\n        super().__init__(patch, \"led par\", 7)\n    def set_dimmer(self, value):\n        super().set_dimmer(value)\n        self.values[0] = value\n    def set_strobe(self, value):\n        self.values[4] = value\n    def set_color(self, color):\n        super().set_color(color)",
         "detail": "parrot.fixtures.led_par",
         "documentation": {}
     },
@@ -1699,7 +1723,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
-        "peekOfCode": "class Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(patch, \"motionstrip 38\", 38)\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.set_pan_speed(128)\n    def set_dimmer(self, value):\n        self.values[4] = value\n    def set_pan(self, value):",
+        "peekOfCode": "class Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(patch, \"motionstrip 38\", 38)\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.set_pan_speed(128)\n    def set_dimmer(self, value):\n        super().set_dimmer(value)\n        self.values[4] = value",
         "detail": "parrot.fixtures.motionstrip",
         "documentation": {}
     },
@@ -1735,7 +1759,25 @@
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        for i in Phrase:\n            button = Button(text=i.name, command=lambda: self.state.set_phrase(i))\n            button.pack()\n        self.label_var = StringVar()\n        self.label = Label(textvariable=self.label_var)",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        self.canvas = Canvas(self, width=800, height=300)\n        self.canvas.pack()\n        self.fixture_circles = []\n        for idx, fixture in enumerate(patch_bay):\n            self.fixture_circles.append(",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "CIRCLE_SIZE",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "CIRCLE_SIZE = 30\nCIRCLE_GAP = 20\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        self.canvas = Canvas(self, width=800, height=300)\n        self.canvas.pack()\n        self.fixture_circles = []",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "CIRCLE_GAP",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "CIRCLE_GAP = 20\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        self.canvas = Canvas(self, width=800, height=300)\n        self.canvas.pack()\n        self.fixture_circles = []\n        for idx, fixture in enumerate(patch_bay):",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2599,7 +2641,16 @@
         "kind": 2,
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
-        "peekOfCode": "def color_distance(a: Color, b: Color) -> float:\n    # Hue distance plus saturation distance plus value distance\n    return (\n        abs(a.hue - b.hue)\n        + abs(a.saturation - b.saturation)\n        + abs(a.luminance - b.luminance)\n    )",
+        "peekOfCode": "def color_distance(a: Color, b: Color) -> float:\n    # Hue distance plus saturation distance plus value distance\n    return (\n        abs(a.hue - b.hue)\n        + abs(a.saturation - b.saturation)\n        + abs(a.luminance - b.luminance)\n    )\ndef dim_color(color: Color, dimmer: float) -> Color:\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "kind": 2,
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
         "detail": "parrot.utils.color_extra",
         "documentation": {}
     },

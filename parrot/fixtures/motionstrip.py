@@ -40,6 +40,7 @@ class Motionstrip38(Motionstrip):
         self.set_pan_speed(128)
 
     def set_dimmer(self, value):
+        super().set_dimmer(value)
         self.values[4] = value
 
     def set_pan(self, value):

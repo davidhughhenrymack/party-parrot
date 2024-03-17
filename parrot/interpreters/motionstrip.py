@@ -8,6 +8,7 @@ from parrot.interpreters.group import groupify
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import clamp
 from parrot.utils.lerp import lerp
+from parrot.utils.color_extra import dim_color
 
 
 class MotionstripBulbBeat(GroupInterpreterBase[Motionstrip38]):
@@ -61,8 +62,8 @@ class MotionstripWaveform(InterpreterBase[Motionstrip38]):
             low = i * 1 / parts
             value = clamp(frame[self.signal] - low, 0, 1 / parts) * parts
 
-            cc = Color(color)
-            cc.set_rgb((cc.red * value, cc.green * value, cc.blue * value))
+            cc = dim_color(Color(color), value)
+            # cc.set_rgb((cc.red * value, cc.green * value, cc.blue * value))
             self.subject.set_bulb_color(3 - i, cc)
             self.subject.set_bulb_color(i + 4, cc)
 

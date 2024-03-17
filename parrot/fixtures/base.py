@@ -8,13 +8,19 @@ class FixtureBase:
         self.name = name
         self.width = width
         self.values = [0 for i in range(width)]
-        self.color = Color("black")
+        self.color_value = Color("black")
 
     def set_color(self, color: Color):
-        self.color = color
+        self.color_value = color
+
+    def get_color(self):
+        return self.color_value
 
     def set_dimmer(self, value):
-        raise NotImplementedError()
+        self.dimmer_value = value
+
+    def get_dimmer(self):
+        return self.dimmer_value
 
     def set_strobe(self, value):
         raise NotImplementedError()

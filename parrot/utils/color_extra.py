@@ -15,3 +15,7 @@ def color_distance(a: Color, b: Color) -> float:
         + abs(a.saturation - b.saturation)
         + abs(a.luminance - b.luminance)
     )
+
+
+def dim_color(color: Color, dimmer: float) -> Color:
+    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))

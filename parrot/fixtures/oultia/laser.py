@@ -35,6 +35,7 @@ class TwoBeamLaser(Laser):
         self.values[1] = value
 
     def set_dimmer(self, value):
+        super().set_dimmer(value)
         if value == 0:
             self.set_mode(0)
         else:

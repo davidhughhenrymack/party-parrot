@@ -31,9 +31,7 @@ class GroupSlowRespond(GroupInterpreterBase[FixtureBase]):
                 fixture.set_dimmer(
                     50
                     + (255 - 50)
-                    * math.sin(
-                        time.time() * 5 + math.pi * idx / len(self.subject.par_group)
-                    )
+                    * math.sin(time.time() * 5 + math.pi * idx / len(self.group))
                 )
                 fixture.set_strobe(0)
             else:
