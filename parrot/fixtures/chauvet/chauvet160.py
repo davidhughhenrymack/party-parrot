@@ -1,28 +1,23 @@
 from parrot.utils.colour import Color
 from parrot.utils.color_extra import color_distance
-from .base import FixtureBase
+from ..base import FixtureBase, ColorWheelEntry
 
 
 # DMX layout:
-dmx_layout = [
-    "pan 0 -540",
-    "fine pan",
-    "tilt 0 - 229",
-    "fine tilt",
-    "pan/tilt speed",
-    "color wheel",
-    "gobo wheel",
-    "dimmer",
-    "shutter",
-    "control function",
-    "movement macro",
-]
-
-
-class ColorWheelEntry:
-    def __init__(self, color: Color, dmx_value: int):
-        self.color = color
-        self.dmx_value = dmx_value
+dmx_layout = {
+    "pan_coarse": 0,
+    "pan_fine": 1,
+    "tilt_coarse": 2,
+    "tilt_fine": 3,
+    "speed": 4,
+    "color_wheel": 5,
+    "gobo_wheel": 6,
+    "dimmer": 7,
+    "shutter": 8,
+    "function": 9,
+    "movement_macro": 10,
+    "movement_macro_speed": 11,
+}
 
 
 color_wheel = [
@@ -39,9 +34,15 @@ color_wheel = [
 ]
 
 
-class ChauvetSpot160(FixtureBase):
+class ChauvetSpot160_12Ch(FixtureBase):
     def __init__(
-        self, patch, pan_lower, pan_upper, tilt_lower, tilt_upper, dimmer_upper=255
+        self,
+        patch,
+        pan_lower=270,
+        pan_upper=450,
+        tilt_lower=0,
+        tilt_upper=90,
+        dimmer_upper=255,
     ):
         super().__init__(patch, "chauvet intimidator 160", 11)
         self.pan_lower = pan_lower / 540 * 255
@@ -55,23 +56,27 @@ class ChauvetSpot160(FixtureBase):
         self.set_speed(0)
         self.set_shutter_open()
 
+    def set(self, name, value):
+        if name in dmx_layout:
+            self.values[dmx_layout[name]] = value
+
     def set_dimmer(self, value):
-        self.values[7] = value / 255 * self.dimmer_upper
+        self.set("dimmer", value / 255 * self.dimmer_upper)
 
     # 0 - 255
     def set_pan(self, value):
         projected = self.pan_lower + (self.pan_range * value / 255)
-        self.values[0] = int(projected)
-        self.values[1] = int((projected - self.values[0]) * 255)
+        self.set("pan_coarse", int(projected))
+        self.set("pan_fine", int((projected - self.values[0]) * 255))
 
     # 0 - 255
     def set_tilt(self, value):
         projected = self.tilt_lower + (self.tilt_range * value / 255)
-        self.values[2] = int(projected)
-        self.values[3] = int((projected - self.values[2]) * 255)
+        self.set("tilt_coarse", int(projected))
+        self.set("tilt_fine", int((projected - self.values[2]) * 255))
 
     def set_speed(self, value):
-        self.values[4] = value
+        self.set("speed", value)
 
     def set_color(self, color: Color):
         super().set_color(color)
@@ -84,13 +89,13 @@ class ChauvetSpot160(FixtureBase):
                 closest = entry
 
         # Set the color wheel value
-        self.values[5] = closest.dmx_value
+        self.set("color_wheel", closest.dmx_value)
 
     def set_strobe(self, value):
         lower = 4
         upper = 76
         scaled = lower + (upper - lower) * value / 255
-        self.values[8] = scaled
+        self.set("shutter", scaled)
 
     def set_shutter_open(self):
-        self.values[8] = 6
+        self.set("shutter", 6)

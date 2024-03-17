@@ -6,7 +6,7 @@ from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame
 
 from parrot.patch_bay import patch_bay
-from parrot.fixtures.chauvet import ChauvetSpot160
+from parrot.fixtures.chauvet import ChauvetSpot160_12Ch, ChauvetSpot120_12Ch
 from parrot.fixtures.led_par import LedPar
 from parrot.fixtures.motionstrip import Motionstrip38
 
@@ -26,10 +26,12 @@ from parrot.fixtures.oultia.laser import TwoBeamLaser
 
 SHIFT_AFTER = 2 * 60
 WARMUP_SECONDS = 40
+MAX_INTENSITY = 1
 
 interpreters = {
     Motionstrip38: MotionstripSlowRespond,
-    ChauvetSpot160: MoverBeat,
+    ChauvetSpot160_12Ch: MoverBeat,
+    ChauvetSpot120_12Ch: MoverBeat,
     FiveBeamLaser: DimmerBinaryLatched,
     TwoBeamLaser: DimmerBinaryLatched,
 }
@@ -70,7 +72,7 @@ class Director:
         run_time = time.time() - self.start_time
         warmup_phase = min(1, run_time / WARMUP_SECONDS)
 
-        throttled_frame = frame * warmup_phase
+        throttled_frame = frame * warmup_phase * MAX_INTENSITY
 
         for i in self.interpreters:
             i.step(throttled_frame, scheme)

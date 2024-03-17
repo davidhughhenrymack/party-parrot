@@ -1,5 +1,4 @@
 from parrot.fixtures.base import FixtureBase
-from parrot.fixtures.chauvet import dmx_layout
 
 dmx_layout = [
     "mode",

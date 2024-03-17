@@ -28,3 +28,15 @@ class FixtureBase:
     def render(self, dmx):
         for i in range(len(self.values)):
             dmx.set_channel(self.address + i, dmx_clamp(self.values[i]))
+
+
+class ColorWheelEntry:
+    def __init__(self, color: Color, dmx_value: int):
+        self.color = color
+        self.dmx_value = dmx_value
+
+
+class GoboWheelEntry:
+    def __init__(self, gobo: str, dmx_value: int):
+        self.gobo = gobo
+        self.dmx_value = dmx_value
