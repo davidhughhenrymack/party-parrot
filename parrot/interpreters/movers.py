@@ -1,33 +1,29 @@
-import math
-from parrot.interpreters.base import InterpreterBase
-from parrot.fixtures import FixtureBase
+from parrot.interpreters.base import (
+    ColorFg,
+    Dimmer30,
+    FlashBeat,
+    GroupInterpreterBase,
+    MoveCircles,
+)
+from parrot.interpreters.combo import comboify, group_comboify
+from parrot.fixtures.moving_head import MovingHead
+from parrot.interpreters.group import SequenceDimmers
 
 
-class MoverCircleAndColor(InterpreterBase[FixtureBase]):
-    def __init__(self, subject: FixtureBase):
-        super().__init__(subject)
+class MoverFan(GroupInterpreterBase[MovingHead]):
+    def __init__(self, group):
+        super().__init__(group)
+
+        for i, fixture in enumerate(group):
+            fixture.set_pan(i * 255 / len(group))
+            fixture.set_tilt(128)
 
     def step(self, frame, scheme):
-        self.subject.set_color(scheme.fg)
-        self.subject.set_pan(math.cos(frame.time) * 127 + 128)
-        self.subject.set_tilt(math.sin(frame.time) * 127 + 128)
+        pass
 
 
-class MoverBeat(InterpreterBase[FixtureBase]):
-    def __init__(self, subject: FixtureBase):
-        super().__init__(subject)
-        self.signal = "drums"
-        self.movement = MoverCircleAndColor(subject)
-
-    def step(self, frame, scheme):
-        self.movement.step(frame, scheme)
-
-        if frame["sustained"] > 0.7:
-            self.subject.set_dimmer(100)
-            self.subject.set_strobe(200)
-        elif frame[self.signal] > 0.4:
-            self.subject.set_dimmer(frame[self.signal] * 255)
-            self.subject.set_strobe(0)
-        else:
-            self.subject.set_dimmer(0)
-            self.subject.set_strobe(0)
+MoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])
+MoverGroupBeatInFan = group_comboify([FlashBeat, MoverFan, ColorFg])
+MoverSequenceAndCircle = group_comboify([MoveCircles, ColorFg, SequenceDimmers])
+MoverSequenceInFan = group_comboify([SequenceDimmers, MoverFan, ColorFg])
+MoverDimAndCircle = group_comboify([MoveCircles, ColorFg, Dimmer30])

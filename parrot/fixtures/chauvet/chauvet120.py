@@ -1,3 +1,4 @@
+from parrot.fixtures.chauvet.base import ChauvetSpot_12Ch
 from parrot.utils.colour import Color
 from parrot.utils.color_extra import color_distance
 from ..base import FixtureBase, ColorWheelEntry, GoboWheelEntry
@@ -43,7 +44,7 @@ gobo_wheel = [
 ]
 
 
-class ChauvetSpot120_12Ch(FixtureBase):
+class ChauvetSpot120_12Ch(ChauvetSpot_12Ch):
     def __init__(
         self,
         patch,
@@ -53,58 +54,16 @@ class ChauvetSpot120_12Ch(FixtureBase):
         tilt_upper=90,
         dimmer_upper=255,
     ):
-        super().__init__(patch, "chauvet intimidator 120", 11)
-        self.pan_lower = pan_lower / 540 * 255
-        self.pan_upper = pan_upper / 540 * 255
-        self.pan_range = self.pan_upper - self.pan_lower
-        self.tilt_lower = tilt_lower / 229 * 255
-        self.tilt_upper = tilt_upper / 229 * 255
-        self.tilt_range = self.tilt_upper - self.tilt_lower
-        self.dimmer_upper = dimmer_upper
-
-        self.set_speed(0)
-        self.set_shutter_open()
-
-    def set(self, name, value):
-        if name in dmx_layout:
-            self.values[dmx_layout[name]] = value
-
-    def set_dimmer(self, value):
-        self.set("dimmer", value / 255 * self.dimmer_upper)
-
-    # 0 - 255
-    def set_pan(self, value):
-        projected = self.pan_lower + (self.pan_range * value / 255)
-        self.set("pan_coarse", int(projected))
-        self.set("pan_fine", int((projected - self.values[0]) * 255))
-
-    # 0 - 255
-    def set_tilt(self, value):
-        projected = self.tilt_lower + (self.tilt_range * value / 255)
-        self.set("tilt_coarse", int(projected))
-        self.set("tilt_fine", int((projected - self.values[2]) * 255))
-
-    def set_speed(self, value):
-        self.set("speed", value)
-
-    def set_color(self, color: Color):
-        super().set_color(color)
-        # Find the closest color in the color wheel
-        closest = None
-        for entry in color_wheel:
-            if closest == None or color_distance(entry.color, color) < color_distance(
-                closest.color, color
-            ):
-                closest = entry
-
-        # Set the color wheel value
-        self.set("color_wheel", closest.dmx_value)
-
-    def set_strobe(self, value):
-        lower = 4
-        upper = 76
-        scaled = lower + (upper - lower) * value / 255
-        self.set("shutter", scaled)
-
-    def set_shutter_open(self):
-        self.set("shutter", 6)
+        super().__init__(
+            patch,
+            "chauvet intimidator 120",
+            12,
+            dmx_layout,
+            color_wheel,
+            gobo_wheel,
+            pan_lower,
+            pan_upper,
+            tilt_lower,
+            tilt_upper,
+            dimmer_upper,
+        )

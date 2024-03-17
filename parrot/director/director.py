@@ -1,8 +1,6 @@
 import random
-import math
 import time
 from typing import List
-from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame
 
 from parrot.patch_bay import patch_bay
@@ -12,12 +10,12 @@ from parrot.fixtures.motionstrip import Motionstrip38
 
 from parrot.director.color_schemes import color_schemes
 
-from parrot.interpreters.movers import MoverBeat, MoverCircleAndColor
+
+from parrot.interpreters.movers import MoverBeatAndCircle
 from parrot.interpreters.base import InterpreterBase
-from parrot.interpreters.combo import Combo
-from parrot.interpreters.led_par_group import LedParGroup, LedParSlowRespond
-from parrot.interpreters.motionstrip import MotionstripSlowRespond, MotionstripWaveform
-from parrot.interpreters.latched import DimmerBinaryLatched, DimmerFadeLatched
+from parrot.interpreters.slow import GroupSlowRespond
+from parrot.interpreters.motionstrip import MotionstripSlowRespond
+from parrot.interpreters.latched import DimmerBinaryLatched
 
 
 from parrot.utils.lerp import LerpAnimator
@@ -30,8 +28,8 @@ MAX_INTENSITY = 1
 
 interpreters = {
     Motionstrip38: MotionstripSlowRespond,
-    ChauvetSpot160_12Ch: MoverBeat,
-    ChauvetSpot120_12Ch: MoverBeat,
+    ChauvetSpot160_12Ch: MoverBeatAndCircle,
+    ChauvetSpot120_12Ch: MoverBeatAndCircle,
     FiveBeamLaser: DimmerBinaryLatched,
     TwoBeamLaser: DimmerBinaryLatched,
 }
@@ -58,7 +56,7 @@ class Director:
         inferred = [get_interpreter(i) for i in patch_bay]
 
         self.interpreters: List[InterpreterBase] = [
-            LedParSlowRespond(LedParGroup(pars)),
+            GroupSlowRespond(pars),
         ] + filter_nones(inferred)
 
     def shift(self):

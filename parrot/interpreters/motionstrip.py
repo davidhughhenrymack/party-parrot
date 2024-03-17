@@ -1,9 +1,48 @@
 import math
-from parrot.interpreters.base import InterpreterBase
-from parrot.fixtures.motionstrip import color_to_rgbw, Motionstrip38
+import random
+from typing import List
+from parrot.interpreters.base import GroupInterpreterBase, InterpreterBase, MoveCircles
+from parrot.fixtures.motionstrip import Motionstrip38
+from parrot.interpreters.combo import GroupCombo
+from parrot.interpreters.group import groupify
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import clamp
 from parrot.utils.lerp import lerp
+
+
+class MotionstripBulbBeat(GroupInterpreterBase[Motionstrip38]):
+    def __init__(self, group: List[Motionstrip38]):
+        super().__init__(group)
+        self.signal = "drums"
+        self.total_bulbs = len(group) * 8
+        self.bulb = 0
+        self.on = False
+
+    def step(self, frame, scheme):
+        if frame[self.signal] > 0.4:
+            if self.on == False:
+                self.bulb = random.randint(0, self.total_bulbs - 1)
+            self.on = True
+
+            for idx, fixture in enumerate(self.group):
+                for bulb_idx in range(8):
+                    color = Color("black")
+                    absolute_idx = idx * 8 + bulb_idx
+                    if absolute_idx == self.bulb:
+                        color = scheme.fg
+
+                    fixture.set_bulb_color(bulb_idx, color)
+
+        else:
+            if self.on == True:
+                for fixture in self.group:
+                    fixture.set_color(Color("black"))
+            self.on = False
+
+
+MotionStripBulbBeatAndWiggle = lambda group: GroupCombo(
+    group, [MotionstripBulbBeat, groupify(MoveCircles)]
+)
 
 
 class MotionstripWaveform(InterpreterBase[Motionstrip38]):

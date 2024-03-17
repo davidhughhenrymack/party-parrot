@@ -14,6 +14,8 @@ import math
 from parrot.director.director import Director
 from parrot.director.director import Frame
 from parrot.utils.dmx_utils import get_controller
+from parrot.gui.gui import Window
+from parrot.state import State
 
 THRESHOLD = 0  # dB
 RATE = 44100
@@ -24,6 +26,7 @@ TIME_IN_GRAPH = 1000
 BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)
 
 SHOW_PLOT = os.environ.get("SHOW_PLOT", False)
+SHOW_GUI = os.environ.get("SHOW_GUI", True)
 
 if SHOW_PLOT:
     matplotlib.use("macosx")
@@ -37,22 +40,24 @@ class MicToDmxBasic(object):
     def __init__(self):
         self.pa = pyaudio.PyAudio()
         self.stream = self.open_mic_stream()
+
         self.threshold = THRESHOLD
-        self.plot_counter = 0
-
-        # self.fig, (self.ax1, self.ax2) = plt.subplots(nrows=2, sharex=False)
-
         self.power_max = 0
         self.power_min = 99999999999999999
 
         self.spectrogram_buffer = None
         self.lookback_buffer_size = 10000
-
         self.sustain_buffer = []
+
+        self.state = State()
 
         self.dmx = get_controller()
         self.director = Director()
-        self.frame = 0
+
+        if SHOW_GUI:
+            self.window = Window(self.state)
+
+        self.frame_count = 0
 
     def stop(self):
         self.stream.close()
@@ -87,25 +92,6 @@ class MicToDmxBasic(object):
 
         stream.start_stream()
         return stream
-
-    def processBlockSpectrum(self, snd_block):
-        f, t, Sxx = signal.spectrogram(snd_block, RATE)
-        zmin = Sxx.min()
-        zmax = Sxx.max()
-
-        plt.clf()
-        plt.pcolormesh(t, f, Sxx, cmap="RdBu", norm=LogNorm(vmin=zmin, vmax=zmax))
-        plt.ylabel("Frequency [Hz]")
-        plt.xlabel("Time [sec]")
-        plt.axis([t.min(), t.max(), f.min(), f.max()])
-        plt.colorbar()
-        plt.draw()
-        plt.pause(0.001)
-        # plt.show(block=False)
-        # plt.savefig('output/spec{}.png'.format(self.plot_counter), bbox_inches='tight')
-        # plt.close()
-        # write('output/audio{}.wav'.format(self.plot_counter),RATE,snd_block)
-        self.plot_counter += 1
 
     def processBlockPower(self, spectrogram_block):
         ranges = {
@@ -150,40 +136,19 @@ class MicToDmxBasic(object):
         # )
         # log_spectrogram = np.mean(log_spectrogram, axis=1)
 
-        self.director.step(
-            Frame(
-                **values,
-            )
+        frame = Frame(
+            **values,
         )
+
+        self.director.step(frame)
         self.director.render(self.dmx)
 
-        if SHOW_PLOT:
-            self.sustain_buffer.append(sustained)
-            self.sustain_buffer = self.sustain_buffer[-self.lookback_buffer_size :]
-
-            plt.clf()
-            plt.subplot(2, 1, 1)
-
-            for name, x in timeseries.items():
-                plt.plot(x, label=name)
-            plt.legend(loc="upper left")
-            plt.ylabel("Power")
-            plt.xlabel("Time [sec]")
-
-            plt.subplot(2, 1, 2)
-            plt.plot(self.sustain_buffer, label="Sustained")
-            # plt.pcolormesh(log_spectrogram, label="Spectrogram")
-
-            plt.draw()
-            plt.pause(0.001)
+        if SHOW_GUI:
+            self.window.step(frame)
+            self.window.update()
 
     def listen(self):
-        # try:
-        # print("start", self.stream.is_active(), self.stream.is_stopped())
-        # raw_block = self.stream.read(INPUT_FRAMES_PER_BLOCK, exception_on_overflow = False)
-
         total = 0
-
         frame_buffer = []
 
         while total < INPUT_FRAMES_PER_BLOCK:

@@ -26,7 +26,12 @@ def color_to_rgbw(color: Color):
         return (color.red * 255, color.green * 255, color.blue * 255, 0)
 
 
-class Motionstrip38(FixtureBase):
+class Motionstrip(FixtureBase):
+    def __init__(self, address, name, width):
+        super().__init__(address, name, width)
+
+
+class Motionstrip38(Motionstrip):
     def __init__(self, patch, pan_lower, pan_upper):
         super().__init__(patch, "motionstrip 38", 38)
         self.pan_lower = pan_lower
