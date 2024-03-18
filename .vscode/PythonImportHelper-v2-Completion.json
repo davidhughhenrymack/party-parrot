@@ -603,6 +603,14 @@
         "documentation": {}
     },
     {
+        "label": "GroupInterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
         "label": "InterpreterBase",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -867,6 +875,70 @@
         "documentation": {}
     },
     {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
         "label": "parrot.fixtures",
         "kind": 6,
         "isExtraImport": true,
@@ -961,38 +1033,6 @@
         "description": "parrot.fixtures",
         "isExtraImport": true,
         "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
-        "documentation": {}
-    },
-    {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
-        "documentation": {}
-    },
-    {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
-        "documentation": {}
-    },
-    {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
         "documentation": {}
     },
     {
@@ -1265,22 +1305,6 @@
         "description": "parrot.gui.fixtures.moving_head",
         "isExtraImport": true,
         "detail": "parrot.gui.fixtures.moving_head",
-        "documentation": {}
-    },
-    {
-        "label": "State",
-        "importPath": "parrot.state",
-        "description": "parrot.state",
-        "isExtraImport": true,
-        "detail": "parrot.state",
-        "documentation": {}
-    },
-    {
-        "label": "State",
-        "importPath": "parrot.state",
-        "description": "parrot.state",
-        "isExtraImport": true,
-        "detail": "parrot.state",
         "documentation": {}
     },
     {
@@ -1687,16 +1711,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.warmup_complete = False\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        inferred = [get_interpreter(i) for i in patch_bay]\n        self.interpreters: List[InterpreterBase] = [\n            GroupSlowRespond(pars),",
-        "detail": "parrot.director.director",
-        "documentation": {}
-    },
-    {
-        "label": "get_interpreter",
-        "kind": 2,
-        "importPath": "parrot.director.director",
-        "description": "parrot.director.director",
-        "peekOfCode": "def get_interpreter(f):\n    for k, v in interpreters.items():\n        if isinstance(f, k):\n            return v(f)\n    return None\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)",
+        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.warmup_complete = False\n        self.generate_interpreters()\n        self.state.on_phrase_change = self.generate_interpreters\n    def generate_interpreters(self):",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1705,7 +1720,7 @@
         "kind": 2,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.warmup_complete = False\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        inferred = [get_interpreter(i) for i in patch_bay]",
+        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.warmup_complete = False\n        self.generate_interpreters()",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1714,7 +1729,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "SHIFT_AFTER = 2 * 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ninterpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}",
+        "peekOfCode": "SHIFT_AFTER = 2 * 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1723,7 +1738,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ninterpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}\ndef get_interpreter(f):",
+        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1732,16 +1747,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "MAX_INTENSITY = 1\ninterpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}\ndef get_interpreter(f):\n    for k, v in interpreters.items():",
-        "detail": "parrot.director.director",
-        "documentation": {}
-    },
-    {
-        "label": "interpreters",
-        "kind": 5,
-        "importPath": "parrot.director.director",
-        "description": "parrot.director.director",
-        "peekOfCode": "interpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}\ndef get_interpreter(f):\n    for k, v in interpreters.items():\n        if isinstance(f, k):",
+        "peekOfCode": "MAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.warmup_complete = False",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1752,6 +1758,15 @@
         "description": "parrot.director.frame",
         "peekOfCode": "class Frame:\n    def __init__(self, **kwargs):\n        self.time = time.time()\n        self.all = kwargs.get(\"all\", 0)\n        self.drums = kwargs.get(\"drums\", 0)\n        self.bass = kwargs.get(\"bass\", 0)\n        self.kwargs = kwargs\n    def __getitem__(self, __name: str) -> Any:\n        return self.kwargs.get(__name)\n    def __str__(self):",
         "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "get_interpreter",
+        "kind": 2,
+        "importPath": "parrot.director.phrase_interpretations",
+        "description": "parrot.director.phrase_interpretations",
+        "peekOfCode": "def get_interpreter(\n    phrase: Phrase, fixture: Union[FixtureBase, List[FixtureBase]]\n) -> Union[GroupInterpreterBase, InterpreterBase]:\n    for k, v in phrase_interpretations[phrase].items():\n        if isinstance(fixture, k):\n            c = random.choice(v)\n            if not isinstance(c, InterpreterBase):\n                raise NotImplementedError(\n                    f\"Interpreter {c} is not appropriate for non group fixture {fixture}\"\n                )",
+        "detail": "parrot.director.phrase_interpretations",
         "documentation": {}
     },
     {
@@ -2092,7 +2107,7 @@
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(\n            self,\n            width=800,",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(\n            self,\n            width=500,",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3370,7 +3385,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self._phrase = Phrase.intro_outro\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):\n        self._phrase = value",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self._phrase = Phrase.intro_outro\n        self.on_phrase_change = None\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):\n        self._phrase = value\n        if self.on_phrase_change:",
         "detail": "parrot.state",
         "documentation": {}
     }

@@ -9,6 +9,7 @@ class FixtureBase:
         self.width = width
         self.values = [0 for i in range(width)]
         self.color_value = Color("black")
+        self.dimmer_value = 0
 
     def set_color(self, color: Color):
         self.color_value = color

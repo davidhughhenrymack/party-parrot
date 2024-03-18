@@ -52,7 +52,7 @@ class MicToDmxBasic(object):
         self.state = State()
 
         self.dmx = get_controller()
-        self.director = Director()
+        self.director = Director(self.state)
 
         if SHOW_GUI:
             self.window = Window(self.state)

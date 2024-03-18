@@ -11,36 +11,22 @@ from parrot.fixtures.motionstrip import Motionstrip38
 
 from parrot.director.color_schemes import color_schemes
 
-
 from parrot.interpreters.movers import MoverBeatAndCircle
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import GroupInterpreterBase, InterpreterBase
 from parrot.interpreters.slow import GroupSlowRespond
 from parrot.interpreters.motionstrip import MotionstripSlowRespond
 from parrot.interpreters.latched import DimmerBinaryLatched
-
+from .phrase_interpretations import get_interpreter
 
 from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.uking.laser import FiveBeamLaser
 from parrot.fixtures.oultia.laser import TwoBeamLaser
+from parrot.fixtures.moving_head import MovingHead
+from parrot.state import State
 
 SHIFT_AFTER = 2 * 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "40")), 1)
 MAX_INTENSITY = 1
-
-interpreters = {
-    Motionstrip38: MotionstripSlowRespond,
-    ChauvetSpot160_12Ch: MoverBeatAndCircle,
-    ChauvetSpot120_12Ch: MoverBeatAndCircle,
-    FiveBeamLaser: DimmerBinaryLatched,
-    TwoBeamLaser: DimmerBinaryLatched,
-}
-
-
-def get_interpreter(f):
-    for k, v in interpreters.items():
-        if isinstance(f, k):
-            return v(f)
-    return None
 
 
 def filter_nones(l):
@@ -48,19 +34,31 @@ def filter_nones(l):
 
 
 class Director:
-    def __init__(self):
+    def __init__(self, state: State):
         self.scheme = LerpAnimator(random.choice(color_schemes), 4)
         self.last_shift_time = time.time()
         self.start_time = time.time()
+        self.state = state
 
         self.warmup_complete = False
+        self.generate_interpreters()
+        self.state.on_phrase_change = lambda s: self.generate_interpreters()
 
+    def generate_interpreters(self):
         pars = [i for i in patch_bay if isinstance(i, LedPar)]
-        inferred = [get_interpreter(i) for i in patch_bay]
+        movers = [i for i in patch_bay if isinstance(i, MovingHead)]
 
-        self.interpreters: List[InterpreterBase] = [
-            GroupSlowRespond(pars),
-        ] + filter_nones(inferred)
+        fixtures_and_groups = [
+            pars,
+            movers,
+            *[i for i in patch_bay if i not in pars and i not in movers],
+        ]
+
+        self.interpreters: List[Union[InterpreterBase, GroupInterpreterBase]] = (
+            filter_nones(
+                get_interpreter(self.state.phrase, i) for i in fixtures_and_groups
+            )
+        )
 
     def shift(self):
         s = random.choice(color_schemes)

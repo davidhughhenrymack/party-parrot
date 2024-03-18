@@ -23,8 +23,8 @@ class Window(Tk):
 
         self.canvas = Canvas(
             self,
-            width=800,
-            height=300,
+            width=500,
+            height=100,
             bg=BG,
             borderwidth=0,
             border=0,
@@ -42,16 +42,29 @@ class Window(Tk):
             renderer.setup(self.canvas, fixture_x, fixture_y)
             fixture_x += renderer.width + FIXTURE_MARGIN
 
-        for i in Phrase:
-            button = Button(text=i.name, command=lambda: self.state.set_phrase(i))
-            button.pack()
+        self.phrase_frame = Frame(self, background=BG)
 
-        self.label_var = StringVar()
-        self.label = Label(textvariable=self.label_var)
-        self.label.pack()
+        self.phrase_buttons = {}
+        for i in Phrase:
+            self.phrase_buttons[i] = Button(
+                self.phrase_frame, text=i.name, command=lambda: self.click_phrase(i)
+            )
+            self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
+
+        self.click_phrase(self.state.phrase)
+
+        self.phrase_frame.pack()
+
+    def click_phrase(self, phrase: Phrase):
+        self.state.set_phrase(phrase)
+        for phrase, button in self.phrase_buttons.items():
+            if phrase.value == self.state.phrase.value:
+                button.config(relief="sunken", background="green")
+            else:
+                button.config(relief="raised")
 
     def step(self, frame):
-        self.label_var.set("Sustained: {:.2f}".format(frame["sustained"]))
+        # self.label_var.set("Sustained: {:.2f}".format(frame["sustained"]))
 
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas)

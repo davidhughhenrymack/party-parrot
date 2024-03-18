@@ -23,6 +23,8 @@ from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.interpreters.latched import DimmerFadeLatched
 
+import random
+
 
 phrase_interpretations: Dict[
     Phrase,
@@ -57,3 +59,20 @@ phrase_interpretations: Dict[
         Motionstrip: [MotionstripSlowRespond],
     },
 }
+
+
+def get_interpreter(
+    phrase: Phrase, fixture: Union[FixtureBase, List[FixtureBase]]
+) -> Union[GroupInterpreterBase, InterpreterBase]:
+    for k, v in phrase_interpretations[phrase].items():
+        if isinstance(fixture, k):
+            c = random.choice(v)
+            if not issubclass(c, InterpreterBase):
+                raise NotImplementedError(
+                    f"Interpreter {c} is not appropriate for non group fixture {fixture}"
+                )
+            return c(fixture)
+        elif isinstance(fixture, list) and isinstance(fixture[0], k):
+            c = random.choice(v)
+            return c(fixture)
+    return None
