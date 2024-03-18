@@ -1,5 +1,6 @@
 import random
 import time
+import os
 from typing import List
 from parrot.director.frame import Frame
 
@@ -23,7 +24,7 @@ from parrot.fixtures.uking.laser import FiveBeamLaser
 from parrot.fixtures.oultia.laser import TwoBeamLaser
 
 SHIFT_AFTER = 2 * 60
-WARMUP_SECONDS = 40
+WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "40")), 1)
 MAX_INTENSITY = 1
 
 interpreters = {
@@ -52,6 +53,8 @@ class Director:
         self.last_shift_time = time.time()
         self.start_time = time.time()
 
+        self.warmup_complete = False
+
         pars = [i for i in patch_bay if isinstance(i, LedPar)]
         inferred = [get_interpreter(i) for i in patch_bay]
 
@@ -69,6 +72,10 @@ class Director:
 
         run_time = time.time() - self.start_time
         warmup_phase = min(1, run_time / WARMUP_SECONDS)
+
+        if warmup_phase == 1 and not self.warmup_complete:
+            print("Warmup phase complete")
+            self.warmup_complete = True
 
         throttled_frame = frame * warmup_phase * MAX_INTENSITY
 

@@ -8,6 +8,8 @@ from parrot.utils.color_extra import dim_color
 CIRCLE_SIZE = 30
 CIRCLE_GAP = 20
 
+BG = "#111"
+
 
 class Window(Tk):
     def __init__(self, state: State):
@@ -15,8 +17,18 @@ class Window(Tk):
         self.state = state
 
         self.title("Party Parrot")
+        # set background color to black
+        self.configure(bg=BG)
 
-        self.canvas = Canvas(self, width=800, height=300)
+        self.canvas = Canvas(
+            self,
+            width=800,
+            height=300,
+            bg=BG,
+            borderwidth=0,
+            border=0,
+            selectborderwidth=0,
+        )
         self.canvas.pack()
 
         self.fixture_circles = []

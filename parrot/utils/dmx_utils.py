@@ -31,4 +31,8 @@ def get_controller():
     if os.environ.get("MOCK_DMX", False) != False:
         return MockDmxController()
 
-    return Controller(usb_path)  # Typical of Linux
+    try:
+        return Controller(usb_path)
+    except:
+        print("Could not connect to DMX controller. Using mock controller instead.")
+        return MockDmxController()
