@@ -4,9 +4,10 @@ from parrot.state import State
 from parrot.interpreters.base import Phrase
 from parrot.patch_bay import patch_bay
 from parrot.utils.color_extra import dim_color
+from .fixtures.factory import renderer_for_fixture
 
 CIRCLE_SIZE = 30
-CIRCLE_GAP = 20
+FIXTURE_MARGIN = 20
 
 BG = "#111"
 
@@ -31,18 +32,15 @@ class Window(Tk):
         )
         self.canvas.pack()
 
-        self.fixture_circles = []
+        self.fixture_renderers = [
+            renderer_for_fixture(fixture) for fixture in patch_bay
+        ]
 
-        for idx, fixture in enumerate(patch_bay):
-            self.fixture_circles.append(
-                self.canvas.create_oval(
-                    idx * (CIRCLE_SIZE + CIRCLE_GAP) + CIRCLE_GAP,
-                    CIRCLE_GAP,
-                    idx * (CIRCLE_SIZE + CIRCLE_GAP) + CIRCLE_SIZE + CIRCLE_GAP,
-                    CIRCLE_GAP + CIRCLE_SIZE,
-                    fill="black",
-                )
-            )
+        fixture_x = FIXTURE_MARGIN
+        fixture_y = FIXTURE_MARGIN
+        for idx, renderer in enumerate(self.fixture_renderers):
+            renderer.setup(self.canvas, fixture_x, fixture_y)
+            fixture_x += renderer.width + FIXTURE_MARGIN
 
         for i in Phrase:
             button = Button(text=i.name, command=lambda: self.state.set_phrase(i))
@@ -55,8 +53,5 @@ class Window(Tk):
     def step(self, frame):
         self.label_var.set("Sustained: {:.2f}".format(frame["sustained"]))
 
-        for idx, fixture in enumerate(patch_bay):
-            color = fixture.get_color()
-            dim = fixture.get_dimmer()
-            dimmed = dim_color(color, dim / 255)
-            self.canvas.itemconfig(self.fixture_circles[idx], fill=dimmed.hex)
+        for renderer in self.fixture_renderers:
+            renderer.render(self.canvas)

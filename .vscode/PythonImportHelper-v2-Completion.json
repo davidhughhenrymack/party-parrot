@@ -160,6 +160,38 @@
         "documentation": {}
     },
     {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
         "label": "ColorScheme",
         "importPath": "parrot.director.color_scheme",
         "description": "parrot.director.color_scheme",
@@ -218,6 +250,15 @@
         "documentation": {}
     },
     {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
@@ -251,6 +292,30 @@
     },
     {
         "label": "Union",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Generic",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TypeVar",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -442,7 +507,23 @@
         "documentation": {}
     },
     {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
         "label": "Motionstrip38",
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip",
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
         "isExtraImport": true,
@@ -803,6 +884,38 @@
         "documentation": {}
     },
     {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetSpot160_12Ch",
         "importPath": "parrot.fixtures",
         "description": "parrot.fixtures",
@@ -872,6 +985,22 @@
         "description": "parrot.fixtures.moving_head",
         "isExtraImport": true,
         "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
         "documentation": {}
     },
     {
@@ -995,6 +1124,22 @@
         "documentation": {}
     },
     {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetSpot_12Ch",
         "importPath": "parrot.fixtures.chauvet.base",
         "description": "parrot.fixtures.chauvet.base",
@@ -1035,11 +1180,91 @@
         "documentation": {}
     },
     {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
         "label": "*",
         "importPath": "tkinter",
         "description": "tkinter",
         "isExtraImport": true,
         "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureGuiRenderer",
+        "importPath": "parrot.gui.fixtures.base",
+        "description": "parrot.gui.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "BulbRenderer",
+        "importPath": "parrot.gui.fixtures.bulb",
+        "description": "parrot.gui.fixtures.bulb",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.bulb",
+        "documentation": {}
+    },
+    {
+        "label": "LaserRenderer",
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripRenderer",
+        "importPath": "parrot.gui.fixtures.motionstrip",
+        "description": "parrot.gui.fixtures.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHeadRenderer",
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.moving_head",
         "documentation": {}
     },
     {
@@ -1314,15 +1539,6 @@
         "documentation": {}
     },
     {
-        "label": "os",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "os",
-        "description": "os",
-        "detail": "os",
-        "documentation": {}
-    },
-    {
         "label": "sys",
         "kind": 6,
         "isExtraImport": true,
@@ -1471,7 +1687,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        inferred = [get_interpreter(i) for i in patch_bay]\n        self.interpreters: List[InterpreterBase] = [\n            GroupSlowRespond(pars),\n        ] + filter_nones(inferred)",
+        "peekOfCode": "class Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.warmup_complete = False\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        inferred = [get_interpreter(i) for i in patch_bay]\n        self.interpreters: List[InterpreterBase] = [\n            GroupSlowRespond(pars),",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1489,7 +1705,7 @@
         "kind": 2,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        inferred = [get_interpreter(i) for i in patch_bay]\n        self.interpreters: List[InterpreterBase] = [",
+        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.warmup_complete = False\n        pars = [i for i in patch_bay if isinstance(i, LedPar)]\n        inferred = [get_interpreter(i) for i in patch_bay]",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1498,7 +1714,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "SHIFT_AFTER = 2 * 60\nWARMUP_SECONDS = 40\nMAX_INTENSITY = 1\ninterpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}",
+        "peekOfCode": "SHIFT_AFTER = 2 * 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ninterpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1507,7 +1723,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "WARMUP_SECONDS = 40\nMAX_INTENSITY = 1\ninterpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}\ndef get_interpreter(f):",
+        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ninterpreters = {\n    Motionstrip38: MotionstripSlowRespond,\n    ChauvetSpot160_12Ch: MoverBeatAndCircle,\n    ChauvetSpot120_12Ch: MoverBeatAndCircle,\n    FiveBeamLaser: DimmerBinaryLatched,\n    TwoBeamLaser: DimmerBinaryLatched,\n}\ndef get_interpreter(f):",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1755,11 +1971,128 @@
         "documentation": {}
     },
     {
+        "label": "FixtureGuiRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.base",
+        "description": "parrot.gui.fixtures.base",
+        "peekOfCode": "class FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property\n    def height(self) -> int:\n        raise NotImplementedError\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "detail": "parrot.gui.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "T",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.base",
+        "description": "parrot.gui.fixtures.base",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property\n    def height(self) -> int:\n        raise NotImplementedError",
+        "detail": "parrot.gui.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "BulbRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.bulb",
+        "description": "parrot.gui.fixtures.bulb",
+        "peekOfCode": "class BulbRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 30\n    @property\n    def height(self) -> int:\n        return 30\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "detail": "parrot.gui.fixtures.bulb",
+        "documentation": {}
+    },
+    {
+        "label": "CIRCLE_SIZE",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.bulb",
+        "description": "parrot.gui.fixtures.bulb",
+        "peekOfCode": "CIRCLE_SIZE = 30\nclass BulbRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 30\n    @property\n    def height(self) -> int:\n        return 30",
+        "detail": "parrot.gui.fixtures.bulb",
+        "documentation": {}
+    },
+    {
+        "label": "renderer_for_fixture",
+        "kind": 2,
+        "importPath": "parrot.gui.fixtures.factory",
+        "description": "parrot.gui.fixtures.factory",
+        "peekOfCode": "def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:\n    if isinstance(fixture, LedPar):\n        return BulbRenderer(fixture)\n    elif isinstance(fixture, Laser):\n        return LaserRenderer(fixture)\n    elif isinstance(fixture, Motionstrip):\n        return MotionstripRenderer(fixture)\n    elif isinstance(fixture, MovingHead):\n        return MovingHeadRenderer(fixture)\n    else:",
+        "detail": "parrot.gui.fixtures.factory",
+        "documentation": {}
+    },
+    {
+        "label": "LaserRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "peekOfCode": "class LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 30\n    @property\n    def height(self) -> int:\n        return 20\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.motionstrip",
+        "description": "parrot.gui.fixtures.motionstrip",
+        "peekOfCode": "class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50\n    @property\n    def height(self) -> int:\n        return 20\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "detail": "parrot.gui.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHeadRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "HEAD_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "HEAD_WIDTH = 20\nHEAD_HEIGHT = 25\nBASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "HEAD_HEIGHT",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "HEAD_HEIGHT = 25\nBASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "BASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_HEIGHT",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "BASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "LIGHT_RADIUS",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "LIGHT_RADIUS = 7\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
         "label": "Window",
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        self.canvas = Canvas(self, width=800, height=300)\n        self.canvas.pack()\n        self.fixture_circles = []\n        for idx, fixture in enumerate(patch_bay):\n            self.fixture_circles.append(",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(\n            self,\n            width=800,",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -1768,16 +2101,25 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_SIZE = 30\nCIRCLE_GAP = 20\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        self.canvas = Canvas(self, width=800, height=300)\n        self.canvas.pack()\n        self.fixture_circles = []",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#111\"\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
     {
-        "label": "CIRCLE_GAP",
+        "label": "FIXTURE_MARGIN",
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_GAP = 20\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        self.canvas = Canvas(self, width=800, height=300)\n        self.canvas.pack()\n        self.fixture_circles = []\n        for idx, fixture in enumerate(patch_bay):",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#111\"\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "BG",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "BG = \"#111\"\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(\n            self,",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2641,7 +2983,7 @@
         "kind": 2,
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
-        "peekOfCode": "def color_distance(a: Color, b: Color) -> float:\n    # Hue distance plus saturation distance plus value distance\n    return (\n        abs(a.hue - b.hue)\n        + abs(a.saturation - b.saturation)\n        + abs(a.luminance - b.luminance)\n    )\ndef dim_color(color: Color, dimmer: float) -> Color:\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
+        "peekOfCode": "def color_distance(a: Color, b: Color) -> float:\n    # Hue distance plus saturation distance plus value distance\n    return (\n        abs(a.hue - b.hue)\n        + abs(a.saturation - b.saturation)\n        + abs(a.luminance - b.luminance)\n    )\ndef dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
         "detail": "parrot.utils.color_extra",
         "documentation": {}
     },
@@ -2650,7 +2992,7 @@
         "kind": 2,
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
-        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
+        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
         "detail": "parrot.utils.color_extra",
         "documentation": {}
     },
@@ -2925,15 +3267,6 @@
         "documentation": {}
     },
     {
-        "label": "clamp",
-        "kind": 2,
-        "importPath": "parrot.utils.dmx_utils",
-        "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n\ndef dmx_clamp(n):\n    if math.isnan(n):\n        return 0",
-        "detail": "parrot.utils.dmx_utils",
-        "documentation": {}
-    },
-    {
         "label": "dmx_clamp",
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
@@ -2947,7 +3280,7 @@
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    return Controller(usb_path)  # Typical of Linux",
+        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -2956,7 +3289,7 @@
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    return Controller(usb_path)  # Typical of Linux",
+        "peekOfCode": "def get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -2965,7 +3298,7 @@
         "kind": 5,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    return Controller(usb_path)  # Typical of Linux",
+        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -3003,6 +3336,15 @@
         "description": "parrot.utils.lerp",
         "peekOfCode": "def lerp_list(a, b, t):\n    return [lerp(i, j, t) for i, j in zip(a, b)]\nclass Lerpable:\n    def lerp(self, other, t):\n        raise NotImplementedError()\nclass LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject\n        self.target = None\n        self.duration = duration",
         "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "kind": 2,
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "peekOfCode": "def clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n",
+        "detail": "parrot.utils.math",
         "documentation": {}
     },
     {

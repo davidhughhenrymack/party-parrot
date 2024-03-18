@@ -3,15 +3,7 @@ import math
 import os
 
 from parrot.utils.mock_controller import MockDmxController
-
-
-def clamp(n, min, max):
-    if n < min:
-        return min
-    elif n > max:
-        return max
-    else:
-        return n
+from .math import clamp
 
 
 def dmx_clamp(n):
