@@ -38,6 +38,7 @@ class Motionstrip38(Motionstrip):
         self.pan_upper = pan_upper
         self.pan_range = pan_upper - pan_lower
         self.set_pan_speed(128)
+        self.bulb_colors = [Color("black") for i in range(8)]
 
     def set_dimmer(self, value):
         super().set_dimmer(value)
@@ -55,14 +56,17 @@ class Motionstrip38(Motionstrip):
     def set_color(self, color: Color):
         super().set_color(color)
         for i in range(8):
-            c = color_to_rgbw(color)
-            for j in range(4):
-                self.values[6 + j + (i * 4)] = c[j]
+            self.set_bulb_color(i, color)
 
     def set_bulb_color(self, bulb: int, color: Color):
+        self.bulb_colors[bulb] = color
+
         if bulb < 0 or bulb > 7:
             raise ValueError("bulb must be between 0 and 7")
 
         c = color_to_rgbw(color)
         for i in range(4):
             self.values[6 + bulb * 4 + i] = c[i]
+
+    def get_bulb_color(self, bulb: int):
+        return self.bulb_colors[bulb]

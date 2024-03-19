@@ -53,4 +53,4 @@ class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):
         color = self.fixture.get_color()
         dim = self.fixture.get_dimmer()
 
-        canvas.itemconfig(self.light, fill=dim_color(color, dim))
+        canvas.itemconfig(self.light, fill=dim_color(color, dim / 255))

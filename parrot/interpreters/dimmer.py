@@ -25,11 +25,15 @@ class Dimmer0(InterpreterBase):
 
 
 class SequenceDimmers(InterpreterBase[T]):
-    def __init__(self, group: List[T], dimmer=255, wait_time=1):
+    def __init__(self, group: List[T], dimmer=255, wait_time=60 * 2 / 120):
         super().__init__(group)
         self.dimmer = dimmer
         self.wait_time = wait_time
 
     def step(self, frame, scheme):
         for i, fixture in enumerate(self.group):
-            fixture.set_dimmer(self.dimmer if frame.time / self.wait_time == i else 0)
+            fixture.set_dimmer(
+                self.dimmer
+                if round(frame.time / self.wait_time) % len(self.group) == i
+                else 0
+            )

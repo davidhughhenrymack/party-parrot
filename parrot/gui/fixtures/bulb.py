@@ -27,4 +27,4 @@ class BulbRenderer(FixtureGuiRenderer[FixtureBase]):
         color = self.fixture.get_color()
         dim = self.fixture.get_dimmer()
 
-        canvas.itemconfig(self.oval, fill=dim_color(color, dim))
+        canvas.itemconfig(self.oval, fill=dim_color(color, dim / 255))
