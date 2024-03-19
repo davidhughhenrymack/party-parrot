@@ -36,7 +36,7 @@ def get_rms(block):
     return np.sqrt(np.mean(np.square(block)))
 
 
-class MicToDmxBasic(object):
+class MicToDmx(object):
     def __init__(self):
         self.pa = pyaudio.PyAudio()
         self.stream = self.open_mic_stream()
@@ -79,7 +79,7 @@ class MicToDmxBasic(object):
 
             for keyword in ["mic", "input"]:
                 if keyword in devinfo["name"].lower():
-                    # print("Found an input: device {} - {}".format(i, devinfo["name"]))
+                    print("Using microphone {}".format(devinfo["name"]))
                     device_index = i
                     return device_index
 

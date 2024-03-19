@@ -18,6 +18,12 @@ class Dimmer30(InterpreterBase):
             i.set_dimmer(30)
 
 
+class Dimmer0(InterpreterBase):
+    def step(self, frame, scheme):
+        for i in self.group:
+            i.set_dimmer(0)
+
+
 class SequenceDimmers(InterpreterBase[T]):
     def __init__(self, group: List[T], dimmer=255, wait_time=1):
         super().__init__(group)

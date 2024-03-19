@@ -1036,6 +1036,30 @@
         "documentation": {}
     },
     {
+        "label": "Dimmer0",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer30",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "SequenceDimmers",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetSpot_12Ch",
         "importPath": "parrot.fixtures.chauvet.base",
         "description": "parrot.fixtures.chauvet.base",
@@ -1194,22 +1218,6 @@
         "description": "parrot.interpreters.combo",
         "isExtraImport": true,
         "detail": "parrot.interpreters.combo",
-        "documentation": {}
-    },
-    {
-        "label": "Dimmer30",
-        "importPath": "parrot.interpreters.dimmer",
-        "description": "parrot.interpreters.dimmer",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.dimmer",
-        "documentation": {}
-    },
-    {
-        "label": "SequenceDimmers",
-        "importPath": "parrot.interpreters.dimmer",
-        "description": "parrot.interpreters.dimmer",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
     {
@@ -1431,11 +1439,11 @@
         "documentation": {}
     },
     {
-        "label": "MicToDmxBasic",
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
+        "label": "MicToDmx",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
         "isExtraImport": true,
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
@@ -1533,7 +1541,7 @@
         "kind": 2,
         "importPath": "parrot.director.phrase_interpretations",
         "description": "parrot.director.phrase_interpretations",
-        "peekOfCode": "def get_interpreter(\n    phrase: Phrase, fixture_group: List[FixtureBase]\n) -> Union[InterpreterBase]:\n    for k, v in phrase_interpretations[phrase].items():\n        if isinstance(fixture_group, list) and isinstance(fixture_group[0], k):\n            c = random.choice(v)\n            interp = c(fixture_group)\n            return interp\n    return None",
+        "peekOfCode": "def get_interpreter(\n    phrase: Phrase, fixture_group: List[FixtureBase]\n) -> Union[InterpreterBase]:\n    for k, v in phrase_interpretations[phrase].items():\n        if isinstance(fixture_group, list) and isinstance(fixture_group[0], k):\n            c = random.choice(v)\n            interp = c(fixture_group)\n            return interp\n    return Dimmer0(fixture_group)",
         "detail": "parrot.director.phrase_interpretations",
         "documentation": {}
     },
@@ -1884,7 +1892,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -1893,7 +1901,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -1902,7 +1910,16 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "BG = \"#222\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(",
+        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "CANVAS_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "CANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2001,7 +2018,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):",
+        "peekOfCode": "class Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass Dimmer0(InterpreterBase):\n    def step(self, frame, scheme):",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -2010,7 +2027,16 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):",
+        "peekOfCode": "class Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass Dimmer0(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(0)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer0",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class Dimmer0(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(0)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -2028,7 +2054,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass SequenceDimmers(InterpreterBase[T]):",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass Dimmer0(InterpreterBase):",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -2240,102 +2266,102 @@
         "documentation": {}
     },
     {
-        "label": "MicToDmxBasic",
+        "label": "MicToDmx",
         "kind": 6,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "class MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None\n        self.lookback_buffer_size = 10000\n        self.sustain_buffer = []",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "class MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None\n        self.lookback_buffer_size = 10000\n        self.sustain_buffer = []",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "get_rms",
         "kind": 2,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "THRESHOLD",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
         "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "RATE",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
         "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "INPUT_BLOCK_TIME",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
         "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "INPUT_FRAMES_PER_BLOCK",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
         "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "INPUT_FRAMES_PER_BLOCK_BUFFER",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "TIME_IN_GRAPH",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "BLOCKS_IN_GRAPH",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "SHOW_PLOT",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "SHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "SHOW_PLOT = os.environ.get(\"SHOW_PLOT\", False)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
         "label": "SHOW_GUI",
         "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx_basic",
-        "description": "parrot.listeners.mic_to_dmx_basic",
-        "peekOfCode": "SHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmxBasic(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
-        "detail": "parrot.listeners.mic_to_dmx_basic",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "SHOW_GUI = os.environ.get(\"SHOW_GUI\", True)\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
+        "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {

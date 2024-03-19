@@ -11,6 +11,8 @@ FIXTURE_MARGIN = 20
 
 BG = "#222"
 
+CANVAS_WIDTH = 500
+
 
 class Window(Tk):
     def __init__(self, state: State, quit: callable):
@@ -24,8 +26,8 @@ class Window(Tk):
 
         self.canvas = Canvas(
             self,
-            width=500,
-            height=100,
+            width=CANVAS_WIDTH,
+            height=400,
             bg=BG,
             borderwidth=0,
             border=0,
@@ -40,6 +42,9 @@ class Window(Tk):
         fixture_x = FIXTURE_MARGIN
         fixture_y = FIXTURE_MARGIN
         for idx, renderer in enumerate(self.fixture_renderers):
+            if fixture_x + renderer.width + FIXTURE_MARGIN > CANVAS_WIDTH:
+                fixture_x = FIXTURE_MARGIN
+                fixture_y += 100
             renderer.setup(self.canvas, fixture_x, fixture_y)
             fixture_x += renderer.width + FIXTURE_MARGIN
 
@@ -55,8 +60,11 @@ class Window(Tk):
             self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
 
         self.click_phrase(self.state.phrase)
-
         self.phrase_frame.pack()
+
+        self.label_var = StringVar()
+        self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
+        self.label.pack()
 
     def click_phrase(self, phrase: Phrase):
         self.state.set_phrase(phrase)
@@ -67,7 +75,11 @@ class Window(Tk):
                 button.config(relief="raised")
 
     def step(self, frame):
-        # self.label_var.set("Sustained: {:.2f}".format(frame["sustained"]))
+        self.label_var.set(
+            "Sustained: {:.2f}, Drums: {:.2f}".format(
+                frame["sustained"], frame["drums"]
+            )
+        )
 
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas)

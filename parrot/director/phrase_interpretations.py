@@ -23,6 +23,7 @@ from parrot.fixtures.motionstrip import Motionstrip
 from parrot.interpreters.latched import DimmerFadeLatched
 
 import random
+from parrot.interpreters.dimmer import Dimmer0
 
 
 phrase_interpretations: Dict[
@@ -69,4 +70,4 @@ def get_interpreter(
             interp = c(fixture_group)
             return interp
 
-    return None
+    return Dimmer0(fixture_group)
