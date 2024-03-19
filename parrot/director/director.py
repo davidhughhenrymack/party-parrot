@@ -3,24 +3,19 @@ import time
 import os
 from typing import List
 from parrot.director.frame import Frame
+from parrot.fixtures import laser
 
 from parrot.patch_bay import patch_bay
-from parrot.fixtures.chauvet import ChauvetSpot160_12Ch, ChauvetSpot120_12Ch
 from parrot.fixtures.led_par import LedPar
-from parrot.fixtures.motionstrip import Motionstrip38
+from parrot.fixtures.motionstrip import Motionstrip
 
 from parrot.director.color_schemes import color_schemes
 
-from parrot.interpreters.movers import MoverBeatAndCircle
-from parrot.interpreters.base import GroupInterpreterBase, InterpreterBase
-from parrot.interpreters.slow import GroupSlowRespond
-from parrot.interpreters.motionstrip import MotionstripSlowRespond
-from parrot.interpreters.latched import DimmerBinaryLatched
+from parrot.interpreters.base import InterpreterBase
+from parrot.fixtures.laser import Laser
 from .phrase_interpretations import get_interpreter
 
 from parrot.utils.lerp import LerpAnimator
-from parrot.fixtures.uking.laser import FiveBeamLaser
-from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
 
@@ -41,24 +36,26 @@ class Director:
         self.state = state
 
         self.warmup_complete = False
-        self.generate_interpreters()
+        # self.generate_interpreters()
         self.state.on_phrase_change = lambda s: self.generate_interpreters()
 
     def generate_interpreters(self):
-        pars = [i for i in patch_bay if isinstance(i, LedPar)]
-        movers = [i for i in patch_bay if isinstance(i, MovingHead)]
 
-        fixtures_and_groups = [
-            pars,
-            movers,
-            *[i for i in patch_bay if i not in pars and i not in movers],
-        ]
+        to_group = [LedPar, MovingHead, Motionstrip, Laser]
+        fixture_groups = []
 
-        self.interpreters: List[Union[InterpreterBase, GroupInterpreterBase]] = (
-            filter_nones(
-                get_interpreter(self.state.phrase, i) for i in fixtures_and_groups
-            )
+        for cls in to_group:
+            fixtures = [i for i in patch_bay if isinstance(i, cls)]
+            fixture_groups.append(fixtures)
+
+        self.interpreters: List[InterpreterBase] = filter_nones(
+            get_interpreter(self.state.phrase, i) for i in fixture_groups
         )
+        print(f"Generated interpretation for {self.state.phrase}:")
+        for i in self.interpreters:
+            print(f"    {str(i)}")
+
+        print()
 
     def shift(self):
         s = random.choice(color_schemes)

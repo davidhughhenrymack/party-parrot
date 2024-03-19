@@ -2,7 +2,7 @@ import parrot.fixtures
 from typing import List
 from parrot.director.frame import Frame
 from parrot.fixtures.led_par import LedPar
-from parrot.interpreters.base import GroupInterpreterBase, InterpreterBase, Phrase
+from parrot.interpreters.base import InterpreterBase, Phrase
 from parrot.utils.lerp import lerp
 from parrot.director.color_scheme import ColorScheme
 import math
@@ -10,7 +10,7 @@ import time
 from parrot.fixtures.base import FixtureBase
 
 
-class GroupSlowRespond(GroupInterpreterBase[FixtureBase]):
+class SlowRespond(InterpreterBase[FixtureBase]):
     def __init__(self, group):
         super().__init__(group)
         self.dimmer_memory = 0
@@ -38,12 +38,8 @@ class GroupSlowRespond(GroupInterpreterBase[FixtureBase]):
                 fixture.set_dimmer(self.dimmer_memory * 255)
                 fixture.set_strobe(0)
 
-    @classmethod
-    def category(cls):
-        return [Phrase.intro_outro]
 
-
-class GroupSlowDecay(GroupInterpreterBase[FixtureBase]):
+class SlowDecay(InterpreterBase[FixtureBase]):
     def __init__(self, group):
         super().__init__(group)
         self.dimmer_memory = 0
@@ -58,7 +54,3 @@ class GroupSlowDecay(GroupInterpreterBase[FixtureBase]):
                 fixture.set_color(scheme.bg_contrast)
 
             fixture.set_dimmer(self.dimmer_memory * 255)
-
-    @classmethod
-    def category(cls):
-        return [Phrase.intro_outro]

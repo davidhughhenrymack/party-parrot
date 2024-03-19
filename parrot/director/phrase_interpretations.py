@@ -1,7 +1,6 @@
 from parrot.fixtures import LedPar
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import (
-    GroupInterpreterBase,
     InterpreterBase,
     Phrase,
 )
@@ -12,11 +11,11 @@ from parrot.interpreters.motionstrip import (
 from parrot.interpreters.movers import (
     MoverBeatAndCircle,
     MoverDimAndCircle,
-    MoverGroupBeatInFan,
+    MoverBeatInFan,
     MoverSequenceAndCircle,
     MoverSequenceInFan,
 )
-from parrot.interpreters.slow import GroupSlowDecay, GroupSlowRespond
+from parrot.interpreters.slow import SlowDecay, SlowRespond
 from parrot.fixtures.laser import Laser
 from typing import List, Dict, Union
 from parrot.fixtures.base import FixtureBase
@@ -28,16 +27,16 @@ import random
 
 phrase_interpretations: Dict[
     Phrase,
-    Dict[FixtureBase, List[Union[GroupInterpreterBase, InterpreterBase]]],
+    Dict[FixtureBase, List[InterpreterBase]],
 ] = {
     Phrase.intro_outro: {
-        LedPar: [GroupSlowDecay, GroupSlowRespond],
+        LedPar: [SlowDecay, SlowRespond],
     },
     Phrase.build: {
         # LEDs off
         # Moving heads flashing beat, (drawing circles / fixed position)
         # Motion strip off or bulb flashing to the beat
-        MovingHead: [MoverBeatAndCircle, MoverGroupBeatInFan],
+        MovingHead: [MoverBeatAndCircle, MoverBeatInFan],
         Motionstrip: [MotionStripBulbBeatAndWiggle],
     },
     Phrase.drop: {
@@ -45,7 +44,7 @@ phrase_interpretations: Dict[
         # Moving sequencing on, drawing circles. maybe strobing
         # Motion strip swishing
         # lasers on during intense moments
-        LedPar: [GroupSlowDecay],
+        LedPar: [SlowDecay],
         MovingHead: [MoverSequenceAndCircle, MoverSequenceInFan],
         Motionstrip: [MotionstripSlowRespond],
         Laser: [DimmerFadeLatched],
@@ -54,7 +53,7 @@ phrase_interpretations: Dict[
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
-        LedPar: [GroupSlowDecay],
+        LedPar: [SlowDecay],
         MovingHead: [MoverDimAndCircle],
         Motionstrip: [MotionstripSlowRespond],
     },
@@ -62,17 +61,12 @@ phrase_interpretations: Dict[
 
 
 def get_interpreter(
-    phrase: Phrase, fixture: Union[FixtureBase, List[FixtureBase]]
-) -> Union[GroupInterpreterBase, InterpreterBase]:
+    phrase: Phrase, fixture_group: List[FixtureBase]
+) -> Union[InterpreterBase]:
     for k, v in phrase_interpretations[phrase].items():
-        if isinstance(fixture, k):
+        if isinstance(fixture_group, list) and isinstance(fixture_group[0], k):
             c = random.choice(v)
-            if not issubclass(c, InterpreterBase):
-                raise NotImplementedError(
-                    f"Interpreter {c} is not appropriate for non group fixture {fixture}"
-                )
-            return c(fixture)
-        elif isinstance(fixture, list) and isinstance(fixture[0], k):
-            c = random.choice(v)
-            return c(fixture)
+            interp = c(fixture_group)
+            return interp
+
     return None

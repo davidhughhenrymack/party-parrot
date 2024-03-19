@@ -51,16 +51,25 @@ class MicToDmxBasic(object):
 
         self.state = State()
 
+        self.should_stop = False
+
         self.dmx = get_controller()
         self.director = Director(self.state)
 
         if SHOW_GUI:
-            self.window = Window(self.state)
+            self.window = Window(self.state, lambda: self.quit())
 
         self.frame_count = 0
 
-    def stop(self):
-        self.stream.close()
+    def quit(self):
+        self.should_stop = True
+
+    def run(self):
+        while not self.should_stop:
+            try:
+                self.listen()
+            except (KeyboardInterrupt, SystemExit) as e:
+                break
 
     def find_input_device(self):
         device_index = None

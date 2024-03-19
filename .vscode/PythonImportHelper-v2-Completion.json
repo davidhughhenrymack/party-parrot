@@ -242,14 +242,6 @@
         "documentation": {}
     },
     {
-        "label": "sleep",
-        "importPath": "time",
-        "description": "time",
-        "isExtraImport": true,
-        "detail": "time",
-        "documentation": {}
-    },
-    {
         "label": "os",
         "kind": 6,
         "isExtraImport": true,
@@ -347,7 +339,7 @@
         "documentation": {}
     },
     {
-        "label": "Generic",
+        "label": "Type",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -371,22 +363,6 @@
         "documentation": {}
     },
     {
-        "label": "Union",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "Generic",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
@@ -403,14 +379,6 @@
         "documentation": {}
     },
     {
-        "label": "Union",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
@@ -427,11 +395,11 @@
         "documentation": {}
     },
     {
-        "label": "Frame",
-        "importPath": "parrot.director.frame",
-        "description": "parrot.director.frame",
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "parrot.director.frame",
+        "detail": "typing",
         "documentation": {}
     },
     {
@@ -459,63 +427,160 @@
         "documentation": {}
     },
     {
-        "label": "patch_bay",
-        "importPath": "parrot.patch_bay",
-        "description": "parrot.patch_bay",
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
         "isExtraImport": true,
-        "detail": "parrot.patch_bay",
+        "detail": "parrot.director.frame",
         "documentation": {}
     },
     {
-        "label": "patch_bay",
-        "importPath": "parrot.patch_bay",
-        "description": "parrot.patch_bay",
+        "label": "parrot.fixtures",
+        "kind": 6,
         "isExtraImport": true,
-        "detail": "parrot.patch_bay",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "laser",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
         "documentation": {}
     },
     {
         "label": "ChauvetSpot160_12Ch",
-        "importPath": "parrot.fixtures.chauvet",
-        "description": "parrot.fixtures.chauvet",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.chauvet",
+        "detail": "parrot.fixtures",
         "documentation": {}
     },
     {
         "label": "ChauvetSpot120_12Ch",
-        "importPath": "parrot.fixtures.chauvet",
-        "description": "parrot.fixtures.chauvet",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.chauvet",
+        "detail": "parrot.fixtures",
         "documentation": {}
     },
     {
         "label": "LedPar",
-        "importPath": "parrot.fixtures.led_par",
-        "description": "parrot.fixtures.led_par",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.led_par",
-        "documentation": {}
-    },
-    {
-        "label": "LedPar",
-        "importPath": "parrot.fixtures.led_par",
-        "description": "parrot.fixtures.led_par",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.led_par",
-        "documentation": {}
-    },
-    {
-        "label": "LedPar",
-        "importPath": "parrot.fixtures.led_par",
-        "description": "parrot.fixtures.led_par",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.led_par",
+        "detail": "parrot.fixtures",
         "documentation": {}
     },
     {
         "label": "Motionstrip38",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FiveBeamLaser",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "TwoBeamLaser",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "patch_bay",
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "isExtraImport": true,
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "patch_bay",
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "isExtraImport": true,
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip",
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
         "isExtraImport": true,
@@ -555,71 +620,7 @@
         "documentation": {}
     },
     {
-        "label": "MoverBeatAndCircle",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
-        "label": "MoverBeatAndCircle",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
-        "label": "MoverDimAndCircle",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
-        "label": "MoverGroupBeatInFan",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
-        "label": "MoverSequenceAndCircle",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
-        "label": "MoverSequenceInFan",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
-        "label": "GroupInterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
         "label": "InterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "GroupInterpreterBase",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
         "isExtraImport": true,
@@ -651,30 +652,6 @@
         "documentation": {}
     },
     {
-        "label": "GroupInterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "InterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "GroupInterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
         "label": "InterpreterBase",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -691,7 +668,7 @@
         "documentation": {}
     },
     {
-        "label": "GroupInterpreterBase",
+        "label": "InterpreterBase",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
         "isExtraImport": true,
@@ -723,14 +700,6 @@
         "documentation": {}
     },
     {
-        "label": "Dimmer30",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
         "label": "FlashBeat",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -739,7 +708,7 @@
         "documentation": {}
     },
     {
-        "label": "GroupInterpreterBase",
+        "label": "InterpreterBase",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
         "isExtraImport": true,
@@ -763,22 +732,6 @@
         "documentation": {}
     },
     {
-        "label": "GroupInterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "InterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
         "label": "Phrase",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -795,35 +748,107 @@
         "documentation": {}
     },
     {
-        "label": "GroupSlowRespond",
-        "importPath": "parrot.interpreters.slow",
-        "description": "parrot.interpreters.slow",
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.slow",
+        "detail": "parrot.fixtures.laser",
         "documentation": {}
     },
     {
-        "label": "GroupSlowDecay",
-        "importPath": "parrot.interpreters.slow",
-        "description": "parrot.interpreters.slow",
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.slow",
+        "detail": "parrot.fixtures.laser",
         "documentation": {}
     },
     {
-        "label": "GroupSlowRespond",
-        "importPath": "parrot.interpreters.slow",
-        "description": "parrot.interpreters.slow",
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.slow",
+        "detail": "parrot.fixtures.laser",
         "documentation": {}
     },
     {
-        "label": "MotionstripSlowRespond",
-        "importPath": "parrot.interpreters.motionstrip",
-        "description": "parrot.interpreters.motionstrip",
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.motionstrip",
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
         "documentation": {}
     },
     {
@@ -843,228 +868,59 @@
         "documentation": {}
     },
     {
-        "label": "DimmerBinaryLatched",
-        "importPath": "parrot.interpreters.latched",
-        "description": "parrot.interpreters.latched",
+        "label": "MoverBeatAndCircle",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.latched",
+        "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
     {
-        "label": "DimmerFadeLatched",
-        "importPath": "parrot.interpreters.latched",
-        "description": "parrot.interpreters.latched",
+        "label": "MoverDimAndCircle",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.latched",
+        "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
     {
-        "label": "FiveBeamLaser",
-        "importPath": "parrot.fixtures.uking.laser",
-        "description": "parrot.fixtures.uking.laser",
+        "label": "MoverBeatInFan",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.uking.laser",
+        "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
     {
-        "label": "TwoBeamLaser",
-        "importPath": "parrot.fixtures.oultia.laser",
-        "description": "parrot.fixtures.oultia.laser",
+        "label": "MoverSequenceAndCircle",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.oultia.laser",
+        "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
     {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
+        "label": "MoverSequenceInFan",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
+        "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
     {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
+        "label": "SlowDecay",
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
+        "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
     {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
+        "label": "SlowRespond",
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
-        "documentation": {}
-    },
-    {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
-        "documentation": {}
-    },
-    {
-        "label": "MovingHead",
-        "importPath": "parrot.fixtures.moving_head",
-        "description": "parrot.fixtures.moving_head",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.moving_head",
-        "documentation": {}
-    },
-    {
-        "label": "State",
-        "importPath": "parrot.state",
-        "description": "parrot.state",
-        "isExtraImport": true,
-        "detail": "parrot.state",
-        "documentation": {}
-    },
-    {
-        "label": "State",
-        "importPath": "parrot.state",
-        "description": "parrot.state",
-        "isExtraImport": true,
-        "detail": "parrot.state",
-        "documentation": {}
-    },
-    {
-        "label": "State",
-        "importPath": "parrot.state",
-        "description": "parrot.state",
-        "isExtraImport": true,
-        "detail": "parrot.state",
-        "documentation": {}
-    },
-    {
-        "label": "parrot.fixtures",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "LedPar",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "FixtureBase",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "FixtureBase",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "FixtureBase",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "FixtureBase",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "ChauvetSpot160_12Ch",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "ChauvetSpot120_12Ch",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "LedPar",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "Motionstrip38",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "FiveBeamLaser",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "TwoBeamLaser",
-        "importPath": "parrot.fixtures",
-        "description": "parrot.fixtures",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures",
-        "documentation": {}
-    },
-    {
-        "label": "Laser",
-        "importPath": "parrot.fixtures.laser",
-        "description": "parrot.fixtures.laser",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.laser",
-        "documentation": {}
-    },
-    {
-        "label": "Laser",
-        "importPath": "parrot.fixtures.laser",
-        "description": "parrot.fixtures.laser",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.laser",
-        "documentation": {}
-    },
-    {
-        "label": "Laser",
-        "importPath": "parrot.fixtures.laser",
-        "description": "parrot.fixtures.laser",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.laser",
-        "documentation": {}
-    },
-    {
-        "label": "Laser",
-        "importPath": "parrot.fixtures.laser",
-        "description": "parrot.fixtures.laser",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.laser",
+        "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
     {
@@ -1172,11 +1028,11 @@
         "documentation": {}
     },
     {
-        "label": "FixtureBase",
-        "importPath": "parrot.fixtures.base",
-        "description": "parrot.fixtures.base",
+        "label": "DimmerFadeLatched",
+        "importPath": "parrot.interpreters.latched",
+        "description": "parrot.interpreters.latched",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.base",
+        "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
     {
@@ -1325,31 +1181,7 @@
         "documentation": {}
     },
     {
-        "label": "ensure_groupify",
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.group",
-        "documentation": {}
-    },
-    {
-        "label": "groupify",
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.group",
-        "documentation": {}
-    },
-    {
-        "label": "SequenceDimmers",
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.group",
-        "documentation": {}
-    },
-    {
-        "label": "GroupCombo",
+        "label": "comboify",
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
         "isExtraImport": true,
@@ -1365,11 +1197,27 @@
         "documentation": {}
     },
     {
-        "label": "group_comboify",
-        "importPath": "parrot.interpreters.combo",
-        "description": "parrot.interpreters.combo",
+        "label": "Dimmer30",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.combo",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "SequenceDimmers",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Ftdi",
+        "importPath": "pyftdi.ftdi",
+        "description": "pyftdi.ftdi",
+        "isExtraImport": true,
+        "detail": "pyftdi.ftdi",
         "documentation": {}
     },
     {
@@ -1382,20 +1230,21 @@
         "documentation": {}
     },
     {
+        "label": "struct",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "struct",
+        "description": "struct",
+        "detail": "struct",
+        "documentation": {}
+    },
+    {
         "label": "numpy",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "numpy",
         "description": "numpy",
         "detail": "numpy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
         "documentation": {}
     },
     {
@@ -1441,112 +1290,6 @@
         "documentation": {}
     },
     {
-        "label": "torch",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "torch",
-        "description": "torch",
-        "detail": "torch",
-        "documentation": {}
-    },
-    {
-        "label": "HDEMUCS_HIGH_MUSDB_PLUS",
-        "importPath": "torchaudio.pipelines",
-        "description": "torchaudio.pipelines",
-        "isExtraImport": true,
-        "detail": "torchaudio.pipelines",
-        "documentation": {}
-    },
-    {
-        "label": "write",
-        "importPath": "scipy.io.wavfile",
-        "description": "scipy.io.wavfile",
-        "isExtraImport": true,
-        "detail": "scipy.io.wavfile",
-        "documentation": {}
-    },
-    {
-        "label": "write",
-        "importPath": "scipy.io.wavfile",
-        "description": "scipy.io.wavfile",
-        "isExtraImport": true,
-        "detail": "scipy.io.wavfile",
-        "documentation": {}
-    },
-    {
-        "label": "write",
-        "importPath": "scipy.io.wavfile",
-        "description": "scipy.io.wavfile",
-        "isExtraImport": true,
-        "detail": "scipy.io.wavfile",
-        "documentation": {}
-    },
-    {
-        "label": "Director",
-        "importPath": "director.director",
-        "description": "director.director",
-        "isExtraImport": true,
-        "detail": "director.director",
-        "documentation": {}
-    },
-    {
-        "label": "Frame",
-        "importPath": "director.director",
-        "description": "director.director",
-        "isExtraImport": true,
-        "detail": "director.director",
-        "documentation": {}
-    },
-    {
-        "label": "get_controller",
-        "importPath": "utils.dmx_utils",
-        "description": "utils.dmx_utils",
-        "isExtraImport": true,
-        "detail": "utils.dmx_utils",
-        "documentation": {}
-    },
-    {
-        "label": "Ftdi",
-        "importPath": "pyftdi.ftdi",
-        "description": "pyftdi.ftdi",
-        "isExtraImport": true,
-        "detail": "pyftdi.ftdi",
-        "documentation": {}
-    },
-    {
-        "label": "Ftdi",
-        "importPath": "pyftdi.ftdi",
-        "description": "pyftdi.ftdi",
-        "isExtraImport": true,
-        "detail": "pyftdi.ftdi",
-        "documentation": {}
-    },
-    {
-        "label": "Controller",
-        "importPath": "DMXEnttecPro",
-        "description": "DMXEnttecPro",
-        "isExtraImport": true,
-        "detail": "DMXEnttecPro",
-        "documentation": {}
-    },
-    {
-        "label": "Controller",
-        "importPath": "DMXEnttecPro",
-        "description": "DMXEnttecPro",
-        "isExtraImport": true,
-        "detail": "DMXEnttecPro",
-        "documentation": {}
-    },
-    {
-        "label": "struct",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "struct",
-        "description": "struct",
-        "detail": "struct",
-        "documentation": {}
-    },
-    {
         "label": "LogNorm",
         "importPath": "matplotlib.colors",
         "description": "matplotlib.colors",
@@ -1560,6 +1303,22 @@
         "description": "matplotlib.colors",
         "isExtraImport": true,
         "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "write",
+        "importPath": "scipy.io.wavfile",
+        "description": "scipy.io.wavfile",
+        "isExtraImport": true,
+        "detail": "scipy.io.wavfile",
+        "documentation": {}
+    },
+    {
+        "label": "write",
+        "importPath": "scipy.io.wavfile",
+        "description": "scipy.io.wavfile",
+        "isExtraImport": true,
+        "detail": "scipy.io.wavfile",
         "documentation": {}
     },
     {
@@ -1593,6 +1352,15 @@
         "description": "parrot.gui.gui",
         "isExtraImport": true,
         "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "torch",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "torch",
+        "description": "torch",
+        "detail": "torch",
         "documentation": {}
     },
     {
@@ -1638,6 +1406,14 @@
         "documentation": {}
     },
     {
+        "label": "Controller",
+        "importPath": "DMXEnttecPro",
+        "description": "DMXEnttecPro",
+        "isExtraImport": true,
+        "detail": "DMXEnttecPro",
+        "documentation": {}
+    },
+    {
         "label": "MockDmxController",
         "importPath": "parrot.utils.mock_controller",
         "description": "parrot.utils.mock_controller",
@@ -1660,14 +1436,6 @@
         "description": "parrot.listeners.mic_to_dmx_basic",
         "isExtraImport": true,
         "detail": "parrot.listeners.mic_to_dmx_basic",
-        "documentation": {}
-    },
-    {
-        "label": "Demucs",
-        "importPath": "listeners.demucs",
-        "description": "listeners.demucs",
-        "isExtraImport": true,
-        "detail": "listeners.demucs",
         "documentation": {}
     },
     {
@@ -1711,7 +1479,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.warmup_complete = False\n        self.generate_interpreters()\n        self.state.on_phrase_change = self.generate_interpreters\n    def generate_interpreters(self):",
+        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.warmup_complete = False\n        # self.generate_interpreters()\n        self.state.on_phrase_change = lambda s: self.generate_interpreters()\n    def generate_interpreters(self):",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1720,7 +1488,7 @@
         "kind": 2,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.warmup_complete = False\n        self.generate_interpreters()",
+        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.warmup_complete = False\n        # self.generate_interpreters()",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1765,7 +1533,7 @@
         "kind": 2,
         "importPath": "parrot.director.phrase_interpretations",
         "description": "parrot.director.phrase_interpretations",
-        "peekOfCode": "def get_interpreter(\n    phrase: Phrase, fixture: Union[FixtureBase, List[FixtureBase]]\n) -> Union[GroupInterpreterBase, InterpreterBase]:\n    for k, v in phrase_interpretations[phrase].items():\n        if isinstance(fixture, k):\n            c = random.choice(v)\n            if not isinstance(c, InterpreterBase):\n                raise NotImplementedError(\n                    f\"Interpreter {c} is not appropriate for non group fixture {fixture}\"\n                )",
+        "peekOfCode": "def get_interpreter(\n    phrase: Phrase, fixture_group: List[FixtureBase]\n) -> Union[InterpreterBase]:\n    for k, v in phrase_interpretations[phrase].items():\n        if isinstance(fixture_group, list) and isinstance(fixture_group[0], k):\n            c = random.choice(v)\n            interp = c(fixture_group)\n            return interp\n    return None",
         "detail": "parrot.director.phrase_interpretations",
         "documentation": {}
     },
@@ -1774,7 +1542,7 @@
         "kind": 5,
         "importPath": "parrot.director.phrase_interpretations",
         "description": "parrot.director.phrase_interpretations",
-        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [GroupSlowDecay, GroupSlowRespond],\n    },\n    Phrase.build: {\n        # LEDs off\n        # Moving heads flashing beat, (drawing circles / fixed position)\n        # Motion strip off or bulb flashing to the beat\n        MovingHead: [MoverBeatAndCircle, MoverGroupBeatInFan],\n        Motionstrip: [MotionStripBulbBeatAndWiggle],",
+        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [SlowDecay, SlowRespond],\n    },\n    Phrase.build: {\n        # LEDs off\n        # Moving heads flashing beat, (drawing circles / fixed position)\n        # Motion strip off or bulb flashing to the beat\n        MovingHead: [MoverBeatAndCircle, MoverBeatInFan],\n        Motionstrip: [MotionStripBulbBeatAndWiggle],",
         "detail": "parrot.director.phrase_interpretations",
         "documentation": {}
     },
@@ -1900,7 +1668,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
-        "peekOfCode": "class FixtureBase:\n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n        self.color_value = Color(\"black\")\n    def set_color(self, color: Color):\n        self.color_value = color\n    def get_color(self):",
+        "peekOfCode": "class FixtureBase:\n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n        self.color_value = Color(\"black\")\n        self.dimmer_value = 0\n    def set_color(self, color: Color):\n        self.color_value = color",
         "detail": "parrot.fixtures.base",
         "documentation": {}
     },
@@ -2107,7 +1875,7 @@
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(\n            self,\n            width=500,",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(\n            self,",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2116,7 +1884,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#111\"\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2125,7 +1893,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#111\"\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2134,7 +1902,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "BG = \"#111\"\nclass Window(Tk):\n    def __init__(self, state: State):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.canvas = Canvas(\n            self,",
+        "peekOfCode": "BG = \"#222\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2152,34 +1920,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class InterpreterBase(Generic[T]):\n    def __init__(self, subject: T):\n        self.subject = subject\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\nclass GroupInterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass",
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "GroupInterpreterBase",
-        "kind": 6,
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "peekOfCode": "class GroupInterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\nclass Dimmer100(InterpreterBase):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)\n    def step(self, frame, scheme):\n        self.subject.set_dimmer(100)",
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "Dimmer100",
-        "kind": 6,
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "peekOfCode": "class Dimmer100(InterpreterBase):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)\n    def step(self, frame, scheme):\n        self.subject.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)\n    def step(self, frame, scheme):\n        self.subject.set_dimmer(30)",
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "Dimmer30",
-        "kind": 6,
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "peekOfCode": "class Dimmer30(InterpreterBase):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)\n    def step(self, frame, scheme):\n        self.subject.set_dimmer(30)\nclass ColorFg(InterpreterBase):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)\n    def step(self, frame, scheme):\n        self.subject.set_color(scheme.fg)",
+        "peekOfCode": "class InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2188,7 +1929,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorFg(InterpreterBase):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)\n    def step(self, frame, scheme):\n        self.subject.set_color(scheme.fg)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, subject: FixtureBase, multiplier=1):\n        super().__init__(subject)\n        self.multiplier = multiplier\n    def step(self, frame, scheme):",
+        "peekOfCode": "class ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1):\n        super().__init__(group)\n        self.multiplier = multiplier\n    def step(self, frame, scheme):\n        for i in self.group:",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2197,7 +1938,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class MoveCircles(InterpreterBase):\n    def __init__(self, subject: FixtureBase, multiplier=1):\n        super().__init__(subject)\n        self.multiplier = multiplier\n    def step(self, frame, scheme):\n        self.subject.set_pan(math.cos(frame.time * self.multiplier) * 127 + 128)\n        self.subject.set_tilt(math.sin(frame.time * self.multiplier) * 127 + 128)\nclass FlashBeat(InterpreterBase[FixtureBase]):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)",
+        "peekOfCode": "class MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1):\n        super().__init__(group)\n        self.multiplier = multiplier\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_pan(math.cos(frame.time * self.multiplier) * 127 + 128)\n            i.set_tilt(math.sin(frame.time * self.multiplier) * 127 + 128)\nclass FlashBeat(InterpreterBase):\n    def __init__(self, group):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2206,7 +1947,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class FlashBeat(InterpreterBase[FixtureBase]):\n    def __init__(self, subject: FixtureBase):\n        super().__init__(subject)\n        self.signal = \"drums\"\n    def step(self, frame, scheme):\n        if frame[\"sustained\"] > 0.7:\n            self.subject.set_dimmer(100)\n            self.subject.set_strobe(200)\n        elif frame[self.signal] > 0.4:\n            self.subject.set_dimmer(frame[self.signal] * 255)",
+        "peekOfCode": "class FlashBeat(InterpreterBase):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"drums\"\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[\"sustained\"] > 0.7:\n                i.set_dimmer(100)\n                i.set_strobe(200)\n            elif frame[self.signal] > 0.4:",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2215,7 +1956,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "Phrase = Enum(\"Phrase\", [\"intro_outro\", \"build\", \"drop\", \"breakdown\"])\nT = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, subject: T):\n        self.subject = subject\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\nclass GroupInterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group",
+        "peekOfCode": "Phrase = Enum(\"Phrase\", [\"intro_outro\", \"build\", \"drop\", \"breakdown\"])\nT = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass ColorFg(InterpreterBase):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2224,7 +1965,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, subject: T):\n        self.subject = subject\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\nclass GroupInterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass ColorFg(InterpreterBase):\n    def step(self, frame, scheme):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2233,16 +1974,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
-        "peekOfCode": "class Combo(InterpreterBase[T]):\n    def __init__(self, subject: T, interpreters: List[InterpreterBase[T]]):\n        super().__init__(subject)\n        self.interpreters = [i(subject) for i in interpreters]\n    def step(self, frame: Frame, scheme: ColorScheme):\n        for i in self.interpreters:\n            i.step(frame, scheme)\ndef comboify(interpreters: List[InterpreterBase[T]]) -> Combo[T]:\n    return lambda subject: Combo(subject, interpreters)\nclass GroupCombo(GroupInterpreterBase[T]):",
-        "detail": "parrot.interpreters.combo",
-        "documentation": {}
-    },
-    {
-        "label": "GroupCombo",
-        "kind": 6,
-        "importPath": "parrot.interpreters.combo",
-        "description": "parrot.interpreters.combo",
-        "peekOfCode": "class GroupCombo(GroupInterpreterBase[T]):\n    def __init__(\n        self,\n        group: List[T],\n        interpreters: List[Union[InterpreterBase, GroupInterpreterBase[T]]],\n    ):\n        super().__init__(group)\n        self.interpreters = [ensure_groupify(i)(group) for i in interpreters]\n    def step(self, frame: Frame, scheme: ColorScheme):\n        for i in self.interpreters:",
+        "peekOfCode": "class Combo(InterpreterBase[T]):\n    def __init__(\n        self,\n        group: List[T],\n        interpreters: List[Type[InterpreterBase[T]]],\n    ):\n        super().__init__(group)\n        self.interpreters = [i(group) for i in interpreters]\n    def step(self, frame: Frame, scheme: ColorScheme):\n        for i in self.interpreters:",
         "detail": "parrot.interpreters.combo",
         "documentation": {}
     },
@@ -2251,16 +1983,7 @@
         "kind": 2,
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
-        "peekOfCode": "def comboify(interpreters: List[InterpreterBase[T]]) -> Combo[T]:\n    return lambda subject: Combo(subject, interpreters)\nclass GroupCombo(GroupInterpreterBase[T]):\n    def __init__(\n        self,\n        group: List[T],\n        interpreters: List[Union[InterpreterBase, GroupInterpreterBase[T]]],\n    ):\n        super().__init__(group)\n        self.interpreters = [ensure_groupify(i)(group) for i in interpreters]",
-        "detail": "parrot.interpreters.combo",
-        "documentation": {}
-    },
-    {
-        "label": "group_comboify",
-        "kind": 2,
-        "importPath": "parrot.interpreters.combo",
-        "description": "parrot.interpreters.combo",
-        "peekOfCode": "def group_comboify(\n    interpreters: List[Union[InterpreterBase, GroupInterpreterBase[T]]]\n) -> GroupCombo[T]:\n    return lambda group: GroupCombo(group, interpreters)",
+        "peekOfCode": "def comboify(interpreters: List[InterpreterBase[T]]) -> Combo[T]:\n    return lambda group: Combo(group, interpreters)",
         "detail": "parrot.interpreters.combo",
         "documentation": {}
     },
@@ -2269,62 +1992,44 @@
         "kind": 5,
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass Combo(InterpreterBase[T]):\n    def __init__(self, subject: T, interpreters: List[InterpreterBase[T]]):\n        super().__init__(subject)\n        self.interpreters = [i(subject) for i in interpreters]\n    def step(self, frame: Frame, scheme: ColorScheme):\n        for i in self.interpreters:\n            i.step(frame, scheme)\ndef comboify(interpreters: List[InterpreterBase[T]]) -> Combo[T]:\n    return lambda subject: Combo(subject, interpreters)",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass Combo(InterpreterBase[T]):\n    def __init__(\n        self,\n        group: List[T],\n        interpreters: List[Type[InterpreterBase[T]]],\n    ):\n        super().__init__(group)\n        self.interpreters = [i(group) for i in interpreters]\n    def step(self, frame: Frame, scheme: ColorScheme):",
         "detail": "parrot.interpreters.combo",
         "documentation": {}
     },
     {
-        "label": "InterpreterGroupify",
+        "label": "Dimmer100",
         "kind": 6,
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "peekOfCode": "class InterpreterGroupify(GroupInterpreterBase[T]):\n    def __init__(self, group: List[T], interpreter_cls: type[InterpreterBase[T]]):\n        super().__init__(group)\n        self.interpreters = [interpreter_cls(subject) for subject in group]\n    def step(self, frame, scheme):\n        for i in self.interpreters:\n            i.step(frame, scheme)\ndef groupify(interpreter_cls: type[InterpreterBase[T]]) -> InterpreterGroupify[T]:\n    return lambda group: InterpreterGroupify(group, interpreter_cls)\ndef ensure_groupify(",
-        "detail": "parrot.interpreters.group",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):",
+        "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
     {
-        "label": "FixtureGroup",
+        "label": "Dimmer30",
         "kind": 6,
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "peekOfCode": "class FixtureGroup(Generic[T]):\n    def __init__(self):\n        pass\nclass SequenceDimmers(GroupInterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):",
-        "detail": "parrot.interpreters.group",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):",
+        "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
     {
         "label": "SequenceDimmers",
         "kind": 6,
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "peekOfCode": "class SequenceDimmers(GroupInterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):\n            fixture.set_dimmer(self.dimmer if frame.time / self.wait_time == i else 0)",
-        "detail": "parrot.interpreters.group",
-        "documentation": {}
-    },
-    {
-        "label": "groupify",
-        "kind": 2,
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "peekOfCode": "def groupify(interpreter_cls: type[InterpreterBase[T]]) -> InterpreterGroupify[T]:\n    return lambda group: InterpreterGroupify(group, interpreter_cls)\ndef ensure_groupify(\n    interpreter_cls: type[Union[InterpreterBase[T], GroupInterpreterBase[T]]]\n) -> GroupInterpreterBase[T]:\n    if isinstance(interpreter_cls, InterpreterBase):\n        return groupify(interpreter_cls)\n    else:\n        return interpreter_cls\n# Type annotation for intepreter map",
-        "detail": "parrot.interpreters.group",
-        "documentation": {}
-    },
-    {
-        "label": "ensure_groupify",
-        "kind": 2,
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "peekOfCode": "def ensure_groupify(\n    interpreter_cls: type[Union[InterpreterBase[T], GroupInterpreterBase[T]]]\n) -> GroupInterpreterBase[T]:\n    if isinstance(interpreter_cls, InterpreterBase):\n        return groupify(interpreter_cls)\n    else:\n        return interpreter_cls\n# Type annotation for intepreter map\nclass FixtureGroup(Generic[T]):\n    def __init__(self):",
-        "detail": "parrot.interpreters.group",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=1):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):\n            fixture.set_dimmer(self.dimmer if frame.time / self.wait_time == i else 0)",
+        "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
     {
         "label": "T",
         "kind": 5,
-        "importPath": "parrot.interpreters.group",
-        "description": "parrot.interpreters.group",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterGroupify(GroupInterpreterBase[T]):\n    def __init__(self, group: List[T], interpreter_cls: type[InterpreterBase[T]]):\n        super().__init__(group)\n        self.interpreters = [interpreter_cls(subject) for subject in group]\n    def step(self, frame, scheme):\n        for i in self.interpreters:\n            i.step(frame, scheme)\ndef groupify(interpreter_cls: type[InterpreterBase[T]]) -> InterpreterGroupify[T]:\n    return lambda group: InterpreterGroupify(group, interpreter_cls)",
-        "detail": "parrot.interpreters.group",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass SequenceDimmers(InterpreterBase[T]):",
+        "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
     {
@@ -2332,7 +2037,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "class DimmerBinaryLatched(InterpreterBase[FixtureBase]):\n    def __init__(self, subject: FixtureBase, signal=\"sustained\"):\n        super().__init__(subject)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n    def step(self, frame, scheme):\n        if frame[\"sustained\"] > 0.55:\n            self.switch = True\n            self.latch_until = frame.time + 0.5",
+        "peekOfCode": "class DimmerBinaryLatched(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], signal=\"sustained\"):\n        super().__init__(group)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[\"sustained\"] > 0.55:\n                self.switch = True",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -2341,7 +2046,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "class DimmerFadeLatched(InterpreterBase[FixtureBase]):\n    def __init__(self, subject: FixtureBase, signal=\"sustained\"):\n        super().__init__(subject)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n        self.memory = 0\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.55:\n            self.switch = True",
+        "peekOfCode": "class DimmerFadeLatched(InterpreterBase):\n    def __init__(self, group, signal=\"sustained\"):\n        super().__init__(group)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n        self.memory = 0\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[self.signal] > 0.55:",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -2350,7 +2055,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripBulbBeat(GroupInterpreterBase[Motionstrip38]):\n    def __init__(self, group: List[Motionstrip38]):\n        super().__init__(group)\n        self.signal = \"drums\"\n        self.total_bulbs = len(group) * 8\n        self.bulb = 0\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:",
+        "peekOfCode": "class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):\n    def __init__(self, group: List[Motionstrip38]):\n        super().__init__(group)\n        self.signal = \"drums\"\n        self.total_bulbs = len(group) * 8\n        self.bulb = 0\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -2359,7 +2064,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        self.subject.set_dimmer(255)\n        self.subject.set_pan(math.cos(frame.time) * 127 + 128)\n        for i in range(parts):",
+        "peekOfCode": "class MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        for i in self.group:\n            i.set_dimmer(255)\n            i.set_pan(math.cos(frame.time) * 127 + 128)",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -2368,7 +2073,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"sustained\"\n        self.dimmer_memory = 0\n        self.decay_rate = 0.24\n        self.latch_until = 0\n    def step(self, frame, scheme):\n        pan = math.cos(frame.time) * 127 + 128\n        self.subject.set_pan(pan)",
+        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    def __init__(self, group: List[Motionstrip38]):\n        super().__init__(group)\n        self.signal = \"sustained\"\n        self.dimmer_memory = 0\n        self.decay_rate = 0.24\n        self.latch_until = 0\n    def step(self, frame, scheme):\n        pan = math.cos(frame.time) * 127 + 128\n        if frame[self.signal] > 0.2:",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -2377,7 +2082,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "MotionStripBulbBeatAndWiggle = lambda group: GroupCombo(\n    group, [MotionstripBulbBeat, groupify(MoveCircles)]\n)\nclass MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, subject: Motionstrip38):\n        super().__init__(subject)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4",
+        "peekOfCode": "MotionStripBulbBeatAndWiggle = comboify([MotionstripBulbBeat, MoveCircles])\nclass MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        for i in self.group:\n            i.set_dimmer(255)",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -2386,7 +2091,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "class MoverFan(GroupInterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for i, fixture in enumerate(group):\n            fixture.set_pan(i * 255 / len(group))\n            fixture.set_tilt(128)\n    def step(self, frame, scheme):\n        pass\nMoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])\nMoverGroupBeatInFan = group_comboify([FlashBeat, MoverFan, ColorFg])",
+        "peekOfCode": "class MoverFan(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for i, fixture in enumerate(group):\n            fixture.set_pan(i * 255 / len(group))\n            fixture.set_tilt(128)\n    def step(self, frame, scheme):\n        pass\nMoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])\nMoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2395,16 +2100,16 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])\nMoverGroupBeatInFan = group_comboify([FlashBeat, MoverFan, ColorFg])\nMoverSequenceAndCircle = group_comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = group_comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = group_comboify([MoveCircles, ColorFg, Dimmer30])",
+        "peekOfCode": "MoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])\nMoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])\nMoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
     {
-        "label": "MoverGroupBeatInFan",
+        "label": "MoverBeatInFan",
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverGroupBeatInFan = group_comboify([FlashBeat, MoverFan, ColorFg])\nMoverSequenceAndCircle = group_comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = group_comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = group_comboify([MoveCircles, ColorFg, Dimmer30])",
+        "peekOfCode": "MoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])\nMoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2413,7 +2118,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverSequenceAndCircle = group_comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = group_comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = group_comboify([MoveCircles, ColorFg, Dimmer30])",
+        "peekOfCode": "MoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2422,7 +2127,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverSequenceInFan = group_comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = group_comboify([MoveCircles, ColorFg, Dimmer30])",
+        "peekOfCode": "MoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2431,287 +2136,26 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverDimAndCircle = group_comboify([MoveCircles, ColorFg, Dimmer30])",
+        "peekOfCode": "MoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
     {
-        "label": "Noop",
-        "kind": 6,
-        "importPath": "parrot.interpreters.noop",
-        "description": "parrot.interpreters.noop",
-        "peekOfCode": "class Noop(InterpreterBase[FixtureBase]):\n    def __init__(self, fixture):\n        self.fixture = fixture\n    def step(self, frame, scheme):\n        pass",
-        "detail": "parrot.interpreters.noop",
-        "documentation": {}
-    },
-    {
-        "label": "GroupSlowRespond",
+        "label": "SlowRespond",
         "kind": 6,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "class GroupSlowRespond(GroupInterpreterBase[FixtureBase]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.dimmer_memory = 0\n        self.signal = \"sustained\"\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)\n        for idx, fixture in enumerate(self.group):\n            if idx % 2 == 0:\n                fixture.set_color(scheme.bg)",
+        "peekOfCode": "class SlowRespond(InterpreterBase[FixtureBase]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.dimmer_memory = 0\n        self.signal = \"sustained\"\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)\n        for idx, fixture in enumerate(self.group):\n            if idx % 2 == 0:\n                fixture.set_color(scheme.bg)",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
     {
-        "label": "GroupSlowDecay",
+        "label": "SlowDecay",
         "kind": 6,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "class GroupSlowDecay(GroupInterpreterBase[FixtureBase]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.all)\n        for idx, fixture in enumerate(self.group):\n            if idx % 2 == 0:\n                fixture.set_color(scheme.bg)\n            else:",
+        "peekOfCode": "class SlowDecay(InterpreterBase[FixtureBase]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.all)\n        for idx, fixture in enumerate(self.group):\n            if idx % 2 == 0:\n                fixture.set_color(scheme.bg)\n            else:",
         "detail": "parrot.interpreters.slow",
-        "documentation": {}
-    },
-    {
-        "label": "Demucs",
-        "kind": 6,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "class Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()\n        self.ax2 = self.ax1.twinx() \n        self.snd_blocks = []",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "get_rms",
-        "kind": 2,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "bundle",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "bundle = HDEMUCS_HIGH_MUSDB_PLUS\nmodel = bundle.get_model()\ndevice = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "model",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "model = bundle.get_model()\ndevice = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "device",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "device = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\nmodel.to(device)\nsample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "sample_rate",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "sample_rate = bundle.sample_rate\nsources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "sources_list",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "sources_list = model.sources\nTHRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "THRESHOLD",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "THRESHOLD = 0 # dB\nRATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "RATE",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "RATE = sample_rate\nINPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "INPUT_BLOCK_TIME",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "INPUT_BLOCK_TIME = 1 * 0.0001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "INPUT_FRAMES_PER_BLOCK",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "INPUT_FRAMES_PER_BLOCK_BUFFER",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "TIME_IN_GRAPH",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "BLOCKS_IN_GRAPH",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "ACCEPTED_LATENCY",
-        "kind": 5,
-        "importPath": "parrot.listeners.demucs",
-        "description": "parrot.listeners.demucs",
-        "peekOfCode": "ACCEPTED_LATENCY = 0.001 * 60 # 60 ms\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass Demucs(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
-        "detail": "parrot.listeners.demucs",
-        "documentation": {}
-    },
-    {
-        "label": "clamp",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-cheap",
-        "description": "parrot.listeners.dmx-entec-cheap",
-        "peekOfCode": "def clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n\ndef int_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\ndef init_open_dmx(device):",
-        "detail": "parrot.listeners.dmx-entec-cheap",
-        "documentation": {}
-    },
-    {
-        "label": "int_clamp_list",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-cheap",
-        "description": "parrot.listeners.dmx-entec-cheap",
-        "peekOfCode": "def int_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\ndef init_open_dmx(device):\n    device.reset()\n    device.set_baudrate(3000000/12)\n    device.set_line_property(8, 2, \"N\")\n    device.set_flowctrl(\"\")\n    device.set_rts(False)\n    device.purge_rx_buffer()\n    device.purge_tx_buffer()",
-        "detail": "parrot.listeners.dmx-entec-cheap",
-        "documentation": {}
-    },
-    {
-        "label": "init_open_dmx",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-cheap",
-        "description": "parrot.listeners.dmx-entec-cheap",
-        "peekOfCode": "def init_open_dmx(device):\n    device.reset()\n    device.set_baudrate(3000000/12)\n    device.set_line_property(8, 2, \"N\")\n    device.set_flowctrl(\"\")\n    device.set_rts(False)\n    device.purge_rx_buffer()\n    device.purge_tx_buffer()\ndef set_par(buffer, patch, r, g, b):\n    buffer[patch:patch+7] = int_clamp_list([",
-        "detail": "parrot.listeners.dmx-entec-cheap",
-        "documentation": {}
-    },
-    {
-        "label": "set_par",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-cheap",
-        "description": "parrot.listeners.dmx-entec-cheap",
-        "peekOfCode": "def set_par(buffer, patch, r, g, b):\n    buffer[patch:patch+7] = int_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, \n        0\n    ])",
-        "detail": "parrot.listeners.dmx-entec-cheap",
-        "documentation": {}
-    },
-    {
-        "label": "set_mover",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-cheap",
-        "description": "parrot.listeners.dmx-entec-cheap",
-        "peekOfCode": "def set_mover(buffer, patch, pan, tilt, speed=0, color=0, gobo=0, dimmer=255, shutter=6, function=0, macro=0):\n    pan_ts = pan/540*255\n    tilt_ts = tilt/270*255\n    buffer[patch:patch+11] = int_clamp_list([\n        pan_ts,\n        (pan_ts - round(pan_ts)) * 255,\n        tilt_ts,\n        (tilt_ts - round(tilt_ts)) * 255,\n        speed,\n        color,",
-        "detail": "parrot.listeners.dmx-entec-cheap",
-        "documentation": {}
-    },
-    {
-        "label": "main",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-cheap",
-        "description": "parrot.listeners.dmx-entec-cheap",
-        "peekOfCode": "def main():\n    device_url = \"ftdi://ftdi:232:A10NI4B7/1\"\n    device = Ftdi.create_from_url(device_url)\n    init_open_dmx(device)\n    buffer = [int(0)]*512\n    frame = 0\n    fta = 1/16\n    while(True):\n        init_open_dmx(device)\n        set_par(buffer, 1,  clamp(128*math.sin(frame*fta)+128, 1, 255), clamp(128*math.cos(frame*fta)+128, 1, 255), 0)",
-        "detail": "parrot.listeners.dmx-entec-cheap",
-        "documentation": {}
-    },
-    {
-        "label": "clamp",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-pro",
-        "description": "parrot.listeners.dmx-entec-pro",
-        "peekOfCode": "def clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n\ndef int_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\ndef set_par(patch, r, g, b):",
-        "detail": "parrot.listeners.dmx-entec-pro",
-        "documentation": {}
-    },
-    {
-        "label": "int_clamp_list",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-pro",
-        "description": "parrot.listeners.dmx-entec-pro",
-        "peekOfCode": "def int_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\ndef set_par(patch, r, g, b):\n    values = int_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, ",
-        "detail": "parrot.listeners.dmx-entec-pro",
-        "documentation": {}
-    },
-    {
-        "label": "set_par",
-        "kind": 2,
-        "importPath": "parrot.listeners.dmx-entec-pro",
-        "description": "parrot.listeners.dmx-entec-pro",
-        "peekOfCode": "def set_par(patch, r, g, b):\n    values = int_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, \n        0\n    ])",
-        "detail": "parrot.listeners.dmx-entec-pro",
-        "documentation": {}
-    },
-    {
-        "label": "usb_path",
-        "kind": 5,
-        "importPath": "parrot.listeners.dmx-entec-pro",
-        "description": "parrot.listeners.dmx-entec-pro",
-        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\nimport math\nfrom time import sleep\nfrom DMXEnttecPro import Controller\ndmx = Controller(usb_path)  # Typical of Linux\npar_patch = 19\ndef clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:",
-        "detail": "parrot.listeners.dmx-entec-pro",
-        "documentation": {}
-    },
-    {
-        "label": "dmx",
-        "kind": 5,
-        "importPath": "parrot.listeners.dmx-entec-pro",
-        "description": "parrot.listeners.dmx-entec-pro",
-        "peekOfCode": "dmx = Controller(usb_path)  # Typical of Linux\npar_patch = 19\ndef clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n\ndef int_clamp_list(items):",
-        "detail": "parrot.listeners.dmx-entec-pro",
-        "documentation": {}
-    },
-    {
-        "label": "par_patch",
-        "kind": 5,
-        "importPath": "parrot.listeners.dmx-entec-pro",
-        "description": "parrot.listeners.dmx-entec-pro",
-        "peekOfCode": "par_patch = 19\ndef clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n\ndef int_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]",
-        "detail": "parrot.listeners.dmx-entec-pro",
-        "documentation": {}
-    },
-    {
-        "label": "frame",
-        "kind": 5,
-        "importPath": "parrot.listeners.dmx-entec-pro",
-        "description": "parrot.listeners.dmx-entec-pro",
-        "peekOfCode": "frame = 0\nwhile(True):\n    set_par(par_patch, math.sin(frame) * 128 + 128, 0, math.cos(frame) * 128 + 128)\n    sleep(0.1)\n    frame += 0.1",
-        "detail": "parrot.listeners.dmx-entec-pro",
         "documentation": {}
     },
     {

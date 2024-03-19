@@ -9,17 +9,18 @@ from .fixtures.factory import renderer_for_fixture
 CIRCLE_SIZE = 30
 FIXTURE_MARGIN = 20
 
-BG = "#111"
+BG = "#222"
 
 
 class Window(Tk):
-    def __init__(self, state: State):
+    def __init__(self, state: State, quit: callable):
         super().__init__()
         self.state = state
 
         self.title("Party Parrot")
         # set background color to black
         self.configure(bg=BG)
+        self.protocol("WM_DELETE_WINDOW", quit)
 
         self.canvas = Canvas(
             self,
@@ -47,7 +48,9 @@ class Window(Tk):
         self.phrase_buttons = {}
         for i in Phrase:
             self.phrase_buttons[i] = Button(
-                self.phrase_frame, text=i.name, command=lambda: self.click_phrase(i)
+                self.phrase_frame,
+                text=i.name,
+                command=lambda i=i: self.click_phrase(i),
             )
             self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
 

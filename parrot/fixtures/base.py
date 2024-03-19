@@ -24,17 +24,20 @@ class FixtureBase:
         return self.dimmer_value
 
     def set_strobe(self, value):
-        raise NotImplementedError()
+        raise NotImplementedError(f"{str(self)} does not support strobe")
 
     def set_pan(self, value):
-        raise NotImplementedError()
+        raise NotImplementedError(f"{str(self)} does not support pan")
 
     def set_tilt(self, value):
-        raise NotImplementedError()
+        raise NotImplementedError(f"{str(self)} does not support tilt")
 
     def render(self, dmx):
         for i in range(len(self.values)):
             dmx.set_channel(self.address + i, dmx_clamp(self.values[i]))
+
+    def __str__(self) -> str:
+        return f"{self.name} @ {self.address}"
 
 
 class ColorWheelEntry:

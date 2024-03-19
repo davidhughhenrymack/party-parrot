@@ -19,6 +19,7 @@ patch_bay = [
     LedPar(26),
     LedPar(33),
     Motionstrip38(59, 0, 256),
+    Motionstrip38(154, 0, 256),
     FiveBeamLaser(100),
     TwoBeamLaser(120),
 ]

@@ -49,6 +49,9 @@ class Motionstrip38(Motionstrip):
     def set_pan_speed(self, value):
         self.values[1] = value
 
+    def set_tilt(self, value):
+        pass
+
     def set_color(self, color: Color):
         super().set_color(color)
         for i in range(8):
