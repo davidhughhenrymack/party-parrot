@@ -1,9 +1,6 @@
 from parrot.fixtures import LedPar
 from parrot.fixtures.moving_head import MovingHead
-from parrot.interpreters.base import (
-    InterpreterBase,
-    Phrase,
-)
+from parrot.interpreters.base import InterpreterBase, Phrase, ColorFg
 from parrot.interpreters.motionstrip import (
     MotionStripBulbBeatAndWiggle,
     MotionstripSlowRespond,
@@ -21,6 +18,8 @@ from typing import List, Dict, Union
 from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.interpreters.latched import DimmerFadeLatched
+from parrot.interpreters.dimmer import Dimmer100, Dimmer30
+from parrot.interpreters.combo import comboify
 
 import random
 from parrot.interpreters.dimmer import Dimmer0
@@ -57,6 +56,12 @@ phrase_interpretations: Dict[
         LedPar: [SlowDecay],
         MovingHead: [MoverDimAndCircle],
         Motionstrip: [MotionstripSlowRespond],
+    },
+    Phrase.test: {
+        LedPar: [comboify([Dimmer30, ColorFg])],
+        MovingHead: [MoverDimAndCircle],
+        Motionstrip: [MoverDimAndCircle],
+        Laser: [Dimmer100],
     },
 }
 

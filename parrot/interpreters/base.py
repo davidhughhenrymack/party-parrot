@@ -5,7 +5,7 @@ from parrot.director.frame import Frame
 from parrot.fixtures.base import FixtureBase
 from parrot.director.color_scheme import ColorScheme
 
-Phrase = Enum("Phrase", ["intro_outro", "build", "drop", "breakdown"])
+Phrase = Enum("Phrase", ["intro_outro", "build", "drop", "breakdown", "test"])
 
 T = TypeVar("T", bound=FixtureBase)
 
