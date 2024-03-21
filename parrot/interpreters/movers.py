@@ -4,7 +4,7 @@ from parrot.interpreters.base import (
     InterpreterBase,
     MoveCircles,
 )
-from parrot.interpreters.dimmer import Dimmer30, SequenceDimmers
+from parrot.interpreters.dimmer import Dimmer100, Dimmer30, SequenceDimmers
 from parrot.interpreters.combo import comboify
 from parrot.fixtures.moving_head import MovingHead
 
@@ -26,3 +26,4 @@ MoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])
 MoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])
 MoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])
 MoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])
+MoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])

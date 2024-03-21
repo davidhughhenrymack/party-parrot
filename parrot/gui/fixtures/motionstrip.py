@@ -1,10 +1,11 @@
+from parrot.director.frame import Frame
 from .base import FixtureGuiRenderer
 from parrot.fixtures import FixtureBase
 from tkinter import Canvas
 from parrot.utils.color_extra import dim_color
 
-BULB_DIA = 5
-BULB_MARGIN = 3
+BULB_DIA = 8
+BULB_MARGIN = 2
 BULBS = 8
 
 
@@ -27,6 +28,7 @@ class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):
             x + self.width,
             y + self.height,
             fill="black",
+            outline="black",
         )
 
         self.bulbs = []
@@ -40,10 +42,11 @@ class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):
                     x_pos + BULB_DIA,
                     y + BULB_MARGIN + BULB_DIA,
                     fill="black",
+                    outline="black",
                 )
             )
 
-    def render(self, canvas: Canvas):
+    def render(self, canvas: Canvas, frame: Frame):
         color = self.fixture.get_color()
         dim = self.fixture.get_dimmer()
 

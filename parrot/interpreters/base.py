@@ -4,6 +4,7 @@ from typing import Generic, List, TypeVar
 from parrot.director.frame import Frame
 from parrot.fixtures.base import FixtureBase
 from parrot.director.color_scheme import ColorScheme
+from parrot.utils.colour import Color
 
 Phrase = Enum("Phrase", ["intro_outro", "build", "drop", "breakdown", "test"])
 
@@ -25,6 +26,12 @@ class ColorFg(InterpreterBase):
     def step(self, frame, scheme):
         for i in self.group:
             i.set_color(scheme.fg)
+
+
+class ColorAlternateBg(InterpreterBase):
+    def step(self, frame, scheme):
+        for i in self.group:
+            i.set_color(scheme.bg if frame.time % 2 == 0 else scheme.bg_contrast)
 
 
 class MoveCircles(InterpreterBase):

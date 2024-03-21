@@ -1,6 +1,12 @@
 from parrot.fixtures import LedPar
 from parrot.fixtures.moving_head import MovingHead
-from parrot.interpreters.base import InterpreterBase, Phrase, ColorFg
+from parrot.interpreters.base import (
+    ColorAlternateBg,
+    ColorFg,
+    InterpreterBase,
+    MoveCircles,
+    Phrase,
+)
 from parrot.interpreters.motionstrip import (
     MotionStripBulbBeatAndWiggle,
     MotionstripSlowRespond,
@@ -9,6 +15,7 @@ from parrot.interpreters.movers import (
     MoverBeatAndCircle,
     MoverDimAndCircle,
     MoverBeatInFan,
+    MoverOnAndCircle,
     MoverSequenceAndCircle,
     MoverSequenceInFan,
 )
@@ -18,7 +25,12 @@ from typing import List, Dict, Union
 from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.interpreters.latched import DimmerFadeLatched
-from parrot.interpreters.dimmer import Dimmer100, Dimmer30
+from parrot.interpreters.dimmer import (
+    Dimmer100,
+    Dimmer30,
+    DimmersBeatChase,
+    GentlePulse,
+)
 from parrot.interpreters.combo import comboify
 
 import random
@@ -30,7 +42,10 @@ phrase_interpretations: Dict[
     Dict[FixtureBase, List[InterpreterBase]],
 ] = {
     Phrase.intro_outro: {
-        LedPar: [SlowDecay, SlowRespond],
+        LedPar: [
+            comboify([SlowDecay, ColorAlternateBg]),
+            comboify([SlowRespond, ColorAlternateBg]),
+        ],
     },
     Phrase.build: {
         # LEDs off
@@ -38,14 +53,15 @@ phrase_interpretations: Dict[
         # Motion strip off or bulb flashing to the beat
         MovingHead: [MoverBeatAndCircle, MoverBeatInFan],
         Motionstrip: [MotionStripBulbBeatAndWiggle],
+        LedPar: [comboify([DimmersBeatChase, ColorAlternateBg])],
     },
     Phrase.drop: {
         # LEDs pulsing vividly
         # Moving sequencing on, drawing circles. maybe strobing
         # Motion strip swishing
         # lasers on during intense moments
-        LedPar: [SlowDecay],
-        MovingHead: [MoverSequenceAndCircle, MoverSequenceInFan],
+        LedPar: [comboify([SlowDecay, ColorAlternateBg])],
+        MovingHead: [comboify([DimmersBeatChase, ColorFg, MoveCircles])],
         Motionstrip: [MotionstripSlowRespond],
         Laser: [DimmerFadeLatched],
     },
@@ -53,13 +69,13 @@ phrase_interpretations: Dict[
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
-        LedPar: [SlowDecay],
+        LedPar: [comboify([GentlePulse, ColorAlternateBg])],
         MovingHead: [MoverDimAndCircle],
-        Motionstrip: [MotionstripSlowRespond],
+        Motionstrip: [comboify([SlowRespond, ColorFg, MoveCircles])],
     },
     Phrase.test: {
         LedPar: [comboify([Dimmer30, ColorFg])],
-        MovingHead: [MoverDimAndCircle],
+        MovingHead: [MoverOnAndCircle],
         Motionstrip: [MoverDimAndCircle],
         Laser: [Dimmer100],
     },

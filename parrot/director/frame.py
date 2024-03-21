@@ -14,7 +14,7 @@ class Frame:
         return self.kwargs.get(__name)
 
     def __str__(self):
-        return f"Frame(vocals={int(self.vocals* 100)}, other={int(self.other* 100)}, drums={int(self.drums* 100)}, bass={int(self.bass* 100)})"
+        return f"Frame(all={int(self.all* 100)}, drums={int(self.drums* 100)}, bass={int(self.bass* 100)})"
 
     def __mul__(self, factor):
         return Frame(

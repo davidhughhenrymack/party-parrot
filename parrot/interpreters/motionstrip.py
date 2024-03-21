@@ -33,13 +33,12 @@ class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):
                         color = scheme.fg
 
                     fixture.set_bulb_color(bulb_idx, color)
-                fixture.set_dimmer(frame[self.signal])
+                fixture.set_dimmer(frame[self.signal] * 255)
 
         else:
-            if self.on == True:
-                for fixture in self.group:
-                    fixture.set_dimmer(0)
-                self.on = False
+            for fixture in self.group:
+                fixture.set_dimmer(0)
+            self.on = False
 
 
 MotionStripBulbBeatAndWiggle = comboify([MotionstripBulbBeat, MoveCircles])

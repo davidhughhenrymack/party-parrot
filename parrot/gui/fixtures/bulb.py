@@ -1,3 +1,4 @@
+from parrot.director.frame import Frame
 from .base import FixtureGuiRenderer
 from parrot.fixtures import FixtureBase
 from tkinter import Canvas
@@ -20,10 +21,10 @@ class BulbRenderer(FixtureGuiRenderer[FixtureBase]):
 
     def setup(self, canvas: Canvas, x: int, y: int):
         self.oval = canvas.create_oval(
-            x, y, x + self.width, y + self.height, fill="black"
+            x, y, x + self.width, y + self.height, fill="black", outline="black"
         )
 
-    def render(self, canvas: Canvas):
+    def render(self, canvas: Canvas, frame: Frame):
         color = self.fixture.get_color()
         dim = self.fixture.get_dimmer()
 

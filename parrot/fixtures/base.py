@@ -24,13 +24,13 @@ class FixtureBase:
         return self.dimmer_value
 
     def set_strobe(self, value):
-        raise NotImplementedError(f"{str(self)} does not support strobe")
+        pass
 
     def set_pan(self, value):
-        raise NotImplementedError(f"{str(self)} does not support pan")
+        pass
 
     def set_tilt(self, value):
-        raise NotImplementedError(f"{str(self)} does not support tilt")
+        pass
 
     def render(self, dmx):
         for i in range(len(self.values)):

@@ -1,6 +1,7 @@
 from typing import Generic, List, TypeVar
 from parrot.fixtures.base import FixtureBase
 from tkinter import Canvas
+from parrot.director.frame import Frame
 
 T = TypeVar("T", bound=FixtureBase)
 
@@ -20,5 +21,5 @@ class FixtureGuiRenderer(Generic[T]):
     def setup(self, canvas: Canvas, x: int, y: int):
         pass
 
-    def render(self, canvas: Canvas):
+    def render(self, canvas: Canvas, frame: Frame):
         pass

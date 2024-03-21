@@ -59,7 +59,6 @@ class Window(Tk):
             )
             self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
 
-        self.click_phrase(self.state.phrase)
         self.phrase_frame.pack()
 
         self.label_var = StringVar()
@@ -69,17 +68,17 @@ class Window(Tk):
     def click_phrase(self, phrase: Phrase):
         self.state.set_phrase(phrase)
         for phrase, button in self.phrase_buttons.items():
-            if phrase.value == self.state.phrase.value:
+            if phrase == self.state.phrase:
                 button.config(relief="sunken", background="green")
             else:
                 button.config(relief="raised")
 
     def step(self, frame):
         self.label_var.set(
-            "Sustained: {:.2f}, Drums: {:.2f}".format(
-                frame["sustained"], frame["drums"]
+            "All: {:.2f}, Sustained: {:.2f}, Drums: {:.2f}".format(
+                frame["all"], frame["sustained"], frame["drums"]
             )
         )
 
         for renderer in self.fixture_renderers:
-            renderer.render(self.canvas)
+            renderer.render(self.canvas, frame)

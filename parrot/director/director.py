@@ -3,6 +3,7 @@ import time
 import os
 from typing import List
 from parrot.director.frame import Frame
+from parrot.director.phrase_machine import PhraseMachine
 from parrot.fixtures import laser
 
 from parrot.patch_bay import patch_bay
@@ -35,8 +36,10 @@ class Director:
         self.start_time = time.time()
         self.state = state
 
+        self.phrase_machine = PhraseMachine(state)
+
         self.warmup_complete = False
-        # self.generate_interpreters()
+        self.generate_interpreters()
         self.state.on_phrase_change = lambda s: self.generate_interpreters()
 
     def generate_interpreters(self):
@@ -63,8 +66,9 @@ class Director:
         self.last_shift_time = time.time()
 
     def step(self, frame: Frame):
-        scheme = self.scheme.render()
+        self.phrase_machine.step(frame)
 
+        scheme = self.scheme.render()
         run_time = time.time() - self.start_time
         warmup_phase = min(1, run_time / WARMUP_SECONDS)
 

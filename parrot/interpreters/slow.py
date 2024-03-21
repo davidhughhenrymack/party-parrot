@@ -20,11 +20,6 @@ class SlowRespond(InterpreterBase[FixtureBase]):
         self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)
 
         for idx, fixture in enumerate(self.group):
-            if idx % 2 == 0:
-                fixture.set_color(scheme.bg)
-            else:
-                fixture.set_color(scheme.bg_contrast)
-
             if frame[self.signal] > 0.65:
                 fixture.set_strobe(200)
             if frame[self.signal] > 0.5:
@@ -47,10 +42,5 @@ class SlowDecay(InterpreterBase[FixtureBase]):
     def step(self, frame: Frame, scheme: ColorScheme):
         self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.all)
 
-        for idx, fixture in enumerate(self.group):
-            if idx % 2 == 0:
-                fixture.set_color(scheme.bg)
-            else:
-                fixture.set_color(scheme.bg_contrast)
-
+        for fixture in self.group:
             fixture.set_dimmer(self.dimmer_memory * 255)

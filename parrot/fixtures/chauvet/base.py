@@ -47,12 +47,15 @@ class ChauvetSpot_12Ch(MovingHead):
     # 0 - 255
     def set_pan(self, value):
         projected = self.pan_lower + (self.pan_range * value / 255)
+        super().set_pan_angle(projected / 255 * 540)
         self.set("pan_coarse", int(projected))
         self.set("pan_fine", int((projected - self.values[0]) * 255))
 
     # 0 - 255
     def set_tilt(self, value):
         projected = self.tilt_lower + (self.tilt_range * value / 255)
+        super().set_tilt_angle(projected / 255 * 270)
+
         self.set("tilt_coarse", int(projected))
         self.set("tilt_fine", int((projected - self.values[2]) * 255))
 
