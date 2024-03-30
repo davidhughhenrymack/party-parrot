@@ -57,13 +57,14 @@ class MicToDmx(object):
         self.should_stop = False
 
         self.dmx = get_controller()
-        self.director = Director(self.state)
 
         if SHOW_GUI:
             self.window = Window(self.state, lambda: self.quit())
 
         if SHOW_PLOT:
             self.plotter = Plotter()
+
+        self.director = Director(self.state)
 
         self.frame_count = 0
 

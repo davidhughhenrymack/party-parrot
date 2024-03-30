@@ -692,6 +692,14 @@
         "documentation": {}
     },
     {
+        "label": "Phrase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
         "label": "ColorAlternateBg",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -1656,6 +1664,14 @@
         "documentation": {}
     },
     {
+        "label": "Events",
+        "importPath": "events",
+        "description": "events",
+        "isExtraImport": true,
+        "detail": "events",
+        "documentation": {}
+    },
+    {
         "label": "ColorScheme",
         "kind": 6,
         "importPath": "parrot.director.color_scheme",
@@ -1696,7 +1712,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)\n        self.warmup_complete = False\n        self.generate_interpreters()\n        self.state.on_phrase_change = lambda s: self.generate_interpreters()",
+        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)\n        self.warmup_complete = False\n        self.state.events.on_phrase_change += lambda s: self.generate_interpreters()\n        self.state.set_phrase(Phrase.intro_outro)",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -3181,7 +3197,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self._phrase = Phrase.intro_outro\n        self.on_phrase_change = None\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):\n        self._phrase = value\n        if self.on_phrase_change:",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):\n        self._phrase = value\n        self.events.on_phrase_change(self._phrase)",
         "detail": "parrot.state",
         "documentation": {}
     }

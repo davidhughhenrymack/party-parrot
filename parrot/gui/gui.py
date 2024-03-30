@@ -35,6 +35,8 @@ class Window(Tk):
         )
         self.canvas.pack()
 
+        self.bind("<space>", lambda e: self.state.set_phrase(Phrase.drop))
+        self.bind("<Key>", self.on_key_press)
         self.fixture_renderers = [
             renderer_for_fixture(fixture) for fixture in patch_bay
         ]
@@ -56,6 +58,7 @@ class Window(Tk):
                 self.phrase_frame,
                 text=i.name,
                 command=lambda i=i: self.click_phrase(i),
+                highlightbackground=BG,
             )
             self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
 
@@ -65,13 +68,20 @@ class Window(Tk):
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
         self.label.pack()
 
+        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)
+
     def click_phrase(self, phrase: Phrase):
         self.state.set_phrase(phrase)
+
+    def on_phrase_change(self, phrase: Phrase):
         for phrase, button in self.phrase_buttons.items():
             if phrase == self.state.phrase:
-                button.config(relief="sunken", background="green")
+                button.config(highlightbackground="green")
             else:
-                button.config(relief="raised")
+                button.config(highlightbackground=BG)
+
+    def on_key_press(self, event):
+        self.state.set_phrase(Phrase.build)
 
     def step(self, frame):
         self.label_var.set(

@@ -12,7 +12,7 @@ from parrot.fixtures.motionstrip import Motionstrip
 
 from parrot.director.color_schemes import color_schemes
 
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import InterpreterBase, Phrase
 from parrot.fixtures.laser import Laser
 from .phrase_interpretations import get_interpreter
 
@@ -39,8 +39,8 @@ class Director:
         self.phrase_machine = PhraseMachine(state)
 
         self.warmup_complete = False
-        self.generate_interpreters()
-        self.state.on_phrase_change = lambda s: self.generate_interpreters()
+        self.state.events.on_phrase_change += lambda s: self.generate_interpreters()
+        self.state.set_phrase(Phrase.intro_outro)
 
     def generate_interpreters(self):
 
