@@ -10,3 +10,4 @@ It listens on your computer's microphone, then coordinates any number of DMX fix
  - LED Pars
  - Lasers
 
+Via Entec Pro USB -> DMX
