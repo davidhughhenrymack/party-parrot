@@ -1,5 +1,7 @@
 # Party Parrot
 
+<iframe src="https://giphy.com/embed/l3q2zVr6cu95nF6O4" width="480" height="236" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/producthunt-party-parrot-parrots-l3q2zVr6cu95nF6O4">via GIPHY</a></p>
+
 Party Parrot is a lighting-designer robot companion for DJs.
 
 It listens on your computer's microphone, then coordinates any number of DMX fixtures. It currently supports:
