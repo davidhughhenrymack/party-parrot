@@ -17,6 +17,7 @@ from parrot.gui.plot import Plotter
 from parrot.utils.dmx_utils import get_controller
 from parrot.gui.gui import Window
 from parrot.state import State
+from parrot.utils.math import clamp
 
 THRESHOLD = 0  # dB
 RATE = 44100
@@ -50,7 +51,12 @@ class MicToDmx(object):
 
         self.spectrogram_buffer = None
         self.lookback_buffer_size = RATE * 6
-        self.sustain_buffer = []
+        self.signal_lookback = {
+            "claps_md": [],
+            "claps_short": [],
+            "build_rate": [],
+            "sustained": [],
+        }
 
         self.state = State()
 
@@ -142,30 +148,40 @@ class MicToDmx(object):
         sustained = timeseries["bass"][-200:].mean()
         values["sustained"] = sustained
 
-        # Calculate BPM by getting the FFT of the drum range
-        x = raw_timeseries["bass"][-round(self.spectrogram_rate * 4) :]
-        # x = x - x.mean()
-        # x = x * np.hanning(len(x))
-        X = np.fft.fft(x)
+        # values["claps_md"] = np.sum(timeseries["drums"][-60:-30] > 0.1) / 3
+        # values["claps_short"] = np.sum(timeseries["drums"][-30:] > 0.1) / 3
+        # values["build_rate"] = clamp(values["claps_short"] / values["claps_md"], 0, 100)
 
-        bpm_range = np.array([40, 180]) / 60 * self.spectrogram_rate
-        X = X[round(bpm_range[0]) : round(bpm_range[1])]
-
-        # Find top 5 peaks
-        peaks = np.argsort(np.abs(X))[-10:]
-        # Convert to Hz
-        peaks = peaks * (self.spectrogram_rate / len(x))
-        # Convert to BPM
-        peaks = peaks * 60
-        peaks = np.sort(peaks)
-        # print([round(i) for i in peaks])
+        # self.signal_lookback["claps_md"].append(values["claps_md"])
+        # self.signal_lookback["claps_short"].append(values["claps_short"])
+        # self.signal_lookback["drum_binary"] = np.where(timeseries["drums"] > 0.3, 1, 0)
+        # self.signal_lookback["build_rate"].append(values["build_rate"])
 
         frame = Frame(
             **values,
         )
 
+        plot_lookback = 2000
+
+        frame.plot = {
+            # **{
+            #     key: value[-plot_lookback:]
+            #     for key, value in self.signal_lookback.items()
+            # },
+            "drums": timeseries["drums"],
+            "bass": timeseries["bass"],
+            # "all": timeseries["all"][-plot_lookback:],
+            "sustained": self.signal_lookback["sustained"][-len(timeseries["bass"]) :],
+        }
+
         if SHOW_PLOT:
-            self.plotter.step(frame, raw_timeseries, np.abs(X), self.spectrogram_rate)
+            self.plotter.step(
+                frame,
+                raw_timeseries,
+                np.abs([]),
+                self.signal_lookback,
+                self.spectrogram_rate,
+            )
 
         self.director.step(frame)
         self.director.render(self.dmx)
@@ -211,6 +227,7 @@ class MicToDmx(object):
         f, t, Sxx = signal.spectrogram(snd_block, self.avg_rate)
 
         self.spectrogram_rate = len(t) / time_elapsed
+        print(self.spectrogram_rate)
 
         if self.spectrogram_buffer is None:
             self.spectrogram_buffer = Sxx
@@ -227,3 +244,23 @@ class MicToDmx(object):
     # except Exception as e:
     #     print('Error recording: {}'.format(e))
     #     return
+
+    def calc_bpm_spec(self, raw_timeseries):
+
+        # Calculate BPM by getting the FFT of the drum range
+        x = raw_timeseries["bass"][-round(self.spectrogram_rate * 4) :]
+        # x = x - x.mean()
+        # x = x * np.hanning(len(x))
+        X = np.fft.fft(x)
+
+        bpm_range = np.array([40, 180]) / 60 * self.spectrogram_rate
+        X = X[round(bpm_range[0]) : round(bpm_range[1])]
+
+        # Find top 5 peaks
+        peaks = np.argsort(np.abs(X))[-10:]
+        # Convert to Hz
+        peaks = peaks * (self.spectrogram_rate / len(x))
+        # Convert to BPM
+        peaks = peaks * 60
+        peaks = np.sort(peaks)
+        # print([round(i) for i in peaks])

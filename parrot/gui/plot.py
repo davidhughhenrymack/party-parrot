@@ -31,7 +31,7 @@ class Plotter:
         # plt.close()
         # write('output/audio{}.wav'.format(self.plot_counter),RATE,snd_block)
 
-    def step(self, frame, timeseries, bpm_estimate, spectrogram_rate):
+    def step(self, frame, timeseries, bpm_estimate, signal_lookbacks, spectrogram_rate):
 
         if frame.time - self.last_plotted < 10:
             return
@@ -48,7 +48,9 @@ class Plotter:
         plt.xlabel("Time [sec]")
 
         plt.subplot(2, 1, 2)
-        plt.plot(bpm_estimate, label="BPM estimate")
+        for name, y in signal_lookbacks.items():
+            plt.plot(y, label=name)
+        # plt.plot(bpm_estimate, label="BPM estimate")
         # plt.pcolormesh(log_spectrogram, label="Spectrogram")
 
         # plt.draw()

@@ -1381,6 +1381,47 @@
         "documentation": {}
     },
     {
+        "label": "scipy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "scipy",
+        "description": "scipy",
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
         "label": "matplotlib",
         "kind": 6,
         "isExtraImport": true,
@@ -1428,47 +1469,6 @@
         "importPath": "numpy",
         "description": "numpy",
         "detail": "numpy",
-        "documentation": {}
-    },
-    {
-        "label": "scipy",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "scipy",
-        "description": "scipy",
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
         "documentation": {}
     },
     {
@@ -1577,6 +1577,14 @@
         "description": "parrot.gui.gui",
         "isExtraImport": true,
         "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
         "documentation": {}
     },
     {
@@ -1784,7 +1792,7 @@
         "kind": 6,
         "importPath": "parrot.director.phrase_machine",
         "description": "parrot.director.phrase_machine",
-        "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.drums_since = None\n    def step(self, frame):\n        if frame[\"bass\"] < 0.1 and self.drums_since == None:\n            self.drums_since = frame.time\n        if frame[\"bass\"] > 0.2:\n            self.drums_since = None\n            if self.state.phrase == Phrase.breakdown:",
+        "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.drums_since = None\n    def step(self, frame):\n        if frame[\"bass\"] < 0.1 and self.drums_since == None:\n            self.drums_since = frame.time\n        # if frame[\"build_rate\"] > 1.5:\n        #     self.state.set_phrase(Phrase.build)\n        #     return",
         "detail": "parrot.director.phrase_machine",
         "documentation": {}
     },
@@ -2189,7 +2197,7 @@
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(\n            self,",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2198,7 +2206,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2207,7 +2215,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2216,7 +2224,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
+        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2225,7 +2233,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(",
+        "peekOfCode": "CANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -2252,7 +2260,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.bg if frame.time % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1):",
+        "peekOfCode": "class ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.bg if frame.time % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2261,7 +2269,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.bg if frame.time % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1):\n        super().__init__(group)\n        self.multiplier = multiplier\n    def step(self, frame, scheme):\n        for i in self.group:",
+        "peekOfCode": "class ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.bg if frame.time % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):\n        super().__init__(group)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2270,7 +2278,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1):\n        super().__init__(group)\n        self.multiplier = multiplier\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_pan(math.cos(frame.time * self.multiplier) * 127 + 128)\n            i.set_tilt(math.sin(frame.time * self.multiplier) * 127 + 128)\nclass FlashBeat(InterpreterBase):\n    def __init__(self, group):",
+        "peekOfCode": "class MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):\n        super().__init__(group)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_pan(\n                math.cos(frame.time * self.multiplier + self.phase * idx) * 127 + 128\n            )",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3197,7 +3205,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):\n        self._phrase = value\n        self.events.on_phrase_change(self._phrase)",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):\n        if self._phrase == value:\n            return",
         "detail": "parrot.state",
         "documentation": {}
     }
