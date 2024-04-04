@@ -1,5 +1,5 @@
 from events import Events
-from parrot.interpreters.base import Phrase
+from parrot.director.phrase import Phrase
 
 
 class State:

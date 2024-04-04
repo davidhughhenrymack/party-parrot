@@ -1,4 +1,5 @@
-from parrot.fixtures.base import FixtureBase
+from typing import List
+from parrot.fixtures.base import ColorWheelEntry, FixtureBase, GoboWheelEntry
 from parrot.utils.color_extra import color_distance
 from parrot.utils.colour import Color
 from parrot.fixtures.moving_head import MovingHead
@@ -12,15 +13,15 @@ class ChauvetSpot_12Ch(MovingHead):
         name,
         width,
         dmx_layout,
-        color_wheel,
-        gobo_wheel,
+        color_wheel: List[ColorWheelEntry],
+        gobo_wheel: List[GoboWheelEntry],
         pan_lower=270,
         pan_upper=450,
         tilt_lower=0,
         tilt_upper=90,
         dimmer_upper=255,
     ):
-        super().__init__(patch, name, width)
+        super().__init__(patch, name, width, gobo_wheel)
         self.pan_lower = pan_lower / 540 * 255
         self.pan_upper = pan_upper / 540 * 255
         self.pan_range = self.pan_upper - self.pan_lower
@@ -30,7 +31,6 @@ class ChauvetSpot_12Ch(MovingHead):
         self.dimmer_upper = dimmer_upper
         self.dmx_layout = dmx_layout
         self.color_wheel = color_wheel
-        self.gobo_wheel = gobo_wheel
 
         self.set_speed(0)
         self.set_shutter_open()
@@ -77,7 +77,11 @@ class ChauvetSpot_12Ch(MovingHead):
 
     def set_gobo(self, name):
         # Find in the gobo wheel
-        gobo = next(i for i in self.gobo_wheel if i.name == name)
+        acceptable_gobos = [i for i in self.gobo_wheel if i.name == name]
+        if len(acceptable_gobos) == 0:
+            raise ValueError(f"Unknown gobo {name}")
+
+        gobo = acceptable_gobos[0]
         self.set("gobo", gobo.dmx_value)
 
     def set_strobe(self, value):

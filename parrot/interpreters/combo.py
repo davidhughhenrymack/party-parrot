@@ -26,5 +26,5 @@ class Combo(InterpreterBase[T]):
         return f"{' + '.join([i.__class__.__name__ for i in self.interpreters])} {[str(i) for i in self.group]}"
 
 
-def comboify(interpreters: List[InterpreterBase[T]]) -> Combo[T]:
+def combo(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:
     return lambda group: Combo(group, interpreters)

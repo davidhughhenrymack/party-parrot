@@ -200,52 +200,52 @@
         "documentation": {}
     },
     {
-        "label": "dim_color",
-        "importPath": "parrot.utils.color_extra",
-        "description": "parrot.utils.color_extra",
-        "isExtraImport": true,
-        "detail": "parrot.utils.color_extra",
-        "documentation": {}
-    },
-    {
-        "label": "ColorScheme",
-        "importPath": "parrot.director.color_scheme",
-        "description": "parrot.director.color_scheme",
-        "isExtraImport": true,
-        "detail": "parrot.director.color_scheme",
-        "documentation": {}
-    },
-    {
-        "label": "ColorScheme",
-        "importPath": "parrot.director.color_scheme",
-        "description": "parrot.director.color_scheme",
-        "isExtraImport": true,
-        "detail": "parrot.director.color_scheme",
-        "documentation": {}
-    },
-    {
-        "label": "ColorScheme",
-        "importPath": "parrot.director.color_scheme",
-        "description": "parrot.director.color_scheme",
-        "isExtraImport": true,
-        "detail": "parrot.director.color_scheme",
-        "documentation": {}
-    },
-    {
-        "label": "ColorScheme",
-        "importPath": "parrot.director.color_scheme",
-        "description": "parrot.director.color_scheme",
-        "isExtraImport": true,
-        "detail": "parrot.director.color_scheme",
-        "documentation": {}
-    },
-    {
         "label": "random",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "random",
         "description": "random",
         "detail": "random",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
         "documentation": {}
     },
     {
@@ -300,6 +300,22 @@
     },
     {
         "label": "Union",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -411,11 +427,43 @@
         "documentation": {}
     },
     {
+        "label": "Type",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TypeVar",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
         "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
         "documentation": {}
     },
     {
@@ -636,14 +684,6 @@
         "documentation": {}
     },
     {
-        "label": "LedPar",
-        "importPath": "parrot.fixtures.led_par",
-        "description": "parrot.fixtures.led_par",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.led_par",
-        "documentation": {}
-    },
-    {
         "label": "Motionstrip",
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
@@ -692,14 +732,6 @@
         "documentation": {}
     },
     {
-        "label": "Phrase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
         "label": "ColorAlternateBg",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -732,23 +764,7 @@
         "documentation": {}
     },
     {
-        "label": "Phrase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "Phrase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "Phrase",
+        "label": "Noop",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
         "isExtraImport": true,
@@ -836,7 +852,7 @@
         "documentation": {}
     },
     {
-        "label": "Phrase",
+        "label": "InterpreterBase",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
         "isExtraImport": true,
@@ -845,10 +861,42 @@
     },
     {
         "label": "Phrase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
         "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
         "documentation": {}
     },
     {
@@ -961,6 +1009,22 @@
         "description": "parrot.state",
         "isExtraImport": true,
         "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
         "documentation": {}
     },
     {
@@ -988,14 +1052,6 @@
         "documentation": {}
     },
     {
-        "label": "MoverDimAndCircle",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
         "label": "MoverBeatInFan",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
@@ -1004,7 +1060,7 @@
         "documentation": {}
     },
     {
-        "label": "MoverOnAndCircle",
+        "label": "MoverDimAndCircle",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
         "isExtraImport": true,
@@ -1012,7 +1068,7 @@
         "documentation": {}
     },
     {
-        "label": "MoverSequenceAndCircle",
+        "label": "MoverFan",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
         "isExtraImport": true,
@@ -1020,7 +1076,15 @@
         "documentation": {}
     },
     {
-        "label": "MoverSequenceInFan",
+        "label": "MoverNoGobo",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverRandomGobo",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
         "isExtraImport": true,
@@ -1052,7 +1116,23 @@
         "documentation": {}
     },
     {
+        "label": "ColorWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
         "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "GoboWheelEntry",
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
         "isExtraImport": true,
@@ -1077,6 +1157,22 @@
     },
     {
         "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "GoboWheelEntry",
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
         "isExtraImport": true,
@@ -1156,22 +1252,6 @@
         "documentation": {}
     },
     {
-        "label": "Dimmer100",
-        "importPath": "parrot.interpreters.dimmer",
-        "description": "parrot.interpreters.dimmer",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.dimmer",
-        "documentation": {}
-    },
-    {
-        "label": "Dimmer30",
-        "importPath": "parrot.interpreters.dimmer",
-        "description": "parrot.interpreters.dimmer",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.dimmer",
-        "documentation": {}
-    },
-    {
         "label": "DimmersBeatChase",
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
@@ -1220,7 +1300,7 @@
         "documentation": {}
     },
     {
-        "label": "comboify",
+        "label": "combo",
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
         "isExtraImport": true,
@@ -1228,7 +1308,7 @@
         "documentation": {}
     },
     {
-        "label": "comboify",
+        "label": "combo",
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
         "isExtraImport": true,
@@ -1236,11 +1316,19 @@
         "documentation": {}
     },
     {
-        "label": "comboify",
+        "label": "combo",
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
         "isExtraImport": true,
         "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
+        "label": "randomize",
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.randomize",
         "documentation": {}
     },
     {
@@ -1398,47 +1486,6 @@
         "documentation": {}
     },
     {
-        "label": "scipy",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "scipy",
-        "description": "scipy",
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
-        "label": "signal",
-        "importPath": "scipy",
-        "description": "scipy",
-        "isExtraImport": true,
-        "detail": "scipy",
-        "documentation": {}
-    },
-    {
         "label": "distance",
         "importPath": "parrot.utils.math",
         "description": "parrot.utils.math",
@@ -1505,19 +1552,52 @@
         "documentation": {}
     },
     {
+        "label": "scipy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "scipy",
+        "description": "scipy",
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
         "label": "RATE",
         "importPath": "parrot.listeners.mic",
         "description": "parrot.listeners.mic",
         "isExtraImport": true,
         "detail": "parrot.listeners.mic",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
         "documentation": {}
     },
     {
@@ -1714,6 +1794,15 @@
         "documentation": {}
     },
     {
+        "label": "available_colors",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "available_colors = [\n    \"red\",\n    \"green\",\n    \"blue\",\n    \"cyan\",\n    \"magenta\",\n    \"yellow\",\n    \"white\",\n    \"purple\",\n    \"orange\",",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
         "label": "scheme_tropical",
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
@@ -1727,7 +1816,16 @@
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "scheme_standard = [\n    ColorScheme(Color(\"green\"), Color(\"blue\"), Color(\"blue\")),\n    ColorScheme(Color(\"white\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"white\"), Color(\"red\"), Color(\"red\")),\n    ColorScheme(Color(\"white\"), Color(\"red\"), Color(\"purple\")),\n    ColorScheme(Color(\"red\"), Color(\"blue\"), Color(\"blue\")),\n    ColorScheme(Color(\"magenta\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"blue\"), Color(\"purple\"), Color(\"purple\")),\n]\ncolor_schemes = scheme_tropical",
+        "peekOfCode": "scheme_standard = [\n    ColorScheme(Color(\"green\"), Color(\"blue\"), Color(\"blue\")),\n    ColorScheme(Color(\"white\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"white\"), Color(\"red\"), Color(\"red\")),\n    ColorScheme(Color(\"white\"), Color(\"red\"), Color(\"purple\")),\n    ColorScheme(Color(\"red\"), Color(\"blue\"), Color(\"blue\")),\n    ColorScheme(Color(\"magenta\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"blue\"), Color(\"purple\"), Color(\"purple\")),\n]\nscheme_random = [",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "scheme_random",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "scheme_random = [\n    ColorScheme(\n        Color(random.choice(available_colors)),\n        Color(random.choice(available_colors)),\n        Color(random.choice(available_colors)),\n    )\n    for _ in range(10)\n]\ncolor_schemes = scheme_random",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -1736,7 +1834,7 @@
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "color_schemes = scheme_tropical",
+        "peekOfCode": "color_schemes = scheme_random",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -1745,7 +1843,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)\n        self.warmup_complete = False\n        self.state.events.on_phrase_change += lambda s: self.generate_interpreters()\n        self.state.set_phrase(Phrase.intro_outro)",
+        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)\n        self.warmup_complete = False\n        self.state.events.on_phrase_change += lambda s: self.generate_interpreters()\n        self.state.set_phrase(Phrase.general)",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1763,7 +1861,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "SHIFT_AFTER = 2 * 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()",
+        "peekOfCode": "SHIFT_AFTER = 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -1795,6 +1893,15 @@
         "documentation": {}
     },
     {
+        "label": "Phrase",
+        "kind": 5,
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "peekOfCode": "Phrase = Enum(\"Phrase\", [\"general\", \"intro_outro\", \"build\", \"drop\", \"breakdown\"])",
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
         "label": "get_interpreter",
         "kind": 2,
         "importPath": "parrot.director.phrase_interpretations",
@@ -1808,7 +1915,7 @@
         "kind": 5,
         "importPath": "parrot.director.phrase_interpretations",
         "description": "parrot.director.phrase_interpretations",
-        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [\n            comboify([SlowDecay, ColorAlternateBg]),\n            comboify([SlowRespond, ColorAlternateBg]),\n        ],\n    },\n    Phrase.build: {\n        # LEDs off\n        # Moving heads flashing beat, (drawing circles / fixed position)",
+        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [\n            combo(SlowDecay, ColorAlternateBg),\n            combo(SlowRespond, ColorAlternateBg),\n        ],\n    },\n    Phrase.build: {\n        # LEDs off\n        # Moving heads flashing beat, (drawing circles / fixed position)",
         "detail": "parrot.director.phrase_interpretations",
         "documentation": {}
     },
@@ -1826,7 +1933,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.chauvet.base",
         "description": "parrot.fixtures.chauvet.base",
-        "peekOfCode": "class ChauvetSpot_12Ch(MovingHead):\n    def __init__(\n        self,\n        patch,\n        name,\n        width,\n        dmx_layout,\n        color_wheel,\n        gobo_wheel,\n        pan_lower=270,",
+        "peekOfCode": "class ChauvetSpot_12Ch(MovingHead):\n    def __init__(\n        self,\n        patch,\n        name,\n        width,\n        dmx_layout,\n        color_wheel: List[ColorWheelEntry],\n        gobo_wheel: List[GoboWheelEntry],\n        pan_lower=270,",
         "detail": "parrot.fixtures.chauvet.base",
         "documentation": {}
     },
@@ -1952,7 +2059,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
-        "peekOfCode": "class ColorWheelEntry:\n    def __init__(self, color: Color, dmx_value: int):\n        self.color = color\n        self.dmx_value = dmx_value\nclass GoboWheelEntry:\n    def __init__(self, gobo: str, dmx_value: int):\n        self.gobo = gobo\n        self.dmx_value = dmx_value",
+        "peekOfCode": "class ColorWheelEntry:\n    def __init__(self, color: Color, dmx_value: int):\n        self.color = color\n        self.dmx_value = dmx_value\nclass GoboWheelEntry:\n    def __init__(self, gobo: str, dmx_value: int):\n        self.name = gobo\n        self.dmx_value = dmx_value",
         "detail": "parrot.fixtures.base",
         "documentation": {}
     },
@@ -1961,7 +2068,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
-        "peekOfCode": "class GoboWheelEntry:\n    def __init__(self, gobo: str, dmx_value: int):\n        self.gobo = gobo\n        self.dmx_value = dmx_value",
+        "peekOfCode": "class GoboWheelEntry:\n    def __init__(self, gobo: str, dmx_value: int):\n        self.name = gobo\n        self.dmx_value = dmx_value",
         "detail": "parrot.fixtures.base",
         "documentation": {}
     },
@@ -2024,7 +2131,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.moving_head",
         "description": "parrot.fixtures.moving_head",
-        "peekOfCode": "class MovingHead(FixtureBase):\n    def __init__(self, address, name, width):\n        super().__init__(address, name, width)\n        self.pan_angle = 0\n        self.tilt_angle = 0\n    def set_pan_angle(self, value):\n        self.pan_angle = value\n    def get_pan_angle(self):\n        return self.pan_angle\n    def set_tilt_angle(self, value):",
+        "peekOfCode": "class MovingHead(FixtureBase):\n    def __init__(self, address, name, width, gobo_wheel: List[GoboWheelEntry]):\n        super().__init__(address, name, width)\n        self.pan_angle = 0\n        self.tilt_angle = 0\n        self._gobo_wheel = gobo_wheel\n    def set_pan_angle(self, value):\n        self.pan_angle = value\n    def get_pan_angle(self):\n        return self.pan_angle",
         "detail": "parrot.fixtures.moving_head",
         "documentation": {}
     },
@@ -2276,7 +2383,16 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:",
+        "peekOfCode": "class InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass Noop(InterpreterBase):\n    def step(self, frame, scheme):\n        pass",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "Noop",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class Noop(InterpreterBase):\n    def step(self, frame, scheme):\n        pass\nclass ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2285,7 +2401,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.bg if frame.time % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):",
+        "peekOfCode": "class ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2294,7 +2410,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.bg if frame.time % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):\n        super().__init__(group)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):",
+        "peekOfCode": "class ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)\nclass MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):\n        super().__init__(group)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2317,20 +2433,11 @@
         "documentation": {}
     },
     {
-        "label": "Phrase",
-        "kind": 5,
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "peekOfCode": "Phrase = Enum(\"Phrase\", [\"intro_outro\", \"build\", \"drop\", \"breakdown\", \"test\"])\nT = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass ColorFg(InterpreterBase):",
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
         "label": "T",
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass ColorFg(InterpreterBase):\n    def step(self, frame, scheme):",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass Noop(InterpreterBase):\n    def step(self, frame, scheme):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -2344,11 +2451,11 @@
         "documentation": {}
     },
     {
-        "label": "comboify",
+        "label": "combo",
         "kind": 2,
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
-        "peekOfCode": "def comboify(interpreters: List[InterpreterBase[T]]) -> Combo[T]:\n    return lambda group: Combo(group, interpreters)",
+        "peekOfCode": "def combo(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:\n    return lambda group: Combo(group, interpreters)",
         "detail": "parrot.interpreters.combo",
         "documentation": {}
     },
@@ -2474,7 +2581,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "MotionStripBulbBeatAndWiggle = comboify([MotionstripBulbBeat, MoveCircles])\nclass MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        for i in self.group:\n            i.set_dimmer(255)",
+        "peekOfCode": "MotionStripBulbBeatAndWiggle = combo(MotionstripBulbBeat, MoveCircles)\nclass MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        for i in self.group:\n            i.set_dimmer(255)",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -2483,7 +2590,25 @@
         "kind": 6,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "class MoverFan(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for i, fixture in enumerate(group):\n            fixture.set_pan(i * 255 / len(group))\n            fixture.set_tilt(128)\n    def step(self, frame, scheme):\n        pass\nMoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])\nMoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])",
+        "peekOfCode": "class MoverFan(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for i, fixture in enumerate(group):\n            fixture.set_pan(i * 255 / len(group))\n            fixture.set_tilt(128)\n    def step(self, frame, scheme):\n        pass\nclass MoverRandomGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverRandomGobo",
+        "kind": 6,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "class MoverRandomGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for fixture in self.group:\n            fixture.set_gobo(random.choice(fixture.gobo_wheel).name)\nclass MoverNoGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for fixture in self.group:\n            fixture.set_gobo(\"open\")",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverNoGobo",
+        "kind": 6,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "class MoverNoGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for fixture in self.group:\n            fixture.set_gobo(\"open\")\nMoverBeatAndCircle = combo(FlashBeat, MoveCircles, ColorFg)\nMoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)\nMoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2492,7 +2617,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])\nMoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])\nMoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])\nMoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])",
+        "peekOfCode": "MoverBeatAndCircle = combo(FlashBeat, MoveCircles, ColorFg)\nMoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)\nMoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2501,7 +2626,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])\nMoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])\nMoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])",
+        "peekOfCode": "MoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)\nMoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2510,7 +2635,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])\nMoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])\nMoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])",
+        "peekOfCode": "MoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2519,7 +2644,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])\nMoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])\nMoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])",
+        "peekOfCode": "MoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2528,7 +2653,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])\nMoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])",
+        "peekOfCode": "MoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -2537,8 +2662,26 @@
         "kind": 5,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "MoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])",
+        "peekOfCode": "MoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
         "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "randomize",
+        "kind": 2,
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "peekOfCode": "def randomize(*interpreters: List[InterpreterBase[T]]) -> InterpreterBase[T]:\n    return lambda group: random.choice(interpreters)(group)",
+        "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
+        "label": "T",
+        "kind": 5,
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef randomize(*interpreters: List[InterpreterBase[T]]) -> InterpreterBase[T]:\n    return lambda group: random.choice(interpreters)(group)",
+        "detail": "parrot.interpreters.randomize",
         "documentation": {}
     },
     {

@@ -5,19 +5,20 @@ from parrot.interpreters.base import (
     ColorFg,
     InterpreterBase,
     MoveCircles,
-    Phrase,
+    Noop,
 )
+from parrot.director.phrase import Phrase
 from parrot.interpreters.motionstrip import (
     MotionStripBulbBeatAndWiggle,
     MotionstripSlowRespond,
 )
 from parrot.interpreters.movers import (
     MoverBeatAndCircle,
-    MoverDimAndCircle,
     MoverBeatInFan,
-    MoverOnAndCircle,
-    MoverSequenceAndCircle,
-    MoverSequenceInFan,
+    MoverDimAndCircle,
+    MoverFan,
+    MoverNoGobo,
+    MoverRandomGobo,
 )
 from parrot.interpreters.slow import SlowDecay, SlowRespond
 from parrot.fixtures.laser import Laser
@@ -26,15 +27,14 @@ from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.interpreters.latched import DimmerFadeLatched
 from parrot.interpreters.dimmer import (
-    Dimmer100,
-    Dimmer30,
     DimmersBeatChase,
     GentlePulse,
 )
-from parrot.interpreters.combo import comboify
+from parrot.interpreters.combo import combo
 
 import random
 from parrot.interpreters.dimmer import Dimmer0
+from parrot.interpreters.randomize import randomize
 
 
 phrase_interpretations: Dict[
@@ -43,8 +43,8 @@ phrase_interpretations: Dict[
 ] = {
     Phrase.intro_outro: {
         LedPar: [
-            comboify([SlowDecay, ColorAlternateBg]),
-            comboify([SlowRespond, ColorAlternateBg]),
+            combo(SlowDecay, ColorAlternateBg),
+            combo(SlowRespond, ColorAlternateBg),
         ],
     },
     Phrase.build: {
@@ -53,15 +53,15 @@ phrase_interpretations: Dict[
         # Motion strip off or bulb flashing to the beat
         MovingHead: [MoverBeatAndCircle, MoverBeatInFan],
         Motionstrip: [MotionStripBulbBeatAndWiggle],
-        LedPar: [comboify([DimmersBeatChase, ColorAlternateBg])],
+        LedPar: [combo(DimmersBeatChase, ColorAlternateBg)],
     },
     Phrase.drop: {
         # LEDs pulsing vividly
         # Moving sequencing on, drawing circles. maybe strobing
         # Motion strip swishing
         # lasers on during intense moments
-        LedPar: [comboify([SlowDecay, ColorAlternateBg])],
-        MovingHead: [comboify([DimmersBeatChase, ColorFg, MoveCircles])],
+        LedPar: [combo(SlowDecay, ColorAlternateBg)],
+        MovingHead: [combo(DimmersBeatChase, ColorFg, MoveCircles)],
         Motionstrip: [MotionstripSlowRespond],
         Laser: [DimmerFadeLatched],
     },
@@ -69,15 +69,35 @@ phrase_interpretations: Dict[
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
-        LedPar: [comboify([GentlePulse, ColorAlternateBg])],
+        LedPar: [combo(GentlePulse, ColorAlternateBg)],
         MovingHead: [MoverDimAndCircle],
-        Motionstrip: [comboify([SlowRespond, ColorFg, MoveCircles])],
+        Motionstrip: [combo(SlowRespond, ColorFg, MoveCircles)],
     },
-    Phrase.test: {
-        LedPar: [comboify([Dimmer30, ColorFg])],
-        MovingHead: [MoverOnAndCircle],
-        Motionstrip: [MoverDimAndCircle],
-        Laser: [Dimmer100],
+    Phrase.general: {
+        LedPar: [
+            combo(
+                randomize(GentlePulse, SlowRespond, DimmersBeatChase),
+                ColorAlternateBg,
+            ),
+        ],
+        MovingHead: [
+            combo(
+                randomize(DimmersBeatChase, SlowDecay, GentlePulse),
+                ColorFg,
+                randomize(MoveCircles, MoverFan),
+                randomize(MoverRandomGobo, MoverNoGobo, MoverNoGobo, MoverNoGobo),
+            )
+        ],
+        Motionstrip: [
+            MotionstripSlowRespond,
+            combo(
+                randomize(SlowRespond, DimmersBeatChase),
+                randomize(ColorFg, ColorAlternateBg),
+                MoveCircles,
+            ),
+            MotionStripBulbBeatAndWiggle,
+        ],
+        Laser: [DimmerFadeLatched],
     },
 }
 

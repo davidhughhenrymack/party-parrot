@@ -1,3 +1,4 @@
+import random
 from parrot.interpreters.base import (
     ColorFg,
     FlashBeat,
@@ -5,7 +6,7 @@ from parrot.interpreters.base import (
     MoveCircles,
 )
 from parrot.interpreters.dimmer import Dimmer100, Dimmer30, SequenceDimmers
-from parrot.interpreters.combo import comboify
+from parrot.interpreters.combo import combo
 from parrot.fixtures.moving_head import MovingHead
 
 
@@ -21,9 +22,25 @@ class MoverFan(InterpreterBase[MovingHead]):
         pass
 
 
-MoverBeatAndCircle = comboify([FlashBeat, MoveCircles, ColorFg])
-MoverBeatInFan = comboify([FlashBeat, MoverFan, ColorFg])
-MoverSequenceAndCircle = comboify([MoveCircles, ColorFg, SequenceDimmers])
-MoverSequenceInFan = comboify([SequenceDimmers, MoverFan, ColorFg])
-MoverDimAndCircle = comboify([MoveCircles, ColorFg, Dimmer30])
-MoverOnAndCircle = comboify([MoveCircles, ColorFg, Dimmer100])
+class MoverRandomGobo(InterpreterBase[MovingHead]):
+    def __init__(self, group):
+        super().__init__(group)
+
+        for fixture in self.group:
+            fixture.set_gobo(random.choice(fixture.gobo_wheel).name)
+
+
+class MoverNoGobo(InterpreterBase[MovingHead]):
+    def __init__(self, group):
+        super().__init__(group)
+
+        for fixture in self.group:
+            fixture.set_gobo("open")
+
+
+MoverBeatAndCircle = combo(FlashBeat, MoveCircles, ColorFg)
+MoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)
+MoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)
+MoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)
+MoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)
+MoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)

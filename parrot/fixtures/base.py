@@ -53,5 +53,5 @@ class ColorWheelEntry:
 
 class GoboWheelEntry:
     def __init__(self, gobo: str, dmx_value: int):
-        self.gobo = gobo
+        self.name = gobo
         self.dmx_value = dmx_value

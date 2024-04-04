@@ -1,13 +1,10 @@
 import json
-import math
 import os
-import scipy
 from tkinter import *
 
 from parrot.state import State
-from parrot.interpreters.base import Phrase
+from parrot.director.phrase import Phrase
 from parrot.patch_bay import patch_bay
-from parrot.utils.color_extra import dim_color
 from .fixtures.factory import renderer_for_fixture
 from parrot.utils.math import distance
 
@@ -105,14 +102,12 @@ class Window(Tk):
         closest = 999999999
         for i in self.fixture_renderers:
             dist = distance(event.x, i.x, event.y, i.y)
-            print(dist, i)
             if dist < closest and dist < 100:
                 self._drag_data["item"] = i
                 closest = dist
 
         self._drag_data["x"] = event.x
         self._drag_data["y"] = event.y
-        print(self._drag_data)
 
     def drag_stop(self, event):
         """End drag of an object"""

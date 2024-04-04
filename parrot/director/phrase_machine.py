@@ -1,4 +1,4 @@
-from parrot.interpreters.base import Phrase
+from parrot.director.phrase import Phrase
 from parrot.state import State
 
 

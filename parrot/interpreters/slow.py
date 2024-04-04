@@ -1,8 +1,8 @@
 import parrot.fixtures
 from typing import List
 from parrot.director.frame import Frame
-from parrot.fixtures.led_par import LedPar
-from parrot.interpreters.base import InterpreterBase, Phrase
+from parrot.interpreters.base import InterpreterBase
+
 from parrot.utils.lerp import lerp
 from parrot.director.color_scheme import ColorScheme
 import math

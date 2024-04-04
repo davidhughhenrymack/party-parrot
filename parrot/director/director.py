@@ -12,7 +12,8 @@ from parrot.fixtures.motionstrip import Motionstrip
 
 from parrot.director.color_schemes import color_schemes
 
-from parrot.interpreters.base import InterpreterBase, Phrase
+from parrot.interpreters.base import InterpreterBase
+from parrot.director.phrase import Phrase
 from parrot.fixtures.laser import Laser
 from .phrase_interpretations import get_interpreter
 
@@ -20,7 +21,7 @@ from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
 
-SHIFT_AFTER = 2 * 60
+SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "40")), 1)
 MAX_INTENSITY = 1
 
@@ -40,7 +41,7 @@ class Director:
 
         self.warmup_complete = False
         self.state.events.on_phrase_change += lambda s: self.generate_interpreters()
-        self.state.set_phrase(Phrase.intro_outro)
+        self.state.set_phrase(Phrase.general)
 
     def generate_interpreters(self):
 
@@ -63,6 +64,7 @@ class Director:
     def shift(self):
         s = random.choice(color_schemes)
         self.scheme.push(s)
+        self.generate_interpreters()
         self.last_shift_time = time.time()
 
     def step(self, frame: Frame):

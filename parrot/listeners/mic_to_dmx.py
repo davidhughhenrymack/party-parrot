@@ -114,7 +114,7 @@ class MicToDmx(object):
         stream.start_stream()
         return stream
 
-    def processBlockPower(self, spectrogram_block):
+    def processBlockPower(self, spectrogram_block, num_idx_added):
         ranges = {
             "all": (0, 129),
             "drums": (60, 129),
@@ -126,8 +126,8 @@ class MicToDmx(object):
 
         raw_timeseries = {}
 
-        for name, range in ranges.items():
-            x = np.sum(np.abs(spectrogram_block[range[0] : range[1], :]), axis=0)
+        for name, rg in ranges.items():
+            x = np.sum(np.abs(spectrogram_block[rg[0] : rg[1], :]), axis=0)
             raw_timeseries[name] = x
             N = round(RATE / 5000)
             x = np.convolve(x, np.ones(N) / N, mode="valid")
@@ -156,7 +156,9 @@ class MicToDmx(object):
         # self.signal_lookback["drum_binary"] = np.where(timeseries["drums"] > 0.3, 1, 0)
         # self.signal_lookback["build_rate"].append(values["build_rate"])
 
-        self.signal_lookback["sustained"].append(sustained)
+        self.signal_lookback["sustained"].extend(
+            [sustained for i in range(num_idx_added)]
+        )
         self.signal_lookback["sustained"] = self.signal_lookback["sustained"][
             -SPECTOGRAPH_BUFFER_SIZE:
         ]
@@ -164,8 +166,6 @@ class MicToDmx(object):
         frame = Frame(
             **values,
         )
-
-        plot_lookback = 2000
 
         frame.plot = {
             # **{
@@ -175,7 +175,7 @@ class MicToDmx(object):
             "drums": timeseries["drums"],
             "bass": timeseries["bass"],
             # "all": timeseries["all"][-plot_lookback:],
-            "sustained": self.signal_lookback["sustained"][-len(timeseries["bass"]) :],
+            "sustained": self.signal_lookback["sustained"],
         }
 
         if SHOW_PLOT:
@@ -240,7 +240,7 @@ class MicToDmx(object):
             )
 
         self.spectrogram_buffer = self.spectrogram_buffer[:, -SPECTOGRAPH_BUFFER_SIZE:]
-        self.processBlockPower(self.spectrogram_buffer)
+        self.processBlockPower(self.spectrogram_buffer, len(t))
 
     # except Exception as e:
     #     print('Error recording: {}'.format(e))

@@ -3,7 +3,7 @@ import random
 from typing import List
 from parrot.interpreters.base import InterpreterBase, MoveCircles
 from parrot.fixtures.motionstrip import Motionstrip38
-from parrot.interpreters.combo import comboify
+from parrot.interpreters.combo import combo
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import clamp
 from parrot.utils.lerp import lerp
@@ -41,7 +41,7 @@ class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):
             self.on = False
 
 
-MotionStripBulbBeatAndWiggle = comboify([MotionstripBulbBeat, MoveCircles])
+MotionStripBulbBeatAndWiggle = combo(MotionstripBulbBeat, MoveCircles)
 
 
 class MotionstripWaveform(InterpreterBase[Motionstrip38]):
