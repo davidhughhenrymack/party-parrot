@@ -63,7 +63,6 @@ class ChauvetSpot_12Ch(MovingHead):
         self.set("speed", value)
 
     def set_color(self, color: Color):
-        super().set_color(color)
         # Find the closest color in the color wheel
         closest = None
         for entry in self.color_wheel:
@@ -74,6 +73,7 @@ class ChauvetSpot_12Ch(MovingHead):
 
         # Set the color wheel value
         self.set("color_wheel", closest.dmx_value)
+        super().set_color(closest.color)
 
     def set_gobo(self, name):
         # Find in the gobo wheel

@@ -1,0 +1,3550 @@
+[
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Lerpable",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "LerpAnimator",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "isExtraImport": true,
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "color_distance",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "color_distance",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "random",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "random",
+        "description": "random",
+        "detail": "random",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Union",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Generic",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TypeVar",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Generic",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TypeVar",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Type",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TypeVar",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TypeVar",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Type",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TypeVar",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "PhraseMachine",
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "parrot.fixtures",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "laser",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot160_12Ch",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot120_12Ch",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip38",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FiveBeamLaser",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "TwoBeamLaser",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "patch_bay",
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "isExtraImport": true,
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "patch_bay",
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "isExtraImport": true,
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip",
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip",
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip",
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip38",
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "color_schemes",
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorAlternateBg",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorBg",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorFg",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorRainbow",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "MoveCircles",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "MoveNod",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "Noop",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "MoveCircles",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorFg",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "FlashBeat",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "MoveCircles",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "isExtraImport": true,
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "isExtraImport": true,
+        "detail": "parrot.state",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
+        "documentation": {}
+    },
+    {
+        "label": "MotionStripBulbBeatAndWiggle",
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripSlowRespond",
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MoverBeatAndCircle",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverBeatInFan",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverDimAndCircle",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverFan",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverNoGobo",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverRandomGobo",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "SlowDecay",
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
+        "label": "SlowRespond",
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "GoboWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "GoboWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "GoboWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "DimmerFadeLatched",
+        "importPath": "parrot.interpreters.latched",
+        "description": "parrot.interpreters.latched",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.latched",
+        "documentation": {}
+    },
+    {
+        "label": "DimmerFadeLatchedRandom",
+        "importPath": "parrot.interpreters.latched",
+        "description": "parrot.interpreters.latched",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.latched",
+        "documentation": {}
+    },
+    {
+        "label": "DimmersBeatChase",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "GentlePulse",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "SequenceDimmers",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "SequenceFadeDimmers",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer0",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer100",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer30",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "SequenceDimmers",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "combo",
+        "importPath": "parrot.interpreters.combo",
+        "description": "parrot.interpreters.combo",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
+        "label": "combo",
+        "importPath": "parrot.interpreters.combo",
+        "description": "parrot.interpreters.combo",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
+        "label": "combo",
+        "importPath": "parrot.interpreters.combo",
+        "description": "parrot.interpreters.combo",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
+        "label": "randomize",
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
+        "label": "weighted_randomize",
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot_12Ch",
+        "importPath": "parrot.fixtures.chauvet.base",
+        "description": "parrot.fixtures.chauvet.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.base",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot_12Ch",
+        "importPath": "parrot.fixtures.chauvet.base",
+        "description": "parrot.fixtures.chauvet.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.base",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_clamp",
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_controller",
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "kebab_case",
+        "importPath": "parrot.utils.string",
+        "description": "parrot.utils.string",
+        "isExtraImport": true,
+        "detail": "parrot.utils.string",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "*",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureGuiRenderer",
+        "importPath": "parrot.gui.fixtures.base",
+        "description": "parrot.gui.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "BulbRenderer",
+        "importPath": "parrot.gui.fixtures.bulb",
+        "description": "parrot.gui.fixtures.bulb",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.bulb",
+        "documentation": {}
+    },
+    {
+        "label": "LaserRenderer",
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripRenderer",
+        "importPath": "parrot.gui.fixtures.motionstrip",
+        "description": "parrot.gui.fixtures.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHeadRenderer",
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "math",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "math",
+        "description": "math",
+        "detail": "math",
+        "documentation": {}
+    },
+    {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "distance",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib",
+        "description": "matplotlib",
+        "detail": "matplotlib",
+        "documentation": {}
+    },
+    {
+        "label": "pyplot",
+        "importPath": "matplotlib",
+        "description": "matplotlib",
+        "isExtraImport": true,
+        "detail": "matplotlib",
+        "documentation": {}
+    },
+    {
+        "label": "LogNorm",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "LogNorm",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "LogNorm",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
+        "label": "scipy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "scipy",
+        "description": "scipy",
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "importPath": "scipy",
+        "description": "scipy",
+        "isExtraImport": true,
+        "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "RATE",
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "isExtraImport": true,
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "Ftdi",
+        "importPath": "pyftdi.ftdi",
+        "description": "pyftdi.ftdi",
+        "isExtraImport": true,
+        "detail": "pyftdi.ftdi",
+        "documentation": {}
+    },
+    {
+        "label": "pyaudio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pyaudio",
+        "description": "pyaudio",
+        "detail": "pyaudio",
+        "documentation": {}
+    },
+    {
+        "label": "struct",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "struct",
+        "description": "struct",
+        "detail": "struct",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib.pyplot",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib.pyplot",
+        "description": "matplotlib.pyplot",
+        "detail": "matplotlib.pyplot",
+        "documentation": {}
+    },
+    {
+        "label": "write",
+        "importPath": "scipy.io.wavfile",
+        "description": "scipy.io.wavfile",
+        "isExtraImport": true,
+        "detail": "scipy.io.wavfile",
+        "documentation": {}
+    },
+    {
+        "label": "write",
+        "importPath": "scipy.io.wavfile",
+        "description": "scipy.io.wavfile",
+        "isExtraImport": true,
+        "detail": "scipy.io.wavfile",
+        "documentation": {}
+    },
+    {
+        "label": "sys",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
+        "label": "Director",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Plotter",
+        "importPath": "parrot.gui.plot",
+        "description": "parrot.gui.plot",
+        "isExtraImport": true,
+        "detail": "parrot.gui.plot",
+        "documentation": {}
+    },
+    {
+        "label": "Window",
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "isExtraImport": true,
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "torch",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "torch",
+        "description": "torch",
+        "detail": "torch",
+        "documentation": {}
+    },
+    {
+        "label": "Separator",
+        "importPath": "spleeter.separator",
+        "description": "spleeter.separator",
+        "isExtraImport": true,
+        "detail": "spleeter.separator",
+        "documentation": {}
+    },
+    {
+        "label": "with_statement",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "print_function",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "hashlib",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "hashlib",
+        "description": "hashlib",
+        "detail": "hashlib",
+        "documentation": {}
+    },
+    {
+        "label": "re",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "re",
+        "description": "re",
+        "detail": "re",
+        "documentation": {}
+    },
+    {
+        "label": "Controller",
+        "importPath": "DMXEnttecPro",
+        "description": "DMXEnttecPro",
+        "isExtraImport": true,
+        "detail": "DMXEnttecPro",
+        "documentation": {}
+    },
+    {
+        "label": "MockDmxController",
+        "importPath": "parrot.utils.mock_controller",
+        "description": "parrot.utils.mock_controller",
+        "isExtraImport": true,
+        "detail": "parrot.utils.mock_controller",
+        "documentation": {}
+    },
+    {
+        "label": "traceback",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "traceback",
+        "description": "traceback",
+        "detail": "traceback",
+        "documentation": {}
+    },
+    {
+        "label": "MicToDmx",
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "isExtraImport": true,
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "Events",
+        "importPath": "events",
+        "description": "events",
+        "isExtraImport": true,
+        "detail": "events",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "kind": 6,
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "peekOfCode": "class ColorScheme(Lerpable):\n    def __init__(self, fg: Color, bg: Color, bg_contrast: Color):\n        self.fg = fg\n        self.bg = bg\n        self.bg_contrast = bg_contrast\n    def lerp(self, other, t):\n        return ColorScheme(\n            lerp_color(self.fg, other.fg, t),\n            lerp_color(self.bg, other.bg, t),\n            lerp_color(self.bg_contrast, other.bg_contrast, t),",
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
+        "label": "generate_random_scheme",
+        "kind": 2,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "def generate_random_scheme():\n    fg = Color(key)\n    bg = Color(key)\n    bg_contrast = Color(key)\n    method = random.choice([\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"])\n    match method:\n        case \"contrasting\":\n            bg.set_hue((key.hue + 0.5) % 1)\n            fg = Color(\"white\")\n        case \"thick\":",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "available_colors",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "available_colors = [\n    \"red\",\n    \"green\",\n    \"blue\",\n    \"cyan\",\n    \"magenta\",\n    \"yellow\",\n    \"white\",\n    \"purple\",\n    \"orange\",",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "scheme_tropical",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "scheme_tropical = [\n    ColorScheme(Color(\"green\"), Color(\"blue\"), Color(\"blue\")),\n    ColorScheme(Color(\"white\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"white\"), Color(\"green\"), Color(\"purple\")),\n    ColorScheme(Color(\"white\"), Color(\"green\"), Color(\"yellow\")),\n    ColorScheme(Color(\"magenta\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"blue\"), Color(\"purple\"), Color(\"purple\")),\n]\nscheme_standard = [\n    ColorScheme(Color(\"green\"), Color(\"blue\"), Color(\"blue\")),",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "scheme_standard",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "scheme_standard = [\n    ColorScheme(Color(\"green\"), Color(\"blue\"), Color(\"blue\")),\n    ColorScheme(Color(\"white\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"white\"), Color(\"red\"), Color(\"red\")),\n    ColorScheme(Color(\"white\"), Color(\"red\"), Color(\"purple\")),\n    ColorScheme(Color(\"red\"), Color(\"blue\"), Color(\"blue\")),\n    ColorScheme(Color(\"magenta\"), Color(\"blue\"), Color(\"purple\")),\n    ColorScheme(Color(\"blue\"), Color(\"purple\"), Color(\"purple\")),\n]\nkey = Color(\"red\")",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "key",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "key = Color(\"red\")\nkey.set_hue(random.random())\ndef generate_random_scheme():\n    fg = Color(key)\n    bg = Color(key)\n    bg_contrast = Color(key)\n    method = random.choice([\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"])\n    match method:\n        case \"contrasting\":\n            bg.set_hue((key.hue + 0.5) % 1)",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "scheme_random",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "scheme_random = [generate_random_scheme() for _ in range(10)]\ncolor_schemes = scheme_random",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "color_schemes",
+        "kind": 5,
+        "importPath": "parrot.director.color_schemes",
+        "description": "parrot.director.color_schemes",
+        "peekOfCode": "color_schemes = scheme_random",
+        "detail": "parrot.director.color_schemes",
+        "documentation": {}
+    },
+    {
+        "label": "Director",
+        "kind": 6,
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)\n        self.warmup_complete = False\n        self.state.events.on_phrase_change += lambda s: self.generate_interpreters()\n        self.state.set_phrase(Phrase.general)",
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "filter_nones",
+        "kind": 2,
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)\n        self.warmup_complete = False",
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "SHIFT_AFTER",
+        "kind": 5,
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "peekOfCode": "SHIFT_AFTER = 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()",
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "WARMUP_SECONDS",
+        "kind": 5,
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nMAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state",
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "MAX_INTENSITY",
+        "kind": 5,
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "peekOfCode": "MAX_INTENSITY = 1\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)",
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "kind": 6,
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "peekOfCode": "class Frame:\n    def __init__(self, **kwargs):\n        self.time = time.time()\n        self.all = kwargs.get(\"all\", 0)\n        self.drums = kwargs.get(\"drums\", 0)\n        self.bass = kwargs.get(\"bass\", 0)\n        self.kwargs = kwargs\n    def __getitem__(self, __name: str) -> Any:\n        return self.kwargs.get(__name)\n    def __str__(self):",
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Phrase",
+        "kind": 5,
+        "importPath": "parrot.director.phrase",
+        "description": "parrot.director.phrase",
+        "peekOfCode": "Phrase = Enum(\"Phrase\", [\"general\", \"intro_outro\", \"build\", \"drop\", \"breakdown\"])",
+        "detail": "parrot.director.phrase",
+        "documentation": {}
+    },
+    {
+        "label": "get_interpreter",
+        "kind": 2,
+        "importPath": "parrot.director.phrase_interpretations",
+        "description": "parrot.director.phrase_interpretations",
+        "peekOfCode": "def get_interpreter(\n    phrase: Phrase, fixture_group: List[FixtureBase]\n) -> Union[InterpreterBase]:\n    for k, v in phrase_interpretations[phrase].items():\n        if isinstance(fixture_group, list) and isinstance(fixture_group[0], k):\n            c = random.choice(v)\n            interp = c(fixture_group)\n            return interp\n    return Dimmer0(fixture_group)",
+        "detail": "parrot.director.phrase_interpretations",
+        "documentation": {}
+    },
+    {
+        "label": "]",
+        "kind": 5,
+        "importPath": "parrot.director.phrase_interpretations",
+        "description": "parrot.director.phrase_interpretations",
+        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [\n            combo(SlowDecay, ColorAlternateBg),\n            combo(SlowRespond, ColorAlternateBg),\n        ],\n    },\n    Phrase.build: {\n        # LEDs off\n        # Moving heads flashing beat, (drawing circles / fixed position)",
+        "detail": "parrot.director.phrase_interpretations",
+        "documentation": {}
+    },
+    {
+        "label": "PhraseMachine",
+        "kind": 6,
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.drums_since = None\n    def step(self, frame):\n        # if frame[\"build_rate\"] > 1.5:\n        #     self.state.set_phrase(Phrase.build)\n        #     return\n        # if self.state.phrase == Phrase.build and frame[\"build_rate\"] < 0.5:\n        #     self.state.set_phrase(Phrase.drop)",
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot_12Ch",
+        "kind": 6,
+        "importPath": "parrot.fixtures.chauvet.base",
+        "description": "parrot.fixtures.chauvet.base",
+        "peekOfCode": "class ChauvetSpot_12Ch(MovingHead):\n    def __init__(\n        self,\n        patch,\n        name,\n        width,\n        dmx_layout,\n        color_wheel: List[ColorWheelEntry],\n        gobo_wheel: List[GoboWheelEntry],\n        pan_lower=270,",
+        "detail": "parrot.fixtures.chauvet.base",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot120_12Ch",
+        "kind": 6,
+        "importPath": "parrot.fixtures.chauvet.chauvet120",
+        "description": "parrot.fixtures.chauvet.chauvet120",
+        "peekOfCode": "class ChauvetSpot120_12Ch(ChauvetSpot_12Ch):\n    def __init__(\n        self,\n        patch,\n        pan_lower=270,\n        pan_upper=450,\n        tilt_lower=0,\n        tilt_upper=90,\n        dimmer_upper=255,\n    ):",
+        "detail": "parrot.fixtures.chauvet.chauvet120",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_layout",
+        "kind": 5,
+        "importPath": "parrot.fixtures.chauvet.chauvet120",
+        "description": "parrot.fixtures.chauvet.chauvet120",
+        "peekOfCode": "dmx_layout = {\n    \"pan_coarse\": 0,\n    \"pan_fine\": 1,\n    \"tilt_coarse\": 2,\n    \"tilt_fine\": 3,\n    \"speed\": 4,\n    \"color_wheel\": 5,\n    \"shutter\": 6,\n    \"dimmer\": 7,\n    \"gobo_wheel\": 8,",
+        "detail": "parrot.fixtures.chauvet.chauvet120",
+        "documentation": {}
+    },
+    {
+        "label": "color_wheel",
+        "kind": 5,
+        "importPath": "parrot.fixtures.chauvet.chauvet120",
+        "description": "parrot.fixtures.chauvet.chauvet120",
+        "peekOfCode": "color_wheel = [\n    ColorWheelEntry(Color(\"white\"), 0),\n    ColorWheelEntry(Color(\"red\"), 40),\n    ColorWheelEntry(Color(\"green\"), 70),\n    ColorWheelEntry(Color(\"blue\"), 100),\n    ColorWheelEntry(Color(\"yellow\"), 140),\n    ColorWheelEntry(Color(\"magenta\"), 170),\n    ColorWheelEntry(Color(\"AntiqueWhite\"), 200),\n    ColorWheelEntry(Color(\"cyan\"), 230),\n]",
+        "detail": "parrot.fixtures.chauvet.chauvet120",
+        "documentation": {}
+    },
+    {
+        "label": "gobo_wheel",
+        "kind": 5,
+        "importPath": "parrot.fixtures.chauvet.chauvet120",
+        "description": "parrot.fixtures.chauvet.chauvet120",
+        "peekOfCode": "gobo_wheel = [\n    GoboWheelEntry(\"open\", 0),\n    GoboWheelEntry(\"wood\", 40),\n    GoboWheelEntry(\"spiral\", 80),\n    GoboWheelEntry(\"dots\", 110),\n    GoboWheelEntry(\"squares\", 150),\n    GoboWheelEntry(\"three\", 180),\n    GoboWheelEntry(\"circles\", 200),\n    GoboWheelEntry(\"ring\", 255),\n]",
+        "detail": "parrot.fixtures.chauvet.chauvet120",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot160_12Ch",
+        "kind": 6,
+        "importPath": "parrot.fixtures.chauvet.chauvet160",
+        "description": "parrot.fixtures.chauvet.chauvet160",
+        "peekOfCode": "class ChauvetSpot160_12Ch(ChauvetSpot_12Ch):\n    def __init__(\n        self,\n        patch,\n        pan_lower=360,\n        pan_upper=360 + 180,\n        tilt_lower=0,\n        tilt_upper=90,\n        dimmer_upper=255,\n    ):",
+        "detail": "parrot.fixtures.chauvet.chauvet160",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_layout",
+        "kind": 5,
+        "importPath": "parrot.fixtures.chauvet.chauvet160",
+        "description": "parrot.fixtures.chauvet.chauvet160",
+        "peekOfCode": "dmx_layout = {\n    \"pan_coarse\": 0,\n    \"pan_fine\": 1,\n    \"tilt_coarse\": 2,\n    \"tilt_fine\": 3,\n    \"speed\": 4,\n    \"color_wheel\": 5,\n    \"gobo_wheel\": 6,\n    \"dimmer\": 7,\n    \"shutter\": 8,",
+        "detail": "parrot.fixtures.chauvet.chauvet160",
+        "documentation": {}
+    },
+    {
+        "label": "color_wheel",
+        "kind": 5,
+        "importPath": "parrot.fixtures.chauvet.chauvet160",
+        "description": "parrot.fixtures.chauvet.chauvet160",
+        "peekOfCode": "color_wheel = [\n    ColorWheelEntry(Color(\"white\"), 0),\n    ColorWheelEntry(Color(\"red\"), 12),\n    ColorWheelEntry(Color(\"orange\"), 16),\n    ColorWheelEntry(Color(\"yellow\"), 22),\n    ColorWheelEntry(Color(\"green\"), 30),\n    ColorWheelEntry(Color(\"blue\"), 37),\n    ColorWheelEntry(Color(\"AntiqueWhite\"), 46),\n    ColorWheelEntry(Color(\"cyan\"), 52),\n    ColorWheelEntry(Color(\"magenta\"), 58),",
+        "detail": "parrot.fixtures.chauvet.chauvet160",
+        "documentation": {}
+    },
+    {
+        "label": "gobo_wheel",
+        "kind": 5,
+        "importPath": "parrot.fixtures.chauvet.chauvet160",
+        "description": "parrot.fixtures.chauvet.chauvet160",
+        "peekOfCode": "gobo_wheel = [\n    GoboWheelEntry(\"open\", 0),\n]\nclass ChauvetSpot160_12Ch(ChauvetSpot_12Ch):\n    def __init__(\n        self,\n        patch,\n        pan_lower=360,\n        pan_upper=360 + 180,\n        tilt_lower=0,",
+        "detail": "parrot.fixtures.chauvet.chauvet160",
+        "documentation": {}
+    },
+    {
+        "label": "TwoBeamLaser",
+        "kind": 6,
+        "importPath": "parrot.fixtures.oultia.laser",
+        "description": "parrot.fixtures.oultia.laser",
+        "peekOfCode": "class TwoBeamLaser(Laser):\n    def __init__(self, address):\n        super().__init__(address, \"oultia 2 beam laser\", 10)\n        self.set_pattern(14)\n        self.values[2] = 204\n        self.values[3] = 102\n        self.values[4] = 170\n        self.values[5] = 135\n    def set_mode(self, value):\n        # 0 - Manual",
+        "detail": "parrot.fixtures.oultia.laser",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_layout",
+        "kind": 5,
+        "importPath": "parrot.fixtures.oultia.laser",
+        "description": "parrot.fixtures.oultia.laser",
+        "peekOfCode": "dmx_layout = [\n    \"mode\",\n    \"pattern\",\n    \"angle_control\",\n    \"horizontal_angle\",\n    \"vertical_angle\",\n    \"horizontal_position\",\n    \"vertical_position\",\n    \"size\",\n    \"color\",",
+        "detail": "parrot.fixtures.oultia.laser",
+        "documentation": {}
+    },
+    {
+        "label": "FiveBeamLaser",
+        "kind": 6,
+        "importPath": "parrot.fixtures.uking.laser",
+        "description": "parrot.fixtures.uking.laser",
+        "peekOfCode": "class FiveBeamLaser(Laser):\n    def __init__(self, address):\n        super().__init__(address, \"uking 5 beam laser\", 13)\n        self.set_mode(0)\n        self.set_pan(0)\n        self.set_tilt(0)\n        self.set_pattern(50)\n        self.values[10] = 200\n    def set_mode(self, value):\n        # 0 - Manual",
+        "detail": "parrot.fixtures.uking.laser",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_layout",
+        "kind": 5,
+        "importPath": "parrot.fixtures.uking.laser",
+        "description": "parrot.fixtures.uking.laser",
+        "peekOfCode": "dmx_layout = [\n    \"mode\",\n    \"dimmer1_green\",\n    \"dimmer2_yellow\",\n    \"dimmer3_blue\",\n    \"dimmer4_green\",\n    \"dimmer5_red\",\n    \"pattern\",\n    \"pan\",\n    \"tilt\",",
+        "detail": "parrot.fixtures.uking.laser",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
+        "kind": 6,
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "peekOfCode": "class FixtureBase:\n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n        self.color_value = Color(\"black\")\n        self.dimmer_value = 0\n    def set_color(self, color: Color):\n        self.color_value = color",
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorWheelEntry",
+        "kind": 6,
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "peekOfCode": "class ColorWheelEntry:\n    def __init__(self, color: Color, dmx_value: int):\n        self.color = color\n        self.dmx_value = dmx_value\nclass GoboWheelEntry:\n    def __init__(self, gobo: str, dmx_value: int):\n        self.name = gobo\n        self.dmx_value = dmx_value",
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "GoboWheelEntry",
+        "kind": 6,
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "peekOfCode": "class GoboWheelEntry:\n    def __init__(self, gobo: str, dmx_value: int):\n        self.name = gobo\n        self.dmx_value = dmx_value",
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "Laser",
+        "kind": 6,
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "peekOfCode": "class Laser(FixtureBase):\n    pass",
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "LedPar",
+        "kind": 6,
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "peekOfCode": "class LedPar(FixtureBase):\n    def __init__(self, patch):\n        super().__init__(patch, \"led par\", 7)\n    def set_dimmer(self, value):\n        super().set_dimmer(value)\n        self.values[0] = value\n    def set_strobe(self, value):\n        self.values[4] = value\n    def set_color(self, color):\n        super().set_color(color)",
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip",
+        "kind": 6,
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "peekOfCode": "class Motionstrip(FixtureBase):\n    def __init__(self, address, name, width):\n        super().__init__(address, name, width)\nclass Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(patch, \"motionstrip 38\", 38)\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.set_pan_speed(128)",
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "Motionstrip38",
+        "kind": 6,
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "peekOfCode": "class Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(patch, \"motionstrip 38\", 38)\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.set_pan_speed(128)\n        self.bulb_colors = [Color(\"black\") for i in range(8)]\n    def set_dimmer(self, value):\n        super().set_dimmer(value)",
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "color_to_rgbw",
+        "kind": 2,
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "peekOfCode": "def color_to_rgbw(color: Color):\n    if color.get_saturation() < 0.1:\n        return (0, 0, 0, color.luminance * 255)\n    else:\n        return (color.red * 255, color.green * 255, color.blue * 255, 0)\nclass Motionstrip(FixtureBase):\n    def __init__(self, address, name, width):\n        super().__init__(address, name, width)\nclass Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):",
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_layout",
+        "kind": 5,
+        "importPath": "parrot.fixtures.motionstrip",
+        "description": "parrot.fixtures.motionstrip",
+        "peekOfCode": "dmx_layout = [\n    \"pan\",\n    \"pan_speed\",\n    [\"built_in_program\", 0],\n    \"built_in_program_speed\",\n    \"master_dimmer\",\n    \"strobe\" \"bulb 1: RGBW\",\n    \"bulb 2: RGBW\",\n    \"bulb 3: RGBW\",\n    \"bulb 4: RGBW\",",
+        "detail": "parrot.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "kind": 6,
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "peekOfCode": "class MovingHead(FixtureBase):\n    def __init__(self, address, name, width, gobo_wheel: List[GoboWheelEntry]):\n        super().__init__(address, name, width)\n        self.pan_angle = 0\n        self.tilt_angle = 0\n        self._gobo_wheel = gobo_wheel\n    def set_pan_angle(self, value):\n        self.pan_angle = value\n    def get_pan_angle(self):\n        return self.pan_angle",
+        "detail": "parrot.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureGuiRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.base",
+        "description": "parrot.gui.fixtures.base",
+        "peekOfCode": "class FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n        self._x = 0\n        self._y = 0\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property\n    def height(self) -> int:",
+        "detail": "parrot.gui.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "T",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.base",
+        "description": "parrot.gui.fixtures.base",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n        self._x = 0\n        self._y = 0\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property",
+        "detail": "parrot.gui.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "BulbRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.bulb",
+        "description": "parrot.gui.fixtures.bulb",
+        "peekOfCode": "class BulbRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 30\n    @property\n    def height(self) -> int:\n        return 30\n    def setup(self, canvas: Canvas):",
+        "detail": "parrot.gui.fixtures.bulb",
+        "documentation": {}
+    },
+    {
+        "label": "CIRCLE_SIZE",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.bulb",
+        "description": "parrot.gui.fixtures.bulb",
+        "peekOfCode": "CIRCLE_SIZE = 30\nclass BulbRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 30\n    @property\n    def height(self) -> int:\n        return 30",
+        "detail": "parrot.gui.fixtures.bulb",
+        "documentation": {}
+    },
+    {
+        "label": "renderer_for_fixture",
+        "kind": 2,
+        "importPath": "parrot.gui.fixtures.factory",
+        "description": "parrot.gui.fixtures.factory",
+        "peekOfCode": "def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:\n    if isinstance(fixture, LedPar):\n        return BulbRenderer(fixture)\n    elif isinstance(fixture, Laser):\n        return LaserRenderer(fixture)\n    elif isinstance(fixture, Motionstrip):\n        return MotionstripRenderer(fixture)\n    elif isinstance(fixture, MovingHead):\n        return MovingHeadRenderer(fixture)\n    else:",
+        "detail": "parrot.gui.fixtures.factory",
+        "documentation": {}
+    },
+    {
+        "label": "LaserRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "peekOfCode": "class LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50\n    @property\n    def height(self) -> int:\n        return 50\n    def setup(self, canvas: Canvas):",
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "LINES",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "peekOfCode": "LINES = 8\nLINE_R = 30\nBOX_W = 30\nBOX_H = 15\nclass LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50",
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "LINE_R",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "peekOfCode": "LINE_R = 30\nBOX_W = 30\nBOX_H = 15\nclass LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50\n    @property",
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "BOX_W",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "peekOfCode": "BOX_W = 30\nBOX_H = 15\nclass LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50\n    @property\n    def height(self) -> int:",
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "BOX_H",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.laser",
+        "description": "parrot.gui.fixtures.laser",
+        "peekOfCode": "BOX_H = 15\nclass LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50\n    @property\n    def height(self) -> int:\n        return 50",
+        "detail": "parrot.gui.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.motionstrip",
+        "description": "parrot.gui.fixtures.motionstrip",
+        "peekOfCode": "class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return BULB_MARGIN * 2 + BULB_MARGIN * (BULBS - 1) + BULB_DIA * BULBS\n    @property\n    def height(self) -> int:\n        return BULB_MARGIN * 2 + BULB_DIA\n    def setup(self, canvas: Canvas):",
+        "detail": "parrot.gui.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "BULB_DIA",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.motionstrip",
+        "description": "parrot.gui.fixtures.motionstrip",
+        "peekOfCode": "BULB_DIA = 8\nBULB_MARGIN = 2\nBULBS = 8\nclass MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return BULB_MARGIN * 2 + BULB_MARGIN * (BULBS - 1) + BULB_DIA * BULBS\n    @property",
+        "detail": "parrot.gui.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "BULB_MARGIN",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.motionstrip",
+        "description": "parrot.gui.fixtures.motionstrip",
+        "peekOfCode": "BULB_MARGIN = 2\nBULBS = 8\nclass MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return BULB_MARGIN * 2 + BULB_MARGIN * (BULBS - 1) + BULB_DIA * BULBS\n    @property\n    def height(self) -> int:",
+        "detail": "parrot.gui.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "BULBS",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.motionstrip",
+        "description": "parrot.gui.fixtures.motionstrip",
+        "peekOfCode": "BULBS = 8\nclass MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return BULB_MARGIN * 2 + BULB_MARGIN * (BULBS - 1) + BULB_DIA * BULBS\n    @property\n    def height(self) -> int:\n        return BULB_MARGIN * 2 + BULB_DIA",
+        "detail": "parrot.gui.fixtures.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHeadRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40\n    def setup(self, canvas: Canvas):",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "HEAD_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "HEAD_WIDTH = 20\nHEAD_HEIGHT = 25\nBASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "HEAD_HEIGHT",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "HEAD_HEIGHT = 25\nBASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "BASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_HEIGHT",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "BASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "LIGHT_RADIUS",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "LIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "BEAM_RADIUS",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.moving_head",
+        "description": "parrot.gui.fixtures.moving_head",
+        "peekOfCode": "BEAM_RADIUS = 20\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40",
+        "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "Window",
+        "kind": 6,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.canvas = Canvas(",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "CIRCLE_SIZE",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "FIXTURE_MARGIN",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "BG",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "CANVAS_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "CANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "Plotter",
+        "kind": 6,
+        "importPath": "parrot.gui.plot",
+        "description": "parrot.gui.plot",
+        "peekOfCode": "class Plotter:\n    def __init__(self):\n        self.last_plotted = time.time()\n        pass\n    def processBlockSpectrum(self, snd_block):\n        f, t, Sxx = signal.spectrogram(snd_block, RATE)\n        zmin = Sxx.min()\n        zmax = Sxx.max()\n        plt.clf()\n        plt.pcolormesh(t, f, Sxx, cmap=\"RdBu\", norm=LogNorm(vmin=zmin, vmax=zmax))",
+        "detail": "parrot.gui.plot",
+        "documentation": {}
+    },
+    {
+        "label": "InterpreterBase",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass Noop(InterpreterBase):\n    def step(self, frame, scheme):\n        pass",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "Noop",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class Noop(InterpreterBase):\n    def step(self, frame, scheme):\n        pass\nclass ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorFg",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class ColorFg(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)\nclass ColorBg(InterpreterBase):\n    def step(self, frame, scheme):",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorAlternateBg",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)\nclass ColorBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg)\nclass ColorRainbow(InterpreterBase):\n    def __init__(self, group, color_speed=0.08, color_phase_spread=0):",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorBg",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class ColorBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg)\nclass ColorRainbow(InterpreterBase):\n    def __init__(self, group, color_speed=0.08, color_phase_spread=0):\n        super().__init__(group)\n        self.color_speed = color_speed\n        self.color_phase_spread = color_phase_spread\n    def step(self, frame, scheme):",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorRainbow",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class ColorRainbow(InterpreterBase):\n    def __init__(self, group, color_speed=0.08, color_phase_spread=0):\n        super().__init__(group)\n        self.color_speed = color_speed\n        self.color_phase_spread = color_phase_spread\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            color = Color(\"red\")\n            phase = frame.time * self.color_speed + self.color_phase_spread * idx\n            color.set_hue(phase - math.floor(phase))",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "MoveCircles",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):\n        super().__init__(group)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_pan(\n                math.cos(frame.time * self.multiplier + self.phase * idx) * 127 + 128\n            )",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "MoveNod",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class MoveNod(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi / 3):\n        super().__init__(group)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_pan(0)\n            fixture.set_tilt(\n                math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "FlashBeat",
+        "kind": 6,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "class FlashBeat(InterpreterBase):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"drums\"\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[\"sustained\"] > 0.7:\n                i.set_dimmer(100)\n                i.set_strobe(200)\n            elif frame[self.signal] > 0.4:",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "T",
+        "kind": 5,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass InterpreterBase(Generic[T]):\n    def __init__(self, group: List[T]):\n        self.group = group\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def __str__(self) -> str:\n        return f\"{self.__class__.__name__} {[str(i) for i in self.group]}\"\nclass Noop(InterpreterBase):\n    def step(self, frame, scheme):",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "Combo",
+        "kind": 6,
+        "importPath": "parrot.interpreters.combo",
+        "description": "parrot.interpreters.combo",
+        "peekOfCode": "class Combo(InterpreterBase[T]):\n    def __init__(\n        self,\n        group: List[T],\n        interpreters: List[Type[InterpreterBase[T]]],\n    ):\n        super().__init__(group)\n        self.interpreters = [i(group) for i in interpreters]\n    def step(self, frame: Frame, scheme: ColorScheme):\n        for i in self.interpreters:",
+        "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
+        "label": "combo",
+        "kind": 2,
+        "importPath": "parrot.interpreters.combo",
+        "description": "parrot.interpreters.combo",
+        "peekOfCode": "def combo(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:\n    return lambda group: Combo(group, interpreters)",
+        "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
+        "label": "T",
+        "kind": 5,
+        "importPath": "parrot.interpreters.combo",
+        "description": "parrot.interpreters.combo",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass Combo(InterpreterBase[T]):\n    def __init__(\n        self,\n        group: List[T],\n        interpreters: List[Type[InterpreterBase[T]]],\n    ):\n        super().__init__(group)\n        self.interpreters = [i(group) for i in interpreters]\n    def step(self, frame: Frame, scheme: ColorScheme):",
+        "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer100",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass Dimmer0(InterpreterBase):\n    def step(self, frame, scheme):",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer30",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass Dimmer0(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(0)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=0.5):",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "Dimmer0",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class Dimmer0(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(0)\nclass SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=0.5):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "SequenceDimmers",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class SequenceDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], dimmer=255, wait_time=0.5):\n        super().__init__(group)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):\n            fixture.set_dimmer(\n                self.dimmer\n                if round(frame.time / self.wait_time) % len(self.group) == i",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "SequenceFadeDimmers",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class SequenceFadeDimmers(InterpreterBase[T]):\n    def __init__(self, group: List[T], wait_time=3):\n        super().__init__(group)\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):\n            fixture.set_dimmer(\n                128\n                + math.cos(\n                    math.pi",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "DimmersBeatChase",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class DimmersBeatChase(InterpreterBase[T]):\n    def __init__(self, group: List[T]):\n        super().__init__(group)\n        self.signal = \"drums\"\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:\n                self.bulb = random.randint(0, len(self.group) - 1)\n                self.on = True",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "GentlePulse",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class GentlePulse(InterpreterBase[T]):\n    def __init__(self, group: List[T], signal=\"all\"):\n        super().__init__(group)\n        self.signal = signal\n        self.on = False\n        self.memory = [0] * len(self.group)\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.2:\n            if self.on == False:\n                self.bulb = random.randint(0, len(self.group) - 1)",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "T",
+        "kind": 5,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass Dimmer100(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(100)\nclass Dimmer30(InterpreterBase):\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_dimmer(30)\nclass Dimmer0(InterpreterBase):",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "DimmerBinaryLatched",
+        "kind": 6,
+        "importPath": "parrot.interpreters.latched",
+        "description": "parrot.interpreters.latched",
+        "peekOfCode": "class DimmerBinaryLatched(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], signal=\"sustained\"):\n        super().__init__(group)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[\"sustained\"] > 0.55:\n                self.switch = True",
+        "detail": "parrot.interpreters.latched",
+        "documentation": {}
+    },
+    {
+        "label": "DimmerFadeLatched",
+        "kind": 6,
+        "importPath": "parrot.interpreters.latched",
+        "description": "parrot.interpreters.latched",
+        "peekOfCode": "class DimmerFadeLatched(InterpreterBase):\n    def __init__(self, group, signal=\"sustained\"):\n        super().__init__(group)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n        self.memory = 0\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[self.signal] > 0.55:",
+        "detail": "parrot.interpreters.latched",
+        "documentation": {}
+    },
+    {
+        "label": "DimmerFadeLatchedRandom",
+        "kind": 6,
+        "importPath": "parrot.interpreters.latched",
+        "description": "parrot.interpreters.latched",
+        "peekOfCode": "class DimmerFadeLatchedRandom(InterpreterBase):\n    def __init__(\n        self, group, signal=\"sustained\", latch_at=0.55, latch_off_at=0.1, latch_time=0.5\n    ):\n        super().__init__(group)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n        self.memory = 0\n        self.selected = None",
+        "detail": "parrot.interpreters.latched",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripBulbBeat",
+        "kind": 6,
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "peekOfCode": "class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):\n    def __init__(self, group: List[Motionstrip38]):\n        super().__init__(group)\n        self.signal = \"drums\"\n        self.total_bulbs = len(group) * 8\n        self.bulb = 0\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:",
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripWaveform",
+        "kind": 6,
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "peekOfCode": "class MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        for i in self.group:\n            i.set_dimmer(255)\n            i.set_pan(math.cos(frame.time) * 127 + 128)",
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MotionstripSlowRespond",
+        "kind": 6,
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    def __init__(self, group: List[Motionstrip38]):\n        super().__init__(group)\n        self.signal = \"sustained\"\n        self.dimmer_memory = 0\n        self.decay_rate = 0.24\n        self.latch_until = 0\n    def step(self, frame, scheme):\n        pan = math.cos(frame.time) * 127 + 128\n        if frame[self.signal] > 0.2:",
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MotionStripBulbBeatAndWiggle",
+        "kind": 5,
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "peekOfCode": "MotionStripBulbBeatAndWiggle = combo(MotionstripBulbBeat, MoveCircles)\nclass MotionstripWaveform(InterpreterBase[Motionstrip38]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.signal = \"vocals\"\n    def step(self, frame, scheme):\n        color = scheme.fg\n        parts = 4\n        for i in self.group:\n            i.set_dimmer(255)",
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
+        "label": "MoverFan",
+        "kind": 6,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "class MoverFan(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for i, fixture in enumerate(group):\n            fixture.set_pan(i * 255 / len(group))\n            fixture.set_tilt(128)\n    def step(self, frame, scheme):\n        pass\nclass MoverRandomGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverRandomGobo",
+        "kind": 6,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "class MoverRandomGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for fixture in self.group:\n            fixture.set_gobo(random.choice(fixture.gobo_wheel).name)\nclass MoverNoGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for fixture in self.group:\n            fixture.set_gobo(\"open\")",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverNoGobo",
+        "kind": 6,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "class MoverNoGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group):\n        super().__init__(group)\n        for fixture in self.group:\n            fixture.set_gobo(\"open\")\nMoverBeatAndCircle = combo(FlashBeat, MoveCircles, ColorFg)\nMoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)\nMoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverBeatAndCircle",
+        "kind": 5,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "MoverBeatAndCircle = combo(FlashBeat, MoveCircles, ColorFg)\nMoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)\nMoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverBeatInFan",
+        "kind": 5,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "MoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)\nMoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverSequenceAndCircle",
+        "kind": 5,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "MoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)\nMoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverSequenceInFan",
+        "kind": 5,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "MoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)\nMoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverDimAndCircle",
+        "kind": 5,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "MoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)\nMoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverOnAndCircle",
+        "kind": 5,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "MoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "randomize",
+        "kind": 2,
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "peekOfCode": "def randomize(*interpreters: List[InterpreterBase[T]]) -> InterpreterBase[T]:\n    return lambda group: random.choice(interpreters)(group)\ndef weighted_randomize(\n    *interpreters: List[Tuple[int, InterpreterBase[T]]]\n) -> InterpreterBase[T]:\n    total = sum([i[0] for i in interpreters])\n    weights = [i[0] / total for i in interpreters]\n    return lambda group: random.choices(interpreters, weights=weights)[0][1](group)",
+        "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
+        "label": "weighted_randomize",
+        "kind": 2,
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "peekOfCode": "def weighted_randomize(\n    *interpreters: List[Tuple[int, InterpreterBase[T]]]\n) -> InterpreterBase[T]:\n    total = sum([i[0] for i in interpreters])\n    weights = [i[0] / total for i in interpreters]\n    return lambda group: random.choices(interpreters, weights=weights)[0][1](group)",
+        "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
+        "label": "T",
+        "kind": 5,
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef randomize(*interpreters: List[InterpreterBase[T]]) -> InterpreterBase[T]:\n    return lambda group: random.choice(interpreters)(group)\ndef weighted_randomize(\n    *interpreters: List[Tuple[int, InterpreterBase[T]]]\n) -> InterpreterBase[T]:\n    total = sum([i[0] for i in interpreters])\n    weights = [i[0] / total for i in interpreters]\n    return lambda group: random.choices(interpreters, weights=weights)[0][1](group)",
+        "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
+        "label": "SlowRespond",
+        "kind": 6,
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "peekOfCode": "class SlowRespond(InterpreterBase[FixtureBase]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.dimmer_memory = 0\n        self.signal = \"sustained\"\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)\n        for idx, fixture in enumerate(self.group):\n            if frame[self.signal] > 0.65:\n                fixture.set_strobe(200)",
+        "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
+        "label": "SlowDecay",
+        "kind": 6,
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "peekOfCode": "class SlowDecay(InterpreterBase[FixtureBase]):\n    def __init__(self, group):\n        super().__init__(group)\n        self.dimmer_memory = 0\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.all)\n        for fixture in self.group:\n            fixture.set_dimmer(self.dimmer_memory * 255)",
+        "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
+        "label": "AudioHandler",
+        "kind": 6,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "class AudioHandler(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()\n        self.ax2 = self.ax1.twinx() \n        self.snd_blocks = []\n        self.spectrogram_blocks = []",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "get_rms",
+        "kind": 2,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()\n        self.ax2 = self.ax1.twinx() ",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "THRESHOLD",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "THRESHOLD = 0 # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "RATE",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_BLOCK_TIME",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_FRAMES_PER_BLOCK",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_FRAMES_PER_BLOCK_BUFFER",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "TIME_IN_GRAPH",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "BLOCKS_IN_GRAPH",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic",
+        "description": "parrot.listeners.mic",
+        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0",
+        "detail": "parrot.listeners.mic",
+        "documentation": {}
+    },
+    {
+        "label": "MicToDmx",
+        "kind": 6,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "class MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None\n        self.signal_lookback = {",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "get_rms",
+        "kind": 2,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "THRESHOLD",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "RATE",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_BLOCK_TIME",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_FRAMES_PER_BLOCK",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_FRAMES_PER_BLOCK_BUFFER",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "SPECTOGRAPH_AVG_RATE",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "SPECTOGRAPH_BUFFER_SIZE",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "SHOW_PLOT",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "SHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "SHOW_GUI",
+        "kind": 5,
+        "importPath": "parrot.listeners.mic_to_dmx",
+        "description": "parrot.listeners.mic_to_dmx",
+        "peekOfCode": "SHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE",
+        "detail": "parrot.listeners.mic_to_dmx",
+        "documentation": {}
+    },
+    {
+        "label": "AudioHandler",
+        "kind": 6,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "class AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()\n        self.ax2 = self.ax1.twinx() \n        self.snd_blocks = []",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "get_rms",
+        "kind": 2,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0\n        self.fig, self.ax1 = plt.subplots()",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "THRESHOLD",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "THRESHOLD = 0 # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\nfrom spleeter.separator import Separator\n# Using embedded configuration.",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "RATE",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\nfrom spleeter.separator import Separator\n# Using embedded configuration.\nseparator = Separator('spleeter:2stems')",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_BLOCK_TIME",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001 # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\nfrom spleeter.separator import Separator\n# Using embedded configuration.\nseparator = Separator('spleeter:2stems')\ndef get_rms(block):",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_FRAMES_PER_BLOCK",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\nfrom spleeter.separator import Separator\n# Using embedded configuration.\nseparator = Separator('spleeter:2stems')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "INPUT_FRAMES_PER_BLOCK_BUFFER",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\nfrom spleeter.separator import Separator\n# Using embedded configuration.\nseparator = Separator('spleeter:2stems')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "TIME_IN_GRAPH",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\nfrom spleeter.separator import Separator\n# Using embedded configuration.\nseparator = Separator('spleeter:2stems')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "BLOCKS_IN_GRAPH",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nmatplotlib.use('macosx')\nfrom spleeter.separator import Separator\n# Using embedded configuration.\nseparator = Separator('spleeter:2stems')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "separator",
+        "kind": 5,
+        "importPath": "parrot.listeners.spleeter",
+        "description": "parrot.listeners.spleeter",
+        "peekOfCode": "separator = Separator('spleeter:2stems')\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass AudioHandler(object):\n    def __init__(self):\n        self.start_time = time.time()\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.threshold = THRESHOLD\n        self.plot_counter = 0",
+        "detail": "parrot.listeners.spleeter",
+        "documentation": {}
+    },
+    {
+        "label": "lerp_color",
+        "kind": 2,
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "peekOfCode": "def lerp_color(a: Color, b: Color, t: float) -> Color:\n    return Color(\n        rgb=(lerp(a.red, b.red, t), lerp(a.green, b.green, t), lerp(a.blue, b.blue, t))\n    )\ndef color_distance(a: Color, b: Color) -> float:\n    # Hue distance plus saturation distance plus value distance\n    return (\n        abs(a.hue - b.hue)\n        + abs(a.saturation - b.saturation)\n        + abs(a.luminance - b.luminance)",
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "color_distance",
+        "kind": 2,
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "peekOfCode": "def color_distance(a: Color, b: Color) -> float:\n    # Hue distance plus saturation distance plus value distance\n    return (\n        abs(a.hue - b.hue)\n        + abs(a.saturation - b.saturation)\n        + abs(a.luminance - b.luminance)\n    )\ndef dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
+        "kind": 2,
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))",
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "C_HSL",
+        "kind": 6,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "class C_HSL:\n    def __getattr__(self, value):\n        label = value.lower()\n        if label in COLOR_NAME_TO_RGB:\n            return rgb2hsl(tuple(v / 255. for v in COLOR_NAME_TO_RGB[label]))\n        raise AttributeError(\"%s instance has no attribute %r\"\n                             % (self.__class__, value))\nHSL = C_HSL()\nclass C_RGB:\n    \"\"\"RGB colors container",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "C_RGB",
+        "kind": 6,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "class C_RGB:\n    \"\"\"RGB colors container\n    Provides a quick color access.\n    >>> from colour import RGB\n    >>> RGB.WHITE\n    (1.0, 1.0, 1.0)\n    >>> RGB.BLUE\n    (0.0, 0.0, 1.0)\n    >>> RGB.DONOTEXISTS  # doctest: +ELLIPSIS\n    Traceback (most recent call last):",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "C_HEX",
+        "kind": 6,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "class C_HEX:\n    \"\"\"RGB colors container\n    Provides a quick color access.\n    >>> from colour import HEX\n    >>> HEX.WHITE\n    '#fff'\n    >>> HEX.BLUE\n    '#00f'\n    >>> HEX.DONOTEXISTS  # doctest: +ELLIPSIS\n    Traceback (most recent call last):",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "Color",
+        "kind": 6,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "class Color(object):\n    \"\"\"Abstraction of a color object\n    Color object keeps information of a color. It can input/output to different\n    format (HSL, RGB, HEX, WEB) and their partial representation.\n        >>> from colour import Color, HSL\n        >>> b = Color()\n        >>> b.hsl = HSL.BLUE\n    Access values\n    -------------\n        >>> b.hue  # doctest: +ELLIPSIS",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "hsl2rgb",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def hsl2rgb(hsl):\n    \"\"\"Convert HSL representation towards RGB\n    :param h: Hue, position around the chromatic circle (h=1 equiv h=0)\n    :param s: Saturation, color saturation (0=full gray, 1=full color)\n    :param l: Ligthness, Overhaul lightness (0=full black, 1=full white)\n    :rtype: 3-uple for RGB values in float between 0 and 1\n    Hue, Saturation, Range from Lightness is a float between 0 and 1\n    Note that Hue can be set to any value but as it is a rotation\n    around the chromatic circle, any value above 1 or below 0 can\n    be expressed by a value between 0 and 1 (Note that h=0 is equiv",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "rgb2hsl",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def rgb2hsl(rgb):\n    \"\"\"Convert RGB representation towards HSL\n    :param r: Red amount (float between 0 and 1)\n    :param g: Green amount (float between 0 and 1)\n    :param b: Blue amount (float between 0 and 1)\n    :rtype: 3-uple for HSL values in float between 0 and 1\n    This algorithm came from:\n    http://www.easyrgb.com/index.php?X=MATH&H=19#text19\n    Here are some quick notion of RGB to HSL conversion:\n    >>> from colour import rgb2hsl",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "rgb2hex",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def rgb2hex(rgb, force_long=False):\n    \"\"\"Transform RGB tuple to hex RGB representation\n    :param rgb: RGB 3-uple of float between 0 and 1\n    :rtype: 3 hex char or 6 hex char string representation\n    Usage\n    -----\n    >>> from colour import rgb2hex\n    >>> rgb2hex((0.0,1.0,0.0))\n    '#0f0'\n    Rounding try to be as natural as possible:",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "hex2rgb",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def hex2rgb(str_rgb):\n    \"\"\"Transform hex RGB representation to RGB tuple\n    :param str_rgb: 3 hex char or 6 hex char string representation\n    :rtype: RGB 3-uple of float between 0 and 1\n    >>> from colour import hex2rgb\n    >>> hex2rgb('#00ff00')\n    (0.0, 1.0, 0.0)\n    >>> hex2rgb('#0f0')\n    (0.0, 1.0, 0.0)\n    >>> hex2rgb('#aaa')  # doctest: +ELLIPSIS",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "hex2web",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def hex2web(hex):\n    \"\"\"Converts HEX representation to WEB\n    :param rgb: 3 hex char or 6 hex char string representation\n    :rtype: web string representation (human readable if possible)\n    WEB representation uses X11 rgb.txt to define conversion\n    between RGB and english color names.\n    Usage\n    =====\n    >>> from colour import hex2web\n    >>> hex2web('#ff0000')",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "web2hex",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def web2hex(web, force_long=False):\n    \"\"\"Converts WEB representation to HEX\n    :param rgb: web string representation (human readable if possible)\n    :rtype: 3 hex char or 6 hex char string representation\n    WEB representation uses X11 rgb.txt to define conversion\n    between RGB and english color names.\n    Usage\n    =====\n    >>> from colour import web2hex\n    >>> web2hex('red')",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "color_scale",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def color_scale(begin_hsl, end_hsl, nb):\n    \"\"\"Returns a list of nb color HSL tuples between begin_hsl and end_hsl\n    >>> from colour import color_scale\n    >>> [rgb2hex(hsl2rgb(hsl)) for hsl in color_scale((0, 1, 0.5),\n    ...                                               (1, 1, 0.5), 3)]\n    ['#f00', '#0f0', '#00f', '#f00']\n    >>> [rgb2hex(hsl2rgb(hsl))\n    ...  for hsl in color_scale((0, 0, 0),\n    ...                         (0, 0, 1),\n    ...                         15)]  # doctest: +ELLIPSIS",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "RGB_color_picker",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def RGB_color_picker(obj):\n    \"\"\"Build a color representation from the string representation of an object\n    This allows to quickly get a color from some data, with the\n    additional benefit that the color will be the same as long as the\n    (string representation of the) data is the same::\n        >>> from colour import RGB_color_picker, Color\n    Same inputs produce the same result::\n        >>> RGB_color_picker(\"Something\") == RGB_color_picker(\"Something\")\n        True\n    ... but different inputs produce different colors::",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "hash_or_str",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def hash_or_str(obj):\n    try:\n        return hash((type(obj).__name__, obj))\n    except TypeError:\n        ## Adds the type name to make sure two object of different type but\n        ## identical string representation get distinguished.\n        return type(obj).__name__ + str(obj)\n##\n## All purpose object\n##",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "make_color_factory",
+        "kind": 2,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "def make_color_factory(**kwargs_defaults):\n    def ColorFactory(*args, **kwargs):\n        new_kwargs = kwargs_defaults.copy()\n        new_kwargs.update(kwargs)\n        return Color(*args, **new_kwargs)\n    return ColorFactory",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "FLOAT_ERROR",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "FLOAT_ERROR = 0.0000005\nRGB_TO_COLOR_NAMES = {\n    (0, 0, 0): ['Black'],\n    (0, 0, 128): ['Navy', 'NavyBlue'],\n    (0, 0, 139): ['DarkBlue'],\n    (0, 0, 205): ['MediumBlue'],\n    (0, 0, 255): ['Blue'],\n    (0, 100, 0): ['DarkGreen'],\n    (0, 128, 0): ['Green'],\n    (0, 139, 139): ['DarkCyan'],",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "RGB_TO_COLOR_NAMES",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "RGB_TO_COLOR_NAMES = {\n    (0, 0, 0): ['Black'],\n    (0, 0, 128): ['Navy', 'NavyBlue'],\n    (0, 0, 139): ['DarkBlue'],\n    (0, 0, 205): ['MediumBlue'],\n    (0, 0, 255): ['Blue'],\n    (0, 100, 0): ['DarkGreen'],\n    (0, 128, 0): ['Green'],\n    (0, 139, 139): ['DarkCyan'],\n    (0, 191, 255): ['DeepSkyBlue'],",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "COLOR_NAME_TO_RGB",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "COLOR_NAME_TO_RGB = dict(\n    (name.lower(), rgb)\n    for rgb, names in RGB_TO_COLOR_NAMES.items()\n    for name in names)\nLONG_HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')\nSHORT_HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{3}$')\nclass C_HSL:\n    def __getattr__(self, value):\n        label = value.lower()\n        if label in COLOR_NAME_TO_RGB:",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "LONG_HEX_COLOR",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "LONG_HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')\nSHORT_HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{3}$')\nclass C_HSL:\n    def __getattr__(self, value):\n        label = value.lower()\n        if label in COLOR_NAME_TO_RGB:\n            return rgb2hsl(tuple(v / 255. for v in COLOR_NAME_TO_RGB[label]))\n        raise AttributeError(\"%s instance has no attribute %r\"\n                             % (self.__class__, value))\nHSL = C_HSL()",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "SHORT_HEX_COLOR",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "SHORT_HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{3}$')\nclass C_HSL:\n    def __getattr__(self, value):\n        label = value.lower()\n        if label in COLOR_NAME_TO_RGB:\n            return rgb2hsl(tuple(v / 255. for v in COLOR_NAME_TO_RGB[label]))\n        raise AttributeError(\"%s instance has no attribute %r\"\n                             % (self.__class__, value))\nHSL = C_HSL()\nclass C_RGB:",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "HSL",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "HSL = C_HSL()\nclass C_RGB:\n    \"\"\"RGB colors container\n    Provides a quick color access.\n    >>> from colour import RGB\n    >>> RGB.WHITE\n    (1.0, 1.0, 1.0)\n    >>> RGB.BLUE\n    (0.0, 0.0, 1.0)\n    >>> RGB.DONOTEXISTS  # doctest: +ELLIPSIS",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "RGB",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "RGB = C_RGB()\nHEX = C_HEX()\n##\n## Conversion function\n##\ndef hsl2rgb(hsl):\n    \"\"\"Convert HSL representation towards RGB\n    :param h: Hue, position around the chromatic circle (h=1 equiv h=0)\n    :param s: Saturation, color saturation (0=full gray, 1=full color)\n    :param l: Ligthness, Overhaul lightness (0=full black, 1=full white)",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "HEX",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "HEX = C_HEX()\n##\n## Conversion function\n##\ndef hsl2rgb(hsl):\n    \"\"\"Convert HSL representation towards RGB\n    :param h: Hue, position around the chromatic circle (h=1 equiv h=0)\n    :param s: Saturation, color saturation (0=full gray, 1=full color)\n    :param l: Ligthness, Overhaul lightness (0=full black, 1=full white)\n    :rtype: 3-uple for RGB values in float between 0 and 1",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "hsl2hex",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "hsl2hex = lambda x: rgb2hex(hsl2rgb(x))\nhex2hsl = lambda x: rgb2hsl(hex2rgb(x))\nrgb2web = lambda x: hex2web(rgb2hex(x))\nweb2rgb = lambda x: hex2rgb(web2hex(x))\nweb2hsl = lambda x: rgb2hsl(web2rgb(x))\nhsl2web = lambda x: rgb2web(hsl2rgb(x))\ndef color_scale(begin_hsl, end_hsl, nb):\n    \"\"\"Returns a list of nb color HSL tuples between begin_hsl and end_hsl\n    >>> from colour import color_scale\n    >>> [rgb2hex(hsl2rgb(hsl)) for hsl in color_scale((0, 1, 0.5),",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "hex2hsl",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "hex2hsl = lambda x: rgb2hsl(hex2rgb(x))\nrgb2web = lambda x: hex2web(rgb2hex(x))\nweb2rgb = lambda x: hex2rgb(web2hex(x))\nweb2hsl = lambda x: rgb2hsl(web2rgb(x))\nhsl2web = lambda x: rgb2web(hsl2rgb(x))\ndef color_scale(begin_hsl, end_hsl, nb):\n    \"\"\"Returns a list of nb color HSL tuples between begin_hsl and end_hsl\n    >>> from colour import color_scale\n    >>> [rgb2hex(hsl2rgb(hsl)) for hsl in color_scale((0, 1, 0.5),\n    ...                                               (1, 1, 0.5), 3)]",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "rgb2web",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "rgb2web = lambda x: hex2web(rgb2hex(x))\nweb2rgb = lambda x: hex2rgb(web2hex(x))\nweb2hsl = lambda x: rgb2hsl(web2rgb(x))\nhsl2web = lambda x: rgb2web(hsl2rgb(x))\ndef color_scale(begin_hsl, end_hsl, nb):\n    \"\"\"Returns a list of nb color HSL tuples between begin_hsl and end_hsl\n    >>> from colour import color_scale\n    >>> [rgb2hex(hsl2rgb(hsl)) for hsl in color_scale((0, 1, 0.5),\n    ...                                               (1, 1, 0.5), 3)]\n    ['#f00', '#0f0', '#00f', '#f00']",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "web2rgb",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "web2rgb = lambda x: hex2rgb(web2hex(x))\nweb2hsl = lambda x: rgb2hsl(web2rgb(x))\nhsl2web = lambda x: rgb2web(hsl2rgb(x))\ndef color_scale(begin_hsl, end_hsl, nb):\n    \"\"\"Returns a list of nb color HSL tuples between begin_hsl and end_hsl\n    >>> from colour import color_scale\n    >>> [rgb2hex(hsl2rgb(hsl)) for hsl in color_scale((0, 1, 0.5),\n    ...                                               (1, 1, 0.5), 3)]\n    ['#f00', '#0f0', '#00f', '#f00']\n    >>> [rgb2hex(hsl2rgb(hsl))",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "web2hsl",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "web2hsl = lambda x: rgb2hsl(web2rgb(x))\nhsl2web = lambda x: rgb2web(hsl2rgb(x))\ndef color_scale(begin_hsl, end_hsl, nb):\n    \"\"\"Returns a list of nb color HSL tuples between begin_hsl and end_hsl\n    >>> from colour import color_scale\n    >>> [rgb2hex(hsl2rgb(hsl)) for hsl in color_scale((0, 1, 0.5),\n    ...                                               (1, 1, 0.5), 3)]\n    ['#f00', '#0f0', '#00f', '#f00']\n    >>> [rgb2hex(hsl2rgb(hsl))\n    ...  for hsl in color_scale((0, 0, 0),",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "hsl2web",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "hsl2web = lambda x: rgb2web(hsl2rgb(x))\ndef color_scale(begin_hsl, end_hsl, nb):\n    \"\"\"Returns a list of nb color HSL tuples between begin_hsl and end_hsl\n    >>> from colour import color_scale\n    >>> [rgb2hex(hsl2rgb(hsl)) for hsl in color_scale((0, 1, 0.5),\n    ...                                               (1, 1, 0.5), 3)]\n    ['#f00', '#0f0', '#00f', '#f00']\n    >>> [rgb2hex(hsl2rgb(hsl))\n    ...  for hsl in color_scale((0, 0, 0),\n    ...                         (0, 0, 1),",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "RGB_equivalence",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "RGB_equivalence = lambda c1, c2: c1.hex_l == c2.hex_l\nHSL_equivalence = lambda c1, c2: c1._hsl == c2._hsl\ndef make_color_factory(**kwargs_defaults):\n    def ColorFactory(*args, **kwargs):\n        new_kwargs = kwargs_defaults.copy()\n        new_kwargs.update(kwargs)\n        return Color(*args, **new_kwargs)\n    return ColorFactory",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "HSL_equivalence",
+        "kind": 5,
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "peekOfCode": "HSL_equivalence = lambda c1, c2: c1._hsl == c2._hsl\ndef make_color_factory(**kwargs_defaults):\n    def ColorFactory(*args, **kwargs):\n        new_kwargs = kwargs_defaults.copy()\n        new_kwargs.update(kwargs)\n        return Color(*args, **new_kwargs)\n    return ColorFactory",
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_clamp",
+        "kind": 2,
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "peekOfCode": "def dmx_clamp(n):\n    if math.isnan(n):\n        return 0\n    return int(clamp(n, 0, 255))\ndef dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()",
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_clamp_list",
+        "kind": 2,
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")",
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_controller",
+        "kind": 2,
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "peekOfCode": "def get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "usb_path",
+        "kind": 5,
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "Lerpable",
+        "kind": 6,
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "class Lerpable:\n    def lerp(self, other, t):\n        raise NotImplementedError()\nclass LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject\n        self.target = None\n        self.duration = duration\n        self.start_time = None\n    def push(self, target):",
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "LerpAnimator",
+        "kind": 6,
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "class LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject\n        self.target = None\n        self.duration = duration\n        self.start_time = None\n    def push(self, target):\n        self.target = target\n        self.start_time = time.time()\n    def render(self):",
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp",
+        "kind": 2,
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "def lerp(a, b, t):\n    return a + (b - a) * t\ndef lerp_list(a, b, t):\n    return [lerp(i, j, t) for i, j in zip(a, b)]\nclass Lerpable:\n    def lerp(self, other, t):\n        raise NotImplementedError()\nclass LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject",
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "lerp_list",
+        "kind": 2,
+        "importPath": "parrot.utils.lerp",
+        "description": "parrot.utils.lerp",
+        "peekOfCode": "def lerp_list(a, b, t):\n    return [lerp(i, j, t) for i, j in zip(a, b)]\nclass Lerpable:\n    def lerp(self, other, t):\n        raise NotImplementedError()\nclass LerpAnimator:\n    def __init__(self, subject: Lerpable, duration: float):\n        self.subject = subject\n        self.target = None\n        self.duration = duration",
+        "detail": "parrot.utils.lerp",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "kind": 2,
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "peekOfCode": "def clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n\ndef distance(x0, x1, y0, y1):\n    dx = x1 - x0\n    dy = y1 - y0",
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "distance",
+        "kind": 2,
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "peekOfCode": "def distance(x0, x1, y0, y1):\n    dx = x1 - x0\n    dy = y1 - y0\n    return math.sqrt(dx * dx + dy * dy)",
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "MockDmxController",
+        "kind": 6,
+        "importPath": "parrot.utils.mock_controller",
+        "description": "parrot.utils.mock_controller",
+        "peekOfCode": "class MockDmxController:\n    def __init__(self):\n        pass\n    def set_channel(self, channel, value):\n        pass\n    def submit(self):\n        pass",
+        "detail": "parrot.utils.mock_controller",
+        "documentation": {}
+    },
+    {
+        "label": "kebab_case",
+        "kind": 2,
+        "importPath": "parrot.utils.string",
+        "description": "parrot.utils.string",
+        "peekOfCode": "def kebab_case(string):\n    \"\"\"Converts a string to kebab case.\n    Args:\n      string: The string to convert.\n    Returns:\n      The string in kebab case.\n    \"\"\"\n    string = re.sub(r\"(_|-)+\", \" \", string).lower()\n    return \"-\".join(string.split())",
+        "detail": "parrot.utils.string",
+        "documentation": {}
+    },
+    {
+        "label": "patch_bay",
+        "kind": 5,
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "peekOfCode": "patch_bay = [\n    ChauvetSpot160_12Ch(\n        patch=1,\n    ),\n    ChauvetSpot120_12Ch(\n        patch=140,\n    ),\n    ChauvetSpot120_12Ch(\n        patch=152,\n    ),",
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "State",
+        "kind": 6,
+        "importPath": "parrot.state",
+        "description": "parrot.state",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):\n        if self._phrase == value:\n            return",
+        "detail": "parrot.state",
+        "documentation": {}
+    }
+]
