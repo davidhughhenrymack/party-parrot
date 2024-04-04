@@ -1,8 +1,10 @@
+import math
 import random
 import scipy
 from typing import List, TypeVar
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterBase
+from parrot.utils.math import clamp
 
 
 T = TypeVar("T", bound=FixtureBase)
@@ -27,7 +29,7 @@ class Dimmer0(InterpreterBase):
 
 
 class SequenceDimmers(InterpreterBase[T]):
-    def __init__(self, group: List[T], dimmer=255, wait_time=60 * 2 / 120):
+    def __init__(self, group: List[T], dimmer=255, wait_time=0.5):
         super().__init__(group)
         self.dimmer = dimmer
         self.wait_time = wait_time
@@ -38,6 +40,23 @@ class SequenceDimmers(InterpreterBase[T]):
                 self.dimmer
                 if round(frame.time / self.wait_time) % len(self.group) == i
                 else 0
+            )
+
+
+class SequenceFadeDimmers(InterpreterBase[T]):
+    def __init__(self, group: List[T], wait_time=3):
+        super().__init__(group)
+        self.wait_time = wait_time
+
+    def step(self, frame, scheme):
+        for i, fixture in enumerate(self.group):
+            fixture.set_dimmer(
+                128
+                + math.cos(
+                    math.pi
+                    * ((frame.time / self.wait_time) - (2 * i / len(self.group)))
+                )
+                * 128
             )
 
 

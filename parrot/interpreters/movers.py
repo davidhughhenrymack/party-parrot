@@ -8,6 +8,7 @@ from parrot.interpreters.base import (
 from parrot.interpreters.dimmer import Dimmer100, Dimmer30, SequenceDimmers
 from parrot.interpreters.combo import combo
 from parrot.fixtures.moving_head import MovingHead
+from parrot.utils.colour import Color
 
 
 class MoverFan(InterpreterBase[MovingHead]):

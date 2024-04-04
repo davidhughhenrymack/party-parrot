@@ -37,6 +37,26 @@ class ColorAlternateBg(InterpreterBase):
             fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)
 
 
+class ColorBg(InterpreterBase):
+    def step(self, frame, scheme):
+        for idx, fixture in enumerate(self.group):
+            fixture.set_color(scheme.bg)
+
+
+class ColorRainbow(InterpreterBase):
+    def __init__(self, group, color_speed=0.08, color_phase_spread=0):
+        super().__init__(group)
+        self.color_speed = color_speed
+        self.color_phase_spread = color_phase_spread
+
+    def step(self, frame, scheme):
+        for idx, fixture in enumerate(self.group):
+            color = Color("red")
+            phase = frame.time * self.color_speed + self.color_phase_spread * idx
+            color.set_hue(phase - math.floor(phase))
+            fixture.set_color(color)
+
+
 class MoveCircles(InterpreterBase):
     def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):
         super().__init__(group)
@@ -48,6 +68,20 @@ class MoveCircles(InterpreterBase):
             fixture.set_pan(
                 math.cos(frame.time * self.multiplier + self.phase * idx) * 127 + 128
             )
+            fixture.set_tilt(
+                math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128
+            )
+
+
+class MoveNod(InterpreterBase):
+    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi / 3):
+        super().__init__(group)
+        self.multiplier = multiplier
+        self.phase = phase
+
+    def step(self, frame, scheme):
+        for idx, fixture in enumerate(self.group):
+            fixture.set_pan(0)
             fixture.set_tilt(
                 math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128
             )

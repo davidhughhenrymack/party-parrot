@@ -2,9 +2,12 @@ from parrot.fixtures import LedPar
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import (
     ColorAlternateBg,
+    ColorBg,
     ColorFg,
+    ColorRainbow,
     InterpreterBase,
     MoveCircles,
+    MoveNod,
     Noop,
 )
 from parrot.director.phrase import Phrase
@@ -25,16 +28,18 @@ from parrot.fixtures.laser import Laser
 from typing import List, Dict, Union
 from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.motionstrip import Motionstrip
-from parrot.interpreters.latched import DimmerFadeLatched
+from parrot.interpreters.latched import DimmerFadeLatched, DimmerFadeLatchedRandom
 from parrot.interpreters.dimmer import (
     DimmersBeatChase,
     GentlePulse,
+    SequenceDimmers,
+    SequenceFadeDimmers,
 )
 from parrot.interpreters.combo import combo
 
 import random
 from parrot.interpreters.dimmer import Dimmer0
-from parrot.interpreters.randomize import randomize
+from parrot.interpreters.randomize import randomize, weighted_randomize
 
 
 phrase_interpretations: Dict[
@@ -77,22 +82,30 @@ phrase_interpretations: Dict[
         LedPar: [
             combo(
                 randomize(GentlePulse, SlowRespond, DimmersBeatChase),
-                ColorAlternateBg,
+                randomize(ColorAlternateBg, ColorBg),
             ),
         ],
         MovingHead: [
             combo(
-                randomize(DimmersBeatChase, SlowDecay, GentlePulse),
-                ColorFg,
-                randomize(MoveCircles, MoverFan),
-                randomize(MoverRandomGobo, MoverNoGobo, MoverNoGobo, MoverNoGobo),
+                randomize(
+                    DimmersBeatChase,
+                    SlowDecay,
+                    GentlePulse,
+                    DimmerFadeLatched,
+                    SequenceDimmers,
+                    SequenceFadeDimmers,
+                    lambda group: DimmerFadeLatchedRandom(group, latch_at=0.3),
+                ),
+                weighted_randomize((95, ColorFg), (5, ColorRainbow)),
+                randomize(MoveCircles, MoveNod),
+                weighted_randomize((10, MoverRandomGobo), (90, MoverNoGobo)),
             )
         ],
         Motionstrip: [
             MotionstripSlowRespond,
             combo(
-                randomize(SlowRespond, DimmersBeatChase),
-                randomize(ColorFg, ColorAlternateBg),
+                randomize(SlowRespond, DimmersBeatChase, SlowDecay),
+                randomize(ColorFg, ColorAlternateBg, ColorBg),
                 MoveCircles,
             ),
             MotionStripBulbBeatAndWiggle,
