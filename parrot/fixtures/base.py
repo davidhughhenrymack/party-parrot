@@ -1,5 +1,6 @@
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp
+from parrot.utils.string import kebab_case
 
 
 class FixtureBase:
@@ -38,6 +39,10 @@ class FixtureBase:
 
     def __str__(self) -> str:
         return f"{self.name} @ {self.address}"
+
+    @property
+    def id(self):
+        return f"{kebab_case(self.name)}@{self.address}"
 
 
 class ColorWheelEntry:

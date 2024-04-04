@@ -1284,6 +1284,14 @@
         "documentation": {}
     },
     {
+        "label": "kebab_case",
+        "importPath": "parrot.utils.string",
+        "description": "parrot.utils.string",
+        "isExtraImport": true,
+        "detail": "parrot.utils.string",
+        "documentation": {}
+    },
+    {
         "label": "Canvas",
         "importPath": "tkinter",
         "description": "tkinter",
@@ -1381,6 +1389,15 @@
         "documentation": {}
     },
     {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
         "label": "scipy",
         "kind": 6,
         "isExtraImport": true,
@@ -1419,6 +1436,22 @@
         "description": "scipy",
         "isExtraImport": true,
         "detail": "scipy",
+        "documentation": {}
+    },
+    {
+        "label": "distance",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
         "documentation": {}
     },
     {
@@ -1577,14 +1610,6 @@
         "description": "parrot.gui.gui",
         "isExtraImport": true,
         "detail": "parrot.gui.gui",
-        "documentation": {}
-    },
-    {
-        "label": "clamp",
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "isExtraImport": true,
-        "detail": "parrot.utils.math",
         "documentation": {}
     },
     {
@@ -1792,7 +1817,7 @@
         "kind": 6,
         "importPath": "parrot.director.phrase_machine",
         "description": "parrot.director.phrase_machine",
-        "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.drums_since = None\n    def step(self, frame):\n        if frame[\"bass\"] < 0.1 and self.drums_since == None:\n            self.drums_since = frame.time\n        # if frame[\"build_rate\"] > 1.5:\n        #     self.state.set_phrase(Phrase.build)\n        #     return",
+        "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.drums_since = None\n    def step(self, frame):\n        # if frame[\"build_rate\"] > 1.5:\n        #     self.state.set_phrase(Phrase.build)\n        #     return\n        # if self.state.phrase == Phrase.build and frame[\"build_rate\"] < 0.5:\n        #     self.state.set_phrase(Phrase.drop)",
         "detail": "parrot.director.phrase_machine",
         "documentation": {}
     },
@@ -2008,7 +2033,7 @@
         "kind": 6,
         "importPath": "parrot.gui.fixtures.base",
         "description": "parrot.gui.fixtures.base",
-        "peekOfCode": "class FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property\n    def height(self) -> int:\n        raise NotImplementedError\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "peekOfCode": "class FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n        self._x = 0\n        self._y = 0\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property\n    def height(self) -> int:",
         "detail": "parrot.gui.fixtures.base",
         "documentation": {}
     },
@@ -2017,7 +2042,7 @@
         "kind": 5,
         "importPath": "parrot.gui.fixtures.base",
         "description": "parrot.gui.fixtures.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property\n    def height(self) -> int:\n        raise NotImplementedError",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n        self._x = 0\n        self._y = 0\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property",
         "detail": "parrot.gui.fixtures.base",
         "documentation": {}
     },
@@ -2026,7 +2051,7 @@
         "kind": 6,
         "importPath": "parrot.gui.fixtures.bulb",
         "description": "parrot.gui.fixtures.bulb",
-        "peekOfCode": "class BulbRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 30\n    @property\n    def height(self) -> int:\n        return 30\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "peekOfCode": "class BulbRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 30\n    @property\n    def height(self) -> int:\n        return 30\n    def setup(self, canvas: Canvas):",
         "detail": "parrot.gui.fixtures.bulb",
         "documentation": {}
     },
@@ -2053,7 +2078,7 @@
         "kind": 6,
         "importPath": "parrot.gui.fixtures.laser",
         "description": "parrot.gui.fixtures.laser",
-        "peekOfCode": "class LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50\n    @property\n    def height(self) -> int:\n        return 50\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "peekOfCode": "class LaserRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 50\n    @property\n    def height(self) -> int:\n        return 50\n    def setup(self, canvas: Canvas):",
         "detail": "parrot.gui.fixtures.laser",
         "documentation": {}
     },
@@ -2098,7 +2123,7 @@
         "kind": 6,
         "importPath": "parrot.gui.fixtures.motionstrip",
         "description": "parrot.gui.fixtures.motionstrip",
-        "peekOfCode": "class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return BULB_MARGIN * 2 + BULB_MARGIN * (BULBS - 1) + BULB_DIA * BULBS\n    @property\n    def height(self) -> int:\n        return BULB_MARGIN * 2 + BULB_DIA\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "peekOfCode": "class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return BULB_MARGIN * 2 + BULB_MARGIN * (BULBS - 1) + BULB_DIA * BULBS\n    @property\n    def height(self) -> int:\n        return BULB_MARGIN * 2 + BULB_DIA\n    def setup(self, canvas: Canvas):",
         "detail": "parrot.gui.fixtures.motionstrip",
         "documentation": {}
     },
@@ -2134,7 +2159,7 @@
         "kind": 6,
         "importPath": "parrot.gui.fixtures.moving_head",
         "description": "parrot.gui.fixtures.moving_head",
-        "peekOfCode": "class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40\n    def setup(self, canvas: Canvas, x: int, y: int):",
+        "peekOfCode": "class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40\n    def setup(self, canvas: Canvas):",
         "detail": "parrot.gui.fixtures.moving_head",
         "documentation": {}
     },
@@ -2620,7 +2645,7 @@
         "kind": 6,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "class MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None\n        self.lookback_buffer_size = RATE * 6",
+        "peekOfCode": "class MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None\n        self.signal_lookback = {",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -2638,7 +2663,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:",
+        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -2647,7 +2672,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -2656,7 +2681,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -2665,7 +2690,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -2674,25 +2699,25 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nTIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
-        "label": "TIME_IN_GRAPH",
+        "label": "SPECTOGRAPH_AVG_RATE",
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "TIME_IN_GRAPH = 1000\nBLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
+        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
-        "label": "BLOCKS_IN_GRAPH",
+        "label": "SPECTOGRAPH_BUFFER_SIZE",
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3178,7 +3203,16 @@
         "kind": 2,
         "importPath": "parrot.utils.math",
         "description": "parrot.utils.math",
-        "peekOfCode": "def clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n",
+        "peekOfCode": "def clamp(n, min, max):\n    if n < min:\n        return min\n    elif n > max:\n        return max\n    else:\n        return n\ndef distance(x0, x1, y0, y1):\n    dx = x1 - x0\n    dy = y1 - y0",
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "distance",
+        "kind": 2,
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "peekOfCode": "def distance(x0, x1, y0, y1):\n    dx = x1 - x0\n    dy = y1 - y0\n    return math.sqrt(dx * dx + dy * dy)",
         "detail": "parrot.utils.math",
         "documentation": {}
     },
@@ -3189,6 +3223,15 @@
         "description": "parrot.utils.mock_controller",
         "peekOfCode": "class MockDmxController:\n    def __init__(self):\n        pass\n    def set_channel(self, channel, value):\n        pass\n    def submit(self):\n        pass",
         "detail": "parrot.utils.mock_controller",
+        "documentation": {}
+    },
+    {
+        "label": "kebab_case",
+        "kind": 2,
+        "importPath": "parrot.utils.string",
+        "description": "parrot.utils.string",
+        "peekOfCode": "def kebab_case(string):\n    \"\"\"Converts a string to kebab case.\n    Args:\n      string: The string to convert.\n    Returns:\n      The string in kebab case.\n    \"\"\"\n    string = re.sub(r\"(_|-)+\", \" \", string).lower()\n    return \"-\".join(string.split())",
+        "detail": "parrot.utils.string",
         "documentation": {}
     },
     {

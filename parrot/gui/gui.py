@@ -1,4 +1,6 @@
+import json
 import math
+import os
 import scipy
 from tkinter import *
 
@@ -59,6 +61,8 @@ class Window(Tk):
             renderer.set_position(self.canvas, fixture_x, fixture_y)
             fixture_x += renderer.width + FIXTURE_MARGIN
 
+        self.load()
+
         self.phrase_frame = Frame(self, background=BG)
 
         self.phrase_buttons = {}
@@ -116,6 +120,7 @@ class Window(Tk):
         self._drag_data["item"] = None
         self._drag_data["x"] = 0
         self._drag_data["y"] = 0
+        self.save()
 
     def drag(self, event):
         """Handle dragging of an object"""
@@ -179,3 +184,24 @@ class Window(Tk):
                     y1,
                     fill=fill,
                 )
+
+    def save(self):
+        data = {}
+        for i in self.fixture_renderers:
+            data[i.fixture.id] = i.to_json()
+
+        # write to file
+        with open("gui.json", "w") as f:
+            json.dump(data, f, indent=4)
+
+    def load(self):
+        # read from file
+        if not os.path.exists("gui.json"):
+            return
+
+        with open("gui.json", "r") as f:
+            data = json.load(f)
+        # load json
+        for i in self.fixture_renderers:
+            if i.fixture.id in data:
+                i.from_json(self.canvas, data[i.fixture.id])

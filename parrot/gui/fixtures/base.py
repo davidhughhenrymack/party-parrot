@@ -37,3 +37,12 @@ class FixtureGuiRenderer(Generic[T]):
 
     def render(self, canvas: Canvas, frame: Frame):
         pass
+
+    def to_json(self):
+        return {
+            "x": self.x,
+            "y": self.y,
+        }
+
+    def from_json(self, canvas, data):
+        self.set_position(canvas, data["x"], data["y"])
