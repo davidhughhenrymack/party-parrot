@@ -19,9 +19,20 @@ class BulbRenderer(FixtureGuiRenderer[FixtureBase]):
     def height(self) -> int:
         return 30
 
-    def setup(self, canvas: Canvas, x: int, y: int):
+    def setup(self, canvas: Canvas):
         self.oval = canvas.create_oval(
-            x, y, x + self.width, y + self.height, fill="black", outline="black"
+            self.x,
+            self.y,
+            self.x + self.width,
+            self.y + self.height,
+            fill="black",
+            outline="black",
+        )
+
+    def set_position(self, canvas: Canvas, x: int, y: int):
+        super().set_position(canvas, x, y)
+        canvas.coords(
+            self.oval, self.x, self.y, self.x + self.width, self.y + self.height
         )
 
     def render(self, canvas: Canvas, frame: Frame):

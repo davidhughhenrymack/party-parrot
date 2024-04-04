@@ -24,8 +24,8 @@ RATE = 44100
 INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms
 INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)
 INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
-TIME_IN_GRAPH = 1000
-BLOCKS_IN_GRAPH = int(TIME_IN_GRAPH / INPUT_BLOCK_TIME)
+SPECTOGRAPH_AVG_RATE = 275
+SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 6
 
 SHOW_PLOT = os.environ.get("SHOW_PLOT") == "True"
 SHOW_GUI = os.environ.get("SHOW_GUI", "True") == "True"
@@ -50,7 +50,6 @@ class MicToDmx(object):
         self.power_min = 99999999999999999
 
         self.spectrogram_buffer = None
-        self.lookback_buffer_size = RATE * 6
         self.signal_lookback = {
             "claps_md": [],
             "claps_short": [],
@@ -157,6 +156,11 @@ class MicToDmx(object):
         # self.signal_lookback["drum_binary"] = np.where(timeseries["drums"] > 0.3, 1, 0)
         # self.signal_lookback["build_rate"].append(values["build_rate"])
 
+        self.signal_lookback["sustained"].append(sustained)
+        self.signal_lookback["sustained"] = self.signal_lookback["sustained"][
+            -SPECTOGRAPH_BUFFER_SIZE:
+        ]
+
         frame = Frame(
             **values,
         )
@@ -227,7 +231,6 @@ class MicToDmx(object):
         f, t, Sxx = signal.spectrogram(snd_block, self.avg_rate)
 
         self.spectrogram_rate = len(t) / time_elapsed
-        print(self.spectrogram_rate)
 
         if self.spectrogram_buffer is None:
             self.spectrogram_buffer = Sxx
@@ -236,9 +239,7 @@ class MicToDmx(object):
                 [self.spectrogram_buffer, Sxx], axis=1
             )
 
-        self.spectrogram_buffer = self.spectrogram_buffer[
-            :, -self.lookback_buffer_size :
-        ]
+        self.spectrogram_buffer = self.spectrogram_buffer[:, -SPECTOGRAPH_BUFFER_SIZE:]
         self.processBlockPower(self.spectrogram_buffer)
 
     # except Exception as e:

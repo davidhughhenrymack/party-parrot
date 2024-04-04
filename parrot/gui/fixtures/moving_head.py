@@ -29,32 +29,32 @@ class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):
     def height(self) -> int:
         return 40
 
-    def setup(self, canvas: Canvas, x: int, y: int):
+    def setup(self, canvas: Canvas):
         self.base = canvas.create_rectangle(
-            x,
-            y + self.height - BASE_HEIGHT,
-            x + self.width,
-            y + self.height,
+            self.x,
+            self.y + self.height - BASE_HEIGHT,
+            self.x + self.width,
+            self.y + self.height,
             fill="black",
             outline="black",
         )
         self.head = canvas.create_rectangle(
-            x + self.height / 2 - HEAD_WIDTH / 2,
-            y,
-            x + self.height / 2 + HEAD_WIDTH / 2,
-            y + HEAD_HEIGHT,
+            self.x + self.height / 2 - HEAD_WIDTH / 2,
+            self.y,
+            self.x + self.height / 2 + HEAD_WIDTH / 2,
+            self.y + HEAD_HEIGHT,
             fill="black",
             outline="black",
         )
 
-        self.light_cx = x + self.width / 2
-        self.light_cy = y + 5 + LIGHT_RADIUS
+        self.light_cx = self.x + self.width / 2
+        self.light_cy = self.y + 5 + LIGHT_RADIUS
 
         self.light = canvas.create_oval(
-            x + self.width / 2 - LIGHT_RADIUS,
-            y + 5,
-            x + self.width / 2 + LIGHT_RADIUS,
-            y + 5 + 2 * LIGHT_RADIUS,
+            self.x + self.width / 2 - LIGHT_RADIUS,
+            self.y + 5,
+            self.x + self.width / 2 + LIGHT_RADIUS,
+            self.y + 5 + 2 * LIGHT_RADIUS,
             fill="black",
             outline="black",
         )
@@ -66,6 +66,43 @@ class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):
             self.light_cy,
             fill="black",
             width=3,
+        )
+
+    def set_position(self, canvas: Canvas, x: int, y: int):
+        super().set_position(canvas, x, y)
+
+        canvas.coords(
+            self.base,
+            self.x,
+            self.y + self.height - BASE_HEIGHT,
+            self.x + self.width,
+            self.y + self.height,
+        )
+        canvas.coords(
+            self.head,
+            self.x + self.height / 2 - HEAD_WIDTH / 2,
+            self.y,
+            self.x + self.height / 2 + HEAD_WIDTH / 2,
+            self.y + HEAD_HEIGHT,
+        )
+
+        self.light_cx = self.x + self.width / 2
+        self.light_cy = self.y + 5 + LIGHT_RADIUS
+
+        canvas.coords(
+            self.light,
+            self.x + self.width / 2 - LIGHT_RADIUS,
+            self.y + 5,
+            self.x + self.width / 2 + LIGHT_RADIUS,
+            self.y + 5 + 2 * LIGHT_RADIUS,
+        )
+
+        canvas.coords(
+            self.beam,
+            self.light_cx,
+            self.light_cy,
+            self.light_cx,
+            self.light_cy,
         )
 
     def render(self, canvas: Canvas, frame: Frame):

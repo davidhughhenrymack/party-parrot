@@ -27,10 +27,10 @@ class LaserRenderer(FixtureGuiRenderer[FixtureBase]):
     def height(self) -> int:
         return 50
 
-    def setup(self, canvas: Canvas, x: int, y: int):
+    def setup(self, canvas: Canvas):
 
-        cx = x + self.width / 2
-        cy = y + self.height / 2
+        cx = self.x + self.width / 2
+        cy = self.y + self.height / 2
 
         self.shape = canvas.create_rectangle(
             cx - BOX_W / 2,
@@ -54,6 +54,31 @@ class LaserRenderer(FixtureGuiRenderer[FixtureBase]):
                     fill="",
                     width=1,
                 )
+            )
+
+    def set_position(self, canvas: Canvas, x: int, y: int):
+        super().set_position(canvas, x, y)
+
+        cx = x + self.width / 2
+        cy = y + self.height / 2
+
+        canvas.coords(
+            self.shape,
+            cx - BOX_W / 2,
+            cy - BOX_H / 2,
+            cx + BOX_W / 2,
+            cy + BOX_H / 2,
+        )
+
+        for i in self.lines:
+            size = LINE_R * random.random()
+            angle = random.random() * 2 * math.pi
+            canvas.coords(
+                i,
+                cx,
+                cy,
+                cx + size * math.cos(angle),
+                cy + size * math.sin(angle),
             )
 
     def render(self, canvas: Canvas, frame: Frame):

@@ -7,6 +7,7 @@ from parrot.interpreters.base import Phrase
 from parrot.patch_bay import patch_bay
 from parrot.utils.color_extra import dim_color
 from .fixtures.factory import renderer_for_fixture
+from parrot.utils.math import distance
 
 CIRCLE_SIZE = 30
 FIXTURE_MARGIN = 20
@@ -37,6 +38,10 @@ class Window(Tk):
             selectborderwidth=0,
         )
         self.canvas.pack()
+        self._drag_data = {"x": 0, "y": 0, "item": None}
+        self.canvas.bind("<ButtonPress-1>", self.drag_start)
+        self.canvas.bind("<ButtonRelease-1>", self.drag_stop)
+        self.canvas.bind("<B1-Motion>", self.drag)
 
         self.bind("<space>", lambda e: self.state.set_phrase(Phrase.drop))
         self.bind("<Key>", self.on_key_press)
@@ -50,7 +55,8 @@ class Window(Tk):
             if fixture_x + renderer.width + FIXTURE_MARGIN > CANVAS_WIDTH:
                 fixture_x = FIXTURE_MARGIN
                 fixture_y += 100
-            renderer.setup(self.canvas, fixture_x, fixture_y)
+            renderer.setup(self.canvas)
+            renderer.set_position(self.canvas, fixture_x, fixture_y)
             fixture_x += renderer.width + FIXTURE_MARGIN
 
         self.phrase_frame = Frame(self, background=BG)
@@ -62,7 +68,7 @@ class Window(Tk):
                 text=i.name,
                 command=lambda i=i: self.click_phrase(i),
                 highlightbackground=BG,
-                height=7,
+                height=3,
             )
             self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
 
@@ -72,7 +78,7 @@ class Window(Tk):
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
         # self.label.pack()
 
-        self.graph = Canvas(self, width=CANVAS_WIDTH, height=200, bg=BG)
+        self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
         self.graph.pack()
 
     def click_phrase(self, phrase: Phrase):
@@ -88,6 +94,44 @@ class Window(Tk):
     def on_key_press(self, event):
         self.state.set_phrase(Phrase.build)
 
+    def drag_start(self, event):
+        """Begining drag of an object"""
+        # record the item and its location
+        self._drag_data["item"] = None
+        closest = 999999999
+        for i in self.fixture_renderers:
+            dist = distance(event.x, i.x, event.y, i.y)
+            print(dist, i)
+            if dist < closest and dist < 100:
+                self._drag_data["item"] = i
+                closest = dist
+
+        self._drag_data["x"] = event.x
+        self._drag_data["y"] = event.y
+        print(self._drag_data)
+
+    def drag_stop(self, event):
+        """End drag of an object"""
+        # reset the drag information
+        self._drag_data["item"] = None
+        self._drag_data["x"] = 0
+        self._drag_data["y"] = 0
+
+    def drag(self, event):
+        """Handle dragging of an object"""
+        # compute how much the mouse has moved
+        delta_x = event.x - self._drag_data["x"]
+        delta_y = event.y - self._drag_data["y"]
+        # move the object the appropriate amount
+        self._drag_data["item"].set_position(
+            self.canvas,
+            self._drag_data["item"].x + delta_x,
+            self._drag_data["item"].y + delta_y,
+        )
+        # record the new position
+        self._drag_data["x"] = event.x
+        self._drag_data["y"] = event.y
+
     def step(self, frame):
         # self.label_var.set(
         #     "All: {:.2f}, Sustained: {:.2f}, Drums: {:.2f}, Build rate: {:.2f}".format(
@@ -99,6 +143,7 @@ class Window(Tk):
             renderer.render(self.canvas, frame)
 
         self.graph.delete("all")
+        g_height = self.graph.winfo_height()
         for idx, (name, values) in enumerate(frame.plot.items()):
             if len(values) == 0:
                 continue
@@ -124,9 +169,9 @@ class Window(Tk):
                 if i == 0:
                     continue
                 x0 = (i - 1) * x_scale
-                y0 = 200 - values[i - 1] * 200
+                y0 = g_height - values[i - 1] * g_height
                 x1 = i * x_scale
-                y1 = 200 - value * 200
+                y1 = g_height - value * g_height
                 self.graph.create_line(
                     x0,
                     y0,
