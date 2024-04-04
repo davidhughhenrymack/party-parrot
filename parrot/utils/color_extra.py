@@ -1,4 +1,5 @@
 from parrot.utils.colour import Color
+from .math import clamp
 from parrot.utils.lerp import lerp
 
 
@@ -15,3 +16,8 @@ def color_distance(a: Color, b: Color) -> float:
         + abs(a.saturation - b.saturation)
         + abs(a.luminance - b.luminance)
     )
+
+
+def dim_color(color: Color, dimmer: float) -> Color:
+    dimmer = clamp(dimmer, 0, 1)
+    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))

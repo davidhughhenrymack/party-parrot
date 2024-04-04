@@ -2,15 +2,12 @@
 
 import os
 import traceback
-from parrot.listeners.mic_to_dmx_basic import MicToDmxBasic
+from parrot.listeners.mic_to_dmx import MicToDmx
 
 if __name__ == "__main__":
-    audio = MicToDmxBasic()
-    while True:
-        try:
-            audio.listen()
-        except (KeyboardInterrupt, SystemExit) as e:
-            break
-        # except Exception as e:
-        #     print(traceback.format_exc())
-        #     False
+    app = MicToDmx()
+    app.run()
+
+    # except Exception as e:
+    #     print(traceback.format_exc())
+    #     False

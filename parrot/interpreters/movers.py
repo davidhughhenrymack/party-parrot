@@ -1,33 +1,47 @@
-import math
-from parrot.interpreters.base import InterpreterBase
-from parrot.fixtures import FixtureBase
+import random
+from parrot.interpreters.base import (
+    ColorFg,
+    FlashBeat,
+    InterpreterBase,
+    MoveCircles,
+)
+from parrot.interpreters.dimmer import Dimmer100, Dimmer30, SequenceDimmers
+from parrot.interpreters.combo import combo
+from parrot.fixtures.moving_head import MovingHead
+from parrot.utils.colour import Color
 
 
-class MoverCircleAndColor(InterpreterBase[FixtureBase]):
-    def __init__(self, subject: FixtureBase):
-        super().__init__(subject)
+class MoverFan(InterpreterBase[MovingHead]):
+    def __init__(self, group):
+        super().__init__(group)
+
+        for i, fixture in enumerate(group):
+            fixture.set_pan(i * 255 / len(group))
+            fixture.set_tilt(128)
 
     def step(self, frame, scheme):
-        self.subject.set_color(scheme.fg)
-        self.subject.set_pan(math.cos(frame.time) * 127 + 128)
-        self.subject.set_tilt(math.sin(frame.time) * 127 + 128)
+        pass
 
 
-class MoverBeat(InterpreterBase[FixtureBase]):
-    def __init__(self, subject: FixtureBase):
-        super().__init__(subject)
-        self.signal = "drums"
-        self.movement = MoverCircleAndColor(subject)
+class MoverRandomGobo(InterpreterBase[MovingHead]):
+    def __init__(self, group):
+        super().__init__(group)
 
-    def step(self, frame, scheme):
-        self.movement.step(frame, scheme)
+        for fixture in self.group:
+            fixture.set_gobo(random.choice(fixture.gobo_wheel).name)
 
-        if frame["sustained"] > 0.7:
-            self.subject.set_dimmer(100)
-            self.subject.set_strobe(200)
-        elif frame[self.signal] > 0.4:
-            self.subject.set_dimmer(frame[self.signal] * 255)
-            self.subject.set_strobe(0)
-        else:
-            self.subject.set_dimmer(0)
-            self.subject.set_strobe(0)
+
+class MoverNoGobo(InterpreterBase[MovingHead]):
+    def __init__(self, group):
+        super().__init__(group)
+
+        for fixture in self.group:
+            fixture.set_gobo("open")
+
+
+MoverBeatAndCircle = combo(FlashBeat, MoveCircles, ColorFg)
+MoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)
+MoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)
+MoverSequenceInFan = combo(SequenceDimmers, MoverFan, ColorFg)
+MoverDimAndCircle = combo(MoveCircles, ColorFg, Dimmer30)
+MoverOnAndCircle = combo(MoveCircles, ColorFg, Dimmer100)

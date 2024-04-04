@@ -3,15 +3,7 @@ import math
 import os
 
 from parrot.utils.mock_controller import MockDmxController
-
-
-def clamp(n, min, max):
-    if n < min:
-        return min
-    elif n > max:
-        return max
-    else:
-        return n
+from .math import clamp
 
 
 def dmx_clamp(n):
@@ -31,4 +23,8 @@ def get_controller():
     if os.environ.get("MOCK_DMX", False) != False:
         return MockDmxController()
 
-    return Controller(usb_path)  # Typical of Linux
+    try:
+        return Controller(usb_path)
+    except:
+        print("Could not connect to DMX controller. Using mock controller instead.")
+        return MockDmxController()

@@ -1,4 +1,4 @@
-from parrot.fixtures.base import FixtureBase
+from parrot.fixtures.laser import Laser
 
 dmx_layout = [
     "mode",
@@ -14,7 +14,7 @@ dmx_layout = [
 ]
 
 
-class TwoBeamLaser(FixtureBase):
+class TwoBeamLaser(Laser):
     def __init__(self, address):
         super().__init__(address, "oultia 2 beam laser", 10)
 
@@ -35,6 +35,7 @@ class TwoBeamLaser(FixtureBase):
         self.values[1] = value
 
     def set_dimmer(self, value):
+        super().set_dimmer(value)
         if value == 0:
             self.set_mode(0)
         else:

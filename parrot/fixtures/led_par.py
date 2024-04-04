@@ -6,6 +6,7 @@ class LedPar(FixtureBase):
         super().__init__(patch, "led par", 7)
 
     def set_dimmer(self, value):
+        super().set_dimmer(value)
         self.values[0] = value
 
     def set_strobe(self, value):

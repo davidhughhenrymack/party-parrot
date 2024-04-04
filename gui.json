@@ -1,0 +1,54 @@
+{
+    "chauvet-intimidator-160@1": {
+        "x": 149,
+        "y": 177
+    },
+    "chauvet-intimidator-120@140": {
+        "x": 211,
+        "y": 175
+    },
+    "chauvet-intimidator-120@152": {
+        "x": 275,
+        "y": 175
+    },
+    "led-par@12": {
+        "x": 93,
+        "y": 215
+    },
+    "led-par@19": {
+        "x": 123,
+        "y": 85
+    },
+    "led-par@26": {
+        "x": 286,
+        "y": 80
+    },
+    "led-par@33": {
+        "x": 349,
+        "y": 215
+    },
+    "led-par@40": {
+        "x": 450,
+        "y": 352
+    },
+    "led-par@47": {
+        "x": 31,
+        "y": 358
+    },
+    "motionstrip-38@59": {
+        "x": 246,
+        "y": 229
+    },
+    "motionstrip-38@154": {
+        "x": 140,
+        "y": 229
+    },
+    "uking-5-beam-laser@100": {
+        "x": 176,
+        "y": 69
+    },
+    "oultia-2-beam-laser@120": {
+        "x": 225,
+        "y": 70
+    }
+}

@@ -1,4 +1,4 @@
-from parrot.fixtures.base import FixtureBase
+from parrot.fixtures.laser import Laser
 
 dmx_layout = [
     "mode",
@@ -17,7 +17,7 @@ dmx_layout = [
 ]
 
 
-class FiveBeamLaser(FixtureBase):
+class FiveBeamLaser(Laser):
     def __init__(self, address):
         super().__init__(address, "uking 5 beam laser", 13)
 
@@ -37,6 +37,7 @@ class FiveBeamLaser(FixtureBase):
         self.values[6] = value
 
     def set_dimmer(self, value):
+        super().set_dimmer(value)
         self.values[1] = value
         self.values[2] = value
         self.values[3] = value
