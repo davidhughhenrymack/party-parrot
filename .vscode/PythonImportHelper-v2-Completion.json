@@ -3131,7 +3131,7 @@
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.theme_select = Combobox(",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.theme_select = Combobox(",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3140,7 +3140,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3149,7 +3149,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3158,7 +3158,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3167,7 +3167,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
+        "peekOfCode": "CANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },

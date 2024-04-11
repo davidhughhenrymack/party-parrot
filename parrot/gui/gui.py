@@ -23,7 +23,7 @@ class Window(Tk):
         super().__init__()
 
         self.state = state
-        state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)
+        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)
 
         self.title("Party Parrot")
         # set background color to black
@@ -74,18 +74,18 @@ class Window(Tk):
 
         self.phrase_frame = Frame(self, background=BG)
 
-        self.phrase_buttons = {}
-        for i in Phrase:
-            self.phrase_buttons[i] = Button(
-                self.phrase_frame,
-                text=i.name,
-                command=lambda i=i: self.state.set_phrase(i),
-                highlightbackground=BG,
-                height=3,
-            )
-            self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
+        # self.phrase_buttons = {}
+        # for i in Phrase:
+        #     self.phrase_buttons[i] = Button(
+        #         self.phrase_frame,
+        #         text=i.name,
+        #         command=lambda i=i: self.state.set_phrase(i),
+        #         highlightbackground=BG,
+        #         height=3,
+        #     )
+        #     self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
 
-        self.phrase_frame.pack()
+        # self.phrase_frame.pack()
 
         self.label_var = StringVar()
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
@@ -103,12 +103,12 @@ class Window(Tk):
         self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
         self.graph.pack()
 
-    def on_phrase_change(self, phrase: Phrase):
-        for phrase, button in self.phrase_buttons.items():
-            if phrase == self.state.phrase:
-                button.config(highlightbackground="green")
-            else:
-                button.config(highlightbackground=BG)
+    # def on_phrase_change(self, phrase: Phrase):
+    #     for phrase, button in self.phrase_buttons.items():
+    #         if phrase == self.state.phrase:
+    #             button.config(highlightbackground="green")
+    #         else:
+    #             button.config(highlightbackground=BG)
 
     def on_key_press(self, event):
         self.state.set_phrase(Phrase.build)

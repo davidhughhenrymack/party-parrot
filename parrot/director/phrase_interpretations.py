@@ -109,57 +109,57 @@ phrase_interpretations: Dict[
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
             ),
         ],
-        # MovingHead: [
-        #     combo(
-        #         randomize(
-        #             DimmersBeatChase,
-        #             SlowDecay,
-        #             GentlePulse,
-        #             DimmerFadeLatched,
-        #             SequenceDimmers,
-        #             SequenceFadeDimmers,
-        #             with_args(DimmerFadeLatchedRandom, latch_at=0.3),
-        #         ),
-        #         weighted_randomize((95, ColorFg), (5, ColorRainbow)),
-        #         randomize(MoveCircles, MoveNod),
-        #         weighted_randomize((10, MoverRandomGobo), (90, MoverNoGobo)),
-        #     )
-        # ],
-        # Motionstrip: [
-        #     MotionstripSlowRespond,
-        #     combo(
-        #         randomize(
-        #             combo(SlowRespond, AllBulbs255),
-        #             combo(DimmersBeatChase, AllBulbs255),
-        #             combo(SlowDecay, AllBulbs255),
-        #             combo(
-        #                 Dimmer255,
-        #                 for_bulbs(with_args(GentlePulse, trigger_level=0.1)),
-        #             ),
-        #             combo(Dimmer255, for_bulbs(DimmersBeatChase)),
-        #             combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
-        #         ),
-        #         randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-        #         MoveCircles,
-        #     ),
-        # ],
-        # Laser: [LaserLatch],
-        # ChauvetRotosphere_28Ch: [
-        #     Dimmer0,
-        #     combo(
-        #         RotosphereSpinColor,
-        #         randomize(
-        #             DimmerFadeIn,
-        #             for_bulbs(GentlePulse),
-        #             DimmerFadeLatched4s,
-        #         ),
-        #     ),
-        #     combo(
-        #         for_bulbs(ColorRainbow),
-        #         RotosphereSpin,
-        #         with_args(SlowDecay, decay_rate=0.01),
-        #     ),
-        # ],
+        MovingHead: [
+            combo(
+                randomize(
+                    DimmersBeatChase,
+                    SlowDecay,
+                    GentlePulse,
+                    DimmerFadeLatched,
+                    SequenceDimmers,
+                    SequenceFadeDimmers,
+                    with_args(DimmerFadeLatchedRandom, latch_at=0.3),
+                ),
+                weighted_randomize((95, ColorFg), (5, ColorRainbow)),
+                randomize(MoveCircles, MoveNod),
+                weighted_randomize((10, MoverRandomGobo), (90, MoverNoGobo)),
+            )
+        ],
+        Motionstrip: [
+            MotionstripSlowRespond,
+            combo(
+                randomize(
+                    combo(SlowRespond, AllBulbs255),
+                    combo(DimmersBeatChase, AllBulbs255),
+                    combo(SlowDecay, AllBulbs255),
+                    combo(
+                        Dimmer255,
+                        for_bulbs(with_args(GentlePulse, trigger_level=0.1)),
+                    ),
+                    combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                    combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
+                ),
+                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                MoveCircles,
+            ),
+        ],
+        Laser: [LaserLatch],
+        ChauvetRotosphere_28Ch: [
+            Dimmer0,
+            combo(
+                RotosphereSpinColor,
+                randomize(
+                    DimmerFadeIn,
+                    for_bulbs(GentlePulse),
+                    DimmerFadeLatched4s,
+                ),
+            ),
+            combo(
+                for_bulbs(ColorRainbow),
+                RotosphereSpin,
+                with_args(SlowDecay, decay_rate=0.01),
+            ),
+        ],
     },
 }
 
