@@ -1,5 +1,6 @@
 from parrot.utils.colour import Color
-from .base import FixtureBase
+from parrot.utils.color_extra import dim_color
+from .base import FixtureBase, FixtureWithBulbs
 
 # DMX layout:
 dmx_layout = [
@@ -26,22 +27,32 @@ def color_to_rgbw(color: Color):
         return (color.red * 255, color.green * 255, color.blue * 255, 0)
 
 
-class Motionstrip(FixtureBase):
-    def __init__(self, address, name, width):
-        super().__init__(address, name, width)
+class MotionstripBulb(FixtureBase):
+    def __init__(self, address):
+        super().__init__(address, "motionstrip bulb", 4)
+
+    def render_values(self, values):
+        c = color_to_rgbw(dim_color(self.get_color(), self.get_dimmer() / 255))
+        for i in range(4):
+            values[self.address + i] = c[i]
+
+
+class Motionstrip(FixtureWithBulbs):
+    pass
 
 
 class Motionstrip38(Motionstrip):
     def __init__(self, patch, pan_lower, pan_upper):
-        super().__init__(patch, "motionstrip 38", 38)
+        super().__init__(
+            patch, "motionstrip 38", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]
+        )
         self.pan_lower = pan_lower
         self.pan_upper = pan_upper
         self.pan_range = pan_upper - pan_lower
         self.set_pan_speed(128)
-        self.bulb_colors = [Color("black") for i in range(8)]
 
     def set_dimmer(self, value):
-        super().set_dimmer(value)
+        FixtureBase.set_dimmer(self, value)
         self.values[4] = value
 
     def set_pan(self, value):
@@ -52,21 +63,3 @@ class Motionstrip38(Motionstrip):
 
     def set_tilt(self, value):
         pass
-
-    def set_color(self, color: Color):
-        super().set_color(color)
-        for i in range(8):
-            self.set_bulb_color(i, color)
-
-    def set_bulb_color(self, bulb: int, color: Color):
-        self.bulb_colors[bulb] = color
-
-        if bulb < 0 or bulb > 7:
-            raise ValueError("bulb must be between 0 and 7")
-
-        c = color_to_rgbw(color)
-        for i in range(4):
-            self.values[6 + bulb * 4 + i] = c[i]
-
-    def get_bulb_color(self, bulb: int):
-        return self.bulb_colors[bulb]

@@ -1,3 +1,4 @@
+from collections import namedtuple
 from enum import Enum
 import math
 from typing import Generic, List, TypeVar
@@ -8,16 +9,58 @@ from parrot.utils.colour import Color
 
 T = TypeVar("T", bound=FixtureBase)
 
+InterpreterArgs = namedtuple("InterpreterArgs", ["hype", "allow_rainbows"])
+
 
 class InterpreterBase(Generic[T]):
-    def __init__(self, group: List[T]):
+    has_rainbow = False
+    hype = 0
+
+    def __init__(self, group: List[T], args: InterpreterArgs):
         self.group = group
+        self.interpreter_args = args
 
     def step(self, frame: Frame, scheme: ColorScheme):
         pass
 
+    @classmethod
+    def acceptable(cls, args: InterpreterArgs) -> bool:
+        if cls.has_rainbow and not args.allow_rainbows:
+            return False
+
+        if cls.hype > args.hype:
+            return False
+
+        return True
+
     def __str__(self) -> str:
-        return f"{self.__class__.__name__} {[str(i) for i in self.group]}"
+        return f"{self.__class__.__name__}"
+
+
+def with_args(interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
+
+    class WithArgs(InterpreterBase):
+        def __init__(self, group, args):
+            super().__init__(group, args)
+            self.interpreter = interpreter(group, args, **kwargs)
+
+        @classmethod
+        def acceptable(cls, args):
+            if new_hype is not None and new_has_rainbow is not None:
+                if new_hype > args.hype:
+                    return False
+                if new_has_rainbow and not args.allow_rainbows:
+                    return False
+                return True
+            return interpreter.acceptable(args)
+
+        def step(self, frame, scheme):
+            self.interpreter.step(frame, scheme)
+
+        def __str__(self):
+            return str(self.interpreter)
+
+    return WithArgs
 
 
 class Noop(InterpreterBase):
@@ -44,22 +87,27 @@ class ColorBg(InterpreterBase):
 
 
 class ColorRainbow(InterpreterBase):
-    def __init__(self, group, color_speed=0.08, color_phase_spread=0):
-        super().__init__(group)
+    has_rainbow = True
+
+    def __init__(self, group, args, color_speed=0.08, color_phase_spread=0.2):
+        super().__init__(group, args)
         self.color_speed = color_speed
         self.color_phase_spread = color_phase_spread
 
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
             color = Color("red")
-            phase = frame.time * self.color_speed + self.color_phase_spread * idx
+            phase = (
+                frame.time * self.color_speed
+                + self.color_phase_spread / len(self.group) * idx
+            )
             color.set_hue(phase - math.floor(phase))
             fixture.set_color(color)
 
 
 class MoveCircles(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi):
-        super().__init__(group)
+    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=math.pi):
+        super().__init__(group, args)
         self.multiplier = multiplier
         self.phase = phase
 
@@ -74,8 +122,8 @@ class MoveCircles(InterpreterBase):
 
 
 class MoveNod(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], multiplier=1, phase=math.pi / 3):
-        super().__init__(group)
+    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=math.pi / 3):
+        super().__init__(group, args)
         self.multiplier = multiplier
         self.phase = phase
 
@@ -88,8 +136,10 @@ class MoveNod(InterpreterBase):
 
 
 class FlashBeat(InterpreterBase):
-    def __init__(self, group):
-        super().__init__(group)
+    hype = 70
+
+    def __init__(self, group, args):
+        super().__init__(group, args)
         self.signal = "drums"
 
     def step(self, frame, scheme):

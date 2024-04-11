@@ -1,13 +1,17 @@
 import random
 from typing import List
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
 from parrot.fixtures.base import FixtureBase
 from parrot.utils.lerp import lerp
 
 
 class DimmerBinaryLatched(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], signal="sustained"):
-        super().__init__(group)
+    hype = 40
+
+    def __init__(
+        self, group: List[FixtureBase], args: InterpreterArgs, signal="sustained"
+    ):
+        super().__init__(group, args)
         self.signal = signal
         self.switch = False
         self.latch_until = 0
@@ -27,22 +31,30 @@ class DimmerBinaryLatched(InterpreterBase):
 
 
 class DimmerFadeLatched(InterpreterBase):
+    hype = 40
+
     def __init__(
         self,
         group,
+        args: InterpreterArgs,
         signal="sustained",
         latch_time=0.5,
         condition_on=lambda x: x > 0.55,
         condition_off=lambda x: x < 0.2,
+        fade_in_rate=0.1,
+        fade_out_rate=0.1,
     ):
-        super().__init__(group)
+        super().__init__(group, args)
         self.signal = signal
-        self.switch = False
-        self.latch_until = 0
-        self.memory = 0
         self.condition_on = condition_on
         self.condition_off = condition_off
         self.latch_time = latch_time
+        self.fade_in_rate = fade_in_rate
+        self.fade_out_rate = fade_out_rate
+
+        self.switch = False
+        self.latch_until = 0
+        self.memory = 0
 
     def step(self, frame, scheme):
         for i in self.group:
@@ -53,17 +65,30 @@ class DimmerFadeLatched(InterpreterBase):
                 self.switch = False
 
             if self.switch or self.latch_until > frame.time:
-                self.memory = lerp(self.memory, 255, 0.1)
-                i.set_dimmer(self.memory)
+                self.memory = lerp(self.memory, 255, self.fade_in_rate)
             else:
-                i.set_dimmer(0)
+                self.memory = lerp(self.memory, 0, self.fade_out_rate)
+            i.set_dimmer(self.memory)
+
+
+DimmerFadeLatched4s = with_args(
+    DimmerFadeLatched, new_hype=5, new_has_rainbow=False, latch_time=4
+)
 
 
 class DimmerFadeLatchedRandom(InterpreterBase):
+    hype = 50
+
     def __init__(
-        self, group, signal="sustained", latch_at=0.55, latch_off_at=0.1, latch_time=0.5
+        self,
+        group,
+        args: InterpreterArgs,
+        signal="sustained",
+        latch_at=0.55,
+        latch_off_at=0.1,
+        latch_time=0.5,
     ):
-        super().__init__(group)
+        super().__init__(group, args)
         self.signal = signal
         self.switch = False
         self.latch_until = 0

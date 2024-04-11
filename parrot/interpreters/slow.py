@@ -1,7 +1,7 @@
 import parrot.fixtures
 from typing import List
 from parrot.director.frame import Frame
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
 
 from parrot.utils.lerp import lerp
 from parrot.director.color_scheme import ColorScheme
@@ -11,8 +11,14 @@ from parrot.fixtures.base import FixtureBase
 
 
 class SlowRespond(InterpreterBase[FixtureBase]):
-    def __init__(self, group):
-        super().__init__(group)
+    hype = 25
+
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+    ):
+        super().__init__(group, args)
         self.dimmer_memory = 0
         self.signal = "sustained"
 
@@ -35,12 +41,20 @@ class SlowRespond(InterpreterBase[FixtureBase]):
 
 
 class SlowDecay(InterpreterBase[FixtureBase]):
-    def __init__(self, group):
-        super().__init__(group)
+    hype = 20
+
+    def __init__(self, group, args: InterpreterArgs, decay_rate=0.1):
+        super().__init__(group, args)
         self.dimmer_memory = 0
+        self.decay_rate = decay_rate
 
     def step(self, frame: Frame, scheme: ColorScheme):
-        self.dimmer_memory = max(lerp(self.dimmer_memory, 0, 0.1), frame.all)
+        self.dimmer_memory = max(
+            lerp(self.dimmer_memory, 0, self.decay_rate), frame.all
+        )
 
         for fixture in self.group:
             fixture.set_dimmer(self.dimmer_memory * 255)
+
+
+VerySlowDecay = with_args(SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01)

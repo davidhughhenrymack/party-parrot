@@ -45,6 +45,30 @@ class FixtureBase:
         return f"{kebab_case(self.name)}@{self.address}"
 
 
+class FixtureWithBulbs(FixtureBase):
+    def __init__(self, address, name, width, bulbs):
+        super().__init__(address, name, width)
+        self.bulbs = bulbs
+
+    def set_dimmer(self, value):
+        super().set_dimmer(value)
+        for bulb in self.bulbs:
+            bulb.set_dimmer(value)
+
+    def set_color(self, color):
+        super().set_color(color)
+        for bulb in self.bulbs:
+            bulb.set_color(color)
+
+    def get_bulbs(self):
+        return self.bulbs
+
+    def render(self, dmx):
+        for bulb in self.bulbs:
+            bulb.render_values(self.values)
+        super().render(dmx)
+
+
 class ColorWheelEntry:
     def __init__(self, color: Color, dmx_value: int):
         self.color = color

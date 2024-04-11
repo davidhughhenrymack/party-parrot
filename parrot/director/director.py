@@ -12,7 +12,7 @@ from parrot.fixtures.motionstrip import Motionstrip
 
 from parrot.director.color_schemes import color_schemes
 
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.director.phrase import Phrase
 from parrot.fixtures.laser import Laser
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
@@ -41,7 +41,10 @@ class Director:
         self.phrase_machine = PhraseMachine(state)
 
         self.warmup_complete = False
+
         self.state.events.on_phrase_change += lambda s: self.generate_interpreters()
+        self.state.events.on_hype_change += lambda s: self.generate_interpreters()
+        self.state.events.on_theme_change += lambda s: self.shift()
         self.state.set_phrase(Phrase.general)
 
     def generate_interpreters(self):
@@ -54,16 +57,21 @@ class Director:
             fixture_groups.append(fixtures)
 
         self.interpreters: List[InterpreterBase] = filter_nones(
-            get_interpreter(self.state.phrase, i) for i in fixture_groups
+            get_interpreter(
+                self.state.phrase,
+                i,
+                InterpreterArgs(self.state.hype, self.state.theme.allow_rainbows),
+            )
+            for i in fixture_groups
         )
         print(f"Generated interpretation for {self.state.phrase}:")
         for i in self.interpreters:
-            print(f"    {str(i)}")
+            print(f"    {str(i)} {[str(j) for j in i.group]}")
 
         print()
 
     def shift(self):
-        s = random.choice(color_schemes)
+        s = random.choice(self.state.theme.color_scheme)
         self.scheme.push(s)
         self.generate_interpreters()
         self.last_shift_time = time.time()

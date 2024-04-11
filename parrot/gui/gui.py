@@ -1,10 +1,12 @@
 import json
 import os
 from tkinter import *
+from tkinter.ttk import Combobox
 
 from parrot.state import State
 from parrot.director.phrase import Phrase
 from parrot.patch_bay import patch_bay
+from parrot.director.themes import themes
 from .fixtures.factory import renderer_for_fixture
 from parrot.utils.math import distance
 
@@ -27,6 +29,16 @@ class Window(Tk):
         # set background color to black
         self.configure(bg=BG)
         self.protocol("WM_DELETE_WINDOW", quit)
+
+        self.theme_select = Combobox(
+            self, values=[i.name for i in themes], state="readonly"
+        )
+        self.theme_select.current(0)
+        self.theme_select.bind(
+            "<<ComboboxSelected>>",
+            lambda e: state.set_theme(themes[self.theme_select.current()]),
+        )
+        self.theme_select.pack()
 
         self.canvas = Canvas(
             self,
@@ -67,7 +79,7 @@ class Window(Tk):
             self.phrase_buttons[i] = Button(
                 self.phrase_frame,
                 text=i.name,
-                command=lambda i=i: self.click_phrase(i),
+                command=lambda i=i: self.state.set_phrase(i),
                 highlightbackground=BG,
                 height=3,
             )
@@ -79,11 +91,17 @@ class Window(Tk):
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
         # self.label.pack()
 
+        self.scale = Scale(
+            self, from_=0, to=100, length=CANVAS_WIDTH, orient=HORIZONTAL
+        )
+        self.scale.set(self.state.hype)
+        self.scale.bind(
+            "<ButtonRelease-1>", lambda e: self.state.set_hype(self.scale.get())
+        )
+        self.scale.pack()
+
         self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
         self.graph.pack()
-
-    def click_phrase(self, phrase: Phrase):
-        self.state.set_phrase(phrase)
 
     def on_phrase_change(self, phrase: Phrase):
         for phrase, button in self.phrase_buttons.items():

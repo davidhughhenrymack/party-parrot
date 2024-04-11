@@ -1,4 +1,4 @@
-from parrot.fixtures.base import FixtureBase
+from parrot.fixtures.base import FixtureBase, FixtureWithBulbs
 from parrot.utils.color_extra import dim_color, lerp_color
 from parrot.utils.colour import Color
 from parrot.utils.math import clamp
@@ -33,39 +33,21 @@ class RotosphereBulb(FixtureBase):
         values[self.address + 7] = components["orange"]
 
 
-class ChauvetRotosphere_28Ch(FixtureBase):
+class ChauvetRotosphere_28Ch(FixtureWithBulbs):
 
     def __init__(
         self,
         address,
     ):
-        super().__init__(address, "chauvet rotosphere", 28)
-
-        self.bulbs = [RotosphereBulb(i * 8) for i in range(3)]
-
-    def get_bulbs(self):
-        return self.bulbs
+        super().__init__(
+            address, "chauvet rotosphere", 28, [RotosphereBulb(i * 8) for i in range(3)]
+        )
 
     def set_strobe(self, value):
         self.values[24] = value
-
-    def set_dimmer(self, value):
-        super().set_dimmer(value)
-        for bulb in self.bulbs:
-            bulb.set_dimmer(value)
-
-    def set_color(self, color):
-        super().set_color(color)
-        for bulb in self.bulbs:
-            bulb.set_color(color)
 
     def set_speed(self, value):
         self.values[27] = value
 
     def get_speed(self):
         return self.values[27]
-
-    def render(self, dmx):
-        for bulb in self.bulbs:
-            bulb.render_values(self.values)
-        super().render(dmx)

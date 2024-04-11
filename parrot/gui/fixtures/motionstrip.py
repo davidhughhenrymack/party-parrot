@@ -74,6 +74,7 @@ class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):
 
         # canvas.itemconfig(self.shape, fill=dim_color(color, dim / 255))
 
-        for i, oval in enumerate(self.bulbs):
-            bc = self.fixture.get_bulb_color(i)
+        for i, (oval, bulb) in enumerate(zip(self.bulbs, self.fixture.get_bulbs())):
+            bc = bulb.get_color()
+            bc = dim_color(bc, bulb.get_dimmer() / 255)
             canvas.itemconfig(oval, fill=dim_color(bc, dim / 255))

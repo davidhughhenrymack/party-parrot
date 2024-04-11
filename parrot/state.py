@@ -1,11 +1,15 @@
 from events import Events
 from parrot.director.phrase import Phrase
+from parrot.director.themes import themes
 
 
 class State:
     def __init__(self):
         self.events = Events()
+
         self._phrase = None
+        self._hype = 50
+        self._theme = themes[0]
 
     @property
     def phrase(self):
@@ -17,3 +21,25 @@ class State:
 
         self._phrase = value
         self.events.on_phrase_change(self._phrase)
+
+    @property
+    def hype(self):
+        return self._hype
+
+    def set_hype(self, value: float):
+        if self._hype == value:
+            return
+
+        self._hype = value
+        self.events.on_hype_change(self._hype)
+
+    @property
+    def theme(self):
+        return self._theme
+
+    def set_theme(self, value):
+        if self._theme == value:
+            return
+
+        self._theme = value
+        self.events.on_theme_change(self._theme)

@@ -1,21 +1,72 @@
 import random
 from typing import Tuple, Type, TypeVar, List
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import InterpreterArgs, InterpreterBase, Noop
 from parrot.fixtures.base import FixtureBase
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame
+from parrot.interpreters.dimmer import Dimmer0
 
 
 T = TypeVar("T", bound=FixtureBase)
 
 
-def randomize(*interpreters: List[InterpreterBase[T]]) -> InterpreterBase[T]:
-    return lambda group: random.choice(interpreters)(group)
+def randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:
+
+    class Random(InterpreterBase[T]):
+        def __init__(
+            self,
+            group: List[T],
+            args: InterpreterArgs,
+        ):
+            super().__init__(group, args)
+
+            options = [i for i in interpreters if i.acceptable(args)]
+
+            if len(options) == 0:
+                self.interpreter = Dimmer0(group, args)
+            else:
+                self.interpreter = random.choice(options)(group, args)
+
+        @classmethod
+        def acceptable(cls, args: InterpreterArgs) -> bool:
+            return any([i.acceptable(args) for i in interpreters])
+
+        def step(self, frame: Frame, scheme: ColorScheme):
+            self.interpreter.step(frame, scheme)
+
+        def __str__(self) -> str:
+            return str(self.interpreter)
+
+    return Random
 
 
 def weighted_randomize(
     *interpreters: List[Tuple[int, InterpreterBase[T]]]
 ) -> InterpreterBase[T]:
-    total = sum([i[0] for i in interpreters])
-    weights = [i[0] / total for i in interpreters]
-    return lambda group: random.choices(interpreters, weights=weights)[0][1](group)
+
+    class Random(InterpreterBase[T]):
+        def __init__(
+            self,
+            group: List[T],
+            args: InterpreterArgs,
+        ):
+            super().__init__(group, args)
+
+            total = sum([i[0] for i in interpreters])
+            weights = [i[0] / total for i in interpreters]
+
+            self.interpreter = random.choices(
+                [i[1] for i in interpreters if i[1].acceptable(args)], weights=weights
+            )[0](group, args)
+
+        @classmethod
+        def acceptable(cls, args: InterpreterArgs) -> bool:
+            return any([i[1].acceptable(args) for i in interpreters])
+
+        def step(self, frame: Frame, scheme: ColorScheme):
+            self.interpreter.step(frame, scheme)
+
+        def __str__(self) -> str:
+            return str(self.interpreter)
+
+    return Random

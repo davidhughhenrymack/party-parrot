@@ -15,9 +15,9 @@ patch_bay = [
     ChauvetSpot120_12Ch(
         patch=140,
     ),
-    ChauvetSpot120_12Ch(
-        patch=152,
-    ),
+    # ChauvetSpot120_12Ch(
+    #     patch=152,
+    # ),
     LedPar(12),
     LedPar(19),
     LedPar(26),

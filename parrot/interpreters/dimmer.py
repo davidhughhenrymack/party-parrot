@@ -3,17 +3,17 @@ import random
 import scipy
 from typing import List, TypeVar
 from parrot.fixtures.base import FixtureBase
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.utils.math import clamp
 
 
 T = TypeVar("T", bound=FixtureBase)
 
 
-class Dimmer100(InterpreterBase):
+class Dimmer255(InterpreterBase):
     def step(self, frame, scheme):
         for i in self.group:
-            i.set_dimmer(100)
+            i.set_dimmer(255)
 
 
 class Dimmer30(InterpreterBase):
@@ -28,9 +28,25 @@ class Dimmer0(InterpreterBase):
             i.set_dimmer(0)
 
 
+class DimmerFadeIn(InterpreterBase):
+    def __init__(self, group: List[T], args: InterpreterArgs, fade_time=3):
+        super().__init__(group, args)
+        self.fade_time = fade_time
+        self.memory = 0
+
+    def step(self, frame, scheme):
+        for i in self.group:
+            self.memory = clamp(self.memory + 255 / (self.fade_time * 30), 0, 255)
+            i.set_dimmer(self.memory)
+
+
 class SequenceDimmers(InterpreterBase[T]):
-    def __init__(self, group: List[T], dimmer=255, wait_time=0.5):
-        super().__init__(group)
+    hype = 30
+
+    def __init__(
+        self, group: List[T], args: InterpreterArgs, dimmer=255, wait_time=0.5
+    ):
+        super().__init__(group, args)
         self.dimmer = dimmer
         self.wait_time = wait_time
 
@@ -44,8 +60,10 @@ class SequenceDimmers(InterpreterBase[T]):
 
 
 class SequenceFadeDimmers(InterpreterBase[T]):
-    def __init__(self, group: List[T], wait_time=3):
-        super().__init__(group)
+    hype = 20
+
+    def __init__(self, group: List[T], args: InterpreterArgs, wait_time=3):
+        super().__init__(group, args)
         self.wait_time = wait_time
 
     def step(self, frame, scheme):
@@ -61,8 +79,10 @@ class SequenceFadeDimmers(InterpreterBase[T]):
 
 
 class DimmersBeatChase(InterpreterBase[T]):
-    def __init__(self, group: List[T]):
-        super().__init__(group)
+    hype = 70
+
+    def __init__(self, group: List[T], args: InterpreterArgs):
+        super().__init__(group, args)
         self.signal = "drums"
         self.on = False
 
@@ -86,14 +106,19 @@ class DimmersBeatChase(InterpreterBase[T]):
 
 
 class GentlePulse(InterpreterBase[T]):
-    def __init__(self, group: List[T], signal="all"):
-        super().__init__(group)
+    hype = 10
+
+    def __init__(
+        self, group: List[T], args: InterpreterArgs, signal="all", trigger_level=0.2
+    ):
+        super().__init__(group, args)
         self.signal = signal
         self.on = False
         self.memory = [0] * len(self.group)
+        self.trigger_level = trigger_level
 
     def step(self, frame, scheme):
-        if frame[self.signal] > 0.2:
+        if frame[self.signal] > self.trigger_level:
             if self.on == False:
                 self.bulb = random.randint(0, len(self.group) - 1)
                 self.on = True
