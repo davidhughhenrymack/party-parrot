@@ -50,5 +50,9 @@
     "oultia-2-beam-laser@120": {
         "x": 225,
         "y": 70
+    },
+    "chauvet-rotosphere@164": {
+        "x": 230,
+        "y": 288
     }
 }

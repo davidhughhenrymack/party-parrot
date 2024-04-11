@@ -96,6 +96,14 @@
         "documentation": {}
     },
     {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
         "label": "Lerpable",
         "importPath": "parrot.utils.lerp",
         "description": "parrot.utils.lerp",
@@ -160,7 +168,23 @@
         "documentation": {}
     },
     {
-        "label": "color_distance",
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "lerp_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "dim_color",
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
         "isExtraImport": true,
@@ -475,6 +499,22 @@
         "documentation": {}
     },
     {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
         "label": "Frame",
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
@@ -581,6 +621,14 @@
     },
     {
         "label": "LedPar",
+        "importPath": "parrot.fixtures",
+        "description": "parrot.fixtures",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
         "importPath": "parrot.fixtures",
         "description": "parrot.fixtures",
         "isExtraImport": true,
@@ -900,6 +948,14 @@
         "documentation": {}
     },
     {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
         "label": "Phrase",
         "importPath": "parrot.director.phrase",
         "description": "parrot.director.phrase",
@@ -977,6 +1033,54 @@
         "description": "parrot.fixtures.laser",
         "isExtraImport": true,
         "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetRotosphere_28Ch",
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetRotosphere_28Ch",
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetRotosphere_28Ch",
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetRotosphere_28Ch",
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetRotosphere_28Ch",
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetRotosphere_28Ch",
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.rotosphere",
         "documentation": {}
     },
     {
@@ -1132,6 +1236,22 @@
         "documentation": {}
     },
     {
+        "label": "RotosphereAll",
+        "importPath": "parrot.interpreters.rotosphere",
+        "description": "parrot.interpreters.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "RotosphereOn",
+        "importPath": "parrot.interpreters.rotosphere",
+        "description": "parrot.interpreters.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.rotosphere",
+        "documentation": {}
+    },
+    {
         "label": "SlowDecay",
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
@@ -1156,6 +1276,22 @@
         "documentation": {}
     },
     {
+        "label": "GoboWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "ColorWheelEntry",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
         "label": "ColorWheelEntry",
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
@@ -1180,15 +1316,7 @@
         "documentation": {}
     },
     {
-        "label": "GoboWheelEntry",
-        "importPath": "parrot.fixtures.base",
-        "description": "parrot.fixtures.base",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.base",
-        "documentation": {}
-    },
-    {
-        "label": "ColorWheelEntry",
+        "label": "FixtureBase",
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
         "isExtraImport": true,
@@ -1300,6 +1428,14 @@
         "documentation": {}
     },
     {
+        "label": "DimmerFadeLatched",
+        "importPath": "parrot.interpreters.latched",
+        "description": "parrot.interpreters.latched",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.latched",
+        "documentation": {}
+    },
+    {
         "label": "DimmersBeatChase",
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
@@ -1364,6 +1500,22 @@
         "documentation": {}
     },
     {
+        "label": "Dimmer100",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
+        "label": "combo",
+        "importPath": "parrot.interpreters.combo",
+        "description": "parrot.interpreters.combo",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.combo",
+        "documentation": {}
+    },
+    {
         "label": "combo",
         "importPath": "parrot.interpreters.combo",
         "description": "parrot.interpreters.combo",
@@ -1405,18 +1557,50 @@
     },
     {
         "label": "ChauvetSpot_12Ch",
-        "importPath": "parrot.fixtures.chauvet.base",
-        "description": "parrot.fixtures.chauvet.base",
+        "importPath": "parrot.fixtures.chauvet.mover_base",
+        "description": "parrot.fixtures.chauvet.mover_base",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.chauvet.base",
+        "detail": "parrot.fixtures.chauvet.mover_base",
         "documentation": {}
     },
     {
         "label": "ChauvetSpot_12Ch",
-        "importPath": "parrot.fixtures.chauvet.base",
-        "description": "parrot.fixtures.chauvet.base",
+        "importPath": "parrot.fixtures.chauvet.mover_base",
+        "description": "parrot.fixtures.chauvet.mover_base",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.chauvet.base",
+        "detail": "parrot.fixtures.chauvet.mover_base",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "distance",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
         "documentation": {}
     },
     {
@@ -1449,6 +1633,14 @@
         "description": "parrot.utils.string",
         "isExtraImport": true,
         "detail": "parrot.utils.string",
+        "documentation": {}
+    },
+    {
+        "label": "Canvas",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
         "documentation": {}
     },
     {
@@ -1540,6 +1732,14 @@
         "documentation": {}
     },
     {
+        "label": "RotosphereRenderer",
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "isExtraImport": true,
+        "detail": "parrot.gui.fixtures.rotosphere",
+        "documentation": {}
+    },
+    {
         "label": "math",
         "kind": 6,
         "isExtraImport": true,
@@ -1555,30 +1755,6 @@
         "importPath": "json",
         "description": "json",
         "detail": "json",
-        "documentation": {}
-    },
-    {
-        "label": "distance",
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "isExtraImport": true,
-        "detail": "parrot.utils.math",
-        "documentation": {}
-    },
-    {
-        "label": "clamp",
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "isExtraImport": true,
-        "detail": "parrot.utils.math",
-        "documentation": {}
-    },
-    {
-        "label": "clamp",
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "isExtraImport": true,
-        "detail": "parrot.utils.math",
         "documentation": {}
     },
     {
@@ -2013,7 +2189,7 @@
         "kind": 5,
         "importPath": "parrot.director.phrase_interpretations",
         "description": "parrot.director.phrase_interpretations",
-        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [\n            combo(SlowDecay, ColorAlternateBg),\n            combo(SlowRespond, ColorAlternateBg),\n        ],\n    },\n    Phrase.build: {\n        # LEDs off\n        # Moving heads flashing beat, (drawing circles / fixed position)",
+        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [\n            combo(SlowDecay, ColorAlternateBg),\n            combo(SlowRespond, ColorAlternateBg),\n        ],\n        ChauvetRotosphere_28Ch: [RotosphereOn],\n    },\n    Phrase.build: {\n        # LEDs off",
         "detail": "parrot.director.phrase_interpretations",
         "documentation": {}
     },
@@ -2024,15 +2200,6 @@
         "description": "parrot.director.phrase_machine",
         "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.drums_since = None\n    def step(self, frame):\n        # if frame[\"build_rate\"] > 1.5:\n        #     self.state.set_phrase(Phrase.build)\n        #     return\n        # if self.state.phrase == Phrase.build and frame[\"build_rate\"] < 0.5:\n        #     self.state.set_phrase(Phrase.drop)",
         "detail": "parrot.director.phrase_machine",
-        "documentation": {}
-    },
-    {
-        "label": "ChauvetSpot_12Ch",
-        "kind": 6,
-        "importPath": "parrot.fixtures.chauvet.base",
-        "description": "parrot.fixtures.chauvet.base",
-        "peekOfCode": "class ChauvetSpot_12Ch(MovingHead):\n    def __init__(\n        self,\n        patch,\n        name,\n        width,\n        dmx_layout,\n        color_wheel: List[ColorWheelEntry],\n        gobo_wheel: List[GoboWheelEntry],\n        pan_lower=270,",
-        "detail": "parrot.fixtures.chauvet.base",
         "documentation": {}
     },
     {
@@ -2105,6 +2272,33 @@
         "description": "parrot.fixtures.chauvet.chauvet160",
         "peekOfCode": "gobo_wheel = [\n    GoboWheelEntry(\"open\", 0),\n]\nclass ChauvetSpot160_12Ch(ChauvetSpot_12Ch):\n    def __init__(\n        self,\n        patch,\n        pan_lower=360,\n        pan_upper=360 + 180,\n        tilt_lower=0,",
         "detail": "parrot.fixtures.chauvet.chauvet160",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetSpot_12Ch",
+        "kind": 6,
+        "importPath": "parrot.fixtures.chauvet.mover_base",
+        "description": "parrot.fixtures.chauvet.mover_base",
+        "peekOfCode": "class ChauvetSpot_12Ch(MovingHead):\n    def __init__(\n        self,\n        patch,\n        name,\n        width,\n        dmx_layout,\n        color_wheel: List[ColorWheelEntry],\n        gobo_wheel: List[GoboWheelEntry],\n        pan_lower=270,",
+        "detail": "parrot.fixtures.chauvet.mover_base",
+        "documentation": {}
+    },
+    {
+        "label": "RotosphereBulb",
+        "kind": 6,
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "peekOfCode": "class RotosphereBulb(FixtureBase):\n    def __init__(self, address):\n        super().__init__(address, \"chauvet rotosphere bulb\", 8)\n    def render_values(self, values):\n        c = dim_color(self.get_color(), self.get_dimmer() / 255)\n        rgb = c.get_rgb()\n        white = c.get_luminance()\n        channels = [\"cyan\", \"magenta\", \"yellow\", \"orange\"]\n        components = {}\n        for channel in channels:",
+        "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetRotosphere_28Ch",
+        "kind": 6,
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "peekOfCode": "class ChauvetRotosphere_28Ch(FixtureBase):\n    def __init__(\n        self,\n        address,\n    ):\n        super().__init__(address, \"chauvet rotosphere\", 28)\n        self.bulbs = [RotosphereBulb(i * 8) for i in range(3)]\n    def get_bulbs(self):\n        return self.bulbs\n    def set_strobe(self, value):",
+        "detail": "parrot.fixtures.chauvet.rotosphere",
         "documentation": {}
     },
     {
@@ -2274,7 +2468,7 @@
         "kind": 2,
         "importPath": "parrot.gui.fixtures.factory",
         "description": "parrot.gui.fixtures.factory",
-        "peekOfCode": "def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:\n    if isinstance(fixture, LedPar):\n        return BulbRenderer(fixture)\n    elif isinstance(fixture, Laser):\n        return LaserRenderer(fixture)\n    elif isinstance(fixture, Motionstrip):\n        return MotionstripRenderer(fixture)\n    elif isinstance(fixture, MovingHead):\n        return MovingHeadRenderer(fixture)\n    else:",
+        "peekOfCode": "def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:\n    if isinstance(fixture, LedPar):\n        return BulbRenderer(fixture)\n    elif isinstance(fixture, Laser):\n        return LaserRenderer(fixture)\n    elif isinstance(fixture, Motionstrip):\n        return MotionstripRenderer(fixture)\n    elif isinstance(fixture, MovingHead):\n        return MovingHeadRenderer(fixture)\n    elif isinstance(fixture, ChauvetRotosphere_28Ch):",
         "detail": "parrot.gui.fixtures.factory",
         "documentation": {}
     },
@@ -2420,6 +2614,69 @@
         "description": "parrot.gui.fixtures.moving_head",
         "peekOfCode": "BEAM_RADIUS = 20\nclass MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):\n    def __init__(self, fixture: FixtureBase):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40",
         "detail": "parrot.gui.fixtures.moving_head",
+        "documentation": {}
+    },
+    {
+        "label": "RotosphereRenderer",
+        "kind": 6,
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "peekOfCode": "class RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):\n    def __init__(self, fixture: ChauvetRotosphere_28Ch):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40\n    def setup(self, canvas: Canvas):",
+        "detail": "parrot.gui.fixtures.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "HEAD_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "peekOfCode": "HEAD_WIDTH = 30\nHEAD_HEIGHT = 30\nBASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):\n    def __init__(self, fixture: ChauvetRotosphere_28Ch):\n        super().__init__(fixture)\n    @property",
+        "detail": "parrot.gui.fixtures.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "HEAD_HEIGHT",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "peekOfCode": "HEAD_HEIGHT = 30\nBASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):\n    def __init__(self, fixture: ChauvetRotosphere_28Ch):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:",
+        "detail": "parrot.gui.fixtures.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_WIDTH",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "peekOfCode": "BASE_WIDTH = 40\nBASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):\n    def __init__(self, fixture: ChauvetRotosphere_28Ch):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40",
+        "detail": "parrot.gui.fixtures.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_HEIGHT",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "peekOfCode": "BASE_HEIGHT = 10\nLIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):\n    def __init__(self, fixture: ChauvetRotosphere_28Ch):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property",
+        "detail": "parrot.gui.fixtures.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "LIGHT_RADIUS",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "peekOfCode": "LIGHT_RADIUS = 7\nBEAM_RADIUS = 20\nclass RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):\n    def __init__(self, fixture: ChauvetRotosphere_28Ch):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:",
+        "detail": "parrot.gui.fixtures.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "BEAM_RADIUS",
+        "kind": 5,
+        "importPath": "parrot.gui.fixtures.rotosphere",
+        "description": "parrot.gui.fixtures.rotosphere",
+        "peekOfCode": "BEAM_RADIUS = 20\nclass RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):\n    def __init__(self, fixture: ChauvetRotosphere_28Ch):\n        super().__init__(fixture)\n    @property\n    def width(self) -> int:\n        return 40\n    @property\n    def height(self) -> int:\n        return 40",
+        "detail": "parrot.gui.fixtures.rotosphere",
         "documentation": {}
     },
     {
@@ -2679,7 +2936,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "class DimmerFadeLatched(InterpreterBase):\n    def __init__(self, group, signal=\"sustained\"):\n        super().__init__(group)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n        self.memory = 0\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[self.signal] > 0.55:",
+        "peekOfCode": "class DimmerFadeLatched(InterpreterBase):\n    def __init__(\n        self,\n        group,\n        signal=\"sustained\",\n        latch_time=0.5,\n        condition_on=lambda x: x > 0.55,\n        condition_off=lambda x: x < 0.2,\n    ):\n        super().__init__(group)",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -2834,6 +3091,33 @@
         "description": "parrot.interpreters.randomize",
         "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef randomize(*interpreters: List[InterpreterBase[T]]) -> InterpreterBase[T]:\n    return lambda group: random.choice(interpreters)(group)\ndef weighted_randomize(\n    *interpreters: List[Tuple[int, InterpreterBase[T]]]\n) -> InterpreterBase[T]:\n    total = sum([i[0] for i in interpreters])\n    weights = [i[0] / total for i in interpreters]\n    return lambda group: random.choices(interpreters, weights=weights)[0][1](group)",
         "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
+        "label": "RotosphereColor",
+        "kind": 6,
+        "importPath": "parrot.interpreters.rotosphere",
+        "description": "parrot.interpreters.rotosphere",
+        "peekOfCode": "class RotosphereColor(InterpreterBase[ChauvetRotosphere_28Ch]):\n    def __init__(self, group: List[ChauvetRotosphere_28Ch]):\n        super().__init__(group)\n    def step(self, frame, scheme):\n        for fixture in self.group:\n            fixture.set_speed(50)\n            for i, bulb in enumerate(fixture.get_bulbs()):\n                bulb.set_color(scheme.bg if i % 2 == 0 else scheme.bg_contrast)\nRotosphereAll = combo(\n    RotosphereColor,",
+        "detail": "parrot.interpreters.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "RotosphereAll",
+        "kind": 5,
+        "importPath": "parrot.interpreters.rotosphere",
+        "description": "parrot.interpreters.rotosphere",
+        "peekOfCode": "RotosphereAll = combo(\n    RotosphereColor,\n    lambda group: DimmerFadeLatched(\n        group,\n        condition_on=lambda x: x < 0.1,\n        condition_off=lambda x: x > 0.4,\n        latch_time=10,\n    ),\n)\nRotosphereOn = combo(RotosphereColor, Dimmer100)",
+        "detail": "parrot.interpreters.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "RotosphereOn",
+        "kind": 5,
+        "importPath": "parrot.interpreters.rotosphere",
+        "description": "parrot.interpreters.rotosphere",
+        "peekOfCode": "RotosphereOn = combo(RotosphereColor, Dimmer100)",
+        "detail": "parrot.interpreters.rotosphere",
         "documentation": {}
     },
     {

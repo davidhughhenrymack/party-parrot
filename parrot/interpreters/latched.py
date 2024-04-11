@@ -27,19 +27,29 @@ class DimmerBinaryLatched(InterpreterBase):
 
 
 class DimmerFadeLatched(InterpreterBase):
-    def __init__(self, group, signal="sustained"):
+    def __init__(
+        self,
+        group,
+        signal="sustained",
+        latch_time=0.5,
+        condition_on=lambda x: x > 0.55,
+        condition_off=lambda x: x < 0.2,
+    ):
         super().__init__(group)
         self.signal = signal
         self.switch = False
         self.latch_until = 0
         self.memory = 0
+        self.condition_on = condition_on
+        self.condition_off = condition_off
+        self.latch_time = latch_time
 
     def step(self, frame, scheme):
         for i in self.group:
-            if frame[self.signal] > 0.55:
+            if self.condition_on(frame[self.signal]):
                 self.switch = True
-                self.latch_until = frame.time + 0.5
-            elif frame[self.signal] < 0.2:
+                self.latch_until = frame.time + self.latch_time
+            elif self.condition_off(frame[self.signal]):
                 self.switch = False
 
             if self.switch or self.latch_until > frame.time:

@@ -15,6 +15,7 @@ from parrot.director.color_schemes import color_schemes
 from parrot.interpreters.base import InterpreterBase
 from parrot.director.phrase import Phrase
 from parrot.fixtures.laser import Laser
+from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from .phrase_interpretations import get_interpreter
 
 from parrot.utils.lerp import LerpAnimator
@@ -45,7 +46,7 @@ class Director:
 
     def generate_interpreters(self):
 
-        to_group = [LedPar, MovingHead, Motionstrip, Laser]
+        to_group = [LedPar, MovingHead, Motionstrip, Laser, ChauvetRotosphere_28Ch]
         fixture_groups = []
 
         for cls in to_group:

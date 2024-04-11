@@ -1,7 +1,6 @@
-from parrot.fixtures.chauvet.base import ChauvetSpot_12Ch
+from parrot.fixtures.chauvet.mover_base import ChauvetSpot_12Ch
 from parrot.utils.colour import Color
-from parrot.utils.color_extra import color_distance
-from ..base import FixtureBase, ColorWheelEntry, GoboWheelEntry
+from ..base import ColorWheelEntry, GoboWheelEntry
 
 
 # DMX layout:

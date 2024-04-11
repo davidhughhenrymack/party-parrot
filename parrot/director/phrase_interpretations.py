@@ -23,6 +23,7 @@ from parrot.interpreters.movers import (
     MoverNoGobo,
     MoverRandomGobo,
 )
+from parrot.interpreters.rotosphere import RotosphereAll, RotosphereOn
 from parrot.interpreters.slow import SlowDecay, SlowRespond
 from parrot.fixtures.laser import Laser
 from typing import List, Dict, Union
@@ -40,6 +41,7 @@ from parrot.interpreters.combo import combo
 import random
 from parrot.interpreters.dimmer import Dimmer0
 from parrot.interpreters.randomize import randomize, weighted_randomize
+from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 
 
 phrase_interpretations: Dict[
@@ -51,6 +53,7 @@ phrase_interpretations: Dict[
             combo(SlowDecay, ColorAlternateBg),
             combo(SlowRespond, ColorAlternateBg),
         ],
+        ChauvetRotosphere_28Ch: [RotosphereOn],
     },
     Phrase.build: {
         # LEDs off
@@ -111,6 +114,7 @@ phrase_interpretations: Dict[
             MotionStripBulbBeatAndWiggle,
         ],
         Laser: [DimmerFadeLatched],
+        ChauvetRotosphere_28Ch: [RotosphereAll],
     },
 }
 

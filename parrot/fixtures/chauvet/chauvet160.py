@@ -1,5 +1,5 @@
 from parrot.utils.colour import Color
-from parrot.fixtures.chauvet.base import ChauvetSpot_12Ch
+from parrot.fixtures.chauvet.mover_base import ChauvetSpot_12Ch
 from parrot.fixtures.base import GoboWheelEntry, ColorWheelEntry
 
 

@@ -6,6 +6,7 @@ from parrot.fixtures import (
     FiveBeamLaser,
     TwoBeamLaser,
 )
+from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 
 patch_bay = [
     ChauvetSpot160_12Ch(
@@ -27,4 +28,5 @@ patch_bay = [
     Motionstrip38(154, 0, 256),
     FiveBeamLaser(100),
     TwoBeamLaser(120),
+    ChauvetRotosphere_28Ch(164),
 ]

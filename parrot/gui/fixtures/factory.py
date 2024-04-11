@@ -8,6 +8,8 @@ from parrot.gui.fixtures.bulb import BulbRenderer
 from parrot.gui.fixtures.laser import LaserRenderer
 from parrot.gui.fixtures.motionstrip import MotionstripRenderer
 from parrot.gui.fixtures.moving_head import MovingHeadRenderer
+from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
+from parrot.gui.fixtures.rotosphere import RotosphereRenderer
 
 
 def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:
@@ -19,5 +21,7 @@ def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:
         return MotionstripRenderer(fixture)
     elif isinstance(fixture, MovingHead):
         return MovingHeadRenderer(fixture)
+    elif isinstance(fixture, ChauvetRotosphere_28Ch):
+        return RotosphereRenderer(fixture)
     else:
         raise NotImplementedError(f"Renderer for {fixture} not implemented")
