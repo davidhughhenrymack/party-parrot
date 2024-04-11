@@ -15,3 +15,6 @@ class ColorScheme(Lerpable):
             lerp_color(self.bg, other.bg, t),
             lerp_color(self.bg_contrast, other.bg_contrast, t),
         )
+
+    def __str__(self) -> str:
+        return f"ColorScheme({self.fg}, {self.bg}, {self.bg_contrast})"

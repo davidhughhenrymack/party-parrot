@@ -35,6 +35,7 @@ class Director:
     def __init__(self, state: State):
         self.scheme = LerpAnimator(random.choice(color_schemes), 4)
         self.last_shift_time = time.time()
+        self.shift_count = 0
         self.start_time = time.time()
         self.state = state
 
@@ -71,11 +72,15 @@ class Director:
         print()
 
     def shift(self):
-        s = random.choice(self.state.theme.color_scheme)
-        print(f"Shifting to {s}")
-        self.scheme.push(s)
-        self.generate_interpreters()
+        if self.shift_count % 2 == 0:
+            s = random.choice(self.state.theme.color_scheme)
+            print(f"Shifting to {s}")
+            self.scheme.push(s)
+        else:
+            self.generate_interpreters()
+
         self.last_shift_time = time.time()
+        self.shift_count += 1
 
     def step(self, frame: Frame):
         self.phrase_machine.step(frame)
