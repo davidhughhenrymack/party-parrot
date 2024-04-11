@@ -1020,6 +1020,14 @@
         "documentation": {}
     },
     {
+        "label": "with_args",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
         "label": "InterpreterArgs",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -3262,11 +3270,20 @@
         "documentation": {}
     },
     {
+        "label": "acceptable_test",
+        "kind": 2,
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "peekOfCode": "def acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):",
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
         "label": "with_args",
         "kind": 2,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "def with_args(interpreter, new_hype=None, new_has_rainbow=None, **kwargs):\n    class WithArgs(InterpreterBase):\n        def __init__(self, group, args):\n            super().__init__(group, args)\n            self.interpreter = interpreter(group, args, **kwargs)\n        @classmethod\n        def acceptable(cls, args):\n            if new_hype is not None and new_has_rainbow is not None:\n                if new_hype > args.hype:\n                    return False",
+        "peekOfCode": "def with_args(interpreter, new_hype=None, new_has_rainbow=None, **kwargs):\n    class WithArgs(InterpreterBase):\n        def __init__(self, group, args):\n            super().__init__(group, args)\n            self.interpreter = interpreter(group, args, **kwargs)\n        @classmethod\n        def acceptable(cls, args):\n            if new_hype is not None and new_has_rainbow is not None:\n                return acceptable_test(args, new_hype, new_has_rainbow)\n            return interpreter.acceptable(args)",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3275,7 +3292,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nInterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        self.group = group\n        self.interpreter_args = args\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nInterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3284,7 +3301,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "InterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        self.group = group\n        self.interpreter_args = args\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    @classmethod",
+        "peekOfCode": "InterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3437,16 +3454,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.laser",
         "description": "parrot.interpreters.laser",
-        "peekOfCode": "LaserLatch = DimmerFadeLatched\nLaserLatch.hype = 80",
-        "detail": "parrot.interpreters.laser",
-        "documentation": {}
-    },
-    {
-        "label": "LaserLatch.hype",
-        "kind": 5,
-        "importPath": "parrot.interpreters.laser",
-        "description": "parrot.interpreters.laser",
-        "peekOfCode": "LaserLatch.hype = 80",
+        "peekOfCode": "LaserLatch = with_args(DimmerFadeLatched, new_has_rainbow=False, new_hype=80)",
         "detail": "parrot.interpreters.laser",
         "documentation": {}
     },

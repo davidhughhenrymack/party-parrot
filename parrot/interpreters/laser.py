@@ -1,5 +1,5 @@
 from parrot.interpreters.latched import DimmerFadeLatched
+from parrot.interpreters.base import with_args
 
 
-LaserLatch = DimmerFadeLatched
-LaserLatch.hype = 80
+LaserLatch = with_args(DimmerFadeLatched, new_has_rainbow=False, new_hype=80)

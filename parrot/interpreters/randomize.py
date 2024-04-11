@@ -52,11 +52,13 @@ def weighted_randomize(
         ):
             super().__init__(group, args)
 
-            total = sum([i[0] for i in interpreters])
-            weights = [i[0] / total for i in interpreters]
+            filtered_interpreters = [i for i in interpreters if i[1].acceptable(args)]
+
+            total = sum([i[0] for i in filtered_interpreters])
+            weights = [i[0] / total for i in filtered_interpreters]
 
             self.interpreter = random.choices(
-                [i[1] for i in interpreters if i[1].acceptable(args)], weights=weights
+                [i[1] for i in filtered_interpreters], weights=weights
             )[0](group, args)
 
         @classmethod

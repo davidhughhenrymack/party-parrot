@@ -12,6 +12,16 @@ T = TypeVar("T", bound=FixtureBase)
 InterpreterArgs = namedtuple("InterpreterArgs", ["hype", "allow_rainbows"])
 
 
+def acceptable_test(args: InterpreterArgs, hype, has_rainbow):
+    if has_rainbow and not args.allow_rainbows:
+        return False
+
+    if hype > args.hype:
+        return False
+
+    return True
+
+
 class InterpreterBase(Generic[T]):
     has_rainbow = False
     hype = 0
@@ -25,13 +35,7 @@ class InterpreterBase(Generic[T]):
 
     @classmethod
     def acceptable(cls, args: InterpreterArgs) -> bool:
-        if cls.has_rainbow and not args.allow_rainbows:
-            return False
-
-        if cls.hype > args.hype:
-            return False
-
-        return True
+        return acceptable_test(args, cls.hype, cls.has_rainbow)
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}"
@@ -47,11 +51,7 @@ def with_args(interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
         @classmethod
         def acceptable(cls, args):
             if new_hype is not None and new_has_rainbow is not None:
-                if new_hype > args.hype:
-                    return False
-                if new_has_rainbow and not args.allow_rainbows:
-                    return False
-                return True
+                return acceptable_test(args, new_hype, new_has_rainbow)
             return interpreter.acceptable(args)
 
         def step(self, frame, scheme):

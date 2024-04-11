@@ -82,6 +82,8 @@ class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
                 i.set_dimmer(255)
             elif frame[self.signal] > 0.6:
                 i.set_color(scheme.fg)
+                for bulb in i.get_bulbs():
+                    bulb.set_dimmer(255)
                 i.set_dimmer(255 * math.sin(frame.time * 30))
             elif frame[self.signal] > 0.4:
                 self.latch_until = frame.time + 0.5
@@ -90,6 +92,8 @@ class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
             else:
                 i.set_color(scheme.fg)
                 i.set_dimmer(self.dimmer_memory)
+                for bulb in i.get_bulbs():
+                    bulb.set_dimmer(255)
 
     def render_bulb_chase(self, motionstrip, frame, scheme):
         for idx, bulb in enumerate(motionstrip.get_bulbs()):

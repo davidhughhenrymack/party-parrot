@@ -72,6 +72,7 @@ class Director:
 
     def shift(self):
         s = random.choice(self.state.theme.color_scheme)
+        print(f"Shifting to {s}")
         self.scheme.push(s)
         self.generate_interpreters()
         self.last_shift_time = time.time()
