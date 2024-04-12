@@ -24,6 +24,9 @@ INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
 SPECTOGRAPH_AVG_RATE = 275
 SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12
 
+SIGNAL_STAT_PERIOD_SECONDS = 10
+SIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)
+
 SHOW_GUI = os.environ.get("SHOW_GUI", "True") == "True"
 
 
@@ -49,6 +52,17 @@ class MicToDmx(object):
             "build_rate": [],
             FrameSignal.sustained_low: [],
         }
+
+        self.signal_stat_buffer = {
+            **{
+                key: {
+                    "max": [],
+                    "min": [],
+                }
+                for key in FrameSignal
+            },
+        }
+        self.signal_stat_last = 0
 
         self.state = State()
 
@@ -132,7 +146,7 @@ class MicToDmx(object):
         #     to the segment times.
         f, t, Sxx = signal.spectrogram(snd_block)
 
-        self.spectrogram_rate = len(t) / time_elapsed
+        # self.spectrogram_rate = len(t) / time_elapsed
 
         if self.spectrogram_buffer is None:
             self.spectrogram_buffer = Sxx
@@ -160,6 +174,12 @@ class MicToDmx(object):
         #     f"spectrogram {spectrogram_block.shape} max: {np.max(spectrogram_block):.3f}, sum: {np.sum(spectrogram_block):.3f}, mean: {np.mean(spectrogram_block):.3f}"
         # )
 
+        should_capture_signal_stats = (
+            time.time() - self.signal_stat_last > SIGNAL_STAT_PERIOD_SECONDS
+        )
+        if should_capture_signal_stats:
+            self.signal_stat_last = time.time()
+
         for name, rg in ranges.items():
             x = np.sum(np.abs(spectrogram_block[rg[0] : rg[1], :]), axis=0)
             raw_timeseries[name] = x
@@ -172,6 +192,24 @@ class MicToDmx(object):
             # Discard outliers and clamp to 0-1
             x_min = np.percentile(x, 5)
             x_max = np.percentile(x, 95)
+
+            if should_capture_signal_stats:
+                self.signal_stat_buffer[name]["max"].append(x_max)
+                self.signal_stat_buffer[name]["min"].append(x_min)
+                self.signal_stat_buffer[name]["max"] = self.signal_stat_buffer[name][
+                    "max"
+                ][-SIGNAL_STAT_BUFFER_SIZE:]
+                self.signal_stat_buffer[name]["min"] = self.signal_stat_buffer[name][
+                    "min"
+                ][-SIGNAL_STAT_BUFFER_SIZE:]
+
+            x_min = np.min(
+                np.concatenate(self.signal_stat_buffer[name]["min"], [x_min])
+            )
+            x_max = np.max(
+                np.concatenate(self.signal_stat_buffer[name]["max"], [x_max])
+            )
+
             x = (x - x_min) / (x_max - x_min + sys.float_info.epsilon)
             x = np.clip(x, 0, 1)
 
