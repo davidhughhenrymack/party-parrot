@@ -5,6 +5,7 @@ from matplotlib.colors import LogNorm
 import numpy as np
 from scipy import signal
 
+from parrot.director.frame import FrameSignal
 from parrot.listeners.mic import RATE
 
 
@@ -39,7 +40,7 @@ class Plotter:
         plt.clf()
         plt.subplot(2, 1, 1)
 
-        x = np.arange(len(timeseries["drums"])) / spectrogram_rate
+        x = np.arange(len(timeseries[FrameSignal.freq_high])) / spectrogram_rate
 
         for name, y in timeseries.items():
             plt.plot(x, y, label=name)

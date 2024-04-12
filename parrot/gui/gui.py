@@ -3,6 +3,7 @@ import os
 from tkinter import *
 from tkinter.ttk import Combobox
 
+from parrot.director.frame import FrameSignal
 from parrot.state import State
 from parrot.director.phrase import Phrase
 from parrot.patch_bay import patch_bay
@@ -151,23 +152,15 @@ class Window(Tk):
         self._drag_data["y"] = event.y
 
     def step(self, frame):
-        # self.label_var.set(
-        #     "All: {:.2f}, Sustained: {:.2f}, Drums: {:.2f}, Build rate: {:.2f}".format(
-        #         frame["all"], frame["sustained"], frame["drums"], frame["build_rate"]
-        #     )
-        # )
-
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas, frame)
 
         self.graph.delete("all")
         g_height = self.graph.winfo_height()
+
         for idx, (name, values) in enumerate(frame.plot.items()):
             if len(values) == 0:
                 continue
-            # find max and min values
-            # min_value = min(values)
-            # max_value = max(values)
 
             fill = ["red", "green", "blue", "purple", "orange"][idx]
 

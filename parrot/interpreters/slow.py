@@ -1,6 +1,6 @@
 import parrot.fixtures
 from typing import List
-from parrot.director.frame import Frame
+from parrot.director.frame import Frame, FrameSignal
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
 
 from parrot.utils.lerp import lerp
@@ -20,7 +20,7 @@ class SlowRespond(InterpreterBase[FixtureBase]):
     ):
         super().__init__(group, args)
         self.dimmer_memory = 0
-        self.signal = "sustained"
+        self.signal = FrameSignal.sustained_low
 
     def step(self, frame: Frame, scheme: ColorScheme):
         self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)

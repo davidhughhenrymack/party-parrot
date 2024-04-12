@@ -2,7 +2,7 @@ import random
 import time
 import os
 from typing import List
-from parrot.director.frame import Frame
+from parrot.director.frame import Frame, FrameSignal
 from parrot.director.phrase_machine import PhraseMachine
 from parrot.fixtures import laser
 
@@ -100,7 +100,7 @@ class Director:
 
         if (
             time.time() - self.last_shift_time > SHIFT_AFTER
-            and throttled_frame["sustained"] < 0.3
+            and throttled_frame[FrameSignal.sustained_low] < 0.3
         ):
             self.shift()
 

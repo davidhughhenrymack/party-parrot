@@ -2,6 +2,7 @@ import math
 import random
 import scipy
 from typing import List, TypeVar
+from parrot.director.frame import FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.utils.math import clamp
@@ -83,7 +84,7 @@ class DimmersBeatChase(InterpreterBase[T]):
 
     def __init__(self, group: List[T], args: InterpreterArgs):
         super().__init__(group, args)
-        self.signal = "drums"
+        self.signal = FrameSignal.freq_high
         self.on = False
 
     def step(self, frame, scheme):
@@ -109,7 +110,11 @@ class GentlePulse(InterpreterBase[T]):
     hype = 10
 
     def __init__(
-        self, group: List[T], args: InterpreterArgs, signal="all", trigger_level=0.2
+        self,
+        group: List[T],
+        args: InterpreterArgs,
+        signal=FrameSignal.freq_all,
+        trigger_level=0.2,
     ):
         super().__init__(group, args)
         self.signal = signal

@@ -2,7 +2,7 @@ from collections import namedtuple
 from enum import Enum
 import math
 from typing import Generic, List, TypeVar
-from parrot.director.frame import Frame
+from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.director.color_scheme import ColorScheme
 from parrot.utils.colour import Color
@@ -140,11 +140,11 @@ class FlashBeat(InterpreterBase):
 
     def __init__(self, group, args):
         super().__init__(group, args)
-        self.signal = "drums"
+        self.signal = FrameSignal.freq_high
 
     def step(self, frame, scheme):
         for i in self.group:
-            if frame["sustained"] > 0.7:
+            if frame[FrameSignal.sustained_low] > 0.7:
                 i.set_dimmer(100)
                 i.set_strobe(200)
             elif frame[self.signal] > 0.4:

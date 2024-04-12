@@ -1,5 +1,6 @@
 import random
 from typing import List
+from parrot.director.frame import FrameSignal
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
 from parrot.fixtures.base import FixtureBase
 from parrot.utils.lerp import lerp
@@ -9,7 +10,10 @@ class DimmerBinaryLatched(InterpreterBase):
     hype = 40
 
     def __init__(
-        self, group: List[FixtureBase], args: InterpreterArgs, signal="sustained"
+        self,
+        group: List[FixtureBase],
+        args: InterpreterArgs,
+        signal=FrameSignal.sustained_low,
     ):
         super().__init__(group, args)
         self.signal = signal
@@ -18,10 +22,10 @@ class DimmerBinaryLatched(InterpreterBase):
 
     def step(self, frame, scheme):
         for i in self.group:
-            if frame["sustained"] > 0.55:
+            if frame[FrameSignal.sustained_low] > 0.55:
                 self.switch = True
                 self.latch_until = frame.time + 0.5
-            elif frame["sustained"] < 0.2:
+            elif frame[FrameSignal.sustained_low] < 0.2:
                 self.switch = False
 
             if self.switch or self.latch_until > frame.time:
@@ -37,7 +41,7 @@ class DimmerFadeLatched(InterpreterBase):
         self,
         group,
         args: InterpreterArgs,
-        signal="sustained",
+        signal=FrameSignal.sustained_low,
         latch_time=0.5,
         condition_on=lambda x: x > 0.55,
         condition_off=lambda x: x < 0.2,
@@ -83,7 +87,7 @@ class DimmerFadeLatchedRandom(InterpreterBase):
         self,
         group,
         args: InterpreterArgs,
-        signal="sustained",
+        signal=FrameSignal.sustained_low,
         latch_at=0.55,
         latch_off_at=0.1,
         latch_time=0.5,

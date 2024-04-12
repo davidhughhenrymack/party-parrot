@@ -1,6 +1,7 @@
 import math
 import random
 from typing import List
+from parrot.director.frame import FrameSignal
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, MoveCircles
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.interpreters.combo import combo
@@ -19,7 +20,7 @@ class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):
         args: InterpreterArgs,
     ):
         super().__init__(group, args)
-        self.signal = "drums"
+        self.signal = FrameSignal.freq_high
         self.total_bulbs = len(group) * 8
         self.bulb = 0
         self.on = False
@@ -59,7 +60,7 @@ class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
         args: InterpreterArgs,
     ):
         super().__init__(group, args)
-        self.signal = "sustained"
+        self.signal = FrameSignal.sustained_low
         self.dimmer_memory = 0
         self.decay_rate = 0.24
         self.latch_until = 0

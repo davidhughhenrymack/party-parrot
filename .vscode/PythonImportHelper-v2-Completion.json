@@ -240,6 +240,15 @@
         "documentation": {}
     },
     {
+        "label": "enum",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "enum",
+        "description": "enum",
+        "detail": "enum",
+        "documentation": {}
+    },
+    {
         "label": "Enum",
         "importPath": "enum",
         "description": "enum",
@@ -571,7 +580,7 @@
         "documentation": {}
     },
     {
-        "label": "Frame",
+        "label": "FrameSignal",
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
         "isExtraImport": true,
@@ -627,7 +636,63 @@
         "documentation": {}
     },
     {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
         "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "FrameSignal",
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
         "isExtraImport": true,
@@ -644,6 +709,22 @@
     },
     {
         "label": "Frame",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "FrameSignal",
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
         "isExtraImport": true,
@@ -1964,14 +2045,6 @@
         "documentation": {}
     },
     {
-        "label": "clamp",
-        "importPath": "parrot.utils.math",
-        "description": "parrot.utils.math",
-        "isExtraImport": true,
-        "detail": "parrot.utils.math",
-        "documentation": {}
-    },
-    {
         "label": "dmx_clamp",
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
@@ -2183,14 +2256,6 @@
         "documentation": {}
     },
     {
-        "label": "LogNorm",
-        "importPath": "matplotlib.colors",
-        "description": "matplotlib.colors",
-        "isExtraImport": true,
-        "detail": "matplotlib.colors",
-        "documentation": {}
-    },
-    {
         "label": "numpy",
         "kind": 6,
         "isExtraImport": true,
@@ -2322,14 +2387,6 @@
         "description": "parrot.director.director",
         "isExtraImport": true,
         "detail": "parrot.director.director",
-        "documentation": {}
-    },
-    {
-        "label": "Plotter",
-        "importPath": "parrot.gui.plot",
-        "description": "parrot.gui.plot",
-        "isExtraImport": true,
-        "detail": "parrot.gui.plot",
         "documentation": {}
     },
     {
@@ -2568,11 +2625,20 @@
         "documentation": {}
     },
     {
+        "label": "FrameSignal",
+        "kind": 6,
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "peekOfCode": "class FrameSignal(enum.Enum):\n    freq_all = \"freq_all\"\n    freq_high = \"freq_high\"\n    freq_low = \"freq_low\"\n    sustained_low = \"sustained_low\"\nclass Frame:\n    def __init__(self, values):\n        self.time = time.time()\n        self.all = values.get(FrameSignal.freq_all, 0)\n        self.drums = values.get(FrameSignal.freq_high, 0)",
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
         "label": "Frame",
         "kind": 6,
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
-        "peekOfCode": "class Frame:\n    def __init__(self, **kwargs):\n        self.time = time.time()\n        self.all = kwargs.get(\"all\", 0)\n        self.drums = kwargs.get(\"drums\", 0)\n        self.bass = kwargs.get(\"bass\", 0)\n        self.kwargs = kwargs\n    def __getitem__(self, __name: str) -> Any:\n        return self.kwargs.get(__name)\n    def __str__(self):",
+        "peekOfCode": "class Frame:\n    def __init__(self, values):\n        self.time = time.time()\n        self.all = values.get(FrameSignal.freq_all, 0)\n        self.drums = values.get(FrameSignal.freq_high, 0)\n        self.bass = values.get(FrameSignal.freq_low, 0)\n        self.values = values\n    def __getitem__(self, __name: str) -> Any:\n        return self.values.get(__name)\n    def __str__(self):",
         "detail": "parrot.director.frame",
         "documentation": {}
     },
@@ -3265,7 +3331,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class FlashBeat(InterpreterBase):\n    hype = 70\n    def __init__(self, group, args):\n        super().__init__(group, args)\n        self.signal = \"drums\"\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[\"sustained\"] > 0.7:\n                i.set_dimmer(100)\n                i.set_strobe(200)",
+        "peekOfCode": "class FlashBeat(InterpreterBase):\n    hype = 70\n    def __init__(self, group, args):\n        super().__init__(group, args)\n        self.signal = FrameSignal.freq_high\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[FrameSignal.sustained_low] > 0.7:\n                i.set_dimmer(100)\n                i.set_strobe(200)",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3427,7 +3493,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class DimmersBeatChase(InterpreterBase[T]):\n    hype = 70\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.signal = \"drums\"\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:\n                self.bulb = random.randint(0, len(self.group) - 1)",
+        "peekOfCode": "class DimmersBeatChase(InterpreterBase[T]):\n    hype = 70\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.signal = FrameSignal.freq_high\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:\n                self.bulb = random.randint(0, len(self.group) - 1)",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -3436,7 +3502,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class GentlePulse(InterpreterBase[T]):\n    hype = 10\n    def __init__(\n        self, group: List[T], args: InterpreterArgs, signal=\"all\", trigger_level=0.2\n    ):\n        super().__init__(group, args)\n        self.signal = signal\n        self.on = False\n        self.memory = [0] * len(self.group)\n        self.trigger_level = trigger_level",
+        "peekOfCode": "class GentlePulse(InterpreterBase[T]):\n    hype = 10\n    def __init__(\n        self,\n        group: List[T],\n        args: InterpreterArgs,\n        signal=FrameSignal.freq_all,\n        trigger_level=0.2,\n    ):\n        super().__init__(group, args)",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -3463,7 +3529,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "class DimmerBinaryLatched(InterpreterBase):\n    hype = 40\n    def __init__(\n        self, group: List[FixtureBase], args: InterpreterArgs, signal=\"sustained\"\n    ):\n        super().__init__(group, args)\n        self.signal = signal\n        self.switch = False\n        self.latch_until = 0\n    def step(self, frame, scheme):",
+        "peekOfCode": "class DimmerBinaryLatched(InterpreterBase):\n    hype = 40\n    def __init__(\n        self,\n        group: List[FixtureBase],\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,\n    ):\n        super().__init__(group, args)\n        self.signal = signal",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -3472,7 +3538,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "class DimmerFadeLatched(InterpreterBase):\n    hype = 40\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=\"sustained\",\n        latch_time=0.5,\n        condition_on=lambda x: x > 0.55,\n        condition_off=lambda x: x < 0.2,",
+        "peekOfCode": "class DimmerFadeLatched(InterpreterBase):\n    hype = 40\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,\n        latch_time=0.5,\n        condition_on=lambda x: x > 0.55,\n        condition_off=lambda x: x < 0.2,",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -3481,7 +3547,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "class DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=\"sustained\",\n        latch_at=0.55,\n        latch_off_at=0.1,\n        latch_time=0.5,",
+        "peekOfCode": "class DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,\n        latch_at=0.55,\n        latch_off_at=0.1,\n        latch_time=0.5,",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -3490,7 +3556,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "DimmerFadeLatched4s = with_args(\n    DimmerFadeLatched, new_hype=5, new_has_rainbow=False, latch_time=4\n)\nclass DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=\"sustained\",",
+        "peekOfCode": "DimmerFadeLatched4s = with_args(\n    DimmerFadeLatched, new_hype=5, new_has_rainbow=False, latch_time=4\n)\nclass DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -3499,7 +3565,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):\n    hype = 60\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = \"drums\"\n        self.total_bulbs = len(group) * 8",
+        "peekOfCode": "class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):\n    hype = 60\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = FrameSignal.freq_high\n        self.total_bulbs = len(group) * 8",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -3508,7 +3574,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    hype = 30\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = \"sustained\"\n        self.dimmer_memory = 0",
+        "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    hype = 30\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = FrameSignal.sustained_low\n        self.dimmer_memory = 0",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -3517,7 +3583,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "MotionStripBulbBeatAndWiggle = combo(MotionstripBulbBeat, MoveCircles)\nclass MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    hype = 30\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = \"sustained\"",
+        "peekOfCode": "MotionStripBulbBeatAndWiggle = combo(MotionstripBulbBeat, MoveCircles)\nclass MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    hype = 30\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = FrameSignal.sustained_low",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -3661,7 +3727,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "class SlowRespond(InterpreterBase[FixtureBase]):\n    hype = 25\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.dimmer_memory = 0\n        self.signal = \"sustained\"",
+        "peekOfCode": "class SlowRespond(InterpreterBase[FixtureBase]):\n    hype = 25\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.dimmer_memory = 0\n        self.signal = FrameSignal.sustained_low",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
@@ -3787,7 +3853,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:",
+        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3796,7 +3862,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3805,7 +3871,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3814,7 +3880,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3823,7 +3889,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3832,7 +3898,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
+        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3841,16 +3907,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
-        "detail": "parrot.listeners.mic_to_dmx",
-        "documentation": {}
-    },
-    {
-        "label": "SHOW_PLOT",
-        "kind": 5,
-        "importPath": "parrot.listeners.mic_to_dmx",
-        "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SHOW_PLOT = os.environ.get(\"SHOW_PLOT\") == \"True\"\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -3859,7 +3916,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\nif SHOW_PLOT:\n    matplotlib.use(\"macosx\")\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE",
+        "peekOfCode": "SHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
