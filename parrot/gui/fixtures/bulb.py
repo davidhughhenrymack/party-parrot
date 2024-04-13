@@ -1,5 +1,5 @@
 from parrot.director.frame import Frame
-from .base import FixtureGuiRenderer
+from .base import FixtureGuiRenderer, render_strobe_dim_color
 from parrot.fixtures import FixtureBase
 from tkinter import Canvas
 from parrot.utils.color_extra import dim_color
@@ -36,7 +36,5 @@ class BulbRenderer(FixtureGuiRenderer[FixtureBase]):
         )
 
     def render(self, canvas: Canvas, frame: Frame):
-        color = self.fixture.get_color()
-        dim = self.fixture.get_dimmer()
-
-        canvas.itemconfig(self.oval, fill=dim_color(color, dim / 255))
+        fill = render_strobe_dim_color(self.fixture, frame)
+        canvas.itemconfig(self.oval, fill=fill)

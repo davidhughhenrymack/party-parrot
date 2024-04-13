@@ -240,6 +240,14 @@
         "documentation": {}
     },
     {
+        "label": "dim_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
         "label": "enum",
         "kind": 6,
         "isExtraImport": true,
@@ -588,6 +596,14 @@
         "documentation": {}
     },
     {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
         "label": "Frame",
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
@@ -709,14 +725,6 @@
     },
     {
         "label": "Frame",
-        "importPath": "parrot.director.frame",
-        "description": "parrot.director.frame",
-        "isExtraImport": true,
-        "detail": "parrot.director.frame",
-        "documentation": {}
-    },
-    {
-        "label": "FrameSignal",
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
         "isExtraImport": true,
@@ -1045,14 +1053,6 @@
         "documentation": {}
     },
     {
-        "label": "Noop",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
         "label": "with_args",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
@@ -1277,22 +1277,6 @@
         "documentation": {}
     },
     {
-        "label": "InterpreterBase",
-        "importPath": "parrot.interpreters.base",
-        "description": "parrot.interpreters.base",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.base",
-        "documentation": {}
-    },
-    {
-        "label": "Phrase",
-        "importPath": "parrot.director.phrase",
-        "description": "parrot.director.phrase",
-        "isExtraImport": true,
-        "detail": "parrot.director.phrase",
-        "documentation": {}
-    },
-    {
         "label": "Phrase",
         "importPath": "parrot.director.phrase",
         "description": "parrot.director.phrase",
@@ -1482,14 +1466,6 @@
         "description": "parrot.state",
         "isExtraImport": true,
         "detail": "parrot.state",
-        "documentation": {}
-    },
-    {
-        "label": "MotionStripBulbBeatAndWiggle",
-        "importPath": "parrot.interpreters.motionstrip",
-        "description": "parrot.interpreters.motionstrip",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
     {
@@ -1525,14 +1501,6 @@
         "documentation": {}
     },
     {
-        "label": "MoverFan",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
         "label": "MoverGobo",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
@@ -1542,14 +1510,6 @@
     },
     {
         "label": "MoverNoGobo",
-        "importPath": "parrot.interpreters.movers",
-        "description": "parrot.interpreters.movers",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.movers",
-        "documentation": {}
-    },
-    {
-        "label": "MoverRandomGobo",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
         "isExtraImport": true,
@@ -1581,6 +1541,14 @@
         "documentation": {}
     },
     {
+        "label": "MellowOnly",
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
         "label": "SlowDecay",
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
@@ -1590,6 +1558,14 @@
     },
     {
         "label": "SlowRespond",
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
+        "label": "SlowSustained",
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
         "isExtraImport": true,
@@ -1821,14 +1797,6 @@
         "documentation": {}
     },
     {
-        "label": "Dimmer30",
-        "importPath": "parrot.interpreters.dimmer",
-        "description": "parrot.interpreters.dimmer",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.dimmer",
-        "documentation": {}
-    },
-    {
         "label": "DimmerFadeIn",
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
@@ -2026,6 +1994,30 @@
         "description": "parrot.interpreters.strobe",
         "isExtraImport": true,
         "detail": "parrot.interpreters.strobe",
+        "documentation": {}
+    },
+    {
+        "label": "Director",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Director",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
         "documentation": {}
     },
     {
@@ -2422,22 +2414,6 @@
         "documentation": {}
     },
     {
-        "label": "Director",
-        "importPath": "parrot.director.director",
-        "description": "parrot.director.director",
-        "isExtraImport": true,
-        "detail": "parrot.director.director",
-        "documentation": {}
-    },
-    {
-        "label": "Frame",
-        "importPath": "parrot.director.director",
-        "description": "parrot.director.director",
-        "isExtraImport": true,
-        "detail": "parrot.director.director",
-        "documentation": {}
-    },
-    {
         "label": "Window",
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
@@ -2677,7 +2653,7 @@
         "kind": 6,
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
-        "peekOfCode": "class FrameSignal(enum.Enum):\n    freq_all = \"freq_all\"\n    freq_high = \"freq_high\"\n    freq_low = \"freq_low\"\n    sustained_low = \"sustained_low\"\nclass Frame:\n    def __init__(self, values):\n        self.time = time.time()\n        self.all = values.get(FrameSignal.freq_all, 0)\n        self.drums = values.get(FrameSignal.freq_high, 0)",
+        "peekOfCode": "class FrameSignal(enum.Enum):\n    freq_all = \"freq_all\"\n    freq_high = \"freq_high\"\n    freq_low = \"freq_low\"\n    sustained_low = \"sustained_low\"\n    sustained_high = \"sustained_high\"\n    hype = \"hype\"\nclass Frame:\n    def __init__(self, values: dict[FrameSignal, float]):\n        self.time = time.perf_counter()",
         "detail": "parrot.director.frame",
         "documentation": {}
     },
@@ -2686,7 +2662,7 @@
         "kind": 6,
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
-        "peekOfCode": "class Frame:\n    def __init__(self, values):\n        self.time = time.time()\n        self.all = values.get(FrameSignal.freq_all, 0)\n        self.drums = values.get(FrameSignal.freq_high, 0)\n        self.bass = values.get(FrameSignal.freq_low, 0)\n        self.values = values\n    def __getitem__(self, __name: str) -> Any:\n        return self.values.get(__name)\n    def __str__(self):",
+        "peekOfCode": "class Frame:\n    def __init__(self, values: dict[FrameSignal, float]):\n        self.time = time.perf_counter()\n        self.values = values\n    def extend(self, additional_signals: dict[FrameSignal, float]):\n        self.values.update(additional_signals)\n    def __getitem__(self, __name: str) -> Any:\n        return self.values.get(__name)\n    def __mul__(self, factor):\n        return Frame(",
         "detail": "parrot.director.frame",
         "documentation": {}
     },
@@ -2722,7 +2698,52 @@
         "kind": 6,
         "importPath": "parrot.director.phrase_machine",
         "description": "parrot.director.phrase_machine",
-        "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.drums_since = None\n    def step(self, frame):\n        # if frame[\"build_rate\"] > 1.5:\n        #     self.state.set_phrase(Phrase.build)\n        #     return\n        # if self.state.phrase == Phrase.build and frame[\"build_rate\"] < 0.5:\n        #     self.state.set_phrase(Phrase.drop)",
+        "peekOfCode": "class PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_low_trough_time = None\n        self.sustained_low_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n    def step(self, frame, director: Director):\n        self.signals[FrameSignal.hype] *= 1 - HYPE_DECAY\n        if frame[FrameSignal.sustained_low] < TROUGH_LEVEL and (\n            self.sustained_low_peak_time is None",
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "TROUGH_TO_PEAK_MAX_SECONDS",
+        "kind": 5,
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "peekOfCode": "TROUGH_TO_PEAK_MAX_SECONDS = 1\nTROUGH_LEVEL = 0.1\nPEAK_LEVEL = 0.35\nTHROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_low_trough_time = None\n        self.sustained_low_peak_time = None",
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "TROUGH_LEVEL",
+        "kind": 5,
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "peekOfCode": "TROUGH_LEVEL = 0.1\nPEAK_LEVEL = 0.35\nTHROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_low_trough_time = None\n        self.sustained_low_peak_time = None\n        self.signals = {FrameSignal.hype: 0}",
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "PEAK_LEVEL",
+        "kind": 5,
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "peekOfCode": "PEAK_LEVEL = 0.35\nTHROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_low_trough_time = None\n        self.sustained_low_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n    def step(self, frame, director: Director):",
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "THROTTLE_SECONDS",
+        "kind": 5,
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "peekOfCode": "THROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_low_trough_time = None\n        self.sustained_low_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n    def step(self, frame, director: Director):\n        self.signals[FrameSignal.hype] *= 1 - HYPE_DECAY",
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "HYPE_DECAY",
+        "kind": 5,
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "peekOfCode": "HYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_low_trough_time = None\n        self.sustained_low_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n    def step(self, frame, director: Director):\n        self.signals[FrameSignal.hype] *= 1 - HYPE_DECAY\n        if frame[FrameSignal.sustained_low] < TROUGH_LEVEL and (",
         "detail": "parrot.director.phrase_machine",
         "documentation": {}
     },
@@ -2893,7 +2914,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
-        "peekOfCode": "class FixtureBase:\n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n        self.color_value = Color(\"black\")\n        self.dimmer_value = 0\n    def set_color(self, color: Color):\n        self.color_value = color",
+        "peekOfCode": "class FixtureBase:\n    def __init__(self, address, name, width):\n        self.address = address\n        self.name = name\n        self.width = width\n        self.values = [0 for i in range(width)]\n        self.color_value = Color(\"black\")\n        self.dimmer_value = 0\n        self.strobe_value = 0\n    def set_color(self, color: Color):",
         "detail": "parrot.fixtures.base",
         "documentation": {}
     },
@@ -2938,7 +2959,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.led_par",
         "description": "parrot.fixtures.led_par",
-        "peekOfCode": "class LedPar(FixtureBase):\n    def __init__(self, patch):\n        super().__init__(patch, \"led par\", 7)\n    def set_dimmer(self, value):\n        super().set_dimmer(value)\n        self.values[0] = value\n    def set_strobe(self, value):\n        self.values[4] = value\n    def set_color(self, color):\n        super().set_color(color)",
+        "peekOfCode": "class LedPar(FixtureBase):\n    def __init__(self, patch):\n        super().__init__(patch, \"led par\", 7)\n    def set_dimmer(self, value):\n        super().set_dimmer(value)\n        self.values[0] = value\n    def set_strobe(self, value):\n        self.values[4] = value\n        super().set_strobe(value)\n    def set_color(self, color):",
         "detail": "parrot.fixtures.led_par",
         "documentation": {}
     },
@@ -3006,11 +3027,20 @@
         "documentation": {}
     },
     {
+        "label": "render_strobe_dim_color",
+        "kind": 2,
+        "importPath": "parrot.gui.fixtures.base",
+        "description": "parrot.gui.fixtures.base",
+        "peekOfCode": "def render_strobe_dim_color(fixture, frame):\n    color = fixture.get_color()\n    dim = fixture.get_dimmer()\n    strobe = fixture.get_strobe()\n    if strobe > 10:\n        dim *= math.sin(frame.time * 30 * strobe / 255 * 4)\n    return dim_color(color, dim / 255)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture",
+        "detail": "parrot.gui.fixtures.base",
+        "documentation": {}
+    },
+    {
         "label": "T",
         "kind": 5,
         "importPath": "parrot.gui.fixtures.base",
         "description": "parrot.gui.fixtures.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture\n        self._x = 0\n        self._y = 0\n    @property\n    def width(self) -> int:\n        raise NotImplementedError\n    @property",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef render_strobe_dim_color(fixture, frame):\n    color = fixture.get_color()\n    dim = fixture.get_dimmer()\n    strobe = fixture.get_strobe()\n    if strobe > 10:\n        dim *= math.sin(frame.time * 30 * strobe / 255 * 4)\n    return dim_color(color, dim / 255)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):",
         "detail": "parrot.gui.fixtures.base",
         "documentation": {}
     },
@@ -3532,7 +3562,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class SequenceFadeDimmers(InterpreterBase[T]):\n    hype = 20\n    def __init__(self, group: List[T], args: InterpreterArgs, wait_time=3):\n        super().__init__(group, args)\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):\n            fixture.set_dimmer(\n                128\n                + math.cos(",
+        "peekOfCode": "class SequenceFadeDimmers(InterpreterBase[T]):\n    hype = 20\n    def __init__(self, group: List[T], args: InterpreterArgs, wait_time=3):\n        super().__init__(group, args)\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):\n            fixture.set_strobe(128 if frame[FrameSignal.hype] > 0.3 else 0)\n            fixture.set_dimmer(\n                128",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -3541,7 +3571,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class DimmersBeatChase(InterpreterBase[T]):\n    hype = 70\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.signal = FrameSignal.freq_high\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:\n                self.bulb = random.randint(0, len(self.group) - 1)",
+        "peekOfCode": "class DimmersBeatChase(InterpreterBase[T]):\n    hype = 70\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.signal = FrameSignal.freq_high\n        self.on = False\n    def step(self, frame, scheme):\n        for fixture in self.group:\n            fixture.set_strobe(128 if frame[FrameSignal.hype] > 0.3 else 0)\n        if frame[self.signal] > 0.4:",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -3559,7 +3589,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class Twinkle(InterpreterBase[T]):\n    hype = 5\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.memory = [0] * len(self.group)\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            if random.random() > 0.99:\n                self.memory[idx] = 1\n            fixture.set_dimmer(self.memory[idx] * 255)",
+        "peekOfCode": "class Twinkle(InterpreterBase[T]):\n    hype = 5\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.memory = [0] * len(self.group)\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_strobe(128 if frame[FrameSignal.hype] > 0.3 else 0)\n            if random.random() > 0.99:\n                self.memory[idx] = 1",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -3618,29 +3648,11 @@
         "documentation": {}
     },
     {
-        "label": "MotionstripBulbBeat",
-        "kind": 6,
-        "importPath": "parrot.interpreters.motionstrip",
-        "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):\n    hype = 60\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = FrameSignal.freq_high\n        self.total_bulbs = len(group) * 8",
-        "detail": "parrot.interpreters.motionstrip",
-        "documentation": {}
-    },
-    {
         "label": "MotionstripSlowRespond",
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
         "description": "parrot.interpreters.motionstrip",
         "peekOfCode": "class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    hype = 30\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = FrameSignal.sustained_low\n        self.dimmer_memory = 0",
-        "detail": "parrot.interpreters.motionstrip",
-        "documentation": {}
-    },
-    {
-        "label": "MotionStripBulbBeatAndWiggle",
-        "kind": 5,
-        "importPath": "parrot.interpreters.motionstrip",
-        "description": "parrot.interpreters.motionstrip",
-        "peekOfCode": "MotionStripBulbBeatAndWiggle = combo(MotionstripBulbBeat, MoveCircles)\nclass MotionstripSlowRespond(InterpreterBase[Motionstrip38]):\n    hype = 30\n    def __init__(\n        self,\n        group: List[Motionstrip38],\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.signal = FrameSignal.sustained_low",
         "detail": "parrot.interpreters.motionstrip",
         "documentation": {}
     },
@@ -3802,7 +3814,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "class SlowRespond(InterpreterBase[FixtureBase]):\n    hype = 25\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        self.dimmer_memory = 0\n        self.signal = FrameSignal.sustained_low",
+        "peekOfCode": "class SlowRespond(InterpreterBase[FixtureBase]):\n    hype = 25\n    def __init__(self, group, args: InterpreterArgs, signal=FrameSignal.sustained_low):\n        super().__init__(group, args)\n        self.dimmer_memory = 0\n        self.signal = signal\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame[FrameSignal.freq_all], 0.24)\n        for idx, fixture in enumerate(self.group):\n            if frame[self.signal] > 0.65:",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
@@ -3811,7 +3823,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "class SlowDecay(InterpreterBase[FixtureBase]):\n    hype = 20\n    def __init__(self, group, args: InterpreterArgs, decay_rate=0.1):\n        super().__init__(group, args)\n        self.dimmer_memory = 0\n        self.decay_rate = decay_rate\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = max(\n            lerp(self.dimmer_memory, 0, self.decay_rate), frame.all\n        )",
+        "peekOfCode": "class SlowDecay(InterpreterBase[FixtureBase]):\n    hype = 20\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        decay_rate=0.1,\n        signal=FrameSignal.freq_all,\n        signal_fn=lambda x: x,\n    ):",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
@@ -3820,17 +3832,26 @@
         "kind": 5,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "VerySlowDecay = with_args(SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01)",
+        "peekOfCode": "VerySlowDecay = with_args(SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01)\nSlowSustained = with_args(\n    SlowDecay,\n    new_hype=5,\n    new_has_rainbow=False,\n    decay_rate=0.5,\n    signal=FrameSignal.sustained_low,\n)\nMellowOnly = with_args(\n    SlowDecay,",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
     {
-        "label": "StrobeHighSustained",
-        "kind": 6,
-        "importPath": "parrot.interpreters.strobe",
-        "description": "parrot.interpreters.strobe",
-        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[FrameSignal.sustained_low] > 0.4:\n                i.set_strobe(255)\n            else:\n                i.set_dimmer(0)",
-        "detail": "parrot.interpreters.strobe",
+        "label": "SlowSustained",
+        "kind": 5,
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "peekOfCode": "SlowSustained = with_args(\n    SlowDecay,\n    new_hype=5,\n    new_has_rainbow=False,\n    decay_rate=0.5,\n    signal=FrameSignal.sustained_low,\n)\nMellowOnly = with_args(\n    SlowDecay,\n    new_hype=0,",
+        "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
+        "label": "MellowOnly",
+        "kind": 5,
+        "importPath": "parrot.interpreters.slow",
+        "description": "parrot.interpreters.slow",
+        "peekOfCode": "MellowOnly = with_args(\n    SlowDecay,\n    new_hype=0,\n    new_has_rainbow=False,\n    decay_rate=0.01,\n    signal=FrameSignal.sustained_low,\n    signal_fn=lambda x: 1 - x,\n)",
+        "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
     {

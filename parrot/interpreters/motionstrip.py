@@ -11,46 +11,6 @@ from parrot.utils.lerp import lerp
 from parrot.utils.color_extra import dim_color
 
 
-class MotionstripBulbBeat(InterpreterBase[Motionstrip38]):
-    hype = 60
-
-    def __init__(
-        self,
-        group: List[Motionstrip38],
-        args: InterpreterArgs,
-    ):
-        super().__init__(group, args)
-        self.signal = FrameSignal.freq_high
-        self.total_bulbs = len(group) * 8
-        self.bulb = 0
-        self.on = False
-
-    def step(self, frame, scheme):
-
-        if frame[self.signal] > 0.4:
-            if self.on == False:
-                self.bulb = random.randint(0, self.total_bulbs - 1)
-            self.on = True
-
-            for idx, fixture in enumerate(self.group):
-                for bulb_idx, bulb in enumerate(fixture.get_bulbs()):
-                    color = Color("black")
-                    absolute_idx = idx * 8 + bulb_idx
-                    if absolute_idx == self.bulb:
-                        color = scheme.fg
-
-                    bulb.set_color(color)
-                fixture.set_dimmer(frame[self.signal] * 255)
-
-        else:
-            for fixture in self.group:
-                fixture.set_dimmer(0)
-            self.on = False
-
-
-MotionStripBulbBeatAndWiggle = combo(MotionstripBulbBeat, MoveCircles)
-
-
 class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
     hype = 30
 

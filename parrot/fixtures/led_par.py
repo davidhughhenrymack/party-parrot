@@ -11,6 +11,7 @@ class LedPar(FixtureBase):
 
     def set_strobe(self, value):
         self.values[4] = value
+        super().set_strobe(value)
 
     def set_color(self, color):
         super().set_color(color)

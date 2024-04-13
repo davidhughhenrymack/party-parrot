@@ -1,4 +1,5 @@
 import parrot.fixtures
+import scipy
 from typing import List
 from parrot.director.frame import Frame, FrameSignal
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
@@ -13,17 +14,13 @@ from parrot.fixtures.base import FixtureBase
 class SlowRespond(InterpreterBase[FixtureBase]):
     hype = 25
 
-    def __init__(
-        self,
-        group,
-        args: InterpreterArgs,
-    ):
+    def __init__(self, group, args: InterpreterArgs, signal=FrameSignal.sustained_low):
         super().__init__(group, args)
         self.dimmer_memory = 0
-        self.signal = FrameSignal.sustained_low
+        self.signal = signal
 
     def step(self, frame: Frame, scheme: ColorScheme):
-        self.dimmer_memory = lerp(self.dimmer_memory, frame.all, 0.24)
+        self.dimmer_memory = lerp(self.dimmer_memory, frame[FrameSignal.freq_all], 0.24)
 
         for idx, fixture in enumerate(self.group):
             if frame[self.signal] > 0.65:
@@ -43,14 +40,24 @@ class SlowRespond(InterpreterBase[FixtureBase]):
 class SlowDecay(InterpreterBase[FixtureBase]):
     hype = 20
 
-    def __init__(self, group, args: InterpreterArgs, decay_rate=0.1):
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+        decay_rate=0.1,
+        signal=FrameSignal.freq_all,
+        signal_fn=lambda x: x,
+    ):
         super().__init__(group, args)
         self.dimmer_memory = 0
         self.decay_rate = decay_rate
+        self.signal = signal
+        self.signal_fn = signal_fn
 
     def step(self, frame: Frame, scheme: ColorScheme):
         self.dimmer_memory = max(
-            lerp(self.dimmer_memory, 0, self.decay_rate), frame.all
+            lerp(self.dimmer_memory, 0, self.decay_rate),
+            self.signal_fn(frame[self.signal]),
         )
 
         for fixture in self.group:
@@ -58,3 +65,19 @@ class SlowDecay(InterpreterBase[FixtureBase]):
 
 
 VerySlowDecay = with_args(SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01)
+SlowSustained = with_args(
+    SlowDecay,
+    new_hype=5,
+    new_has_rainbow=False,
+    decay_rate=0.5,
+    signal=FrameSignal.sustained_low,
+)
+
+MellowOnly = with_args(
+    SlowDecay,
+    new_hype=0,
+    new_has_rainbow=False,
+    decay_rate=0.01,
+    signal=FrameSignal.sustained_low,
+    signal_fn=lambda x: 1 - x,
+)

@@ -1,7 +1,7 @@
 import math
 from parrot.director.frame import Frame
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
-from .base import FixtureGuiRenderer
+from .base import FixtureGuiRenderer, render_strobe_dim_color
 from parrot.fixtures import FixtureBase
 from tkinter import Canvas
 from parrot.utils.color_extra import dim_color
@@ -120,13 +120,12 @@ class RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):
             beam,
         ) in enumerate(self.beams):
             bulb = self.fixture.get_bulbs()[i % len(self.fixture.get_bulbs())]
-            color = bulb.get_color()
-            dim = bulb.get_dimmer()
+            fill = render_strobe_dim_color(bulb, frame)
 
-            if dim < 10:
+            if fill.get_luminance() < 0.1:
                 canvas.itemconfig(beam, fill="")
             else:
-                canvas.itemconfig(beam, fill=dim_color(color, dim / 255))
+                canvas.itemconfig(beam, fill=fill)
 
             canvas.coords(
                 beam,

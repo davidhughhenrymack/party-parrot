@@ -9,29 +9,31 @@ from parrot.interpreters.base import (
     InterpreterBase,
     MoveCircles,
     MoveNod,
-    Noop,
     with_args,
 )
 from parrot.director.phrase import Phrase
 from parrot.interpreters.motionstrip import (
-    MotionStripBulbBeatAndWiggle,
     MotionstripSlowRespond,
 )
 from parrot.interpreters.movers import (
     MoverBeatAndCircle,
     MoverBeatInFan,
     MoverDimAndCircle,
-    MoverFan,
     MoverGobo,
     MoverNoGobo,
-    MoverRandomGobo,
 )
 from parrot.interpreters.rotosphere import (
     RotosphereOn,
     RotosphereSpin,
     RotosphereSpinColor,
 )
-from parrot.interpreters.slow import SlowDecay, SlowRespond, VerySlowDecay
+from parrot.interpreters.slow import (
+    MellowOnly,
+    SlowDecay,
+    SlowRespond,
+    SlowSustained,
+    VerySlowDecay,
+)
 from parrot.fixtures.laser import Laser
 from typing import List, Dict, Union
 from parrot.fixtures.base import FixtureBase
@@ -43,7 +45,6 @@ from parrot.interpreters.latched import (
 )
 from parrot.interpreters.dimmer import (
     Dimmer255,
-    Dimmer30,
     DimmerFadeIn,
     DimmersBeatChase,
     GentlePulse,
@@ -53,7 +54,6 @@ from parrot.interpreters.dimmer import (
 )
 from parrot.interpreters.combo import combo
 
-import random
 from parrot.interpreters.dimmer import Dimmer0
 from parrot.interpreters.randomize import randomize, weighted_randomize
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
@@ -79,7 +79,7 @@ phrase_interpretations: Dict[
         # Moving heads flashing beat, (drawing circles / fixed position)
         # Motion strip off or bulb flashing to the beat
         MovingHead: [MoverBeatAndCircle, MoverBeatInFan],
-        Motionstrip: [MotionStripBulbBeatAndWiggle],
+        Motionstrip: [],
         LedPar: [combo(DimmersBeatChase, ColorAlternateBg)],
     },
     Phrase.drop: {
@@ -109,6 +109,7 @@ phrase_interpretations: Dict[
                     DimmersBeatChase,
                     VerySlowDecay,
                     StrobeHighSustained,
+                    SlowSustained,
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
             ),
@@ -122,7 +123,7 @@ phrase_interpretations: Dict[
                     DimmerFadeLatched,
                     SequenceDimmers,
                     SequenceFadeDimmers,
-                    StrobeHighSustained,
+                    MellowOnly,
                     with_args(DimmerFadeLatchedRandom, latch_at=0.3),
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
@@ -140,7 +141,6 @@ phrase_interpretations: Dict[
                     combo(SlowRespond, AllBulbs255),
                     combo(DimmersBeatChase, AllBulbs255),
                     combo(SlowDecay, AllBulbs255),
-                    combo(StrobeHighSustained, AllBulbs255),
                     combo(
                         Dimmer255,
                         for_bulbs(with_args(GentlePulse, trigger_level=0.1)),
@@ -162,6 +162,8 @@ phrase_interpretations: Dict[
                     for_bulbs(Twinkle),
                     for_bulbs(GentlePulse),
                     DimmerFadeLatched4s,
+                    SlowSustained,
+                    MellowOnly,
                 ),
             ),
             combo(

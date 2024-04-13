@@ -1,6 +1,6 @@
 import math
 from parrot.director.frame import Frame
-from .base import FixtureGuiRenderer
+from .base import FixtureGuiRenderer, render_strobe_dim_color
 from parrot.fixtures import FixtureBase
 from tkinter import Canvas
 from parrot.utils.color_extra import dim_color
@@ -106,15 +106,13 @@ class MovingHeadRenderer(FixtureGuiRenderer[FixtureBase]):
         )
 
     def render(self, canvas: Canvas, frame: Frame):
-        color = self.fixture.get_color()
-        dim = self.fixture.get_dimmer()
+        fill = render_strobe_dim_color(self.fixture, frame)
+        canvas.itemconfig(self.light, fill=fill)
 
-        canvas.itemconfig(self.light, fill=dim_color(color, dim / 255))
-
-        if dim < 10:
+        if fill.get_luminance() < 0.1:
             canvas.itemconfig(self.beam, fill="")
         else:
-            canvas.itemconfig(self.beam, fill=dim_color(color, dim / 255))
+            canvas.itemconfig(self.beam, fill=fill)
 
         canvas.coords(
             self.beam,

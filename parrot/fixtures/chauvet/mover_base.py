@@ -85,6 +85,7 @@ class ChauvetSpot_12Ch(MovingHead):
         self.set("gobo", gobo.dmx_value)
 
     def set_strobe(self, value):
+        super().set_strobe(value)
         lower = 4
         upper = 76
         scaled = lower + (upper - lower) * value / 255

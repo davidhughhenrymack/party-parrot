@@ -83,7 +83,8 @@ class Director:
         self.shift_count += 1
 
     def step(self, frame: Frame):
-        self.phrase_machine.step(frame)
+        additional_signals = self.phrase_machine.step(frame, self)
+        frame.extend(additional_signals)
 
         scheme = self.scheme.render()
         run_time = time.time() - self.start_time

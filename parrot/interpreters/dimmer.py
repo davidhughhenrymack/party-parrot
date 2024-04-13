@@ -67,6 +67,9 @@ class SequenceFadeDimmers(InterpreterBase[T]):
 
     def step(self, frame, scheme):
         for i, fixture in enumerate(self.group):
+
+            fixture.set_strobe(128 if frame[FrameSignal.hype] > 0.3 else 0)
+
             fixture.set_dimmer(
                 128
                 + math.cos(
@@ -86,6 +89,9 @@ class DimmersBeatChase(InterpreterBase[T]):
         self.on = False
 
     def step(self, frame, scheme):
+
+        for fixture in self.group:
+            fixture.set_strobe(128 if frame[FrameSignal.hype] > 0.3 else 0)
 
         if frame[self.signal] > 0.4:
             if self.on == False:
@@ -145,6 +151,9 @@ class Twinkle(InterpreterBase[T]):
 
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
+
+            fixture.set_strobe(128 if frame[FrameSignal.hype] > 0.3 else 0)
+
             if random.random() > 0.99:
                 self.memory[idx] = 1
 

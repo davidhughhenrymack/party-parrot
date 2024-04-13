@@ -1,9 +1,22 @@
+import math
 from typing import Generic, List, TypeVar
 from parrot.fixtures.base import FixtureBase
 from tkinter import Canvas
 from parrot.director.frame import Frame
+from parrot.utils.color_extra import dim_color
 
 T = TypeVar("T", bound=FixtureBase)
+
+
+def render_strobe_dim_color(fixture, frame):
+    color = fixture.get_color()
+    dim = fixture.get_dimmer()
+    strobe = fixture.get_strobe()
+
+    if strobe > 10:
+        dim *= math.sin(frame.time * 30 * strobe / 255 * 4)
+
+    return dim_color(color, dim / 255)
 
 
 class FixtureGuiRenderer(Generic[T]):

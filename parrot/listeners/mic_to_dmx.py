@@ -47,10 +47,8 @@ class MicToDmx(object):
 
         self.spectrogram_buffer = None
         self.signal_lookback = {
-            "claps_md": [],
-            "claps_short": [],
-            "build_rate": [],
             FrameSignal.sustained_low: [],
+            FrameSignal.sustained_high: [],
         }
 
         self.signal_stat_buffer = {
@@ -183,10 +181,9 @@ class MicToDmx(object):
         for name, rg in ranges.items():
             x = np.sum(np.abs(spectrogram_block[rg[0] : rg[1], :]), axis=0)
             raw_timeseries[name] = x
-            # print min max of raw_timeseries
-            # if name == FrameSignal.freq_all:
-            #     print(f"raw_timeseries min: {np.min(x)}, max: {np.max(x)}")
-            N = round(RATE / 5000)
+
+            # N = round(RATE / 50000)
+            N = 3
             x = np.convolve(x, np.ones(N) / N, mode="valid")
 
             # Discard outliers and clamp to 0-1
@@ -213,49 +210,37 @@ class MicToDmx(object):
             x = (x - x_min) / (x_max - x_min + sys.float_info.epsilon)
             x = np.clip(x, 0, 1)
 
-            # if name == FrameSignal.freq_all:
-            #     print(
-            #         f"{name}: {x_min:.3f} - {x_max:.3f}, last {raw_timeseries[name][-1]:.3f}"
-            #     )
-
             timeseries[name] = x
             v = x[-1]
             if math.isnan(v):
                 v = 0
             values[name] = v
 
-        sustained = timeseries[FrameSignal.freq_low][-200:].mean()
-        values[FrameSignal.sustained_low] = sustained
-
-        # values["claps_md"] = np.sum(timeseries[FrameSignal.freq_high][-60:-30] > 0.1) / 3
-        # values["claps_short"] = np.sum(timeseries[FrameSignal.freq_high][-30:] > 0.1) / 3
-        # values["build_rate"] = clamp(values["claps_short"] / values["claps_md"], 0, 100)
-
-        # self.signal_lookback["claps_md"].append(values["claps_md"])
-        # self.signal_lookback["claps_short"].append(values["claps_short"])
-        # self.signal_lookback["drum_binary"] = np.where(timeseries[FrameSignal.freq_high] > 0.3, 1, 0)
-        # self.signal_lookback["build_rate"].append(values["build_rate"])
-
-        self.signal_lookback[FrameSignal.sustained_low].extend(
-            [sustained for i in range(num_idx_added)]
-        )
-        self.signal_lookback[FrameSignal.sustained_low] = self.signal_lookback[
-            FrameSignal.sustained_low
-        ][-SPECTOGRAPH_BUFFER_SIZE:]
+        for src, dest in [
+            (FrameSignal.freq_high, FrameSignal.sustained_high),
+            (FrameSignal.freq_low, FrameSignal.sustained_low),
+        ]:
+            v = timeseries[src][-200:].mean()
+            values[dest] = v
+            self.signal_lookback[dest].extend([v for _ in range(num_idx_added)])
+            self.signal_lookback[dest] = self.signal_lookback[dest][
+                -SPECTOGRAPH_BUFFER_SIZE:
+            ]
 
         frame = Frame(
             values,
         )
 
         frame.plot = {
-            # **{
-            #     key: value[-plot_lookback:]
-            #     for key, value in self.signal_lookback.items()
-            # },
-            FrameSignal.freq_high: timeseries[FrameSignal.freq_high],
-            FrameSignal.freq_low: timeseries[FrameSignal.freq_low],
+            FrameSignal.freq_high.name: timeseries[FrameSignal.freq_high],
+            FrameSignal.freq_low.name: timeseries[FrameSignal.freq_low],
             # FrameSignal.freq_all: timeseries[FrameSignal.freq_all][-plot_lookback:],
-            FrameSignal.sustained_low: self.signal_lookback[FrameSignal.sustained_low],
+            FrameSignal.sustained_low.name: self.signal_lookback[
+                FrameSignal.sustained_low
+            ],
+            FrameSignal.sustained_high.name: self.signal_lookback[
+                FrameSignal.sustained_high
+            ],
         }
 
         self.director.step(frame)

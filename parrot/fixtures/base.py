@@ -11,6 +11,7 @@ class FixtureBase:
         self.values = [0 for i in range(width)]
         self.color_value = Color("black")
         self.dimmer_value = 0
+        self.strobe_value = 0
 
     def set_color(self, color: Color):
         self.color_value = color
@@ -25,7 +26,10 @@ class FixtureBase:
         return self.dimmer_value
 
     def set_strobe(self, value):
-        pass
+        self.strobe_value = value
+
+    def get_strobe(self):
+        return self.strobe_value
 
     def set_pan(self, value):
         pass

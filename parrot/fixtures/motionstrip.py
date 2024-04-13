@@ -68,9 +68,9 @@ class Motionstrip38(Motionstrip):
         pass
 
     def set_strobe(self, value):
-        self.strobe = value
+        super().set_strobe(value)
 
     def render(self, dmx):
-        if self.strobe > 0:
+        if self.get_strobe() > 0:
             self.values[4] = 255 * math.sin(time.time() * 30)
         super().render(dmx)
