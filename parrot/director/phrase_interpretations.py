@@ -61,6 +61,7 @@ from parrot.interpreters.bulbs import AllBulbs255, for_bulbs
 from parrot.director.phrase_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
 from parrot.interpreters.strobe import StrobeHighSustained
+from parrot.interpreters.hype import hype_switch
 
 
 phrase_interpretations: Dict[
@@ -103,28 +104,34 @@ phrase_interpretations: Dict[
     Phrase.general: {
         LedPar: [
             combo(
-                randomize(
-                    GentlePulse,
-                    SlowRespond,
-                    DimmersBeatChase,
-                    VerySlowDecay,
-                    StrobeHighSustained,
-                    SlowSustained,
+                hype_switch(
+                    randomize(
+                        GentlePulse,
+                        SlowRespond,
+                        DimmersBeatChase,
+                        VerySlowDecay,
+                        StrobeHighSustained,
+                        SlowSustained,
+                        StrobeHighSustained,
+                    )
                 ),
-                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
+                randomize(ColorAlternateBg, ColorBg, ColorRainbow, ColorFg),
             ),
         ],
         MovingHead: [
             combo(
-                randomize(
-                    DimmersBeatChase,
-                    SlowDecay,
-                    GentlePulse,
-                    DimmerFadeLatched,
-                    SequenceDimmers,
-                    SequenceFadeDimmers,
-                    MellowOnly,
-                    with_args(DimmerFadeLatchedRandom, latch_at=0.3),
+                hype_switch(
+                    randomize(
+                        DimmersBeatChase,
+                        SlowDecay,
+                        GentlePulse,
+                        DimmerFadeLatched,
+                        SequenceDimmers,
+                        SequenceFadeDimmers,
+                        StrobeHighSustained,
+                        MellowOnly,
+                        with_args(DimmerFadeLatchedRandom, latch_at=0.3),
+                    )
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
                 randomize(MoveCircles, MoveNod),
@@ -136,34 +143,40 @@ phrase_interpretations: Dict[
         Motionstrip: [
             # MotionstripSlowRespond,
             combo(
-                randomize(
-                    combo(Dimmer255, for_bulbs(Twinkle)),
-                    combo(SlowRespond, AllBulbs255),
-                    combo(DimmersBeatChase, AllBulbs255),
-                    combo(SlowDecay, AllBulbs255),
-                    combo(
-                        Dimmer255,
-                        for_bulbs(with_args(GentlePulse, trigger_level=0.1)),
-                    ),
-                    combo(Dimmer255, for_bulbs(DimmersBeatChase)),
-                    combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
+                hype_switch(
+                    randomize(
+                        combo(Dimmer255, for_bulbs(Twinkle)),
+                        combo(SlowRespond, AllBulbs255),
+                        combo(DimmersBeatChase, AllBulbs255),
+                        combo(SlowDecay, AllBulbs255),
+                        combo(StrobeHighSustained, AllBulbs255),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(with_args(GentlePulse, trigger_level=0.1)),
+                        ),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                        # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
+                    )
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
                 MoveCircles,
             ),
         ],
-        Laser: [LaserLatch],
+        Laser: [LaserLatch, StrobeHighSustained],
         ChauvetRotosphere_28Ch: [
             Dimmer0,
             combo(
                 RotosphereSpinColor,
-                randomize(
-                    DimmerFadeIn,
-                    for_bulbs(Twinkle),
-                    for_bulbs(GentlePulse),
-                    DimmerFadeLatched4s,
-                    SlowSustained,
-                    MellowOnly,
+                hype_switch(
+                    randomize(
+                        DimmerFadeIn,
+                        for_bulbs(Twinkle),
+                        for_bulbs(GentlePulse),
+                        DimmerFadeLatched4s,
+                        SlowSustained,
+                        MellowOnly,
+                        StrobeHighSustained,
+                    )
                 ),
             ),
             combo(

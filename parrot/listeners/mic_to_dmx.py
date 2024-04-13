@@ -231,7 +231,7 @@ class MicToDmx(object):
             values,
         )
 
-        frame.plot = {
+        frame.timeseries = {
             FrameSignal.freq_high.name: timeseries[FrameSignal.freq_high],
             FrameSignal.freq_low.name: timeseries[FrameSignal.freq_low],
             # FrameSignal.freq_all: timeseries[FrameSignal.freq_all][-plot_lookback:],

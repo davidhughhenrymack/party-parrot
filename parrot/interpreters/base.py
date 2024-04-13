@@ -69,6 +69,8 @@ class Noop(InterpreterBase):
 
 
 class ColorFg(InterpreterBase):
+    hype = 50
+
     def step(self, frame, scheme):
         for i in self.group:
             i.set_color(scheme.fg)

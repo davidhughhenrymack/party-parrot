@@ -13,9 +13,14 @@ class FrameSignal(enum.Enum):
 
 
 class Frame:
-    def __init__(self, values: dict[FrameSignal, float]):
+    def __init__(
+        self,
+        values: dict[FrameSignal, float],
+        timeseries: dict[FrameSignal, list[float]] = {},
+    ):
         self.time = time.perf_counter()
         self.values = values
+        self.timeseries: dict[FrameSignal, list[float]] = timeseries
 
     def extend(self, additional_signals: dict[FrameSignal, float]):
         self.values.update(additional_signals)
@@ -24,6 +29,4 @@ class Frame:
         return self.values.get(__name)
 
     def __mul__(self, factor):
-        return Frame(
-            {k: v * factor for k, v in self.values.items()},
-        )
+        return Frame({k: v * factor for k, v in self.values.items()}, self.timeseries)

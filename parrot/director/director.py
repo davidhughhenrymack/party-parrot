@@ -24,7 +24,6 @@ from parrot.state import State
 
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "40")), 1)
-MAX_INTENSITY = 1
 
 
 def filter_nones(l):
@@ -57,35 +56,34 @@ class Director:
             fixtures = [i for i in patch_bay if isinstance(i, cls)]
             fixture_groups.append(fixtures)
 
-        self.interpreters: List[InterpreterBase] = filter_nones(
+        self.interpreters: List[InterpreterBase] = [
             get_interpreter(
                 self.state.phrase,
                 i,
                 InterpreterArgs(self.state.hype, self.state.theme.allow_rainbows),
             )
             for i in fixture_groups
-        )
+        ]
+
         print(f"Generated interpretation for {self.state.phrase}:")
         for i in self.interpreters:
             print(f"    {str(i)} {[str(j) for j in i.group]}")
 
         print()
 
-    def shift(self):
-        # if self.shift_count % 2 == 0:
+    def generate_color_scheme(self):
         s = random.choice(self.state.theme.color_scheme)
-        print(f"Shifting to {s}")
         self.scheme.push(s)
-        # else:
+        print(f"Shifting to {s}")
+
+    def shift(self):
+        self.generate_color_scheme()
         self.generate_interpreters()
 
         self.last_shift_time = time.time()
         self.shift_count += 1
 
     def step(self, frame: Frame):
-        additional_signals = self.phrase_machine.step(frame, self)
-        frame.extend(additional_signals)
-
         scheme = self.scheme.render()
         run_time = time.time() - self.start_time
         warmup_phase = min(1, run_time / WARMUP_SECONDS)
@@ -94,14 +92,17 @@ class Director:
             print("Warmup phase complete")
             self.warmup_complete = True
 
-        throttled_frame = frame * warmup_phase * MAX_INTENSITY
+        frame = frame * warmup_phase
+
+        additional_signals = self.phrase_machine.step(frame)
+        frame.extend(additional_signals)
 
         for i in self.interpreters:
-            i.step(throttled_frame, scheme)
+            i.step(frame, scheme)
 
         if (
             time.time() - self.last_shift_time > SHIFT_AFTER
-            and throttled_frame[FrameSignal.sustained_low] < 0.2
+            and frame[FrameSignal.sustained_low] < 0.2
         ):
             self.shift()
 

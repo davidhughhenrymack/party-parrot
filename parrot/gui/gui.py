@@ -3,7 +3,7 @@ import os
 from tkinter import *
 from tkinter.ttk import Combobox
 
-from parrot.director.frame import FrameSignal
+import parrot.director.frame
 from parrot.state import State
 from parrot.director.phrase import Phrase
 from parrot.patch_bay import patch_bay
@@ -151,14 +151,14 @@ class Window(Tk):
         self._drag_data["x"] = event.x
         self._drag_data["y"] = event.y
 
-    def step(self, frame):
+    def step(self, frame: parrot.director.frame.Frame):
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas, frame)
 
         self.graph.delete("all")
         g_height = self.graph.winfo_height()
 
-        for idx, (name, values) in enumerate(frame.plot.items()):
+        for idx, (name, values) in enumerate(frame.timeseries.items()):
             if len(values) == 0:
                 continue
 
