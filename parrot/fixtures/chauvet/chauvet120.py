@@ -38,7 +38,7 @@ gobo_wheel = [
     GoboWheelEntry("dots", 110),
     GoboWheelEntry("squares", 150),
     GoboWheelEntry("three", 180),
-    GoboWheelEntry("circles", 200),
+    GoboWheelEntry("starburst", 200),
     GoboWheelEntry("ring", 255),
 ]
 

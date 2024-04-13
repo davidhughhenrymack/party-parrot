@@ -42,6 +42,15 @@ class MoverRandomGobo(InterpreterBase[MovingHead]):
             fixture.set_gobo(random.choice(fixture.gobo_wheel).name)
 
 
+class MoverGobo(InterpreterBase[MovingHead]):
+
+    def __init__(self, group, args: InterpreterArgs, gobo: str):
+        super().__init__(group, args)
+
+        for fixture in self.group:
+            fixture.set_gobo(gobo)
+
+
 class MoverNoGobo(InterpreterBase[MovingHead]):
 
     def __init__(

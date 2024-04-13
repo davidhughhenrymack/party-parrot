@@ -35,6 +35,15 @@ color_wheel = [
 
 gobo_wheel = [
     GoboWheelEntry("open", 0),
+    GoboWheelEntry("dots", 9),
+    GoboWheelEntry("spiral", 14),
+    GoboWheelEntry("spiral2", 20),
+    GoboWheelEntry("starburst", 26),
+    GoboWheelEntry("four", 32),
+    GoboWheelEntry("waves", 38),
+    GoboWheelEntry("biohazard", 45),
+    GoboWheelEntry("ring", 50),
+    GoboWheelEntry("flower", 60),
 ]
 
 

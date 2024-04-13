@@ -732,6 +732,14 @@
         "documentation": {}
     },
     {
+        "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
         "label": "PhraseMachine",
         "importPath": "parrot.director.phrase_machine",
         "description": "parrot.director.phrase_machine",
@@ -1269,6 +1277,14 @@
         "documentation": {}
     },
     {
+        "label": "InterpreterBase",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
         "label": "Phrase",
         "importPath": "parrot.director.phrase",
         "description": "parrot.director.phrase",
@@ -1510,6 +1526,14 @@
     },
     {
         "label": "MoverFan",
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverGobo",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
         "isExtraImport": true,
@@ -1997,6 +2021,14 @@
         "documentation": {}
     },
     {
+        "label": "StrobeHighSustained",
+        "importPath": "parrot.interpreters.strobe",
+        "description": "parrot.interpreters.strobe",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.strobe",
+        "documentation": {}
+    },
+    {
         "label": "namedtuple",
         "importPath": "collections",
         "description": "collections",
@@ -2090,6 +2122,15 @@
         "description": "parrot.utils.string",
         "isExtraImport": true,
         "detail": "parrot.utils.string",
+        "documentation": {}
+    },
+    {
+        "label": "math",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "math",
+        "description": "math",
+        "detail": "math",
         "documentation": {}
     },
     {
@@ -2194,15 +2235,6 @@
         "description": "parrot.gui.fixtures.rotosphere",
         "isExtraImport": true,
         "detail": "parrot.gui.fixtures.rotosphere",
-        "documentation": {}
-    },
-    {
-        "label": "math",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "math",
-        "description": "math",
-        "detail": "math",
         "documentation": {}
     },
     {
@@ -2753,7 +2785,7 @@
         "kind": 5,
         "importPath": "parrot.fixtures.chauvet.chauvet120",
         "description": "parrot.fixtures.chauvet.chauvet120",
-        "peekOfCode": "gobo_wheel = [\n    GoboWheelEntry(\"open\", 0),\n    GoboWheelEntry(\"wood\", 40),\n    GoboWheelEntry(\"spiral\", 80),\n    GoboWheelEntry(\"dots\", 110),\n    GoboWheelEntry(\"squares\", 150),\n    GoboWheelEntry(\"three\", 180),\n    GoboWheelEntry(\"circles\", 200),\n    GoboWheelEntry(\"ring\", 255),\n]",
+        "peekOfCode": "gobo_wheel = [\n    GoboWheelEntry(\"open\", 0),\n    GoboWheelEntry(\"wood\", 40),\n    GoboWheelEntry(\"spiral\", 80),\n    GoboWheelEntry(\"dots\", 110),\n    GoboWheelEntry(\"squares\", 150),\n    GoboWheelEntry(\"three\", 180),\n    GoboWheelEntry(\"starburst\", 200),\n    GoboWheelEntry(\"ring\", 255),\n]",
         "detail": "parrot.fixtures.chauvet.chauvet120",
         "documentation": {}
     },
@@ -2789,7 +2821,7 @@
         "kind": 5,
         "importPath": "parrot.fixtures.chauvet.chauvet160",
         "description": "parrot.fixtures.chauvet.chauvet160",
-        "peekOfCode": "gobo_wheel = [\n    GoboWheelEntry(\"open\", 0),\n]\nclass ChauvetSpot160_12Ch(ChauvetSpot_12Ch):\n    def __init__(\n        self,\n        patch,\n        pan_lower=360,\n        pan_upper=360 + 180,\n        tilt_lower=0,",
+        "peekOfCode": "gobo_wheel = [\n    GoboWheelEntry(\"open\", 0),\n    GoboWheelEntry(\"dots\", 9),\n    GoboWheelEntry(\"spiral\", 14),\n    GoboWheelEntry(\"spiral2\", 20),\n    GoboWheelEntry(\"starburst\", 26),\n    GoboWheelEntry(\"four\", 32),\n    GoboWheelEntry(\"waves\", 38),\n    GoboWheelEntry(\"biohazard\", 45),\n    GoboWheelEntry(\"ring\", 50),",
         "detail": "parrot.fixtures.chauvet.chauvet160",
         "documentation": {}
     },
@@ -2933,7 +2965,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
-        "peekOfCode": "class Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(\n            patch, \"motionstrip 38\", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]\n        )\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.set_pan_speed(128)\n    def set_dimmer(self, value):",
+        "peekOfCode": "class Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(\n            patch, \"motionstrip 38\", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]\n        )\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.set_pan_speed(128)\n        self.set_strobe(0)",
         "detail": "parrot.fixtures.motionstrip",
         "documentation": {}
     },
@@ -3626,7 +3658,16 @@
         "kind": 6,
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
-        "peekOfCode": "class MoverRandomGobo(InterpreterBase[MovingHead]):\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        for fixture in self.group:\n            fixture.set_gobo(random.choice(fixture.gobo_wheel).name)\nclass MoverNoGobo(InterpreterBase[MovingHead]):",
+        "peekOfCode": "class MoverRandomGobo(InterpreterBase[MovingHead]):\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n    ):\n        super().__init__(group, args)\n        for fixture in self.group:\n            fixture.set_gobo(random.choice(fixture.gobo_wheel).name)\nclass MoverGobo(InterpreterBase[MovingHead]):",
+        "detail": "parrot.interpreters.movers",
+        "documentation": {}
+    },
+    {
+        "label": "MoverGobo",
+        "kind": 6,
+        "importPath": "parrot.interpreters.movers",
+        "description": "parrot.interpreters.movers",
+        "peekOfCode": "class MoverGobo(InterpreterBase[MovingHead]):\n    def __init__(self, group, args: InterpreterArgs, gobo: str):\n        super().__init__(group, args)\n        for fixture in self.group:\n            fixture.set_gobo(gobo)\nclass MoverNoGobo(InterpreterBase[MovingHead]):\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,",
         "detail": "parrot.interpreters.movers",
         "documentation": {}
     },
@@ -3781,6 +3822,15 @@
         "description": "parrot.interpreters.slow",
         "peekOfCode": "VerySlowDecay = with_args(SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01)",
         "detail": "parrot.interpreters.slow",
+        "documentation": {}
+    },
+    {
+        "label": "StrobeHighSustained",
+        "kind": 6,
+        "importPath": "parrot.interpreters.strobe",
+        "description": "parrot.interpreters.strobe",
+        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(255 if frame[FrameSignal.sustained_low] > 0.5 else 0)",
+        "detail": "parrot.interpreters.strobe",
         "documentation": {}
     },
     {

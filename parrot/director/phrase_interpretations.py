@@ -22,6 +22,7 @@ from parrot.interpreters.movers import (
     MoverBeatInFan,
     MoverDimAndCircle,
     MoverFan,
+    MoverGobo,
     MoverNoGobo,
     MoverRandomGobo,
 )
@@ -59,6 +60,7 @@ from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.interpreters.bulbs import AllBulbs255, for_bulbs
 from parrot.director.phrase_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
+from parrot.interpreters.strobe import StrobeHighSustained
 
 
 phrase_interpretations: Dict[
@@ -106,6 +108,7 @@ phrase_interpretations: Dict[
                     SlowRespond,
                     DimmersBeatChase,
                     VerySlowDecay,
+                    StrobeHighSustained,
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
             ),
@@ -119,21 +122,25 @@ phrase_interpretations: Dict[
                     DimmerFadeLatched,
                     SequenceDimmers,
                     SequenceFadeDimmers,
+                    StrobeHighSustained,
                     with_args(DimmerFadeLatchedRandom, latch_at=0.3),
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
                 randomize(MoveCircles, MoveNod),
-                weighted_randomize((10, MoverRandomGobo), (90, MoverNoGobo)),
+                weighted_randomize(
+                    (10, with_args(MoverGobo, gobo="starburst")), (90, MoverNoGobo)
+                ),
             )
         ],
         Motionstrip: [
-            MotionstripSlowRespond,
+            # MotionstripSlowRespond,
             combo(
                 randomize(
                     combo(Dimmer255, for_bulbs(Twinkle)),
                     combo(SlowRespond, AllBulbs255),
                     combo(DimmersBeatChase, AllBulbs255),
                     combo(SlowDecay, AllBulbs255),
+                    combo(StrobeHighSustained, AllBulbs255),
                     combo(
                         Dimmer255,
                         for_bulbs(with_args(GentlePulse, trigger_level=0.1)),

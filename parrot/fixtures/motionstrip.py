@@ -1,3 +1,5 @@
+import math
+import time
 from parrot.utils.colour import Color
 from parrot.utils.color_extra import dim_color
 from .base import FixtureBase, FixtureWithBulbs
@@ -50,6 +52,7 @@ class Motionstrip38(Motionstrip):
         self.pan_upper = pan_upper
         self.pan_range = pan_upper - pan_lower
         self.set_pan_speed(128)
+        self.set_strobe(0)
 
     def set_dimmer(self, value):
         FixtureBase.set_dimmer(self, value)
@@ -63,3 +66,11 @@ class Motionstrip38(Motionstrip):
 
     def set_tilt(self, value):
         pass
+
+    def set_strobe(self, value):
+        self.strobe = value
+
+    def render(self, dmx):
+        if self.strobe > 0:
+            self.values[4] = 255 * math.sin(time.time() * 30)
+        super().render(dmx)
