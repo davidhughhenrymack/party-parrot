@@ -204,10 +204,10 @@ class MicToDmx(object):
                 ][-SIGNAL_STAT_BUFFER_SIZE:]
 
             x_min = np.min(
-                np.concatenate(self.signal_stat_buffer[name]["min"], [x_min])
+                np.concatenate([self.signal_stat_buffer[name]["min"], [x_min]])
             )
             x_max = np.max(
-                np.concatenate(self.signal_stat_buffer[name]["max"], [x_max])
+                np.concatenate([self.signal_stat_buffer[name]["max"], [x_max]])
             )
 
             x = (x - x_min) / (x_max - x_min + sys.float_info.epsilon)

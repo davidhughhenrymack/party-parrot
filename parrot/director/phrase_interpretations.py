@@ -48,6 +48,7 @@ from parrot.interpreters.dimmer import (
     GentlePulse,
     SequenceDimmers,
     SequenceFadeDimmers,
+    Twinkle,
 )
 from parrot.interpreters.combo import combo
 
@@ -129,6 +130,7 @@ phrase_interpretations: Dict[
             MotionstripSlowRespond,
             combo(
                 randomize(
+                    combo(Dimmer255, for_bulbs(Twinkle)),
                     combo(SlowRespond, AllBulbs255),
                     combo(DimmersBeatChase, AllBulbs255),
                     combo(SlowDecay, AllBulbs255),
@@ -150,6 +152,7 @@ phrase_interpretations: Dict[
                 RotosphereSpinColor,
                 randomize(
                     DimmerFadeIn,
+                    for_bulbs(Twinkle),
                     for_bulbs(GentlePulse),
                     DimmerFadeLatched4s,
                 ),

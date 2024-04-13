@@ -5,9 +5,14 @@ from parrot.fixtures.base import FixtureBase
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame
 from parrot.interpreters.dimmer import Dimmer0
+from parrot.utils.math import clamp
 
 
 T = TypeVar("T", bound=FixtureBase)
+
+
+def get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:
+    return 101 - clamp(abs(interpreter.hype - args.hype), 0, 100)
 
 
 def randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:
@@ -21,11 +26,12 @@ def randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[
             super().__init__(group, args)
 
             options = [i for i in interpreters if i.acceptable(args)]
+            weights = [get_weight(i, args) for i in options]
 
             if len(options) == 0:
                 self.interpreter = Dimmer0(group, args)
             else:
-                self.interpreter = random.choice(options)(group, args)
+                self.interpreter = random.choices(options, weights)[0](group, args)
 
         @classmethod
         def acceptable(cls, args: InterpreterArgs) -> bool:

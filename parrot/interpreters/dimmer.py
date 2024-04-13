@@ -136,3 +136,19 @@ class GentlePulse(InterpreterBase[T]):
         for idx, fixture in enumerate(self.group):
             fixture.set_dimmer(self.memory[idx] * 255)
             self.memory[idx] *= 0.95
+
+
+class Twinkle(InterpreterBase[T]):
+    hype = 5
+
+    def __init__(self, group: List[T], args: InterpreterArgs):
+        super().__init__(group, args)
+        self.memory = [0] * len(self.group)
+
+    def step(self, frame, scheme):
+        for idx, fixture in enumerate(self.group):
+            if random.random() > 0.99:
+                self.memory[idx] = 1
+
+            fixture.set_dimmer(self.memory[idx] * 255)
+            self.memory[idx] *= 0.9

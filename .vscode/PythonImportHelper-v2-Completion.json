@@ -1845,6 +1845,14 @@
         "documentation": {}
     },
     {
+        "label": "Twinkle",
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
         "label": "Dimmer0",
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
@@ -2030,6 +2038,14 @@
     },
     {
         "label": "distance",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "clamp",
         "importPath": "parrot.utils.math",
         "description": "parrot.utils.math",
         "isExtraImport": true,
@@ -3507,6 +3523,15 @@
         "documentation": {}
     },
     {
+        "label": "Twinkle",
+        "kind": 6,
+        "importPath": "parrot.interpreters.dimmer",
+        "description": "parrot.interpreters.dimmer",
+        "peekOfCode": "class Twinkle(InterpreterBase[T]):\n    hype = 5\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.memory = [0] * len(self.group)\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            if random.random() > 0.99:\n                self.memory[idx] = 1\n            fixture.set_dimmer(self.memory[idx] * 255)",
+        "detail": "parrot.interpreters.dimmer",
+        "documentation": {}
+    },
+    {
         "label": "T",
         "kind": 5,
         "importPath": "parrot.interpreters.dimmer",
@@ -3669,11 +3694,20 @@
         "documentation": {}
     },
     {
+        "label": "get_weight",
+        "kind": 2,
+        "importPath": "parrot.interpreters.randomize",
+        "description": "parrot.interpreters.randomize",
+        "peekOfCode": "def get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:\n    return 101 - clamp(abs(interpreter.hype - args.hype), 0, 100)\ndef randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)",
+        "detail": "parrot.interpreters.randomize",
+        "documentation": {}
+    },
+    {
         "label": "randomize",
         "kind": 2,
         "importPath": "parrot.interpreters.randomize",
         "description": "parrot.interpreters.randomize",
-        "peekOfCode": "def randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)\n            options = [i for i in interpreters if i.acceptable(args)]\n            if len(options) == 0:",
+        "peekOfCode": "def randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)\n            options = [i for i in interpreters if i.acceptable(args)]\n            weights = [get_weight(i, args) for i in options]",
         "detail": "parrot.interpreters.randomize",
         "documentation": {}
     },
@@ -3691,7 +3725,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.randomize",
         "description": "parrot.interpreters.randomize",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)\n            options = [i for i in interpreters if i.acceptable(args)]",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:\n    return 101 - clamp(abs(interpreter.hype - args.hype), 0, 100)\ndef randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):",
         "detail": "parrot.interpreters.randomize",
         "documentation": {}
     },
