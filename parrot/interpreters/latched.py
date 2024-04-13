@@ -76,7 +76,7 @@ class DimmerFadeLatched(InterpreterBase):
 
 
 DimmerFadeLatched4s = with_args(
-    DimmerFadeLatched, new_hype=5, new_has_rainbow=False, latch_time=4
+    DimmerFadeLatched, new_hype=10, new_has_rainbow=False, latch_time=4
 )
 
 

@@ -8,7 +8,7 @@ class State:
         self.events = Events()
 
         self._phrase = None
-        self._hype = 50
+        self._hype = 75
         self._theme = themes[0]
 
     @property

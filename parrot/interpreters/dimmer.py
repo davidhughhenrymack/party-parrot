@@ -44,9 +44,7 @@ class DimmerFadeIn(InterpreterBase):
 class SequenceDimmers(InterpreterBase[T]):
     hype = 30
 
-    def __init__(
-        self, group: List[T], args: InterpreterArgs, dimmer=255, wait_time=0.5
-    ):
+    def __init__(self, group: List[T], args: InterpreterArgs, dimmer=255, wait_time=1):
         super().__init__(group, args)
         self.dimmer = dimmer
         self.wait_time = wait_time

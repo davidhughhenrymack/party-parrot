@@ -72,12 +72,12 @@ class Director:
         print()
 
     def shift(self):
-        if self.shift_count % 2 == 0:
-            s = random.choice(self.state.theme.color_scheme)
-            print(f"Shifting to {s}")
-            self.scheme.push(s)
-        else:
-            self.generate_interpreters()
+        # if self.shift_count % 2 == 0:
+        s = random.choice(self.state.theme.color_scheme)
+        print(f"Shifting to {s}")
+        self.scheme.push(s)
+        # else:
+        self.generate_interpreters()
 
         self.last_shift_time = time.time()
         self.shift_count += 1
@@ -100,7 +100,7 @@ class Director:
 
         if (
             time.time() - self.last_shift_time > SHIFT_AFTER
-            and throttled_frame[FrameSignal.sustained_low] < 0.3
+            and throttled_frame[FrameSignal.sustained_low] < 0.2
         ):
             self.shift()
 

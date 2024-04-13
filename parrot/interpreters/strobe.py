@@ -7,4 +7,7 @@ class StrobeHighSustained(InterpreterBase):
 
     def step(self, frame, scheme):
         for i in self.group:
-            i.set_strobe(255 if frame[FrameSignal.sustained_low] > 0.5 else 0)
+            if frame[FrameSignal.sustained_low] > 0.4:
+                i.set_strobe(255)
+            else:
+                i.set_dimmer(0)

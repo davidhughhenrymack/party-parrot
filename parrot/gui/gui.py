@@ -55,8 +55,8 @@ class Window(Tk):
         self.canvas.bind("<ButtonRelease-1>", self.drag_stop)
         self.canvas.bind("<B1-Motion>", self.drag)
 
-        self.bind("<space>", lambda e: self.state.set_phrase(Phrase.drop))
-        self.bind("<Key>", self.on_key_press)
+        # self.bind("<space>", lambda e: self.state.set_phrase(Phrase.drop))
+        # self.bind("<Key>", self.on_key_press)
         self.fixture_renderers = [
             renderer_for_fixture(fixture) for fixture in patch_bay
         ]

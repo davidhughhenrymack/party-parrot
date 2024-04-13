@@ -2740,7 +2740,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Rave\", True, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
+        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
         "detail": "parrot.director.themes",
         "documentation": {}
     },
@@ -2749,7 +2749,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "themes = [\n    Theme(\"Rave\", True, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
+        "peekOfCode": "themes = [\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
         "detail": "parrot.director.themes",
         "documentation": {}
     },
@@ -3523,7 +3523,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class SequenceDimmers(InterpreterBase[T]):\n    hype = 30\n    def __init__(\n        self, group: List[T], args: InterpreterArgs, dimmer=255, wait_time=0.5\n    ):\n        super().__init__(group, args)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):",
+        "peekOfCode": "class SequenceDimmers(InterpreterBase[T]):\n    hype = 30\n    def __init__(self, group: List[T], args: InterpreterArgs, dimmer=255, wait_time=1):\n        super().__init__(group, args)\n        self.dimmer = dimmer\n        self.wait_time = wait_time\n    def step(self, frame, scheme):\n        for i, fixture in enumerate(self.group):\n            fixture.set_dimmer(\n                self.dimmer",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },
@@ -3577,7 +3577,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.laser",
         "description": "parrot.interpreters.laser",
-        "peekOfCode": "LaserLatch = with_args(DimmerFadeLatched, new_has_rainbow=False, new_hype=80)",
+        "peekOfCode": "LaserLatch = with_args(DimmerFadeLatched, new_has_rainbow=False, new_hype=60)",
         "detail": "parrot.interpreters.laser",
         "documentation": {}
     },
@@ -3613,7 +3613,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "DimmerFadeLatched4s = with_args(\n    DimmerFadeLatched, new_hype=5, new_has_rainbow=False, latch_time=4\n)\nclass DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,",
+        "peekOfCode": "DimmerFadeLatched4s = with_args(\n    DimmerFadeLatched, new_hype=10, new_has_rainbow=False, latch_time=4\n)\nclass DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -3829,7 +3829,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.strobe",
         "description": "parrot.interpreters.strobe",
-        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(255 if frame[FrameSignal.sustained_low] > 0.5 else 0)",
+        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[FrameSignal.sustained_low] > 0.4:\n                i.set_strobe(255)\n            else:\n                i.set_dimmer(0)",
         "detail": "parrot.interpreters.strobe",
         "documentation": {}
     },
@@ -4531,7 +4531,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 50\n        self._theme = themes[0]\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):",
         "detail": "parrot.state",
         "documentation": {}
     }
