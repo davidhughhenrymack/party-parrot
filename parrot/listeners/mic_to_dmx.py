@@ -159,8 +159,8 @@ class MicToDmx(object):
     def process_block(self, spectrogram_block, num_idx_added):
         ranges = {
             FrameSignal.freq_all: (0, 129),
-            FrameSignal.freq_high: (60, 129),
-            FrameSignal.freq_low: (0, 60),
+            FrameSignal.freq_high: (30, 129),
+            FrameSignal.freq_low: (0, 30),
         }
 
         values = {}
