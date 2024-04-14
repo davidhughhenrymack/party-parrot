@@ -64,8 +64,11 @@ class SlowDecay(InterpreterBase[FixtureBase]):
             fixture.set_dimmer(self.dimmer_memory * 255)
 
 
-VerySlowDecay = with_args(SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01)
+VerySlowDecay = with_args(
+    "VerySlowDecay", SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01
+)
 SlowSustained = with_args(
+    "SlowSustained",
     SlowDecay,
     new_hype=5,
     new_has_rainbow=False,
@@ -73,7 +76,8 @@ SlowSustained = with_args(
     signal=FrameSignal.sustained_low,
 )
 
-MellowOnly = with_args(
+OnWhenNoSustained = with_args(
+    "OnWhenNoSustained",
     SlowDecay,
     new_hype=0,
     new_has_rainbow=False,

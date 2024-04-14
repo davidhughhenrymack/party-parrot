@@ -104,6 +104,8 @@ class Director:
             time.time() - self.last_shift_time > SHIFT_AFTER
             and frame[FrameSignal.sustained_low] < 0.2
         ):
+            for i in self.interpreters:
+                i.exit(frame, scheme)
             self.shift()
 
     def render(self, dmx):

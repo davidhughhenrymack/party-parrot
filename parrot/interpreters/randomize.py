@@ -40,6 +40,9 @@ def randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[
         def step(self, frame: Frame, scheme: ColorScheme):
             self.interpreter.step(frame, scheme)
 
+        def exit(self, frame: Frame, scheme: ColorScheme):
+            self.interpreter.exit(frame, scheme)
+
         def __str__(self) -> str:
             return str(self.interpreter)
 
@@ -73,6 +76,9 @@ def weighted_randomize(
 
         def step(self, frame: Frame, scheme: ColorScheme):
             self.interpreter.step(frame, scheme)
+
+        def exit(self, frame: Frame, scheme: ColorScheme):
+            self.interpreter.exit(frame, scheme)
 
         def __str__(self) -> str:
             return str(self.interpreter)

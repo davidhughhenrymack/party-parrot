@@ -33,6 +33,9 @@ class InterpreterBase(Generic[T]):
     def step(self, frame: Frame, scheme: ColorScheme):
         pass
 
+    def exit(self, frame: Frame, scheme: ColorScheme):
+        pass
+
     @classmethod
     def acceptable(cls, args: InterpreterArgs) -> bool:
         return acceptable_test(args, cls.hype, cls.has_rainbow)
@@ -41,12 +44,13 @@ class InterpreterBase(Generic[T]):
         return f"{self.__class__.__name__}"
 
 
-def with_args(interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
+def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
 
     class WithArgs(InterpreterBase):
         def __init__(self, group, args):
             super().__init__(group, args)
             self.interpreter = interpreter(group, args, **kwargs)
+            self.name = name
 
         @classmethod
         def acceptable(cls, args):
@@ -57,8 +61,11 @@ def with_args(interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
         def step(self, frame, scheme):
             self.interpreter.step(frame, scheme)
 
+        def exit(self, frame, scheme):
+            self.interpreter.exit(frame, scheme)
+
         def __str__(self):
-            return str(self.interpreter)
+            return str(self.interpreter) if self.name is None else self.name
 
     return WithArgs
 

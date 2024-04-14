@@ -594,6 +594,14 @@
         "documentation": {}
     },
     {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -790,6 +798,14 @@
     },
     {
         "label": "FrameSignal",
+        "importPath": "parrot.director.frame",
+        "description": "parrot.director.frame",
+        "isExtraImport": true,
+        "detail": "parrot.director.frame",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
         "importPath": "parrot.director.frame",
         "description": "parrot.director.frame",
         "isExtraImport": true,
@@ -1630,7 +1646,7 @@
         "documentation": {}
     },
     {
-        "label": "MellowOnly",
+        "label": "OnWhenNoSustained",
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
         "isExtraImport": true,
@@ -2791,38 +2807,11 @@
         "documentation": {}
     },
     {
-        "label": "TROUGH_TO_PEAK_MAX_SECONDS",
-        "kind": 5,
-        "importPath": "parrot.director.phrase_machine",
-        "description": "parrot.director.phrase_machine",
-        "peekOfCode": "TROUGH_TO_PEAK_MAX_SECONDS = 1.5\nTROUGH_LEVEL = 0.1\nPEAK_LEVEL = 0.25\nTHROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None",
-        "detail": "parrot.director.phrase_machine",
-        "documentation": {}
-    },
-    {
-        "label": "TROUGH_LEVEL",
-        "kind": 5,
-        "importPath": "parrot.director.phrase_machine",
-        "description": "parrot.director.phrase_machine",
-        "peekOfCode": "TROUGH_LEVEL = 0.1\nPEAK_LEVEL = 0.25\nTHROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None\n        self.signals = {FrameSignal.hype: 0}",
-        "detail": "parrot.director.phrase_machine",
-        "documentation": {}
-    },
-    {
-        "label": "PEAK_LEVEL",
-        "kind": 5,
-        "importPath": "parrot.director.phrase_machine",
-        "description": "parrot.director.phrase_machine",
-        "peekOfCode": "PEAK_LEVEL = 0.25\nTHROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n        self.last_hype = 0",
-        "detail": "parrot.director.phrase_machine",
-        "documentation": {}
-    },
-    {
         "label": "THROTTLE_SECONDS",
         "kind": 5,
         "importPath": "parrot.director.phrase_machine",
         "description": "parrot.director.phrase_machine",
-        "peekOfCode": "THROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n        self.last_hype = 0\n    def deploy_hype(self, frame: Frame):",
+        "peekOfCode": "THROTTLE_SECONDS = 8\nHYPE_DECAY = 0.01\nHYPE_TRIGGER_DELTA = 0.3\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n        self.last_hype = 0",
         "detail": "parrot.director.phrase_machine",
         "documentation": {}
     },
@@ -2831,7 +2820,16 @@
         "kind": 5,
         "importPath": "parrot.director.phrase_machine",
         "description": "parrot.director.phrase_machine",
-        "peekOfCode": "HYPE_DECAY = 0.01\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n        self.last_hype = 0\n    def deploy_hype(self, frame: Frame):\n        self.signals[FrameSignal.hype] = 1",
+        "peekOfCode": "HYPE_DECAY = 0.01\nHYPE_TRIGGER_DELTA = 0.3\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n        self.last_hype = 0\n    def deploy_hype(self, frame: Frame):",
+        "detail": "parrot.director.phrase_machine",
+        "documentation": {}
+    },
+    {
+        "label": "HYPE_TRIGGER_DELTA",
+        "kind": 5,
+        "importPath": "parrot.director.phrase_machine",
+        "description": "parrot.director.phrase_machine",
+        "peekOfCode": "HYPE_TRIGGER_DELTA = 0.3\nclass PhraseMachine:\n    def __init__(self, state: State):\n        self.state = state\n        self.sustained_high_trough_time = None\n        self.sustained_high_peak_time = None\n        self.signals = {FrameSignal.hype: 0}\n        self.last_hype = 0\n    def deploy_hype(self, frame: Frame):\n        self.signals[FrameSignal.hype] = 1",
         "detail": "parrot.director.phrase_machine",
         "documentation": {}
     },
@@ -3119,7 +3117,7 @@
         "kind": 2,
         "importPath": "parrot.gui.fixtures.base",
         "description": "parrot.gui.fixtures.base",
-        "peekOfCode": "def render_strobe_dim_color(fixture, frame):\n    color = fixture.get_color()\n    dim = fixture.get_dimmer()\n    strobe = fixture.get_strobe()\n    if strobe > 10:\n        dim *= math.sin(frame.time * 30 * strobe / 255 * 4)\n    return dim_color(color, dim / 255)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture",
+        "peekOfCode": "def render_strobe_dim_color(fixture, frame):\n    color = fixture.get_color()\n    dim = fixture.get_dimmer()\n    strobe = fixture.get_strobe()\n    if strobe > 10:\n        dim = 255 * (1 + math.sin(frame.time * 30 * strobe / 255 * 4) / 2)\n    return dim_color(color, dim / 255)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):\n        self.fixture = fixture",
         "detail": "parrot.gui.fixtures.base",
         "documentation": {}
     },
@@ -3128,7 +3126,7 @@
         "kind": 5,
         "importPath": "parrot.gui.fixtures.base",
         "description": "parrot.gui.fixtures.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef render_strobe_dim_color(fixture, frame):\n    color = fixture.get_color()\n    dim = fixture.get_dimmer()\n    strobe = fixture.get_strobe()\n    if strobe > 10:\n        dim *= math.sin(frame.time * 30 * strobe / 255 * 4)\n    return dim_color(color, dim / 255)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef render_strobe_dim_color(fixture, frame):\n    color = fixture.get_color()\n    dim = fixture.get_dimmer()\n    strobe = fixture.get_strobe()\n    if strobe > 10:\n        dim = 255 * (1 + math.sin(frame.time * 30 * strobe / 255 * 4) / 2)\n    return dim_color(color, dim / 255)\nclass FixtureGuiRenderer(Generic[T]):\n    def __init__(self, fixture: T):",
         "detail": "parrot.gui.fixtures.base",
         "documentation": {}
     },
@@ -3425,7 +3423,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        self.group = group\n        self.interpreter_args = args\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    @classmethod\n    def acceptable(cls, args: InterpreterArgs) -> bool:",
+        "peekOfCode": "class InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        self.group = group\n        self.interpreter_args = args\n    def step(self, frame: Frame, scheme: ColorScheme):\n        pass\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        pass",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3515,7 +3513,7 @@
         "kind": 2,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "def with_args(interpreter, new_hype=None, new_has_rainbow=None, **kwargs):\n    class WithArgs(InterpreterBase):\n        def __init__(self, group, args):\n            super().__init__(group, args)\n            self.interpreter = interpreter(group, args, **kwargs)\n        @classmethod\n        def acceptable(cls, args):\n            if new_hype is not None and new_has_rainbow is not None:\n                return acceptable_test(args, new_hype, new_has_rainbow)\n            return interpreter.acceptable(args)",
+        "peekOfCode": "def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):\n    class WithArgs(InterpreterBase):\n        def __init__(self, group, args):\n            super().__init__(group, args)\n            self.interpreter = interpreter(group, args, **kwargs)\n            self.name = name\n        @classmethod\n        def acceptable(cls, args):\n            if new_hype is not None and new_has_rainbow is not None:\n                return acceptable_test(args, new_hype, new_has_rainbow)",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3713,7 +3711,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.laser",
         "description": "parrot.interpreters.laser",
-        "peekOfCode": "LaserLatch = with_args(DimmerFadeLatched, new_has_rainbow=False, new_hype=60)",
+        "peekOfCode": "LaserLatch = with_args(\n    \"LaserLatch\", DimmerFadeLatched, new_has_rainbow=False, new_hype=60\n)",
         "detail": "parrot.interpreters.laser",
         "documentation": {}
     },
@@ -3749,7 +3747,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.latched",
         "description": "parrot.interpreters.latched",
-        "peekOfCode": "DimmerFadeLatched4s = with_args(\n    DimmerFadeLatched, new_hype=10, new_has_rainbow=False, latch_time=4\n)\nclass DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,",
+        "peekOfCode": "DimmerFadeLatched4s = with_args(\n    \"DimmerFadeLatched4s\",\n    DimmerFadeLatched,\n    new_hype=10,\n    new_has_rainbow=False,\n    latch_time=4,\n)\nclass DimmerFadeLatchedRandom(InterpreterBase):\n    hype = 50\n    def __init__(",
         "detail": "parrot.interpreters.latched",
         "documentation": {}
     },
@@ -3938,7 +3936,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "VerySlowDecay = with_args(SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01)\nSlowSustained = with_args(\n    SlowDecay,\n    new_hype=5,\n    new_has_rainbow=False,\n    decay_rate=0.5,\n    signal=FrameSignal.sustained_low,\n)\nMellowOnly = with_args(\n    SlowDecay,",
+        "peekOfCode": "VerySlowDecay = with_args(\n    \"VerySlowDecay\", SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01\n)\nSlowSustained = with_args(\n    \"SlowSustained\",\n    SlowDecay,\n    new_hype=5,\n    new_has_rainbow=False,\n    decay_rate=0.5,\n    signal=FrameSignal.sustained_low,",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
@@ -3947,16 +3945,16 @@
         "kind": 5,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "SlowSustained = with_args(\n    SlowDecay,\n    new_hype=5,\n    new_has_rainbow=False,\n    decay_rate=0.5,\n    signal=FrameSignal.sustained_low,\n)\nMellowOnly = with_args(\n    SlowDecay,\n    new_hype=0,",
+        "peekOfCode": "SlowSustained = with_args(\n    \"SlowSustained\",\n    SlowDecay,\n    new_hype=5,\n    new_has_rainbow=False,\n    decay_rate=0.5,\n    signal=FrameSignal.sustained_low,\n)\nOnWhenNoSustained = with_args(\n    \"OnWhenNoSustained\",",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
     {
-        "label": "MellowOnly",
+        "label": "OnWhenNoSustained",
         "kind": 5,
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
-        "peekOfCode": "MellowOnly = with_args(\n    SlowDecay,\n    new_hype=0,\n    new_has_rainbow=False,\n    decay_rate=0.01,\n    signal=FrameSignal.sustained_low,\n    signal_fn=lambda x: 1 - x,\n)",
+        "peekOfCode": "OnWhenNoSustained = with_args(\n    \"OnWhenNoSustained\",\n    SlowDecay,\n    new_hype=0,\n    new_has_rainbow=False,\n    decay_rate=0.01,\n    signal=FrameSignal.sustained_low,\n    signal_fn=lambda x: 1 - x,\n)",
         "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
@@ -3965,7 +3963,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.strobe",
         "description": "parrot.interpreters.strobe",
-        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            if frame[FrameSignal.sustained_low] > 0.3:\n                i.set_strobe(255)\n            else:\n                i.set_strobe(0)",
+        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(255)\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        for i in self.group:\n            i.set_strobe(0)",
         "detail": "parrot.interpreters.strobe",
         "documentation": {}
     },

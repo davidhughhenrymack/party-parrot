@@ -3,13 +3,9 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.state import State
 
 
-TROUGH_TO_PEAK_MAX_SECONDS = 1.5
-TROUGH_LEVEL = 0.1
-PEAK_LEVEL = 0.25
-
 THROTTLE_SECONDS = 8
-
 HYPE_DECAY = 0.01
+HYPE_TRIGGER_DELTA = 0.3
 
 
 class PhraseMachine:
@@ -33,7 +29,10 @@ class PhraseMachine:
         min = np.min(frame.timeseries[FrameSignal.sustained_high.name][-200:])
         delta = frame[FrameSignal.sustained_high] - min
 
-        if delta > 0.23 and frame.time - self.last_hype > THROTTLE_SECONDS:
+        if (
+            delta > HYPE_TRIGGER_DELTA
+            and frame.time - self.last_hype > THROTTLE_SECONDS
+        ):
             self.deploy_hype(frame)
 
         # if frame[FrameSignal.sustained_high] < TROUGH_LEVEL and (

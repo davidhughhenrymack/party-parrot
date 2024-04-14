@@ -28,7 +28,7 @@ from parrot.interpreters.rotosphere import (
     RotosphereSpinColor,
 )
 from parrot.interpreters.slow import (
-    MellowOnly,
+    OnWhenNoSustained,
     SlowDecay,
     SlowRespond,
     SlowSustained,
@@ -129,14 +129,17 @@ phrase_interpretations: Dict[
                         SequenceDimmers,
                         SequenceFadeDimmers,
                         StrobeHighSustained,
-                        MellowOnly,
-                        with_args(DimmerFadeLatchedRandom, latch_at=0.3),
+                        OnWhenNoSustained,
+                        with_args(
+                            "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
+                        ),
                     )
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
                 randomize(MoveCircles, MoveNod),
                 weighted_randomize(
-                    (10, with_args(MoverGobo, gobo="starburst")), (90, MoverNoGobo)
+                    (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
+                    (90, MoverNoGobo),
                 ),
             )
         ],
@@ -152,7 +155,13 @@ phrase_interpretations: Dict[
                         combo(StrobeHighSustained, AllBulbs255),
                         combo(
                             Dimmer255,
-                            for_bulbs(with_args(GentlePulse, trigger_level=0.1)),
+                            for_bulbs(
+                                with_args(
+                                    "GentlePulseTrigger0.1",
+                                    GentlePulse,
+                                    trigger_level=0.1,
+                                )
+                            ),
                         ),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                         # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
@@ -174,7 +183,7 @@ phrase_interpretations: Dict[
                         for_bulbs(GentlePulse),
                         DimmerFadeLatched4s,
                         SlowSustained,
-                        MellowOnly,
+                        OnWhenNoSustained,
                         StrobeHighSustained,
                     )
                 ),
@@ -182,7 +191,7 @@ phrase_interpretations: Dict[
             combo(
                 for_bulbs(ColorRainbow),
                 RotosphereSpin,
-                with_args(SlowDecay, decay_rate=0.01),
+                VerySlowDecay,
             ),
         ],
     },

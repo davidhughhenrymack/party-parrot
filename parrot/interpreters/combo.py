@@ -45,6 +45,10 @@ def combo(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:
             for i in self.interpreters:
                 i.step(frame, scheme)
 
+        def exit(self, frame: Frame, scheme: ColorScheme):
+            for i in self.interpreters:
+                i.exit(frame, scheme)
+
         def __str__(self) -> str:
             return f"{' + '.join([str(i) for i in self.interpreters])}"
 

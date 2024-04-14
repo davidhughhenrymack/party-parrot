@@ -14,7 +14,7 @@ def render_strobe_dim_color(fixture, frame):
     strobe = fixture.get_strobe()
 
     if strobe > 10:
-        dim *= math.sin(frame.time * 30 * strobe / 255 * 4)
+        dim = 255 * (1 + math.sin(frame.time * 30 * strobe / 255 * 4) / 2)
 
     return dim_color(color, dim / 255)
 
