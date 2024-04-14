@@ -97,6 +97,7 @@ class ColorBg(InterpreterBase):
 
 class ColorRainbow(InterpreterBase):
     has_rainbow = True
+    hype = 40
 
     def __init__(self, group, args, color_speed=0.08, color_phase_spread=0.2):
         super().__init__(group, args)

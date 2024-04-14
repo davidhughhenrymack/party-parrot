@@ -1662,14 +1662,6 @@
         "documentation": {}
     },
     {
-        "label": "SlowRespond",
-        "importPath": "parrot.interpreters.slow",
-        "description": "parrot.interpreters.slow",
-        "isExtraImport": true,
-        "detail": "parrot.interpreters.slow",
-        "documentation": {}
-    },
-    {
         "label": "SlowSustained",
         "importPath": "parrot.interpreters.slow",
         "description": "parrot.interpreters.slow",
@@ -2793,7 +2785,7 @@
         "kind": 5,
         "importPath": "parrot.director.phrase_interpretations",
         "description": "parrot.director.phrase_interpretations",
-        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [\n            combo(SlowDecay, ColorAlternateBg),\n            combo(SlowRespond, ColorAlternateBg),\n        ],\n        ChauvetRotosphere_28Ch: [RotosphereOn],\n    },\n    Phrase.build: {\n        # LEDs off",
+        "peekOfCode": "] = {\n    Phrase.intro_outro: {\n        LedPar: [\n            combo(SlowDecay, ColorAlternateBg),\n        ],\n        ChauvetRotosphere_28Ch: [RotosphereOn],\n    },\n    Phrase.build: {\n        # LEDs off\n        # Moving heads flashing beat, (drawing circles / fixed position)",
         "detail": "parrot.director.phrase_interpretations",
         "documentation": {}
     },
@@ -3459,7 +3451,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg)\nclass ColorRainbow(InterpreterBase):\n    has_rainbow = True\n    def __init__(self, group, args, color_speed=0.08, color_phase_spread=0.2):\n        super().__init__(group, args)\n        self.color_speed = color_speed\n        self.color_phase_spread = color_phase_spread",
+        "peekOfCode": "class ColorBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg)\nclass ColorRainbow(InterpreterBase):\n    has_rainbow = True\n    hype = 40\n    def __init__(self, group, args, color_speed=0.08, color_phase_spread=0.2):\n        super().__init__(group, args)\n        self.color_speed = color_speed",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3468,7 +3460,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorRainbow(InterpreterBase):\n    has_rainbow = True\n    def __init__(self, group, args, color_speed=0.08, color_phase_spread=0.2):\n        super().__init__(group, args)\n        self.color_speed = color_speed\n        self.color_phase_spread = color_phase_spread\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            color = Color(\"red\")\n            phase = (",
+        "peekOfCode": "class ColorRainbow(InterpreterBase):\n    has_rainbow = True\n    hype = 40\n    def __init__(self, group, args, color_speed=0.08, color_phase_spread=0.2):\n        super().__init__(group, args)\n        self.color_speed = color_speed\n        self.color_phase_spread = color_phase_spread\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            color = Color(\"red\")",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3911,15 +3903,6 @@
         "description": "parrot.interpreters.rotosphere",
         "peekOfCode": "RotosphereOn = combo(RotosphereSpinColor, Dimmer255)",
         "detail": "parrot.interpreters.rotosphere",
-        "documentation": {}
-    },
-    {
-        "label": "SlowRespond",
-        "kind": 6,
-        "importPath": "parrot.interpreters.slow",
-        "description": "parrot.interpreters.slow",
-        "peekOfCode": "class SlowRespond(InterpreterBase[FixtureBase]):\n    hype = 25\n    def __init__(self, group, args: InterpreterArgs, signal=FrameSignal.sustained_low):\n        super().__init__(group, args)\n        self.dimmer_memory = 0\n        self.signal = signal\n    def step(self, frame: Frame, scheme: ColorScheme):\n        self.dimmer_memory = lerp(self.dimmer_memory, frame[FrameSignal.freq_all], 0.24)\n        for idx, fixture in enumerate(self.group):\n            if frame[self.signal] > 0.65:",
-        "detail": "parrot.interpreters.slow",
         "documentation": {}
     },
     {

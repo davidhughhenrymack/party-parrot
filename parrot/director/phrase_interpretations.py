@@ -30,7 +30,6 @@ from parrot.interpreters.rotosphere import (
 from parrot.interpreters.slow import (
     OnWhenNoSustained,
     SlowDecay,
-    SlowRespond,
     SlowSustained,
     VerySlowDecay,
 )
@@ -71,7 +70,6 @@ phrase_interpretations: Dict[
     Phrase.intro_outro: {
         LedPar: [
             combo(SlowDecay, ColorAlternateBg),
-            combo(SlowRespond, ColorAlternateBg),
         ],
         ChauvetRotosphere_28Ch: [RotosphereOn],
     },
@@ -99,7 +97,7 @@ phrase_interpretations: Dict[
         # Motion strip slowly moving and pulsing along bulbs
         LedPar: [combo(GentlePulse, ColorAlternateBg)],
         MovingHead: [MoverDimAndCircle],
-        Motionstrip: [combo(SlowRespond, ColorFg, MoveCircles)],
+        Motionstrip: [combo(ColorFg, MoveCircles)],
     },
     Phrase.general: {
         LedPar: [
@@ -107,7 +105,6 @@ phrase_interpretations: Dict[
                 hype_switch(
                     randomize(
                         GentlePulse,
-                        SlowRespond,
                         DimmersBeatChase,
                         VerySlowDecay,
                         StrobeHighSustained,
@@ -115,7 +112,9 @@ phrase_interpretations: Dict[
                         StrobeHighSustained,
                     )
                 ),
-                randomize(ColorAlternateBg, ColorBg, ColorRainbow, ColorFg),
+                hype_switch(
+                    randomize(ColorAlternateBg, ColorBg, ColorRainbow, ColorFg)
+                ),
             ),
         ],
         MovingHead: [
@@ -149,7 +148,6 @@ phrase_interpretations: Dict[
                 hype_switch(
                     randomize(
                         combo(Dimmer255, for_bulbs(Twinkle)),
-                        combo(SlowRespond, AllBulbs255),
                         combo(DimmersBeatChase, AllBulbs255),
                         combo(SlowDecay, AllBulbs255),
                         combo(StrobeHighSustained, AllBulbs255),
