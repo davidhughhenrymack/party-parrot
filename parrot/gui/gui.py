@@ -18,6 +18,8 @@ BG = "#222"
 
 CANVAS_WIDTH = 500
 
+SHOW_PLOT = os.environ.get("HIDE_PLOT", "false") != "true"
+
 
 class Window(Tk):
     def __init__(self, state: State, quit: callable):
@@ -101,8 +103,9 @@ class Window(Tk):
         )
         self.scale.pack()
 
-        self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
-        self.graph.pack()
+        if SHOW_PLOT:
+            self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
+            self.graph.pack()
 
     # def on_phrase_change(self, phrase: Phrase):
     #     for phrase, button in self.phrase_buttons.items():
@@ -155,6 +158,10 @@ class Window(Tk):
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas, frame)
 
+        if SHOW_PLOT:
+            self.step_plot(frame)
+
+    def step_plot(self, frame):
         self.graph.delete("all")
         g_height = self.graph.winfo_height()
 

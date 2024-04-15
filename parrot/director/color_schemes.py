@@ -57,20 +57,19 @@ def generate_random_scheme(
 
     method = random.choice(methods)
 
-    match method:
-        case ColorRelationship.contrasting:
-            bg.set_hue((key.hue + 0.5) % 1)
-            fg = Color("white")
-        case ColorRelationship.thick:
-            bg_contrast.set_hue((key.hue + 0.5) % 1)
-        case ColorRelationship.analogous:
-            bg.set_hue((key.hue + 0.15) % 1)
-            bg_contrast.set_hue((key.hue + 0.3) % 1)
-        case ColorRelationship.mono:
-            fg = Color("white")
-        case ColorRelationship.bright:
-            bg = Color("white")
-            bg_contrast = Color("white")
+    if method == ColorRelationship.contrasting:
+        bg.set_hue((key.hue + 0.5) % 1)
+        fg = Color("white")
+    elif method == ColorRelationship.thick:
+        bg_contrast.set_hue((key.hue + 0.5) % 1)
+    elif method == ColorRelationship.analogous:
+        bg.set_hue((key.hue + 0.15) % 1)
+        bg_contrast.set_hue((key.hue + 0.3) % 1)
+    elif method == ColorRelationship.mono:
+        fg = Color("white")
+    elif method == ColorRelationship.bright:
+        bg = Color("white")
+        bg_contrast = Color("white")
 
     return ColorScheme(fg, bg, bg_contrast)
 
