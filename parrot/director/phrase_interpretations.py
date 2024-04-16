@@ -12,9 +12,7 @@ from parrot.interpreters.base import (
     with_args,
 )
 from parrot.director.phrase import Phrase
-from parrot.interpreters.motionstrip import (
-    MotionstripSlowRespond,
-)
+from parrot.interpreters.motionstrip import MotionstripSlowRespond, PanLatched
 from parrot.interpreters.movers import (
     MoverBeatAndCircle,
     MoverBeatInFan,
@@ -166,12 +164,11 @@ phrase_interpretations: Dict[
                     )
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                MoveCircles,
+                randomize(PanLatched),
             ),
         ],
         Laser: [LaserLatch, StrobeHighSustained],
         ChauvetRotosphere_28Ch: [
-            Dimmer0,
             combo(
                 RotosphereSpinColor,
                 hype_switch(

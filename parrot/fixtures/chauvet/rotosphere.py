@@ -1,7 +1,19 @@
 from parrot.fixtures.base import FixtureBase, FixtureWithBulbs
-from parrot.utils.color_extra import dim_color, lerp_color
+from parrot.utils.color_extra import dim_color, lerp_color, color_distance
 from parrot.utils.colour import Color
 from parrot.utils.math import clamp
+from parrot.utils.dmx_utils import dmx_clamp
+
+color_components = [
+    Color("red"),
+    Color("green"),
+    Color("blue"),
+    Color("white"),
+    Color("cyan"),
+    Color("magenta"),
+    Color("yellow"),
+    Color("orange"),
+]
 
 
 class RotosphereBulb(FixtureBase):
@@ -9,28 +21,24 @@ class RotosphereBulb(FixtureBase):
         super().__init__(address, "chauvet rotosphere bulb", 8)
 
     def render_values(self, values):
-        c = dim_color(self.get_color(), self.get_dimmer() / 255)
-        rgb = c.get_rgb()
-        white = c.get_luminance()
 
-        channels = ["cyan", "magenta", "yellow", "orange"]
-        components = {}
+        distances = [
+            (idx, color, color_distance(self.get_color(), color))
+            for idx, color in enumerate(color_components)
+        ]
+        distances = sorted(
+            [i for i in distances if i[2] < 0.3], key=lambda i: i[2], reverse=True
+        )
 
-        for channel in channels:
-            components[channel] = (
-                clamp(180 - abs(Color(channel).get_hue() - c.get_hue()) / 180, 0, 1)
-                * c.get_saturation()
-                * c.get_luminance()
-            )
+        distances = distances[-2:]
 
-        values[self.address] = rgb[0]
-        values[self.address + 1] = rgb[1]
-        values[self.address + 2] = rgb[2]
-        values[self.address + 3] = white
-        values[self.address + 4] = components["cyan"]
-        values[self.address + 5] = components["magenta"]
-        values[self.address + 6] = components["yellow"]
-        values[self.address + 7] = components["orange"]
+        for i in range(len(color_components)):
+            values[self.address + i] = 0
+
+        for idx, color, dist in distances:
+            dn = (3 - dist) / 3
+            dim = self.get_dimmer() / 255
+            values[self.address + idx] = int(dn * dim * 255)
 
 
 class ChauvetRotosphere_28Ch(FixtureWithBulbs):
@@ -47,7 +55,14 @@ class ChauvetRotosphere_28Ch(FixtureWithBulbs):
         self.values[24] = value
 
     def set_speed(self, value):
-        self.values[27] = value
+        if value == 0:
+            self.values[27] = 0
+
+        else:
+            speed_low = 194
+            speed_fast = 255
+            value = speed_low + (dmx_clamp(value) / 255 * (speed_fast - speed_low))
+            self.values[27] = int(value)
 
     def get_speed(self):
         return self.values[27]

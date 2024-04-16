@@ -113,7 +113,7 @@ class RotosphereRenderer(FixtureGuiRenderer[ChauvetRotosphere_28Ch]):
             )
 
     def render(self, canvas: Canvas, frame: Frame):
-        self.angle += self.fixture.get_speed() / 255 * 360 / 60
+        self.angle += self.fixture.get_speed() / 255 * 180 / 60
 
         for (
             i,

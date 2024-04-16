@@ -1,6 +1,7 @@
 from collections import namedtuple
 from enum import Enum
 import math
+import random
 from typing import Generic, List, TypeVar
 from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
@@ -116,10 +117,14 @@ class ColorRainbow(InterpreterBase):
 
 
 class MoveCircles(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=math.pi):
+    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=None):
         super().__init__(group, args)
         self.multiplier = multiplier
-        self.phase = phase
+
+        if phase is None:
+            self.phase = random.choice([0, math.pi])
+        else:
+            self.phase = phase
 
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
@@ -139,7 +144,7 @@ class MoveNod(InterpreterBase):
 
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
-            fixture.set_pan(0)
+            fixture.set_pan(128)
             fixture.set_tilt(
                 math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128
             )

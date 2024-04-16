@@ -4,11 +4,47 @@ from typing import List
 from parrot.director.frame import FrameSignal
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, MoveCircles
 from parrot.fixtures.motionstrip import Motionstrip38
+from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.combo import combo
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import clamp
 from parrot.utils.lerp import lerp
 from parrot.utils.color_extra import dim_color
+
+
+class PanLatched(InterpreterBase[FixtureBase]):
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+        signal=FrameSignal.sustained_low,
+        latch_level=0.3,
+        latch_duration=math.pi * 2,
+    ):
+        super().__init__(group, args)
+        self.signal = signal
+        self.latch_level = latch_level
+        self.latch_duration = latch_duration
+
+        self.on = False
+        self.on_time = 0
+
+    def step(self, frame, scheme):
+        if frame[self.signal] > self.latch_level and self.on == False:
+            self.on = True
+            self.on_time = frame.time
+
+        if self.on:
+            pan = -math.cos(frame.time - self.on_time) * 127 + 128
+
+            if frame.time - self.on_time > self.latch_duration:
+                self.on = False
+                pan = 0
+        else:
+            pan = 0
+
+        for fixture in self.group:
+            fixture.set_pan(pan)
 
 
 class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
