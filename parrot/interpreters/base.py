@@ -17,8 +17,8 @@ def acceptable_test(args: InterpreterArgs, hype, has_rainbow):
     if has_rainbow and not args.allow_rainbows:
         return False
 
-    if hype > args.hype:
-        return False
+    # if hype > args.hype:
+    #     return False
 
     return True
 
@@ -38,11 +38,15 @@ class InterpreterBase(Generic[T]):
         pass
 
     @classmethod
+    def get_hype(cls):
+        return cls.hype
+
+    @classmethod
     def acceptable(cls, args: InterpreterArgs) -> bool:
         return acceptable_test(args, cls.hype, cls.has_rainbow)
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}"
+        return f"{self.__class__.__name__}%{self.__class__.hype}"
 
 
 def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):

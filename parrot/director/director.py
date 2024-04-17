@@ -79,6 +79,8 @@ class Director:
         for i in self.interpreters:
             print(f"    {str(i)} {[str(j) for j in i.group]}")
 
+        print("hypes", [i.__class__.get_hype() for i in self.interpreters])
+
         print()
 
     def generate_color_scheme(self):
@@ -100,17 +102,18 @@ class Director:
 
         hype_counts = {key: 0 for key in HYPE_BUCKETS}
 
-        for i in self.interpreters:
-            hype = i.__class__.hype
-            bucket = sorted(
-                [(bucket, abs(hype - bucket)) for bucket in HYPE_BUCKETS],
-                key=lambda i: i[1],
-            )[0][0]
-            hype_counts[bucket] += 1
+        for idx, i in enumerate(self.interpreters):
+            if idx != eviction_index:
+                hype = i.__class__.hype
+                bucket = sorted(
+                    [(bucket, abs(hype - bucket)) for bucket in HYPE_BUCKETS],
+                    key=lambda i: i[1],
+                )[0][0]
+                hype_counts[bucket] += 1
 
-        smallest_bucket = sorted(hype_counts.items(), key=lambda i: i[1], reverse=True)[
-            0
-        ][0]
+        print("hype_counts", hype_counts)
+
+        smallest_bucket = sorted(hype_counts.items(), key=lambda i: i[1])[0][0]
 
         self.interpreters[eviction_index] = get_interpreter(
             self.state.phrase,
@@ -124,6 +127,8 @@ class Director:
         print(
             f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]}"
         )
+
+        print("hypes", [i.__class__.hype for i in self.interpreters])
 
     def shift(self):
         self.shift_color_scheme()

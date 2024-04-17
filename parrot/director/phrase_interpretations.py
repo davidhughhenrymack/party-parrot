@@ -125,7 +125,7 @@ phrase_interpretations: Dict[
                         DimmerFadeLatched,
                         SequenceDimmers,
                         SequenceFadeDimmers,
-                        StrobeHighSustained,
+                        # StrobeHighSustained,
                         OnWhenNoSustained,
                         with_args(
                             "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
@@ -143,25 +143,23 @@ phrase_interpretations: Dict[
         Motionstrip: [
             # MotionstripSlowRespond,
             combo(
-                hype_switch(
-                    randomize(
-                        combo(Dimmer255, for_bulbs(Twinkle)),
-                        combo(DimmersBeatChase, AllBulbs255),
-                        combo(SlowDecay, AllBulbs255),
-                        combo(StrobeHighSustained, AllBulbs255),
-                        combo(
-                            Dimmer255,
-                            for_bulbs(
-                                with_args(
-                                    "GentlePulseTrigger0.1",
-                                    GentlePulse,
-                                    trigger_level=0.1,
-                                )
-                            ),
+                randomize(
+                    combo(Dimmer255, for_bulbs(Twinkle)),
+                    combo(DimmersBeatChase, AllBulbs255),
+                    combo(SlowDecay, AllBulbs255),
+                    # combo(StrobeHighSustained, AllBulbs255),
+                    combo(
+                        Dimmer255,
+                        for_bulbs(
+                            with_args(
+                                "GentlePulseTrigger0.1",
+                                GentlePulse,
+                                trigger_level=0.1,
+                            )
                         ),
-                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
-                        # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
-                    )
+                    ),
+                    combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                    # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
                 randomize(PanLatched),
@@ -171,16 +169,14 @@ phrase_interpretations: Dict[
         ChauvetRotosphere_28Ch: [
             combo(
                 RotosphereSpinColor,
-                hype_switch(
-                    randomize(
-                        DimmerFadeIn,
-                        for_bulbs(Twinkle),
-                        for_bulbs(GentlePulse),
-                        DimmerFadeLatched4s,
-                        SlowSustained,
-                        OnWhenNoSustained,
-                        StrobeHighSustained,
-                    )
+                randomize(
+                    DimmerFadeIn,
+                    for_bulbs(Twinkle),
+                    for_bulbs(GentlePulse),
+                    DimmerFadeLatched4s,
+                    SlowSustained,
+                    OnWhenNoSustained,
+                    # StrobeHighSustained,
                 ),
             ),
             combo(

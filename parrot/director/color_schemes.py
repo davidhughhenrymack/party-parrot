@@ -84,7 +84,7 @@ scheme_random = [generate_random_scheme(random_color()) for _ in range(10)]
 
 scheme_berlin = [
     generate_random_scheme(
-        random.choice([Color("red"), Color("blue")]),
+        random.choice([Color("red"), Color("purple")]),
         [ColorRelationship.mono, ColorRelationship.bright],
     )
     for _ in range(10)
