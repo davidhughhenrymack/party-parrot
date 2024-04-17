@@ -27,7 +27,7 @@ class RotosphereBulb(FixtureBase):
             for idx, color in enumerate(color_components)
         ]
         distances = sorted(
-            [i for i in distances if i[2] < 0.3], key=lambda i: i[2], reverse=True
+            [i for i in distances if i[2] < 1], key=lambda i: i[2], reverse=True
         )
 
         distances = distances[-2:]

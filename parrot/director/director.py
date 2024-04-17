@@ -11,6 +11,7 @@ from parrot.fixtures.led_par import LedPar
 from parrot.fixtures.motionstrip import Motionstrip
 
 from parrot.director.color_schemes import color_schemes
+from parrot.director.color_scheme import ColorScheme
 
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.director.phrase import Phrase
@@ -25,6 +26,8 @@ from parrot.state import State
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "40")), 1)
 
+HYPE_BUCKETS = [25, 50, 80]
+
 
 def filter_nones(l):
     return [i for i in l if i is not None]
@@ -38,31 +41,38 @@ class Director:
         self.start_time = time.time()
         self.state = state
 
+        self.state.set_phrase(Phrase.general)
+
+        self.group_fixtures()
+        self.generate_color_scheme()
+        self.generate_interpreters()
         self.phrase_machine = PhraseMachine(state)
 
         self.warmup_complete = False
 
-        self.state.events.on_phrase_change += lambda s: self.generate_interpreters()
-        self.state.events.on_hype_change += lambda s: self.generate_interpreters()
-        self.state.events.on_theme_change += lambda s: self.shift()
-        self.state.set_phrase(Phrase.general)
+        # self.state.events.on_phrase_change += lambda s: self.generate_interpreters()
+        # self.state.events.on_hype_change += lambda s: self.generate_interpreters()
+        self.state.events.on_theme_change += lambda s: self.generate_color_scheme()
 
-    def generate_interpreters(self):
-
+    def group_fixtures(self):
         to_group = [LedPar, MovingHead, Motionstrip, Laser, ChauvetRotosphere_28Ch]
-        fixture_groups = []
+        self.fixture_groups = []
 
         for cls in to_group:
             fixtures = [i for i in patch_bay if isinstance(i, cls)]
-            fixture_groups.append(fixtures)
+            self.fixture_groups.append(fixtures)
 
+    def generate_interpreters(self):
         self.interpreters: List[InterpreterBase] = [
             get_interpreter(
                 self.state.phrase,
-                i,
-                InterpreterArgs(self.state.hype, self.state.theme.allow_rainbows),
+                group,
+                InterpreterArgs(
+                    HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
+                    self.state.theme.allow_rainbows,
+                ),
             )
-            for i in fixture_groups
+            for idx, group in enumerate(self.fixture_groups)
         ]
 
         print(f"Generated interpretation for {self.state.phrase}:")
@@ -76,9 +86,48 @@ class Director:
         self.scheme.push(s)
         print(f"Shifting to {s}")
 
+    def shift_color_scheme(self):
+        s = random.choice(self.state.theme.color_scheme)
+        st = s.to_list()
+        ct = self.scheme.render().to_list()
+        idx = random.randint(0, 2)
+        ct[idx] = st[idx]
+        self.scheme.push(ColorScheme.from_list(ct))
+
+    def shift_interpreter(self):
+        eviction_index = random.randint(0, len(self.interpreters) - 1)
+        eviction_group = self.fixture_groups[eviction_index]
+
+        hype_counts = {key: 0 for key in HYPE_BUCKETS}
+
+        for i in self.interpreters:
+            hype = i.__class__.hype
+            bucket = sorted(
+                [(bucket, abs(hype - bucket)) for bucket in HYPE_BUCKETS],
+                key=lambda i: i[1],
+            )[0][0]
+            hype_counts[bucket] += 1
+
+        smallest_bucket = sorted(hype_counts.items(), key=lambda i: i[1], reverse=True)[
+            0
+        ][0]
+
+        self.interpreters[eviction_index] = get_interpreter(
+            self.state.phrase,
+            eviction_group,
+            InterpreterArgs(smallest_bucket, self.state.theme.allow_rainbows),
+        )
+
+        print(
+            f"Shifted interpretation for {self.state.phrase} hype_goal {smallest_bucket}:"
+        )
+        print(
+            f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]}"
+        )
+
     def shift(self):
-        self.generate_color_scheme()
-        self.generate_interpreters()
+        self.shift_color_scheme()
+        self.shift_interpreter()
 
         self.last_shift_time = time.time()
         self.shift_count += 1

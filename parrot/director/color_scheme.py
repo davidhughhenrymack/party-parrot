@@ -16,5 +16,12 @@ class ColorScheme(Lerpable):
             lerp_color(self.bg_contrast, other.bg_contrast, t),
         )
 
+    def to_list(self):
+        return [self.fg, self.bg, self.bg_contrast]
+
     def __str__(self) -> str:
         return f"ColorScheme({self.fg}, {self.bg}, {self.bg_contrast})"
+
+    @classmethod
+    def from_list(cls, list):
+        return cls(list[0], list[1], list[2])

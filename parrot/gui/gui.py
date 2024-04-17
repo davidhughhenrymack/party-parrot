@@ -94,14 +94,14 @@ class Window(Tk):
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
         # self.label.pack()
 
-        self.scale = Scale(
-            self, from_=0, to=100, length=CANVAS_WIDTH, orient=HORIZONTAL
-        )
-        self.scale.set(self.state.hype)
-        self.scale.bind(
-            "<ButtonRelease-1>", lambda e: self.state.set_hype(self.scale.get())
-        )
-        self.scale.pack()
+        # self.scale = Scale(
+        #     self, from_=0, to=100, length=CANVAS_WIDTH, orient=HORIZONTAL
+        # )
+        # self.scale.set(self.state.hype)
+        # self.scale.bind(
+        #     "<ButtonRelease-1>", lambda e: self.state.set_hype(self.scale.get())
+        # )
+        # self.scale.pack()
 
         if SHOW_PLOT:
             self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
