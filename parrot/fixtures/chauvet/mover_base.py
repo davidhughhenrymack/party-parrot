@@ -5,7 +5,7 @@ from parrot.utils.colour import Color
 from parrot.fixtures.moving_head import MovingHead
 
 
-class ChauvetSpot_12Ch(MovingHead):
+class ChauvetMoverBase(MovingHead):
 
     def __init__(
         self,

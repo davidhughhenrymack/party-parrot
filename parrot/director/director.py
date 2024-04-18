@@ -7,7 +7,7 @@ from parrot.director.phrase_machine import PhraseMachine
 from parrot.fixtures import laser
 
 from parrot.patch_bay import venue_patches
-from parrot.fixtures.led_par import LedPar
+from parrot.fixtures.led_par import Par, ParRGB
 from parrot.fixtures.motionstrip import Motionstrip
 
 from parrot.director.color_schemes import color_schemes
@@ -17,6 +17,7 @@ from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.director.phrase import Phrase
 from parrot.fixtures.laser import Laser
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
+from parrot.fixtures.chauvet.derby import ChauvetDerby
 from .phrase_interpretations import get_interpreter
 
 from parrot.utils.lerp import LerpAnimator
@@ -59,7 +60,14 @@ class Director:
         self.generate_interpreters()
 
     def group_fixtures(self):
-        to_group = [LedPar, MovingHead, Motionstrip, Laser, ChauvetRotosphere_28Ch]
+        to_group = [
+            Par,
+            MovingHead,
+            Motionstrip,
+            Laser,
+            ChauvetRotosphere_28Ch,
+            ChauvetDerby,
+        ]
         self.fixture_groups = []
 
         for cls in to_group:

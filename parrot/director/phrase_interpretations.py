@@ -1,4 +1,4 @@
-from parrot.fixtures import LedPar
+from parrot.fixtures import ParRGB
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import (
     ColorAlternateBg,
@@ -22,7 +22,7 @@ from parrot.interpreters.movers import (
 )
 from parrot.interpreters.rotosphere import (
     RotosphereOn,
-    RotosphereSpin,
+    Spin,
     RotosphereSpinColor,
 )
 from parrot.interpreters.slow import (
@@ -59,6 +59,7 @@ from parrot.director.phrase_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
 from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.interpreters.hype import hype_switch
+from parrot.fixtures.led_par import Par
 
 
 phrase_interpretations: Dict[
@@ -66,7 +67,7 @@ phrase_interpretations: Dict[
     Dict[FixtureBase, List[InterpreterBase]],
 ] = {
     Phrase.intro_outro: {
-        LedPar: [
+        ParRGB: [
             combo(SlowDecay, ColorAlternateBg),
         ],
         ChauvetRotosphere_28Ch: [RotosphereOn],
@@ -77,14 +78,14 @@ phrase_interpretations: Dict[
         # Motion strip off or bulb flashing to the beat
         MovingHead: [MoverBeatAndCircle, MoverBeatInFan],
         Motionstrip: [],
-        LedPar: [combo(DimmersBeatChase, ColorAlternateBg)],
+        ParRGB: [combo(DimmersBeatChase, ColorAlternateBg)],
     },
     Phrase.drop: {
         # LEDs pulsing vividly
         # Moving sequencing on, drawing circles. maybe strobing
         # Motion strip swishing
         # lasers on during intense moments
-        LedPar: [combo(SlowDecay, ColorAlternateBg)],
+        ParRGB: [combo(SlowDecay, ColorAlternateBg)],
         MovingHead: [combo(DimmersBeatChase, ColorFg, MoveCircles)],
         Motionstrip: [MotionstripSlowRespond],
         Laser: [DimmerFadeLatched],
@@ -93,20 +94,18 @@ phrase_interpretations: Dict[
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
-        LedPar: [combo(GentlePulse, ColorAlternateBg)],
+        ParRGB: [combo(GentlePulse, ColorAlternateBg)],
         MovingHead: [MoverDimAndCircle],
         Motionstrip: [combo(ColorFg, MoveCircles)],
     },
     Phrase.general: {
-        LedPar: [
+        Par: [
             combo(
                 randomize(
                     GentlePulse,
                     DimmersBeatChase,
                     VerySlowDecay,
-                    StrobeHighSustained,
                     SlowSustained,
-                    StrobeHighSustained,
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
             ),
@@ -177,7 +176,7 @@ phrase_interpretations: Dict[
             ),
             combo(
                 for_bulbs(ColorRainbow),
-                RotosphereSpin,
+                Spin,
                 VerySlowDecay,
             ),
         ],

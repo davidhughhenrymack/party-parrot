@@ -12,6 +12,7 @@ class FixtureBase:
         self.color_value = Color("black")
         self.dimmer_value = 0
         self.strobe_value = 0
+        self.speed_value = 0
 
     def set_color(self, color: Color):
         self.color_value = color
@@ -36,6 +37,12 @@ class FixtureBase:
 
     def set_tilt(self, value):
         pass
+
+    def set_speed(self, value):
+        self.speed_value = value
+
+    def get_speed(self):
+        return self.speed_value
 
     def render(self, dmx):
         for i in range(len(self.values)):

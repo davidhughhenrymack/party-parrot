@@ -1,5 +1,10 @@
 from parrot.fixtures.base import FixtureBase, FixtureWithBulbs
-from parrot.utils.color_extra import dim_color, lerp_color, color_distance
+from parrot.utils.color_extra import (
+    color_distance,
+    dim_color,
+    lerp_color,
+    render_color_components,
+)
 from parrot.utils.colour import Color
 from parrot.utils.math import clamp
 from parrot.utils.dmx_utils import dmx_clamp
@@ -21,24 +26,9 @@ class RotosphereBulb(FixtureBase):
         super().__init__(address, "chauvet rotosphere bulb", 8)
 
     def render_values(self, values):
-
-        distances = [
-            (idx, color, color_distance(self.get_color(), color))
-            for idx, color in enumerate(color_components)
-        ]
-        distances = sorted(
-            [i for i in distances if i[2] < 1], key=lambda i: i[2], reverse=True
+        render_color_components(
+            color_components, self.get_color(), self.get_dimmer(), values, self.address
         )
-
-        distances = distances[-2:]
-
-        for i in range(len(color_components)):
-            values[self.address + i] = 0
-
-        for idx, color, dist in distances:
-            dn = (3 - dist) / 3
-            dim = self.get_dimmer() / 255
-            values[self.address + idx] = int(dn * dim * 255)
 
 
 class ChauvetRotosphere_28Ch(FixtureWithBulbs):

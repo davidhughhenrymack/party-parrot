@@ -1,7 +1,11 @@
 from .base import FixtureBase
 
 
-class LedPar(FixtureBase):
+class Par(FixtureBase):
+    pass
+
+
+class ParRGB(Par):
     def __init__(self, patch):
         super().__init__(patch, "led par", 7)
 

@@ -1,5 +1,5 @@
 from parrot.utils.colour import Color
-from parrot.fixtures.chauvet.mover_base import ChauvetSpot_12Ch
+from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.fixtures.base import GoboWheelEntry, ColorWheelEntry
 
 
@@ -47,7 +47,7 @@ gobo_wheel = [
 ]
 
 
-class ChauvetSpot160_12Ch(ChauvetSpot_12Ch):
+class ChauvetSpot160_12Ch(ChauvetMoverBase):
     def __init__(
         self,
         patch,

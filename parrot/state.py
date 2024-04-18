@@ -11,7 +11,7 @@ class State:
         self._phrase = None
         self._hype = 75
         self._theme = themes[0]
-        self._venue = venues.dmack
+        self._venue = venues.mtn_lotus
 
     @property
     def phrase(self):

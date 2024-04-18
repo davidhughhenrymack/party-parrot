@@ -1,7 +1,7 @@
 import math
 import time
 from parrot.utils.colour import Color
-from parrot.utils.color_extra import dim_color
+from parrot.utils.color_extra import color_to_rgbw, dim_color
 from .base import FixtureBase, FixtureWithBulbs
 
 # DMX layout:
@@ -20,13 +20,6 @@ dmx_layout = [
     "bulb 7: RGBW",
     "bulb 8: RGBW",
 ]
-
-
-def color_to_rgbw(color: Color):
-    if color.get_saturation() < 0.1:
-        return (0, 0, 0, color.luminance * 255)
-    else:
-        return (color.red * 255, color.green * 255, color.blue * 255, 0)
 
 
 class MotionstripBulb(FixtureBase):

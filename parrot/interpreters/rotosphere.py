@@ -5,13 +5,12 @@ from parrot.interpreters.combo import combo
 from parrot.interpreters.latched import DimmerFadeLatched
 from parrot.interpreters.dimmer import Dimmer255
 from parrot.interpreters.bulbs import for_bulbs
+from parrot.fixtures.base import FixtureBase
 
 
-class RotosphereSpin(InterpreterBase[ChauvetRotosphere_28Ch]):
+class Spin(InterpreterBase[FixtureBase]):
 
-    def __init__(
-        self, group: List[ChauvetRotosphere_28Ch], args: InterpreterArgs, speed=50
-    ):
+    def __init__(self, group: List[FixtureBase], args: InterpreterArgs, speed=50):
         super().__init__(group, args)
         self.speed = speed
 
@@ -20,5 +19,5 @@ class RotosphereSpin(InterpreterBase[ChauvetRotosphere_28Ch]):
             fixture.set_speed(self.speed)
 
 
-RotosphereSpinColor = combo(RotosphereSpin, for_bulbs(ColorAlternateBg))
+RotosphereSpinColor = combo(Spin, for_bulbs(ColorAlternateBg))
 RotosphereOn = combo(RotosphereSpinColor, Dimmer255)
