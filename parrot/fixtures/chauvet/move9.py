@@ -55,7 +55,7 @@ class ChauvetMove_9Ch(ChauvetMoverBase):
     ):
         super().__init__(
             patch,
-            "chauvet intimidator 120",
+            "chauvet move",
             12,
             dmx_layout,
             color_wheel,

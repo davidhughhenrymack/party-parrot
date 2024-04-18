@@ -60,6 +60,8 @@ from parrot.interpreters.laser import LaserLatch
 from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.interpreters.hype import hype_switch
 from parrot.fixtures.led_par import Par
+from parrot.fixtures.chauvet.derby import ChauvetDerby
+from parrot.utils.colour import Color
 
 
 phrase_interpretations: Dict[
@@ -106,6 +108,7 @@ phrase_interpretations: Dict[
                     DimmersBeatChase,
                     VerySlowDecay,
                     SlowSustained,
+                    SequenceFadeDimmers,
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
             ),
@@ -179,6 +182,19 @@ phrase_interpretations: Dict[
                 Spin,
                 VerySlowDecay,
             ),
+        ],
+        ChauvetDerby: [
+            combo(
+                Spin,
+                randomize(ColorAlternateBg, ColorRainbow),
+                randomize(
+                    Twinkle,
+                    GentlePulse,
+                    DimmerFadeLatched,
+                    DimmerFadeLatched4s,
+                    SlowDecay,
+                ),
+            )
         ],
     },
 }

@@ -83,12 +83,12 @@ class DimmersBeatChase(InterpreterBase[T]):
 
     def __init__(self, group: List[T], args: InterpreterArgs):
         super().__init__(group, args)
-        self.signal = FrameSignal.freq_high
+        self.signal = random.choice([FrameSignal.freq_high, FrameSignal.freq_low])
         self.on = False
 
     def step(self, frame, scheme):
 
-        if frame[self.signal] > 0.4:
+        if frame[self.signal] > 0.3:
             if self.on == False:
                 self.bulb = random.randint(0, len(self.group) - 1)
                 self.on = True

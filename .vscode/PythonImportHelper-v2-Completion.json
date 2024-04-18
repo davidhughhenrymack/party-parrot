@@ -120,6 +120,14 @@
         "documentation": {}
     },
     {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
         "label": "Lerpable",
         "importPath": "parrot.utils.lerp",
         "description": "parrot.utils.lerp",
@@ -1619,6 +1627,14 @@
         "description": "parrot.fixtures.chauvet.rotosphere",
         "isExtraImport": true,
         "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetDerby",
+        "importPath": "parrot.fixtures.chauvet.derby",
+        "description": "parrot.fixtures.chauvet.derby",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.derby",
         "documentation": {}
     },
     {
@@ -3970,7 +3986,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.dimmer",
         "description": "parrot.interpreters.dimmer",
-        "peekOfCode": "class DimmersBeatChase(InterpreterBase[T]):\n    hype = 70\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.signal = FrameSignal.freq_high\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.4:\n            if self.on == False:\n                self.bulb = random.randint(0, len(self.group) - 1)",
+        "peekOfCode": "class DimmersBeatChase(InterpreterBase[T]):\n    hype = 70\n    def __init__(self, group: List[T], args: InterpreterArgs):\n        super().__init__(group, args)\n        self.signal = random.choice([FrameSignal.freq_high, FrameSignal.freq_low])\n        self.on = False\n    def step(self, frame, scheme):\n        if frame[self.signal] > 0.3:\n            if self.on == False:\n                self.bulb = random.randint(0, len(self.group) - 1)",
         "detail": "parrot.interpreters.dimmer",
         "documentation": {}
     },

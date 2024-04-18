@@ -108,6 +108,7 @@ class Director:
         idx = random.randint(0, 2)
         ct[idx] = st[idx]
         self.scheme.push(ColorScheme.from_list(ct))
+        print(f"Shifting to {ColorScheme.from_list(ct)}")
 
     def shift_interpreter(self):
         eviction_index = random.randint(0, len(self.interpreters) - 1)
