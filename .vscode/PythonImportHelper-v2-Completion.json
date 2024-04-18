@@ -2391,6 +2391,14 @@
         "documentation": {}
     },
     {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetMoverBase",
         "importPath": "parrot.fixtures.chauvet.mover_base",
         "description": "parrot.fixtures.chauvet.mover_base",
@@ -3112,7 +3120,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
+        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
         "detail": "parrot.director.themes",
         "documentation": {}
     },
@@ -3121,7 +3129,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "themes = [\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
+        "peekOfCode": "themes = [\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
         "detail": "parrot.director.themes",
         "documentation": {}
     },
@@ -4030,7 +4038,7 @@
         "kind": 2,
         "importPath": "parrot.interpreters.hype",
         "description": "parrot.interpreters.hype",
-        "peekOfCode": "def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T]]:\n    class HypeSwitch(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)\n            self.interp_std = interpreter(group, args)\n            self.interp_hype = StrobeHighSustained(group, args)",
+        "peekOfCode": "def hype_switch(\n    interp_std: Type[InterpreterBase[T]],\n    interp_hype: Type[InterpreterBase[T]],\n) -> Type[InterpreterBase[T]]:\n    class HypeSwitch(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):",
         "detail": "parrot.interpreters.hype",
         "documentation": {}
     },
@@ -4039,7 +4047,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.hype",
         "description": "parrot.interpreters.hype",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T]]:\n    class HypeSwitch(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)\n            self.interp_std = interpreter(group, args)",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef hype_switch(\n    interp_std: Type[InterpreterBase[T]],\n    interp_hype: Type[InterpreterBase[T]],\n) -> Type[InterpreterBase[T]]:\n    class HypeSwitch(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,",
         "detail": "parrot.interpreters.hype",
         "documentation": {}
     },
@@ -4606,7 +4614,7 @@
         "kind": 2,
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
-        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))\ndef render_color_components(\n    components: List[Color], color: Color, dimmer: int, values: List[int], address=0\n):\n    distances = [\n        (idx, color, color_distance(color, color))\n        for idx, color in enumerate(components)\n    ]",
+        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))\ndef render_color_components(\n    components: List[Color],\n    target_color: Color,\n    dimmer: int,\n    values: List[int],\n    address=0,\n):",
         "detail": "parrot.utils.color_extra",
         "documentation": {}
     },
@@ -4615,7 +4623,7 @@
         "kind": 2,
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
-        "peekOfCode": "def render_color_components(\n    components: List[Color], color: Color, dimmer: int, values: List[int], address=0\n):\n    distances = [\n        (idx, color, color_distance(color, color))\n        for idx, color in enumerate(components)\n    ]\n    distances = sorted(\n        [i for i in distances if i[2] < 1], key=lambda i: i[2], reverse=True\n    )",
+        "peekOfCode": "def render_color_components(\n    components: List[Color],\n    target_color: Color,\n    dimmer: int,\n    values: List[int],\n    address=0,\n):\n    distances = [\n        (idx, color, color_distance(target_color, color))\n        for idx, color in enumerate(components)",
         "detail": "parrot.utils.color_extra",
         "documentation": {}
     },
@@ -5029,7 +5037,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n        self._venue = venues.mtn_lotus\n    @property\n    def phrase(self):\n        return self._phrase",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n        self._venue = venues.dmack\n    @property\n    def phrase(self):\n        return self._phrase",
         "detail": "parrot.state",
         "documentation": {}
     }

@@ -25,10 +25,14 @@ def dim_color(color: Color, dimmer: float) -> Color:
 
 
 def render_color_components(
-    components: List[Color], color: Color, dimmer: int, values: List[int], address=0
+    components: List[Color],
+    target_color: Color,
+    dimmer: int,
+    values: List[int],
+    address=0,
 ):
     distances = [
-        (idx, color, color_distance(color, color))
+        (idx, color, color_distance(target_color, color))
         for idx, color in enumerate(components)
     ]
     distances = sorted(

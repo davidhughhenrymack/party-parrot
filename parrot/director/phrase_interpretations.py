@@ -123,12 +123,12 @@ phrase_interpretations: Dict[
                         DimmerFadeLatched,
                         SequenceDimmers,
                         SequenceFadeDimmers,
-                        # StrobeHighSustained,
                         OnWhenNoSustained,
                         with_args(
                             "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
                         ),
-                    )
+                    ),
+                    StrobeHighSustained,
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
                 randomize(MoveCircles, MoveNod),
@@ -141,23 +141,26 @@ phrase_interpretations: Dict[
         Motionstrip: [
             # MotionstripSlowRespond,
             combo(
-                randomize(
-                    combo(Dimmer255, for_bulbs(Twinkle)),
-                    combo(DimmersBeatChase, AllBulbs255),
-                    combo(SlowDecay, AllBulbs255),
-                    # combo(StrobeHighSustained, AllBulbs255),
-                    combo(
-                        Dimmer255,
-                        for_bulbs(
-                            with_args(
-                                "GentlePulseTrigger0.1",
-                                GentlePulse,
-                                trigger_level=0.1,
-                            )
+                hype_switch(
+                    randomize(
+                        combo(Dimmer255, for_bulbs(Twinkle)),
+                        combo(DimmersBeatChase, AllBulbs255),
+                        combo(SlowDecay, AllBulbs255),
+                        # combo(StrobeHighSustained, AllBulbs255),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "GentlePulseTrigger0.1",
+                                    GentlePulse,
+                                    trigger_level=0.1,
+                                )
+                            ),
                         ),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                        # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
                     ),
-                    combo(Dimmer255, for_bulbs(DimmersBeatChase)),
-                    # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
+                    DimmerFadeIn,
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
                 randomize(PanLatched, MoveCircles),

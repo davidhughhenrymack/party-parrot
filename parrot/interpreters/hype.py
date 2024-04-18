@@ -5,11 +5,15 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.interpreters.strobe import StrobeHighSustained
+from parrot.utils.math import clamp
 
 T = TypeVar("T", bound=FixtureBase)
 
 
-def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T]]:
+def hype_switch(
+    interp_std: Type[InterpreterBase[T]],
+    interp_hype: Type[InterpreterBase[T]],
+) -> Type[InterpreterBase[T]]:
 
     class HypeSwitch(InterpreterBase[T]):
         def __init__(
@@ -19,8 +23,8 @@ def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T
         ):
             super().__init__(group, args)
 
-            self.interp_std = interpreter(group, args)
-            self.interp_hype = StrobeHighSustained(group, args)
+            self.interp_std = interp_std(group, args)
+            self.interp_hype = interp_hype(group, args)
 
             self.hype_on = None
 
@@ -41,7 +45,7 @@ def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T
             self.interp_hype.exit(frame, scheme)
 
         def get_hype(self):
-            return self.interp_std.get_hype()
+            return clamp(self.interp_std.get_hype() + 30, 0, 100)
 
         def __str__(self) -> str:
             return f"{'HypeSwitch(' + str(self.interp_std) + ' | ' + str(self.interp_hype)})"
