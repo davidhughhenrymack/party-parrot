@@ -34,6 +34,9 @@ def for_bulbs(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:
         def exit(self, frame, scheme):
             self.interpreter.exit(frame, scheme)
 
+        def get_hype(self):
+            return self.interpreter.get_hype()
+
         def __str__(self) -> str:
             return f"ForBulbs({str(self.interpreter)})"
 

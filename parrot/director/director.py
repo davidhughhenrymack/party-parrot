@@ -77,9 +77,7 @@ class Director:
 
         print(f"Generated interpretation for {self.state.phrase}:")
         for i in self.interpreters:
-            print(f"    {str(i)} {[str(j) for j in i.group]}")
-
-        print("hypes", [i.__class__.get_hype() for i in self.interpreters])
+            print(f"    {str(i)} {[str(j) for j in i.group]} hype={i.get_hype()}")
 
         print()
 
@@ -104,7 +102,7 @@ class Director:
 
         for idx, i in enumerate(self.interpreters):
             if idx != eviction_index:
-                hype = i.__class__.hype
+                hype = i.get_hype()
                 bucket = sorted(
                     [(bucket, abs(hype - bucket)) for bucket in HYPE_BUCKETS],
                     key=lambda i: i[1],
@@ -125,10 +123,10 @@ class Director:
             f"Shifted interpretation for {self.state.phrase} hype_goal {smallest_bucket}:"
         )
         print(
-            f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]}"
+            f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]} hype={self.interpreters[eviction_index].get_hype()}"
         )
 
-        print("hypes", [i.__class__.hype for i in self.interpreters])
+        print("hypes", [i.get_hype() for i in self.interpreters])
 
     def shift(self):
         self.shift_color_scheme()

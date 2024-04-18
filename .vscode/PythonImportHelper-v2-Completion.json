@@ -184,6 +184,14 @@
         "documentation": {}
     },
     {
+        "label": "color_distance",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
         "label": "dim_color",
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
@@ -543,6 +551,14 @@
         "description": "typing",
         "isExtraImport": true,
         "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "ColorScheme",
+        "importPath": "parrot.director.color_scheme",
+        "description": "parrot.director.color_scheme",
+        "isExtraImport": true,
+        "detail": "parrot.director.color_scheme",
         "documentation": {}
     },
     {
@@ -1582,6 +1598,14 @@
         "documentation": {}
     },
     {
+        "label": "PanLatched",
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
         "label": "MoverBeatAndCircle",
         "importPath": "parrot.interpreters.movers",
         "description": "parrot.interpreters.movers",
@@ -1799,6 +1823,14 @@
     },
     {
         "label": "FixtureWithBulbs",
+        "importPath": "parrot.fixtures.base",
+        "description": "parrot.fixtures.base",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.base",
+        "documentation": {}
+    },
+    {
+        "label": "FixtureBase",
         "importPath": "parrot.fixtures.base",
         "description": "parrot.fixtures.base",
         "isExtraImport": true,
@@ -2180,6 +2212,14 @@
         "description": "parrot.utils.math",
         "isExtraImport": true,
         "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_clamp",
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
     {
@@ -2641,7 +2681,7 @@
         "kind": 2,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "def random_color():\n    key = Color(\"red\")\n    key.set_hue(random.random())\n    return key\nscheme_random = [generate_random_scheme(random_color()) for _ in range(10)]\nscheme_berlin = [\n    generate_random_scheme(\n        random.choice([Color(\"red\"), Color(\"blue\")]),\n        [ColorRelationship.mono, ColorRelationship.bright],\n    )",
+        "peekOfCode": "def random_color():\n    key = Color(\"red\")\n    key.set_hue(random.random())\n    return key\nscheme_random = [generate_random_scheme(random_color()) for _ in range(10)]\nscheme_berlin = [\n    generate_random_scheme(\n        random.choice([Color(\"red\"), Color(\"purple\")]),\n        [ColorRelationship.mono, ColorRelationship.bright],\n    )",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -2686,7 +2726,7 @@
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "scheme_random = [generate_random_scheme(random_color()) for _ in range(10)]\nscheme_berlin = [\n    generate_random_scheme(\n        random.choice([Color(\"red\"), Color(\"blue\")]),\n        [ColorRelationship.mono, ColorRelationship.bright],\n    )\n    for _ in range(10)\n]\ncolor_schemes = scheme_standard",
+        "peekOfCode": "scheme_random = [generate_random_scheme(random_color()) for _ in range(10)]\nscheme_berlin = [\n    generate_random_scheme(\n        random.choice([Color(\"red\"), Color(\"purple\")]),\n        [ColorRelationship.mono, ColorRelationship.bright],\n    )\n    for _ in range(10)\n]\ncolor_schemes = scheme_standard",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -2695,7 +2735,7 @@
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "scheme_berlin = [\n    generate_random_scheme(\n        random.choice([Color(\"red\"), Color(\"blue\")]),\n        [ColorRelationship.mono, ColorRelationship.bright],\n    )\n    for _ in range(10)\n]\ncolor_schemes = scheme_standard",
+        "peekOfCode": "scheme_berlin = [\n    generate_random_scheme(\n        random.choice([Color(\"red\"), Color(\"purple\")]),\n        [ColorRelationship.mono, ColorRelationship.bright],\n    )\n    for _ in range(10)\n]\ncolor_schemes = scheme_standard",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -2713,7 +2753,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)\n        self.warmup_complete = False\n        self.state.events.on_phrase_change += lambda s: self.generate_interpreters()",
+        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state\n        self.state.set_phrase(Phrase.general)\n        self.group_fixtures()\n        self.generate_color_scheme()",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -2722,7 +2762,7 @@
         "kind": 2,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state\n        self.phrase_machine = PhraseMachine(state)",
+        "peekOfCode": "def filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state\n        self.state.set_phrase(Phrase.general)",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -2731,7 +2771,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "SHIFT_AFTER = 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()",
+        "peekOfCode": "SHIFT_AFTER = 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nHYPE_BUCKETS = [25, 50, 80]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -2740,7 +2780,16 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state",
+        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nHYPE_BUCKETS = [25, 50, 80]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()",
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "HYPE_BUCKETS",
+        "kind": 5,
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "peekOfCode": "HYPE_BUCKETS = [25, 50, 80]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -2938,7 +2987,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.chauvet.rotosphere",
         "description": "parrot.fixtures.chauvet.rotosphere",
-        "peekOfCode": "class RotosphereBulb(FixtureBase):\n    def __init__(self, address):\n        super().__init__(address, \"chauvet rotosphere bulb\", 8)\n    def render_values(self, values):\n        c = dim_color(self.get_color(), self.get_dimmer() / 255)\n        rgb = c.get_rgb()\n        white = c.get_luminance()\n        channels = [\"cyan\", \"magenta\", \"yellow\", \"orange\"]\n        components = {}\n        for channel in channels:",
+        "peekOfCode": "class RotosphereBulb(FixtureBase):\n    def __init__(self, address):\n        super().__init__(address, \"chauvet rotosphere bulb\", 8)\n    def render_values(self, values):\n        distances = [\n            (idx, color, color_distance(self.get_color(), color))\n            for idx, color in enumerate(color_components)\n        ]\n        distances = sorted(\n            [i for i in distances if i[2] < 1], key=lambda i: i[2], reverse=True",
         "detail": "parrot.fixtures.chauvet.rotosphere",
         "documentation": {}
     },
@@ -2948,6 +2997,15 @@
         "importPath": "parrot.fixtures.chauvet.rotosphere",
         "description": "parrot.fixtures.chauvet.rotosphere",
         "peekOfCode": "class ChauvetRotosphere_28Ch(FixtureWithBulbs):\n    def __init__(\n        self,\n        address,\n    ):\n        super().__init__(\n            address, \"chauvet rotosphere\", 28, [RotosphereBulb(i * 8) for i in range(3)]\n        )\n    def set_strobe(self, value):\n        self.values[24] = value",
+        "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "color_components",
+        "kind": 5,
+        "importPath": "parrot.fixtures.chauvet.rotosphere",
+        "description": "parrot.fixtures.chauvet.rotosphere",
+        "peekOfCode": "color_components = [\n    Color(\"red\"),\n    Color(\"green\"),\n    Color(\"blue\"),\n    Color(\"white\"),\n    Color(\"cyan\"),\n    Color(\"magenta\"),\n    Color(\"yellow\"),\n    Color(\"orange\"),\n]",
         "detail": "parrot.fixtures.chauvet.rotosphere",
         "documentation": {}
     },
@@ -3370,7 +3428,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3379,7 +3437,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3388,7 +3446,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3397,7 +3455,16 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CANVAS_WIDTH = 500\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
+        "peekOfCode": "CANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "detail": "parrot.gui.gui",
+        "documentation": {}
+    },
+    {
+        "label": "SHOW_PLOT",
+        "kind": 5,
+        "importPath": "parrot.gui.gui",
+        "description": "parrot.gui.gui",
+        "peekOfCode": "SHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3469,7 +3536,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=math.pi):\n        super().__init__(group, args)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_pan(\n                math.cos(frame.time * self.multiplier + self.phase * idx) * 127 + 128\n            )",
+        "peekOfCode": "class MoveCircles(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=None):\n        super().__init__(group, args)\n        self.multiplier = multiplier\n        if phase is None:\n            self.phase = random.choice([0, math.pi])\n        else:\n            self.phase = phase\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3478,7 +3545,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class MoveNod(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=math.pi / 3):\n        super().__init__(group, args)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_pan(0)\n            fixture.set_tilt(\n                math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128",
+        "peekOfCode": "class MoveNod(InterpreterBase):\n    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=math.pi / 3):\n        super().__init__(group, args)\n        self.multiplier = multiplier\n        self.phase = phase\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_pan(128)\n            fixture.set_tilt(\n                math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3496,7 +3563,7 @@
         "kind": 2,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "def acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):",
+        "peekOfCode": "def acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    # if hype > args.hype:\n    #     return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3514,7 +3581,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nInterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nInterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    # if hype > args.hype:\n    #     return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3523,7 +3590,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "InterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0",
+        "peekOfCode": "InterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    # if hype > args.hype:\n    #     return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3744,6 +3811,15 @@
         "documentation": {}
     },
     {
+        "label": "PanLatched",
+        "kind": 6,
+        "importPath": "parrot.interpreters.motionstrip",
+        "description": "parrot.interpreters.motionstrip",
+        "peekOfCode": "class PanLatched(InterpreterBase[FixtureBase]):\n    def __init__(\n        self,\n        group,\n        args: InterpreterArgs,\n        signal=FrameSignal.sustained_low,\n        latch_level=0.3,\n        latch_duration=math.pi * 2,\n    ):\n        super().__init__(group, args)",
+        "detail": "parrot.interpreters.motionstrip",
+        "documentation": {}
+    },
+    {
         "label": "MotionstripSlowRespond",
         "kind": 6,
         "importPath": "parrot.interpreters.motionstrip",
@@ -3946,7 +4022,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.strobe",
         "description": "parrot.interpreters.strobe",
-        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(255)\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        for i in self.group:\n            i.set_strobe(0)",
+        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(30)\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        for i in self.group:\n            i.set_strobe(0)",
         "detail": "parrot.interpreters.strobe",
         "documentation": {}
     },

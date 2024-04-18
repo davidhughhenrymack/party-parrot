@@ -49,6 +49,9 @@ def combo(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:
             for i in self.interpreters:
                 i.exit(frame, scheme)
 
+        def get_hype(self):
+            return max([i.get_hype() for i in self.interpreters])
+
         def __str__(self) -> str:
             return f"{' + '.join([str(i) for i in self.interpreters])}"
 

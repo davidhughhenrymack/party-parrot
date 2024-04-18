@@ -37,16 +37,15 @@ class InterpreterBase(Generic[T]):
     def exit(self, frame: Frame, scheme: ColorScheme):
         pass
 
-    @classmethod
-    def get_hype(cls):
-        return cls.hype
+    def get_hype(self):
+        return self.__class__.hype
 
     @classmethod
     def acceptable(cls, args: InterpreterArgs) -> bool:
         return acceptable_test(args, cls.hype, cls.has_rainbow)
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}%{self.__class__.hype}"
+        return f"{self.__class__.__name__}"
 
 
 def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
@@ -69,8 +68,12 @@ def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
         def exit(self, frame, scheme):
             self.interpreter.exit(frame, scheme)
 
+        def get_hype(self):
+            return new_hype if new_hype is not None else self.interpreter.get_hype()
+
         def __str__(self):
-            return str(self.interpreter) if self.name is None else self.name
+            n = str(self.interpreter) if self.name is None else self.name
+            return f"{n}"
 
     return WithArgs
 

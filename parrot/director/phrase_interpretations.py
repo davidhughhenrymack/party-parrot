@@ -100,19 +100,15 @@ phrase_interpretations: Dict[
     Phrase.general: {
         LedPar: [
             combo(
-                hype_switch(
-                    randomize(
-                        GentlePulse,
-                        DimmersBeatChase,
-                        VerySlowDecay,
-                        StrobeHighSustained,
-                        SlowSustained,
-                        StrobeHighSustained,
-                    )
+                randomize(
+                    GentlePulse,
+                    DimmersBeatChase,
+                    VerySlowDecay,
+                    StrobeHighSustained,
+                    SlowSustained,
+                    StrobeHighSustained,
                 ),
-                hype_switch(
-                    randomize(ColorAlternateBg, ColorBg, ColorRainbow, ColorFg)
-                ),
+                randomize(ColorAlternateBg, ColorBg, ColorRainbow, ColorFg),
             ),
         ],
         MovingHead: [

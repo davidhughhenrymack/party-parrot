@@ -26,7 +26,7 @@ def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T
             self.hype_on = None
 
         def step(self, frame: Frame, scheme: ColorScheme):
-            if frame[FrameSignal.hype] > 0.5:
+            if frame[FrameSignal.hype] > 0.5 and self.interp_std.get_hype() < 70:
                 self.interp_hype.step(frame, scheme)
                 if self.hype_on != True:
                     self.hype_on = True
@@ -40,6 +40,9 @@ def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T
         def exit(self, frame: Frame, scheme: ColorScheme):
             self.interp_std.exit(frame, scheme)
             self.interp_hype.exit(frame, scheme)
+
+        def get_hype(self):
+            return self.interp_std.get_hype()
 
         def __str__(self) -> str:
             return f"{'HypeSwitch(' + str(self.interp_std) + ' | ' + str(self.interp_hype)})"
