@@ -2302,6 +2302,14 @@
         "documentation": {}
     },
     {
+        "label": "StrobeHighSustained",
+        "importPath": "parrot.interpreters.strobe",
+        "description": "parrot.interpreters.strobe",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.strobe",
+        "documentation": {}
+    },
+    {
         "label": "hype_switch",
         "importPath": "parrot.interpreters.hype",
         "description": "parrot.interpreters.hype",
@@ -4022,7 +4030,7 @@
         "kind": 2,
         "importPath": "parrot.interpreters.hype",
         "description": "parrot.interpreters.hype",
-        "peekOfCode": "def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T]]:\n    class HypeSwitch(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)\n            self.interp_std = interpreter(group, args)\n            self.interp_hype = interpreter(",
+        "peekOfCode": "def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T]]:\n    class HypeSwitch(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)\n            self.interp_std = interpreter(group, args)\n            self.interp_hype = StrobeHighSustained(group, args)",
         "detail": "parrot.interpreters.hype",
         "documentation": {}
     },
@@ -4292,7 +4300,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.strobe",
         "description": "parrot.interpreters.strobe",
-        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(30)\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        for i in self.group:\n            i.set_strobe(0)",
+        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(50)\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        for i in self.group:\n            i.set_strobe(0)",
         "detail": "parrot.interpreters.strobe",
         "documentation": {}
     },
@@ -4400,7 +4408,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"",
+        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4409,7 +4417,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4418,7 +4426,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4427,7 +4435,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4436,7 +4444,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4445,7 +4453,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4454,7 +4462,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4463,7 +4471,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE",
+        "peekOfCode": "SIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4472,7 +4480,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SIGNAL_STAT_BUFFER_SIZE = round((3 * 60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD",
+        "peekOfCode": "SIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },

@@ -38,7 +38,7 @@ class Window(Tk):
         self.venue_select = Combobox(
             self.top_frame, values=[i.name for i in venues], state="readonly"
         )
-        self.venue_select.current(0)
+        self.venue_select.current([i for i in venues].index(state.venue))
         self.venue_select.bind(
             "<<ComboboxSelected>>",
             lambda e: state.set_venue([i for i in venues][self.venue_select.current()]),

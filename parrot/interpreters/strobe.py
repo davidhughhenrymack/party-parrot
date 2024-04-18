@@ -8,7 +8,7 @@ class StrobeHighSustained(InterpreterBase):
 
     def step(self, frame, scheme):
         for i in self.group:
-            i.set_strobe(30)
+            i.set_strobe(50)
 
     def exit(self, frame: Frame, scheme: ColorScheme):
         for i in self.group:

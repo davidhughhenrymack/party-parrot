@@ -4,6 +4,7 @@ from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
+from parrot.interpreters.strobe import StrobeHighSustained
 
 T = TypeVar("T", bound=FixtureBase)
 
@@ -19,14 +20,12 @@ def hype_switch(interpreter: Type[InterpreterBase[T]]) -> Type[InterpreterBase[T
             super().__init__(group, args)
 
             self.interp_std = interpreter(group, args)
-            self.interp_hype = interpreter(
-                group, InterpreterArgs(95, args.allow_rainbows)
-            )
+            self.interp_hype = StrobeHighSustained(group, args)
 
             self.hype_on = None
 
         def step(self, frame: Frame, scheme: ColorScheme):
-            if frame[FrameSignal.hype] > 0.5 and self.interp_std.get_hype() < 70:
+            if frame[FrameSignal.hype] > 0.5:
                 self.interp_hype.step(frame, scheme)
                 if self.hype_on != True:
                     self.hype_on = True

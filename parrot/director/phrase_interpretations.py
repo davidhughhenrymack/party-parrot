@@ -186,9 +186,8 @@ phrase_interpretations: Dict[
         ChauvetDerby: [
             combo(
                 Spin,
-                randomize(ColorAlternateBg, ColorRainbow),
+                randomize(ColorAlternateBg, ColorFg),
                 randomize(
-                    Twinkle,
                     GentlePulse,
                     DimmerFadeLatched,
                     DimmerFadeLatched4s,
