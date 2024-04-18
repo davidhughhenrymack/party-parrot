@@ -1,6 +1,7 @@
 from events import Events
 from parrot.director.phrase import Phrase
 from parrot.director.themes import themes
+from parrot.patch_bay import venues
 
 
 class State:
@@ -10,6 +11,7 @@ class State:
         self._phrase = None
         self._hype = 75
         self._theme = themes[0]
+        self._venue = venues.dmack
 
     @property
     def phrase(self):
@@ -43,3 +45,14 @@ class State:
 
         self._theme = value
         self.events.on_theme_change(self._theme)
+
+    @property
+    def venue(self):
+        return self._venue
+
+    def set_venue(self, value):
+        if self._venue == value:
+            return
+
+        self._venue = value
+        self.events.on_venue_change(self._venue)

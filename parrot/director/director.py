@@ -6,7 +6,7 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.director.phrase_machine import PhraseMachine
 from parrot.fixtures import laser
 
-from parrot.patch_bay import patch_bay
+from parrot.patch_bay import venue_patches
 from parrot.fixtures.led_par import LedPar
 from parrot.fixtures.motionstrip import Motionstrip
 
@@ -43,9 +43,8 @@ class Director:
 
         self.state.set_phrase(Phrase.general)
 
-        self.group_fixtures()
+        self.setup_patch()
         self.generate_color_scheme()
-        self.generate_interpreters()
         self.phrase_machine = PhraseMachine(state)
 
         self.warmup_complete = False
@@ -53,14 +52,22 @@ class Director:
         # self.state.events.on_phrase_change += lambda s: self.generate_interpreters()
         # self.state.events.on_hype_change += lambda s: self.generate_interpreters()
         self.state.events.on_theme_change += lambda s: self.generate_color_scheme()
+        self.state.events.on_venue_change += lambda s: self.setup_patch()
+
+    def setup_patch(self):
+        self.group_fixtures()
+        self.generate_interpreters()
 
     def group_fixtures(self):
         to_group = [LedPar, MovingHead, Motionstrip, Laser, ChauvetRotosphere_28Ch]
         self.fixture_groups = []
 
         for cls in to_group:
-            fixtures = [i for i in patch_bay if isinstance(i, cls)]
-            self.fixture_groups.append(fixtures)
+            fixtures = [
+                i for i in venue_patches[self.state.venue] if isinstance(i, cls)
+            ]
+            if len(fixtures) > 0:
+                self.fixture_groups.append(fixtures)
 
     def generate_interpreters(self):
         self.interpreters: List[InterpreterBase] = [
@@ -157,7 +164,7 @@ class Director:
             self.shift()
 
     def render(self, dmx):
-        for i in patch_bay:
+        for i in venue_patches[self.state.venue]:
             i.render(dmx)
 
         dmx.submit()

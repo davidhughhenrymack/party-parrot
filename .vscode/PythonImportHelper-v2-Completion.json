@@ -966,7 +966,7 @@
         "documentation": {}
     },
     {
-        "label": "patch_bay",
+        "label": "venue_patches",
         "importPath": "parrot.patch_bay",
         "description": "parrot.patch_bay",
         "isExtraImport": true,
@@ -974,7 +974,23 @@
         "documentation": {}
     },
     {
-        "label": "patch_bay",
+        "label": "venue_patches",
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "isExtraImport": true,
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "venues",
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "isExtraImport": true,
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "venues",
         "importPath": "parrot.patch_bay",
         "description": "parrot.patch_bay",
         "isExtraImport": true,
@@ -2753,7 +2769,7 @@
         "kind": 6,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state\n        self.state.set_phrase(Phrase.general)\n        self.group_fixtures()\n        self.generate_color_scheme()",
+        "peekOfCode": "class Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state\n        self.state.set_phrase(Phrase.general)\n        self.setup_patch()\n        self.generate_color_scheme()",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -3419,7 +3435,7 @@
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.theme_select = Combobox(",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.top_frame = Frame(self, background=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -4711,11 +4727,20 @@
         "documentation": {}
     },
     {
-        "label": "patch_bay",
+        "label": "venues",
         "kind": 5,
         "importPath": "parrot.patch_bay",
         "description": "parrot.patch_bay",
-        "peekOfCode": "patch_bay = [\n    ChauvetSpot160_12Ch(\n        patch=1,\n    ),\n    ChauvetSpot120_12Ch(\n        patch=140,\n    ),\n    # ChauvetSpot120_12Ch(\n    #     patch=152,\n    # ),",
+        "peekOfCode": "venues = enum.Enum(\"Venues\", [\"dmack\", \"mtn_lotus\"])\nvenue_patches = {\n    venues.dmack: [\n        ChauvetSpot160_12Ch(\n            patch=1,\n        ),\n        ChauvetSpot120_12Ch(\n            patch=140,\n        ),\n        LedPar(12),",
+        "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "venue_patches",
+        "kind": 5,
+        "importPath": "parrot.patch_bay",
+        "description": "parrot.patch_bay",
+        "peekOfCode": "venue_patches = {\n    venues.dmack: [\n        ChauvetSpot160_12Ch(\n            patch=1,\n        ),\n        ChauvetSpot120_12Ch(\n            patch=140,\n        ),\n        LedPar(12),\n        LedPar(19),",
         "detail": "parrot.patch_bay",
         "documentation": {}
     },
@@ -4724,7 +4749,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n    @property\n    def phrase(self):\n        return self._phrase\n    def set_phrase(self, value: Phrase):",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n        self._venue = venues.dmack\n    @property\n    def phrase(self):\n        return self._phrase",
         "detail": "parrot.state",
         "documentation": {}
     }
