@@ -2771,7 +2771,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "SHIFT_AFTER = 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nHYPE_BUCKETS = [25, 50, 80]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0",
+        "peekOfCode": "SHIFT_AFTER = 60\nWARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nHYPE_BUCKETS = [10, 40, 70]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -2780,7 +2780,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nHYPE_BUCKETS = [25, 50, 80]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()",
+        "peekOfCode": "WARMUP_SECONDS = max(int(os.environ.get(\"WARMUP_TIME\", \"40\")), 1)\nHYPE_BUCKETS = [10, 40, 70]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -2789,7 +2789,7 @@
         "kind": 5,
         "importPath": "parrot.director.director",
         "description": "parrot.director.director",
-        "peekOfCode": "HYPE_BUCKETS = [25, 50, 80]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state",
+        "peekOfCode": "HYPE_BUCKETS = [10, 40, 70]\ndef filter_nones(l):\n    return [i for i in l if i is not None]\nclass Director:\n    def __init__(self, state: State):\n        self.scheme = LerpAnimator(random.choice(color_schemes), 4)\n        self.last_shift_time = time.time()\n        self.shift_count = 0\n        self.start_time = time.time()\n        self.state = state",
         "detail": "parrot.director.director",
         "documentation": {}
     },
@@ -3491,7 +3491,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class Noop(InterpreterBase):\n    def step(self, frame, scheme):\n        pass\nclass ColorFg(InterpreterBase):\n    hype = 50\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):",
+        "peekOfCode": "class Noop(InterpreterBase):\n    def step(self, frame, scheme):\n        pass\nclass ColorFg(InterpreterBase):\n    hype = 30\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3500,7 +3500,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "class ColorFg(InterpreterBase):\n    hype = 50\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)\nclass ColorBg(InterpreterBase):",
+        "peekOfCode": "class ColorFg(InterpreterBase):\n    hype = 30\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_color(scheme.fg)\nclass ColorAlternateBg(InterpreterBase):\n    def step(self, frame, scheme):\n        for idx, fixture in enumerate(self.group):\n            fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)\nclass ColorBg(InterpreterBase):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3923,7 +3923,7 @@
         "kind": 2,
         "importPath": "parrot.interpreters.randomize",
         "description": "parrot.interpreters.randomize",
-        "peekOfCode": "def get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:\n    return pow(101 - clamp(abs(interpreter.hype - args.hype), 0, 100), 1.3)\ndef randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)",
+        "peekOfCode": "def get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:\n    return pow(101 - clamp(abs(interpreter.hype - args.hype), 0, 100), 1.6)\ndef randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):\n            super().__init__(group, args)",
         "detail": "parrot.interpreters.randomize",
         "documentation": {}
     },
@@ -3950,7 +3950,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.randomize",
         "description": "parrot.interpreters.randomize",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:\n    return pow(101 - clamp(abs(interpreter.hype - args.hype), 0, 100), 1.3)\ndef randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\ndef get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:\n    return pow(101 - clamp(abs(interpreter.hype - args.hype), 0, 100), 1.6)\ndef randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:\n    class Random(InterpreterBase[T]):\n        def __init__(\n            self,\n            group: List[T],\n            args: InterpreterArgs,\n        ):",
         "detail": "parrot.interpreters.randomize",
         "documentation": {}
     },

@@ -26,7 +26,7 @@ from parrot.state import State
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "40")), 1)
 
-HYPE_BUCKETS = [25, 50, 80]
+HYPE_BUCKETS = [10, 40, 70]
 
 
 def filter_nones(l):
@@ -109,8 +109,6 @@ class Director:
                 )[0][0]
                 hype_counts[bucket] += 1
 
-        print("hype_counts", hype_counts)
-
         smallest_bucket = sorted(hype_counts.items(), key=lambda i: i[1])[0][0]
 
         self.interpreters[eviction_index] = get_interpreter(
@@ -120,13 +118,11 @@ class Director:
         )
 
         print(
-            f"Shifted interpretation for {self.state.phrase} hype_goal {smallest_bucket}:"
+            f"Shifted interpretation for {self.state.phrase} hype_goal={smallest_bucket}:"
         )
         print(
             f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]} hype={self.interpreters[eviction_index].get_hype()}"
         )
-
-        print("hypes", [i.get_hype() for i in self.interpreters])
 
     def shift(self):
         self.shift_color_scheme()

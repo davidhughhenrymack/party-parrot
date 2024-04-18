@@ -12,7 +12,7 @@ T = TypeVar("T", bound=FixtureBase)
 
 
 def get_weight(interpreter: Type[InterpreterBase[T]], args: InterpreterArgs) -> float:
-    return pow(101 - clamp(abs(interpreter.hype - args.hype), 0, 100), 1.3)
+    return pow(101 - clamp(abs(interpreter.hype - args.hype), 0, 100), 1.6)
 
 
 def randomize(*interpreters: List[Type[InterpreterBase[T]]]) -> InterpreterBase[T]:

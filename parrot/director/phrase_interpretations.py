@@ -108,7 +108,7 @@ phrase_interpretations: Dict[
                     SlowSustained,
                     StrobeHighSustained,
                 ),
-                randomize(ColorAlternateBg, ColorBg, ColorRainbow, ColorFg),
+                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
             ),
         ],
         MovingHead: [
@@ -158,7 +158,7 @@ phrase_interpretations: Dict[
                     # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                randomize(PanLatched),
+                randomize(PanLatched, MoveCircles),
             ),
         ],
         Laser: [LaserLatch, StrobeHighSustained],
