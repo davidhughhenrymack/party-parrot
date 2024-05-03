@@ -9,6 +9,7 @@ from parrot.interpreters.base import (
     InterpreterBase,
     MoveCircles,
     MoveNod,
+    Noop,
     with_args,
 )
 from parrot.director.phrase import Phrase
@@ -188,13 +189,14 @@ phrase_interpretations: Dict[
         ],
         ChauvetDerby: [
             combo(
-                Spin,
+                randomize(Spin, Noop),
                 randomize(ColorAlternateBg, ColorFg),
                 randomize(
                     GentlePulse,
                     DimmerFadeLatched,
                     DimmerFadeLatched4s,
                     SlowDecay,
+                    Dimmer0,
                 ),
             )
         ],

@@ -7,10 +7,12 @@ from parrot.fixtures import (
     FiveBeamLaser,
     TwoBeamLaser,
 )
+from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
-from parrot.fixtures.chauvet.par import ChauvetParRGBWU
+from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
 from parrot.fixtures.chauvet.derby import ChauvetDerby
 from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
+from parrot.fixtures.led_par import ParRGBAWU
 
 venues = enum.Enum("Venues", ["dmack", "mtn_lotus"])
 
@@ -35,23 +37,12 @@ venue_patches = {
         ChauvetRotosphere_28Ch(164),
     ],
     venues.mtn_lotus: [
-        ParRGB(0),
-        ParRGB(7),
-        ParRGB(14),
-        ParRGB(21),
-        ParRGB(28),
-        ParRGB(35),
-        ParRGB(42),
-        ParRGB(49),
-        ChauvetSpot160_12Ch(56),
-        ChauvetSpot120_12Ch(68),
-        Motionstrip38(80, 0, 256),
-        Motionstrip38(108, 0, 256),
-        ChauvetParRGBWU(146),
-        ChauvetParRGBWU(153),
-        ChauvetDerby(160),
-        ChauvetDerby(167),
-        ChauvetMove_9Ch(174),
-        ChauvetMove_9Ch(183),
+        *[ParRGBAWU(i) for i in range(10, 90, 10)],
+        # ChauvetSpot160_12Ch(56),
+        # ChauvetSpot120_12Ch(68),
+        # Motionstrip38(80, 0, 256),
+        # Motionstrip38(108, 0, 256),
+        # GigbarMove ILS 50 channel
+        *ChauvetGigBarMoveILS(100),
     ],
 }

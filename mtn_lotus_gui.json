@@ -1,74 +1,58 @@
 {
-    "led-par@0": {
-        "x": 93,
-        "y": 149
+    "par-rgbawu@10": {
+        "x": 158,
+        "y": 243
     },
-    "led-par@7": {
-        "x": 174,
-        "y": 149
+    "par-rgbawu@20": {
+        "x": 212,
+        "y": 243
     },
-    "led-par@14": {
-        "x": 270,
-        "y": 149
+    "par-rgbawu@30": {
+        "x": 257,
+        "y": 242
     },
-    "led-par@21": {
-        "x": 348,
-        "y": 146
-    },
-    "led-par@28": {
-        "x": 97,
-        "y": 227
-    },
-    "led-par@35": {
-        "x": 173,
-        "y": 223
-    },
-    "led-par@42": {
-        "x": 267,
-        "y": 224
-    },
-    "led-par@49": {
-        "x": 348,
-        "y": 226
-    },
-    "chauvet-intimidator-160@56": {
-        "x": 339,
-        "y": 75
-    },
-    "chauvet-intimidator-120@68": {
-        "x": 89,
-        "y": 75
-    },
-    "motionstrip-38@80": {
-        "x": 143,
-        "y": 104
-    },
-    "motionstrip-38@108": {
-        "x": 243,
-        "y": 104
-    },
-    "chauvet-par-rgbwu@146": {
-        "x": 140,
-        "y": 355
-    },
-    "chauvet-par-rgbwu@153": {
+    "par-rgbawu@40": {
         "x": 306,
-        "y": 352
+        "y": 245
     },
-    "chauvet-derby@160": {
-        "x": 178,
+    "par-rgbawu@50": {
+        "x": 161,
+        "y": 20
+    },
+    "par-rgbawu@60": {
+        "x": 213,
+        "y": 20
+    },
+    "par-rgbawu@70": {
+        "x": 269,
+        "y": 20
+    },
+    "par-rgbawu@80": {
+        "x": 322,
+        "y": 17
+    },
+    "chauvet-par-rgbwu@100": {
+        "x": 389,
+        "y": 356
+    },
+    "chauvet-par-rgbwu@107": {
+        "x": 115,
+        "y": 359
+    },
+    "chauvet-derby@114": {
+        "x": 159,
         "y": 355
     },
-    "chauvet-derby@167": {
-        "x": 253,
-        "y": 353
+    "chauvet-derby@120": {
+        "x": 323,
+        "y": 355
     },
-    "chauvet-move@174": {
-        "x": 86,
-        "y": 345
-    },
-    "chauvet-move@183": {
-        "x": 350,
+    "chauvet-move@132": {
+        "x": 203,
         "y": 346
+    },
+    "chauvet-move@141": {
+        "x": 259,
+        "y": 344
     }
 }

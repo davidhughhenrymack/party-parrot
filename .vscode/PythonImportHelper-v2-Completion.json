@@ -128,6 +128,14 @@
         "documentation": {}
     },
     {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
         "label": "Lerpable",
         "importPath": "parrot.utils.lerp",
         "description": "parrot.utils.lerp",
@@ -200,6 +208,14 @@
         "documentation": {}
     },
     {
+        "label": "color_to_rgbw",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
         "label": "render_color_components",
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
@@ -225,6 +241,22 @@
     },
     {
         "label": "lerp_color",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "render_color_components",
+        "importPath": "parrot.utils.color_extra",
+        "description": "parrot.utils.color_extra",
+        "isExtraImport": true,
+        "detail": "parrot.utils.color_extra",
+        "documentation": {}
+    },
+    {
+        "label": "color_to_rgbw",
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
         "isExtraImport": true,
@@ -1110,6 +1142,14 @@
         "documentation": {}
     },
     {
+        "label": "ParRGBAWU",
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
         "label": "Motionstrip",
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
@@ -1255,6 +1295,14 @@
     },
     {
         "label": "MoveNod",
+        "importPath": "parrot.interpreters.base",
+        "description": "parrot.interpreters.base",
+        "isExtraImport": true,
+        "detail": "parrot.interpreters.base",
+        "documentation": {}
+    },
+    {
+        "label": "Noop",
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
         "isExtraImport": true,
@@ -1627,6 +1675,14 @@
         "description": "parrot.fixtures.chauvet.rotosphere",
         "isExtraImport": true,
         "detail": "parrot.fixtures.chauvet.rotosphere",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetDerby",
+        "importPath": "parrot.fixtures.chauvet.derby",
+        "description": "parrot.fixtures.chauvet.derby",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.derby",
         "documentation": {}
     },
     {
@@ -2399,6 +2455,46 @@
         "documentation": {}
     },
     {
+        "label": "ChauvetMove_9Ch",
+        "importPath": "parrot.fixtures.chauvet.move9",
+        "description": "parrot.fixtures.chauvet.move9",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.move9",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetMove_9Ch",
+        "importPath": "parrot.fixtures.chauvet.move9",
+        "description": "parrot.fixtures.chauvet.move9",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.move9",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetParRGBAWU",
+        "importPath": "parrot.fixtures.chauvet.par",
+        "description": "parrot.fixtures.chauvet.par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.par",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetParRGBAWU",
+        "importPath": "parrot.fixtures.chauvet.par",
+        "description": "parrot.fixtures.chauvet.par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.par",
+        "documentation": {}
+    },
+    {
+        "label": "ChauvetParRGBAWU",
+        "importPath": "parrot.fixtures.chauvet.par",
+        "description": "parrot.fixtures.chauvet.par",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.chauvet.par",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetMoverBase",
         "importPath": "parrot.fixtures.chauvet.mover_base",
         "description": "parrot.fixtures.chauvet.mover_base",
@@ -2573,22 +2669,6 @@
         "description": "parrot.gui.fixtures.rotosphere",
         "isExtraImport": true,
         "detail": "parrot.gui.fixtures.rotosphere",
-        "documentation": {}
-    },
-    {
-        "label": "ChauvetParRGBWU",
-        "importPath": "parrot.fixtures.chauvet.par",
-        "description": "parrot.fixtures.chauvet.par",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.chauvet.par",
-        "documentation": {}
-    },
-    {
-        "label": "ChauvetParRGBWU",
-        "importPath": "parrot.fixtures.chauvet.par",
-        "description": "parrot.fixtures.chauvet.par",
-        "isExtraImport": true,
-        "detail": "parrot.fixtures.chauvet.par",
         "documentation": {}
     },
     {
@@ -2875,11 +2955,11 @@
         "documentation": {}
     },
     {
-        "label": "ChauvetMove_9Ch",
-        "importPath": "parrot.fixtures.chauvet.move9",
-        "description": "parrot.fixtures.chauvet.move9",
+        "label": "ChauvetGigBarMoveILS",
+        "importPath": "parrot.fixtures.chauvet.gigbar",
+        "description": "parrot.fixtures.chauvet.gigbar",
         "isExtraImport": true,
-        "detail": "parrot.fixtures.chauvet.move9",
+        "detail": "parrot.fixtures.chauvet.gigbar",
         "documentation": {}
     },
     {
@@ -3143,6 +3223,15 @@
         "documentation": {}
     },
     {
+        "label": "ChauvetGigBarMoveILS",
+        "kind": 2,
+        "importPath": "parrot.fixtures.chauvet.gigbar",
+        "description": "parrot.fixtures.chauvet.gigbar",
+        "peekOfCode": "def ChauvetGigBarMoveILS(address: int):\n    return [\n        ChauvetParRGBAWU(address),\n        ChauvetParRGBAWU(address + 7),\n        ChauvetDerby(address + 14),\n        ChauvetDerby(address + 20),\n        ChauvetMove_9Ch(address + 32),\n        ChauvetMove_9Ch(address + 41),\n    ]",
+        "detail": "parrot.fixtures.chauvet.gigbar",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetSpot120_12Ch",
         "kind": 6,
         "importPath": "parrot.fixtures.chauvet.intimidator120",
@@ -3260,11 +3349,11 @@
         "documentation": {}
     },
     {
-        "label": "ChauvetParRGBWU",
+        "label": "ChauvetParRGBAWU",
         "kind": 6,
         "importPath": "parrot.fixtures.chauvet.par",
         "description": "parrot.fixtures.chauvet.par",
-        "peekOfCode": "class ChauvetParRGBWU(Par):\n    def __init__(self, address):\n        super().__init__(address, \"chauvet par rgbwu\", 7)\n    def set_color(self, color):\n        super().set_color(color)\n        render_color_components(\n            [\n                Color(\"red\"),\n                Color(\"green\"),\n                Color(\"blue\"),",
+        "peekOfCode": "class ChauvetParRGBAWU(Par):\n    def __init__(self, address):\n        super().__init__(address, \"chauvet par rgbwu\", 7)\n    def set_color(self, color):\n        super().set_color(color)\n        (r, g, b, w) = color_to_rgbw(color)\n        self.values[0] = r\n        self.values[1] = g\n        self.values[2] = b\n        self.values[4] = w",
         "detail": "parrot.fixtures.chauvet.par",
         "documentation": {}
     },
@@ -3391,6 +3480,15 @@
         "importPath": "parrot.fixtures.led_par",
         "description": "parrot.fixtures.led_par",
         "peekOfCode": "class ParRGB(Par):\n    def __init__(self, patch):\n        super().__init__(patch, \"led par\", 7)\n    def set_dimmer(self, value):\n        super().set_dimmer(value)\n        self.values[0] = value\n    def set_strobe(self, value):\n        self.values[4] = value\n        super().set_strobe(value)\n    def set_color(self, color):",
+        "detail": "parrot.fixtures.led_par",
+        "documentation": {}
+    },
+    {
+        "label": "ParRGBAWU",
+        "kind": 6,
+        "importPath": "parrot.fixtures.led_par",
+        "description": "parrot.fixtures.led_par",
+        "peekOfCode": "class ParRGBAWU(Par):\n    \"Mountain Lotus Par fixture\"\n    color_components = [\n        Color(\"red\"),\n        Color(\"green\"),\n        Color(\"blue\"),\n        Color(\"orange\"),\n        Color(\"white\"),\n        Color(\"violet\"),\n    ]",
         "detail": "parrot.fixtures.led_par",
         "documentation": {}
     },
@@ -4614,7 +4712,7 @@
         "kind": 2,
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
-        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))\ndef render_color_components(\n    components: List[Color],\n    target_color: Color,\n    dimmer: int,\n    values: List[int],\n    address=0,\n):",
+        "peekOfCode": "def dim_color(color: Color, dimmer: float) -> Color:\n    dimmer = clamp(dimmer, 0, 1)\n    return Color(rgb=(color.red * dimmer, color.green * dimmer, color.blue * dimmer))\ndef render_color_components(\n    components: List[Color],\n    target_color: Color,\n    dimmer: int,\n    values: List[int],\n    address=0,\n    count=2,",
         "detail": "parrot.utils.color_extra",
         "documentation": {}
     },
@@ -4623,7 +4721,7 @@
         "kind": 2,
         "importPath": "parrot.utils.color_extra",
         "description": "parrot.utils.color_extra",
-        "peekOfCode": "def render_color_components(\n    components: List[Color],\n    target_color: Color,\n    dimmer: int,\n    values: List[int],\n    address=0,\n):\n    distances = [\n        (idx, color, color_distance(target_color, color))\n        for idx, color in enumerate(components)",
+        "peekOfCode": "def render_color_components(\n    components: List[Color],\n    target_color: Color,\n    dimmer: int,\n    values: List[int],\n    address=0,\n    count=2,\n):\n    distances = [\n        (idx, color, color_distance(target_color, color))",
         "detail": "parrot.utils.color_extra",
         "documentation": {}
     },
@@ -5037,7 +5135,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n        self._venue = venues.dmack\n    @property\n    def phrase(self):\n        return self._phrase",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n        self._venue = venues.mtn_lotus\n    @property\n    def phrase(self):\n        return self._phrase",
         "detail": "parrot.state",
         "documentation": {}
     }

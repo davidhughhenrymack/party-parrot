@@ -10,7 +10,7 @@ from parrot.gui.fixtures.motionstrip import MotionstripRenderer
 from parrot.gui.fixtures.moving_head import MovingHeadRenderer
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.gui.fixtures.rotosphere import RotosphereRenderer
-from parrot.fixtures.chauvet.par import ChauvetParRGBWU
+from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
 from parrot.fixtures.chauvet.derby import ChauvetDerby
 
 

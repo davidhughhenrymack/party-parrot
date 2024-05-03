@@ -30,6 +30,7 @@ def render_color_components(
     dimmer: int,
     values: List[int],
     address=0,
+    count=2,
 ):
     distances = [
         (idx, color, color_distance(target_color, color))
@@ -39,7 +40,7 @@ def render_color_components(
         [i for i in distances if i[2] < 1], key=lambda i: i[2], reverse=True
     )
 
-    distances = distances[-2:]
+    distances = distances[-count:]
 
     for i in range(len(components)):
         values[address + i] = 0
