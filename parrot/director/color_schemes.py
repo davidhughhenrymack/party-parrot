@@ -47,7 +47,7 @@ def generate_random_scheme(
         ColorRelationship.analogous,
         ColorRelationship.thick,
         ColorRelationship.contrasting,
-        ColorRelationship.mono,
+        # ColorRelationship.mono,
         ColorRelationship.bright,
     ],
 ):
