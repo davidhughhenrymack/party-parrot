@@ -2992,7 +2992,7 @@
         "kind": 2,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "def generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        # ColorRelationship.mono,\n        ColorRelationship.bright,\n    ],\n):",
+        "peekOfCode": "def generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        # ColorRelationship.contrasting,\n        # ColorRelationship.mono,\n        # ColorRelationship.bright,\n    ],\n):",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -3037,7 +3037,7 @@
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "ColorRelationship = Enum(\n    \"ColorRelationship\", [\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"]\n)\ndef generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        # ColorRelationship.mono,",
+        "peekOfCode": "ColorRelationship = Enum(\n    \"ColorRelationship\", [\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"]\n)\ndef generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        # ColorRelationship.contrasting,\n        # ColorRelationship.mono,",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },

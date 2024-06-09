@@ -37,7 +37,7 @@ venue_patches = {
         ChauvetRotosphere_28Ch(164),
     ],
     venues.mtn_lotus: [
-        *[ParRGBAWU(i) for i in range(10, 90, 10)],
+        # *[ParRGBAWU(i) for i in range(10, 90, 10)],
         # ChauvetSpot160_12Ch(56),
         # ChauvetSpot120_12Ch(68),
         # Motionstrip38(80, 0, 256),

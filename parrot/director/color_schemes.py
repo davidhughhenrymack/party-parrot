@@ -46,9 +46,9 @@ def generate_random_scheme(
     methods: List[ColorRelationship] = [
         ColorRelationship.analogous,
         ColorRelationship.thick,
-        ColorRelationship.contrasting,
+        # ColorRelationship.contrasting,
         # ColorRelationship.mono,
-        ColorRelationship.bright,
+        # ColorRelationship.bright,
     ],
 ):
     fg = Color(key)
