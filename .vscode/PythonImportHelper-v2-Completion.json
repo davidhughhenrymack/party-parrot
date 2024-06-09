@@ -3208,7 +3208,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
+        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
         "detail": "parrot.director.themes",
         "documentation": {}
     },
@@ -3217,7 +3217,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "themes = [\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
+        "peekOfCode": "themes = [\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
         "detail": "parrot.director.themes",
         "documentation": {}
     },

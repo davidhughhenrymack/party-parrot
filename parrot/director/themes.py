@@ -10,8 +10,8 @@ from parrot.director.color_schemes import (
 Theme = namedtuple("Theme", ["name", "allow_rainbows", "color_scheme"])
 
 themes = [
-    Theme("Rave", False, scheme_standard),
     Theme("Pride", True, scheme_random),
+    Theme("Rave", False, scheme_standard),
     Theme("Berlin", False, scheme_berlin),
     Theme("Tropical", True, scheme_tropical),
 ]

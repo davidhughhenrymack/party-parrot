@@ -44,5 +44,8 @@ venue_patches = {
         # Motionstrip38(108, 0, 256),
         # GigbarMove ILS 50 channel
         *ChauvetGigBarMoveILS(100),
+        TwoBeamLaser(150),
+        ChauvetSpot120_12Ch(160),
+        ChauvetSpot160_12Ch(172),
     ],
 }

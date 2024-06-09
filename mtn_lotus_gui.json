@@ -58,5 +58,17 @@
     "chauvet-move@141": {
         "x": 259,
         "y": 344
+    },
+    "oultia-2-beam-laser@150": {
+        "x": 390,
+        "y": 302
+    },
+    "chauvet-intimidator-120@160": {
+        "x": 432,
+        "y": 288
+    },
+    "chauvet-intimidator-160@172": {
+        "x": 360,
+        "y": 296
     }
 }
