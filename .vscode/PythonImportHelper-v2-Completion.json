@@ -1630,6 +1630,14 @@
         "documentation": {}
     },
     {
+        "label": "Laser",
+        "importPath": "parrot.fixtures.laser",
+        "description": "parrot.fixtures.laser",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.laser",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetRotosphere_28Ch",
         "importPath": "parrot.fixtures.chauvet.rotosphere",
         "description": "parrot.fixtures.chauvet.rotosphere",
@@ -2984,7 +2992,7 @@
         "kind": 2,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "def generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        ColorRelationship.mono,\n        ColorRelationship.bright,\n    ],\n):",
+        "peekOfCode": "def generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        # ColorRelationship.mono,\n        ColorRelationship.bright,\n    ],\n):",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -3029,7 +3037,7 @@
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "ColorRelationship = Enum(\n    \"ColorRelationship\", [\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"]\n)\ndef generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        ColorRelationship.mono,",
+        "peekOfCode": "ColorRelationship = Enum(\n    \"ColorRelationship\", [\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"]\n)\ndef generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        # ColorRelationship.mono,",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -3223,11 +3231,20 @@
         "documentation": {}
     },
     {
+        "label": "ChauvetGigbarLaser",
+        "kind": 6,
+        "importPath": "parrot.fixtures.chauvet.gigbar",
+        "description": "parrot.fixtures.chauvet.gigbar",
+        "peekOfCode": "class ChauvetGigbarLaser(Laser):\n    def __init__(self, address):\n        super().__init__(address, \"gigbar laser\", 1)\n    def set_dimmer(self, value):\n        self.values[0] = 6 if value > 0 else 0\ndef ChauvetGigBarMoveILS(address: int):\n    return [\n        ChauvetParRGBAWU(address),\n        ChauvetParRGBAWU(address + 7),\n        ChauvetDerby(address + 14),",
+        "detail": "parrot.fixtures.chauvet.gigbar",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetGigBarMoveILS",
         "kind": 2,
         "importPath": "parrot.fixtures.chauvet.gigbar",
         "description": "parrot.fixtures.chauvet.gigbar",
-        "peekOfCode": "def ChauvetGigBarMoveILS(address: int):\n    return [\n        ChauvetParRGBAWU(address),\n        ChauvetParRGBAWU(address + 7),\n        ChauvetDerby(address + 14),\n        ChauvetDerby(address + 20),\n        ChauvetMove_9Ch(address + 32),\n        ChauvetMove_9Ch(address + 41),\n    ]",
+        "peekOfCode": "def ChauvetGigBarMoveILS(address: int):\n    return [\n        ChauvetParRGBAWU(address),\n        ChauvetParRGBAWU(address + 7),\n        ChauvetDerby(address + 14),\n        ChauvetDerby(address + 20),\n        ChauvetGigbarLaser(address + 31),\n        ChauvetMove_9Ch(address + 32),\n        ChauvetMove_9Ch(address + 41),\n    ]",
         "detail": "parrot.fixtures.chauvet.gigbar",
         "documentation": {}
     },
