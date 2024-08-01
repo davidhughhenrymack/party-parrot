@@ -14,6 +14,7 @@ numpy = "^2.0.1"
 scipy = "^1.14.0"
 events = "^0.5"
 tk = "^0.1.0"
+black = "^24.4.2"
 
 
 [build-system]

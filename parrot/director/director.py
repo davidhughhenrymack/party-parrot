@@ -152,6 +152,7 @@ class Director:
         self.shift_count += 1
 
     def step(self, frame: Frame):
+        self.last_frame = frame
         scheme = self.scheme.render()
         run_time = time.time() - self.start_time
         warmup_phase = min(1, run_time / WARMUP_SECONDS)
@@ -181,3 +182,6 @@ class Director:
             i.render(dmx)
 
         dmx.submit()
+
+    def deploy_hype(self):
+        self.phrase_machine.deploy_hype(self.last_frame)

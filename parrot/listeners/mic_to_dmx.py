@@ -68,10 +68,12 @@ class MicToDmx(object):
 
         self.dmx = get_controller()
 
-        if SHOW_GUI:
-            self.window = Window(self.state, lambda: self.quit())
-
         self.director = Director(self.state)
+
+        if SHOW_GUI:
+            self.window = Window(self.state, lambda: self.quit(), self.director)
+
+     
 
         self.frame_count = 0
 

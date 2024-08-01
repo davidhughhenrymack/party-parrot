@@ -3,6 +3,7 @@ import os
 from tkinter import *
 from tkinter.ttk import Combobox
 
+from parrot.director.director import Director
 import parrot.director.frame
 from parrot.state import State
 from parrot.director.phrase import Phrase
@@ -22,7 +23,7 @@ SHOW_PLOT = os.environ.get("HIDE_PLOT", "false") != "true"
 
 
 class Window(Tk):
-    def __init__(self, state: State, quit: callable):
+    def __init__(self, state: State, quit: callable, director: Director):
         super().__init__()
 
         self.state = state
@@ -93,14 +94,36 @@ class Window(Tk):
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
         # self.label.pack()
 
-        # self.scale = Scale(
-        #     self, from_=0, to=100, length=CANVAS_WIDTH, orient=HORIZONTAL
-        # )
-        # self.scale.set(self.state.hype)
-        # self.scale.bind(
-        #     "<ButtonRelease-1>", lambda e: self.state.set_hype(self.scale.get())
-        # )
-        # self.scale.pack()
+        self.scale = Scale(
+            self, from_=0, to=100, length=CANVAS_WIDTH, orient=HORIZONTAL
+        )
+        self.scale.set(self.state.hype)
+        self.scale.bind(
+            "<ButtonRelease-1>", lambda e: self.state.set_hype(self.scale.get())
+        )
+        self.scale.pack()
+
+
+        self.btn_frame = Frame(self, background=BG)
+
+        self.deploy_hype =  Button(
+                self.btn_frame,
+                text="HYPE!!",
+                command=lambda: director.deploy_hype(),
+                highlightbackground=BG,
+                height=2,
+            )
+        self.deploy_hype.pack(side=LEFT, padx=5, pady=5)
+        
+        self.shift =  Button(
+                self.btn_frame,
+                text="Shift",
+                command=lambda: director.shift(),
+                highlightbackground=BG,
+                height=2,
+            )
+        self.shift.pack(side=LEFT, padx=5, pady=5)
+        self.btn_frame.pack()
 
         if SHOW_PLOT:
             self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
