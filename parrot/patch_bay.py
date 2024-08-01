@@ -34,7 +34,7 @@ venue_patches = {
         Motionstrip38(154, 0, 256),
         FiveBeamLaser(100),
         TwoBeamLaser(120),
-        ChauvetRotosphere_28Ch(164),
+        # ChauvetRotosphere_28Ch(164),
     ],
     venues.mtn_lotus: [
         *[ParRGBAWU(i) for i in range(10, 90, 10)],
