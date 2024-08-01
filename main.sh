@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-python3 -m parrot.main
+poetry run python -m parrot.main
