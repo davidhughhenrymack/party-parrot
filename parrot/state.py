@@ -9,7 +9,7 @@ class State:
         self.events = Events()
 
         self._phrase = None
-        self._hype = 75
+        self._hype = 30
         self._theme = themes[0]
         self._venue = venues.dmack
 

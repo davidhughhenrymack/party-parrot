@@ -17,8 +17,8 @@ def acceptable_test(args: InterpreterArgs, hype, has_rainbow):
     if has_rainbow and not args.allow_rainbows:
         return False
 
-    # if hype > args.hype:
-    #     return False
+    if hype > args.hype:
+        return False
 
     return True
 
