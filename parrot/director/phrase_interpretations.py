@@ -109,6 +109,7 @@ phrase_interpretations: Dict[
                     SequenceFadeDimmers,
                     hype_switch(
                         randomize(
+                            OnWhenNoSustained,
                             GentlePulse,
                             VerySlowDecay,
                             SlowSustained,
