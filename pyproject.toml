@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "party-parrot"
+version = "0.1.0"
+description = ""
+authors = ["David Mack"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+PyAudio = "*"
+DMXEnttecPro = "^0.4"
+matplotlib = "^3.9.1"
+numpy = "^2.0.1"
+scipy = "^1.14.0"
+events = "^0.5"
+tk = "^0.1.0"
+black = "^24.4.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

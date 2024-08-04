@@ -105,11 +105,17 @@ phrase_interpretations: Dict[
         Par: [
             combo(
                 randomize(
-                    GentlePulse,
                     DimmersBeatChase,
-                    VerySlowDecay,
-                    SlowSustained,
                     SequenceFadeDimmers,
+                    hype_switch(
+                        randomize(
+                            OnWhenNoSustained,
+                            GentlePulse,
+                            VerySlowDecay,
+                            SlowSustained,
+                        ),
+                        randomize(StrobeHighSustained, DimmersBeatChase),
+                    ),
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
             ),
@@ -167,7 +173,7 @@ phrase_interpretations: Dict[
                 randomize(PanLatched, MoveCircles),
             ),
         ],
-        Laser: [LaserLatch, StrobeHighSustained],
+        Laser: [hype_switch(LaserLatch, Dimmer255), StrobeHighSustained],
         ChauvetRotosphere_28Ch: [
             combo(
                 RotosphereSpinColor,

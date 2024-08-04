@@ -11,3 +11,14 @@ It listens on your computer's microphone, then coordinates any number of DMX fix
  - Lasers
 
 Via Entec Pro USB -> DMX
+
+
+# Installation
+
+1. `brew install portaudio`
+2. `brew install python-tk@3.12`
+3. `poetry install`
+
+# Run
+
+`./main.sh`

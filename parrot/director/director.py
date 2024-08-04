@@ -118,27 +118,27 @@ class Director:
         eviction_index = random.randint(0, len(self.interpreters) - 1)
         eviction_group = self.fixture_groups[eviction_index]
 
-        hype_counts = {key: 0 for key in HYPE_BUCKETS}
+        # hype_counts = {key: 0 for key in HYPE_BUCKETS}
 
-        for idx, i in enumerate(self.interpreters):
-            if idx != eviction_index:
-                hype = i.get_hype()
-                bucket = sorted(
-                    [(bucket, abs(hype - bucket)) for bucket in HYPE_BUCKETS],
-                    key=lambda i: i[1],
-                )[0][0]
-                hype_counts[bucket] += 1
+        # for idx, i in enumerate(self.interpreters):
+        #     if idx != eviction_index:
+        #         hype = i.get_hype()
+        #         bucket = sorted(
+        #             [(bucket, abs(hype - bucket)) for bucket in HYPE_BUCKETS],
+        #             key=lambda i: i[1],
+        #         )[0][0]
+        #         hype_counts[bucket] += 1
 
-        smallest_bucket = sorted(hype_counts.items(), key=lambda i: i[1])[0][0]
+        # smallest_bucket = sorted(hype_counts.items(), key=lambda i: i[1])[0][0]
 
         self.interpreters[eviction_index] = get_interpreter(
             self.state.phrase,
             eviction_group,
-            InterpreterArgs(smallest_bucket, self.state.theme.allow_rainbows),
+            InterpreterArgs(self.state.hype, self.state.theme.allow_rainbows),
         )
 
         print(
-            f"Shifted interpretation for {self.state.phrase} hype_goal={smallest_bucket}:"
+            f"Shifted interpretation for {self.state.phrase} max_hype={self.state.hype}:"
         )
         print(
             f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]} hype={self.interpreters[eviction_index].get_hype()}"
@@ -152,6 +152,7 @@ class Director:
         self.shift_count += 1
 
     def step(self, frame: Frame):
+        self.last_frame = frame
         scheme = self.scheme.render()
         run_time = time.time() - self.start_time
         warmup_phase = min(1, run_time / WARMUP_SECONDS)
@@ -181,3 +182,6 @@ class Director:
             i.render(dmx)
 
         dmx.submit()
+
+    def deploy_hype(self):
+        self.phrase_machine.deploy_hype(self.last_frame)
