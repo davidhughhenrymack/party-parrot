@@ -13,7 +13,7 @@ from parrot.director.director import Director
 from parrot.director.director import Frame
 from parrot.director.frame import FrameSignal
 from parrot.utils.dmx_utils import get_controller
-from parrot.gui.gui import Window
+
 from parrot.state import State
 
 THRESHOLD = 0  # dB
@@ -28,6 +28,9 @@ SIGNAL_STAT_PERIOD_SECONDS = 10
 SIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)
 
 SHOW_GUI = os.environ.get("SHOW_GUI", "True") == "True"
+
+if SHOW_GUI:
+    from parrot.gui.gui import Window
 
 
 def get_rms(block):

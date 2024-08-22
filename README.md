@@ -22,3 +22,7 @@ Via Entec Pro USB -> DMX
 # Run
 
 `./main.sh`
+
+# List devices
+
+`poetry run python -m DMXEnttecPro.utils`

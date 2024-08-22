@@ -4,9 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["David Mack"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 PyAudio = "*"
 DMXEnttecPro = "^0.4"
 matplotlib = "^3.9.1"
@@ -15,6 +16,7 @@ scipy = "^1.14.0"
 events = "^0.5"
 tk = "^0.1.0"
 black = "^24.4.2"
+pyenttec = "^1.4"
 
 
 [build-system]

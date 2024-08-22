@@ -25,6 +25,7 @@ def get_controller():
 
     try:
         return Controller(usb_path)
-    except:
+    except Exception as e:
+        print(e)
         print("Could not connect to DMX controller. Using mock controller instead.")
         return MockDmxController()

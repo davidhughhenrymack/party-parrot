@@ -4,24 +4,15 @@ usb_path = "/dev/cu.usbserial-EN419206"
 import math
 from time import sleep
 from DMXEnttecPro import Controller
+from parrot.utils.dmx_utils import dmx_clamp_list
+from parrot.utils.math import clamp
 
 dmx = Controller(usb_path)  # Typical of Linux
 par_patch = 19
 
 
-def clamp(n, min, max):
-    if n < min:
-        return min
-    elif n > max:
-        return max
-    else:
-        return n
-
-def int_clamp_list(items):
-    return [int(clamp(item, 0, 255)) for item in items]
-
 def set_par(patch, r, g, b):
-    values = int_clamp_list([
+    values = dmx_clamp_list([
         255, 
         r, 
         g, 
