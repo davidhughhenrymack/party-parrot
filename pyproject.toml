@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["David Mack"]
 readme = "README.md"
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -22,3 +21,4 @@ pyenttec = "^1.4"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+package-mode = false
