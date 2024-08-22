@@ -38,7 +38,6 @@ venue_patches = {
     ],
     venues.mtn_lotus: [
         *[ParRGBAWU(i) for i in range(10, 90, 10)],
-
         Motionstrip38(80, 0, 256),
         Motionstrip38(108, 0, 256),
         # GigbarMove ILS 50 channel

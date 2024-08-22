@@ -2697,6 +2697,30 @@
         "documentation": {}
     },
     {
+        "label": "Director",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Director",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
+        "label": "Frame",
+        "importPath": "parrot.director.director",
+        "description": "parrot.director.director",
+        "isExtraImport": true,
+        "detail": "parrot.director.director",
+        "documentation": {}
+    },
+    {
         "label": "themes",
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
@@ -2855,22 +2879,6 @@
         "documentation": {}
     },
     {
-        "label": "Director",
-        "importPath": "parrot.director.director",
-        "description": "parrot.director.director",
-        "isExtraImport": true,
-        "detail": "parrot.director.director",
-        "documentation": {}
-    },
-    {
-        "label": "Frame",
-        "importPath": "parrot.director.director",
-        "description": "parrot.director.director",
-        "isExtraImport": true,
-        "detail": "parrot.director.director",
-        "documentation": {}
-    },
-    {
         "label": "Window",
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
@@ -2992,7 +3000,7 @@
         "kind": 2,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "def generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        # ColorRelationship.mono,\n        ColorRelationship.bright,\n    ],\n):",
+        "peekOfCode": "def generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        # ColorRelationship.contrasting,\n        # ColorRelationship.mono,\n        # ColorRelationship.bright,\n    ],\n):",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -3037,7 +3045,7 @@
         "kind": 5,
         "importPath": "parrot.director.color_schemes",
         "description": "parrot.director.color_schemes",
-        "peekOfCode": "ColorRelationship = Enum(\n    \"ColorRelationship\", [\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"]\n)\ndef generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        ColorRelationship.contrasting,\n        # ColorRelationship.mono,",
+        "peekOfCode": "ColorRelationship = Enum(\n    \"ColorRelationship\", [\"analogous\", \"contrasting\", \"thick\", \"mono\", \"bright\"]\n)\ndef generate_random_scheme(\n    key: Color,\n    methods: List[ColorRelationship] = [\n        ColorRelationship.analogous,\n        ColorRelationship.thick,\n        # ColorRelationship.contrasting,\n        # ColorRelationship.mono,",
         "detail": "parrot.director.color_schemes",
         "documentation": {}
     },
@@ -3208,7 +3216,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
+        "peekOfCode": "Theme = namedtuple(\"Theme\", [\"name\", \"allow_rainbows\", \"color_scheme\"])\nthemes = [\n    Theme(\"Rave\", True, scheme_standard),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:",
         "detail": "parrot.director.themes",
         "documentation": {}
     },
@@ -3217,7 +3225,7 @@
         "kind": 5,
         "importPath": "parrot.director.themes",
         "description": "parrot.director.themes",
-        "peekOfCode": "themes = [\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Rave\", False, scheme_standard),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
+        "peekOfCode": "themes = [\n    Theme(\"Rave\", True, scheme_standard),\n    Theme(\"Pride\", True, scheme_random),\n    Theme(\"Berlin\", False, scheme_berlin),\n    Theme(\"Tropical\", True, scheme_tropical),\n]\ndef get_theme_by_name(name):\n    for theme in themes:\n        if theme.name == name:\n            return theme",
         "detail": "parrot.director.themes",
         "documentation": {}
     },
@@ -3820,7 +3828,7 @@
         "kind": 6,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.top_frame = Frame(self, background=BG)",
+        "peekOfCode": "class Window(Tk):\n    def __init__(self, state: State, quit: callable, director: Director):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)\n        self.top_frame = Frame(self, background=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3829,7 +3837,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)",
+        "peekOfCode": "CIRCLE_SIZE = 30\nFIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable, director: Director):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3838,7 +3846,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
+        "peekOfCode": "FIXTURE_MARGIN = 20\nBG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable, director: Director):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3847,7 +3855,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
+        "peekOfCode": "BG = \"#222\"\nCANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable, director: Director):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3856,7 +3864,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "CANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
+        "peekOfCode": "CANVAS_WIDTH = 500\nSHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable, director: Director):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3865,7 +3873,7 @@
         "kind": 5,
         "importPath": "parrot.gui.gui",
         "description": "parrot.gui.gui",
-        "peekOfCode": "SHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
+        "peekOfCode": "SHOW_PLOT = os.environ.get(\"HIDE_PLOT\", \"false\") != \"true\"\nclass Window(Tk):\n    def __init__(self, state: State, quit: callable, director: Director):\n        super().__init__()\n        self.state = state\n        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)\n        self.title(\"Party Parrot\")\n        # set background color to black\n        self.configure(bg=BG)\n        self.protocol(\"WM_DELETE_WINDOW\", quit)",
         "detail": "parrot.gui.gui",
         "documentation": {}
     },
@@ -3964,7 +3972,7 @@
         "kind": 2,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "def acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    # if hype > args.hype:\n    #     return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):",
+        "peekOfCode": "def acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0\n    def __init__(self, group: List[T], args: InterpreterArgs):",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3982,7 +3990,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nInterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    # if hype > args.hype:\n    #     return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False",
+        "peekOfCode": "T = TypeVar(\"T\", bound=FixtureBase)\nInterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -3991,7 +3999,7 @@
         "kind": 5,
         "importPath": "parrot.interpreters.base",
         "description": "parrot.interpreters.base",
-        "peekOfCode": "InterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    # if hype > args.hype:\n    #     return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0",
+        "peekOfCode": "InterpreterArgs = namedtuple(\"InterpreterArgs\", [\"hype\", \"allow_rainbows\"])\ndef acceptable_test(args: InterpreterArgs, hype, has_rainbow):\n    if has_rainbow and not args.allow_rainbows:\n        return False\n    if hype > args.hype:\n        return False\n    return True\nclass InterpreterBase(Generic[T]):\n    has_rainbow = False\n    hype = 0",
         "detail": "parrot.interpreters.base",
         "documentation": {}
     },
@@ -5152,7 +5160,7 @@
         "kind": 6,
         "importPath": "parrot.state",
         "description": "parrot.state",
-        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 75\n        self._theme = themes[0]\n        self._venue = venues.mtn_lotus\n    @property\n    def phrase(self):\n        return self._phrase",
+        "peekOfCode": "class State:\n    def __init__(self):\n        self.events = Events()\n        self._phrase = None\n        self._hype = 30\n        self._theme = themes[0]\n        self._venue = venues.dmack\n    @property\n    def phrase(self):\n        return self._phrase",
         "detail": "parrot.state",
         "documentation": {}
     }
