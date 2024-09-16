@@ -136,6 +136,14 @@
         "documentation": {}
     },
     {
+        "label": "Color",
+        "importPath": "parrot.utils.colour",
+        "description": "parrot.utils.colour",
+        "isExtraImport": true,
+        "detail": "parrot.utils.colour",
+        "documentation": {}
+    },
+    {
         "label": "Lerpable",
         "importPath": "parrot.utils.lerp",
         "description": "parrot.utils.lerp",
@@ -719,6 +727,22 @@
         "isExtraImport": true,
         "importPath": "time",
         "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "sleep",
+        "importPath": "time",
+        "description": "time",
+        "isExtraImport": true,
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "sleep",
+        "importPath": "time",
+        "description": "time",
+        "isExtraImport": true,
         "detail": "time",
         "documentation": {}
     },
@@ -2463,6 +2487,14 @@
         "documentation": {}
     },
     {
+        "label": "clamp",
+        "importPath": "parrot.utils.math",
+        "description": "parrot.utils.math",
+        "isExtraImport": true,
+        "detail": "parrot.utils.math",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetMove_9Ch",
         "importPath": "parrot.fixtures.chauvet.move9",
         "description": "parrot.fixtures.chauvet.move9",
@@ -2552,6 +2584,22 @@
     },
     {
         "label": "get_controller",
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_clamp_list",
+        "importPath": "parrot.utils.dmx_utils",
+        "description": "parrot.utils.dmx_utils",
+        "isExtraImport": true,
+        "detail": "parrot.utils.dmx_utils",
+        "documentation": {}
+    },
+    {
+        "label": "dmx_clamp_list",
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
         "isExtraImport": true,
@@ -2819,14 +2867,6 @@
         "documentation": {}
     },
     {
-        "label": "Ftdi",
-        "importPath": "pyftdi.ftdi",
-        "description": "pyftdi.ftdi",
-        "isExtraImport": true,
-        "detail": "pyftdi.ftdi",
-        "documentation": {}
-    },
-    {
         "label": "pyaudio",
         "kind": 6,
         "isExtraImport": true,
@@ -2879,11 +2919,20 @@
         "documentation": {}
     },
     {
-        "label": "Window",
-        "importPath": "parrot.gui.gui",
-        "description": "parrot.gui.gui",
+        "label": "tracemalloc",
+        "kind": 6,
         "isExtraImport": true,
-        "detail": "parrot.gui.gui",
+        "importPath": "tracemalloc",
+        "description": "tracemalloc",
+        "detail": "tracemalloc",
+        "documentation": {}
+    },
+    {
+        "label": "display_top",
+        "importPath": "parrot.utils.tracemalloc",
+        "description": "parrot.utils.tracemalloc",
+        "isExtraImport": true,
+        "detail": "parrot.utils.tracemalloc",
         "documentation": {}
     },
     {
@@ -2946,6 +2995,14 @@
         "documentation": {}
     },
     {
+        "label": "Controller",
+        "importPath": "DMXEnttecPro",
+        "description": "DMXEnttecPro",
+        "isExtraImport": true,
+        "detail": "DMXEnttecPro",
+        "documentation": {}
+    },
+    {
         "label": "MockDmxController",
         "importPath": "parrot.utils.mock_controller",
         "description": "parrot.utils.mock_controller",
@@ -2954,12 +3011,12 @@
         "documentation": {}
     },
     {
-        "label": "traceback",
+        "label": "linecache",
         "kind": 6,
         "isExtraImport": true,
-        "importPath": "traceback",
-        "description": "traceback",
-        "detail": "traceback",
+        "importPath": "linecache",
+        "description": "linecache",
+        "detail": "linecache",
         "documentation": {}
     },
     {
@@ -2971,11 +3028,29 @@
         "documentation": {}
     },
     {
+        "label": "argparse",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "argparse",
+        "description": "argparse",
+        "detail": "argparse",
+        "documentation": {}
+    },
+    {
         "label": "ChauvetGigBarMoveILS",
         "importPath": "parrot.fixtures.chauvet.gigbar",
         "description": "parrot.fixtures.chauvet.gigbar",
         "isExtraImport": true,
         "detail": "parrot.fixtures.chauvet.gigbar",
+        "documentation": {}
+    },
+    {
+        "label": "pyenttec",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pyenttec",
+        "description": "pyenttec",
+        "detail": "pyenttec",
         "documentation": {}
     },
     {
@@ -4521,7 +4596,7 @@
         "kind": 6,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "class MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999\n        self.spectrogram_buffer = None\n        self.signal_lookback = {",
+        "peekOfCode": "class MicToDmx(object):\n    def __init__(self, args):\n        self.args = args\n        if args.profile:\n            tracemalloc.start()\n        if not args.no_gui:\n            from parrot.gui.gui import Window\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4530,7 +4605,7 @@
         "kind": 2,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0\n        self.power_min = 99999999999999999",
+        "peekOfCode": "def get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self, args):\n        self.args = args\n        if args.profile:\n            tracemalloc.start()\n        if not args.no_gui:\n            from parrot.gui.gui import Window\n        self.pa = pyaudio.PyAudio()",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4539,7 +4614,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"",
+        "peekOfCode": "THRESHOLD = 0  # dB\nRATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4548,7 +4623,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):",
+        "peekOfCode": "RATE = 44100\nINPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4557,7 +4632,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
+        "peekOfCode": "INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms\nINPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4566,7 +4641,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)\nINPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4575,7 +4650,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):",
+        "peekOfCode": "INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)\nSPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self, args):",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4584,7 +4659,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()",
+        "peekOfCode": "SPECTOGRAPH_AVG_RATE = 275\nSPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self, args):\n        self.args = args",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4593,7 +4668,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()",
+        "peekOfCode": "SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3\nSIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self, args):\n        self.args = args\n        if args.profile:",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4602,7 +4677,7 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE",
+        "peekOfCode": "SIGNAL_STAT_PERIOD_SECONDS = 10\nSIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self, args):\n        self.args = args\n        if args.profile:\n            tracemalloc.start()",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -4611,16 +4686,16 @@
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nSHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD",
+        "peekOfCode": "SIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)\nPROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self, args):\n        self.args = args\n        if args.profile:\n            tracemalloc.start()\n        if not args.no_gui:",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
     {
-        "label": "SHOW_GUI",
+        "label": "PROFILE_MEMORY_INTERVAL_SECONDS",
         "kind": 5,
         "importPath": "parrot.listeners.mic_to_dmx",
         "description": "parrot.listeners.mic_to_dmx",
-        "peekOfCode": "SHOW_GUI = os.environ.get(\"SHOW_GUI\", \"True\") == \"True\"\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self):\n        self.pa = pyaudio.PyAudio()\n        self.stream = self.open_mic_stream()\n        self.avg_rate = RATE\n        self.threshold = THRESHOLD\n        self.power_max = 0",
+        "peekOfCode": "PROFILE_MEMORY_INTERVAL_SECONDS = 30\ndef get_rms(block):\n    return np.sqrt(np.mean(np.square(block)))\nclass MicToDmx(object):\n    def __init__(self, args):\n        self.args = args\n        if args.profile:\n            tracemalloc.start()\n        if not args.no_gui:\n            from parrot.gui.gui import Window",
         "detail": "parrot.listeners.mic_to_dmx",
         "documentation": {}
     },
@@ -5043,7 +5118,7 @@
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")",
+        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -5052,7 +5127,7 @@
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
+        "peekOfCode": "def get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -5061,7 +5136,7 @@
         "kind": 5,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except:\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
+        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -5138,6 +5213,69 @@
         "documentation": {}
     },
     {
+        "label": "display_top",
+        "kind": 2,
+        "importPath": "parrot.utils.tracemalloc",
+        "description": "parrot.utils.tracemalloc",
+        "peekOfCode": "def display_top(snapshot, key_type=\"lineno\", limit=10):\n    snapshot = snapshot.filter_traces(\n        (\n            tracemalloc.Filter(False, \"<frozen importlib._bootstrap>\"),\n            tracemalloc.Filter(False, \"<unknown>\"),\n        )\n    )\n    top_stats = snapshot.statistics(key_type)\n    print(\"\\033[94m---- Top %s lines ----\\033[0m\" % limit)\n    for index, stat in enumerate(top_stats[:limit], 1):",
+        "detail": "parrot.utils.tracemalloc",
+        "documentation": {}
+    },
+    {
+        "label": "set_par",
+        "kind": 2,
+        "importPath": "parrot.dmx-entec-pro",
+        "description": "parrot.dmx-entec-pro",
+        "peekOfCode": "def set_par(patch, r, g, b):\n    values = dmx_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, \n        0\n    ])",
+        "detail": "parrot.dmx-entec-pro",
+        "documentation": {}
+    },
+    {
+        "label": "usb_path",
+        "kind": 5,
+        "importPath": "parrot.dmx-entec-pro",
+        "description": "parrot.dmx-entec-pro",
+        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\nimport math\nfrom time import sleep\nfrom DMXEnttecPro import Controller\nfrom parrot.utils.dmx_utils import dmx_clamp_list\nfrom parrot.utils.math import clamp\ndmx = Controller(usb_path)  # Typical of Linux\npar_patch = 19\ndef set_par(patch, r, g, b):\n    values = dmx_clamp_list([",
+        "detail": "parrot.dmx-entec-pro",
+        "documentation": {}
+    },
+    {
+        "label": "dmx",
+        "kind": 5,
+        "importPath": "parrot.dmx-entec-pro",
+        "description": "parrot.dmx-entec-pro",
+        "peekOfCode": "dmx = Controller(usb_path)  # Typical of Linux\npar_patch = 19\ndef set_par(patch, r, g, b):\n    values = dmx_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, ",
+        "detail": "parrot.dmx-entec-pro",
+        "documentation": {}
+    },
+    {
+        "label": "par_patch",
+        "kind": 5,
+        "importPath": "parrot.dmx-entec-pro",
+        "description": "parrot.dmx-entec-pro",
+        "peekOfCode": "par_patch = 19\ndef set_par(patch, r, g, b):\n    values = dmx_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, \n        0",
+        "detail": "parrot.dmx-entec-pro",
+        "documentation": {}
+    },
+    {
+        "label": "frame",
+        "kind": 5,
+        "importPath": "parrot.dmx-entec-pro",
+        "description": "parrot.dmx-entec-pro",
+        "peekOfCode": "frame = 0\nwhile(True):\n    set_par(par_patch, math.sin(frame) * 128 + 128, 0, math.cos(frame) * 128 + 128)\n    sleep(0.1)\n    frame += 0.1",
+        "detail": "parrot.dmx-entec-pro",
+        "documentation": {}
+    },
+    {
+        "label": "parse_arguments",
+        "kind": 2,
+        "importPath": "parrot.main",
+        "description": "parrot.main",
+        "peekOfCode": "def parse_arguments():\n    parser = argparse.ArgumentParser(description=\"Parrot DMX Controller\")\n    parser.add_argument(\"--profile\", action=\"store_true\", help=\"Enable profiling\")\n    parser.add_argument(\n        \"--profile-interval\", type=int, default=10, help=\"Profiling interval in seconds\"\n    )\n    parser.add_argument(\"--no-gui\", action=\"store_true\", help=\"Disable GUI\")\n    parser.add_argument(\"--plot\", action=\"store_true\", help=\"Enable plotting\")\n    return parser.parse_args()\nif __name__ == \"__main__\":",
+        "detail": "parrot.main",
+        "documentation": {}
+    },
+    {
         "label": "venues",
         "kind": 5,
         "importPath": "parrot.patch_bay",
@@ -5153,6 +5291,42 @@
         "description": "parrot.patch_bay",
         "peekOfCode": "venue_patches = {\n    venues.dmack: [\n        ChauvetSpot160_12Ch(\n            patch=1,\n        ),\n        ChauvetSpot120_12Ch(\n            patch=140,\n        ),\n        ParRGB(12),\n        ParRGB(19),",
         "detail": "parrot.patch_bay",
+        "documentation": {}
+    },
+    {
+        "label": "set_par",
+        "kind": 2,
+        "importPath": "parrot.pyenttec",
+        "description": "parrot.pyenttec",
+        "peekOfCode": "def set_par(patch, r, g, b):\n    values = dmx_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, \n        0\n    ])",
+        "detail": "parrot.pyenttec",
+        "documentation": {}
+    },
+    {
+        "label": "port",
+        "kind": 5,
+        "importPath": "parrot.pyenttec",
+        "description": "parrot.pyenttec",
+        "peekOfCode": "port = dmx.select_port()\npar_patch = 19\ndef set_par(patch, r, g, b):\n    values = dmx_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, ",
+        "detail": "parrot.pyenttec",
+        "documentation": {}
+    },
+    {
+        "label": "par_patch",
+        "kind": 5,
+        "importPath": "parrot.pyenttec",
+        "description": "parrot.pyenttec",
+        "peekOfCode": "par_patch = 19\ndef set_par(patch, r, g, b):\n    values = dmx_clamp_list([\n        255, \n        r, \n        g, \n        b, \n        0, \n        0, \n        0",
+        "detail": "parrot.pyenttec",
+        "documentation": {}
+    },
+    {
+        "label": "frame",
+        "kind": 5,
+        "importPath": "parrot.pyenttec",
+        "description": "parrot.pyenttec",
+        "peekOfCode": "frame = 0\nwhile(True):\n    set_par(par_patch, math.sin(frame) * 128 + 128, 0, math.cos(frame) * 128 + 128)\n    sleep(0.1)\n    frame += 0.1",
+        "detail": "parrot.pyenttec",
         "documentation": {}
     },
     {

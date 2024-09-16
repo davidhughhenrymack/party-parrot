@@ -2,6 +2,7 @@
 
 import os
 import sys
+import tracemalloc
 import pyaudio
 import numpy as np
 from scipy import signal
@@ -15,6 +16,8 @@ from parrot.director.frame import FrameSignal
 from parrot.utils.dmx_utils import get_controller
 
 from parrot.state import State
+from parrot.utils.colour import Color
+from parrot.utils.tracemalloc import display_top
 
 THRESHOLD = 0  # dB
 RATE = 44100
@@ -22,15 +25,13 @@ INPUT_BLOCK_TIME = 30 * 0.001  # 30 ms
 INPUT_FRAMES_PER_BLOCK = int(RATE * INPUT_BLOCK_TIME)
 INPUT_FRAMES_PER_BLOCK_BUFFER = int(RATE * INPUT_BLOCK_TIME)
 SPECTOGRAPH_AVG_RATE = 275
-SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 12
+SPECTOGRAPH_BUFFER_SIZE = SPECTOGRAPH_AVG_RATE * 3
 
 SIGNAL_STAT_PERIOD_SECONDS = 10
 SIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)
 
-SHOW_GUI = os.environ.get("SHOW_GUI", "True") == "True"
 
-if SHOW_GUI:
-    from parrot.gui.gui import Window
+PROFILE_MEMORY_INTERVAL_SECONDS = 30
 
 
 def get_rms(block):
@@ -38,7 +39,15 @@ def get_rms(block):
 
 
 class MicToDmx(object):
-    def __init__(self):
+    def __init__(self, args):
+        self.args = args
+
+        if args.profile:
+            tracemalloc.start()
+
+        if not args.no_gui:
+            from parrot.gui.gui import Window
+
         self.pa = pyaudio.PyAudio()
         self.stream = self.open_mic_stream()
 
@@ -73,10 +82,8 @@ class MicToDmx(object):
 
         self.director = Director(self.state)
 
-        if SHOW_GUI:
+        if not self.args.no_gui:
             self.window = Window(self.state, lambda: self.quit(), self.director)
-
-     
 
         self.frame_count = 0
 
@@ -84,9 +91,18 @@ class MicToDmx(object):
         self.should_stop = True
 
     def run(self):
+        last_profiled_at = time.time()
+
         while not self.should_stop:
             try:
                 self.listen()
+
+                if self.args.profile:
+                    if time.time() - last_profiled_at > self.args.profile_interval:
+                        last_profiled_at = time.time()
+                        snapshot = tracemalloc.take_snapshot()
+                        display_top(snapshot)
+
             except (KeyboardInterrupt, SystemExit) as e:
                 break
 
@@ -251,7 +267,7 @@ class MicToDmx(object):
         self.director.step(frame)
         self.director.render(self.dmx)
 
-        if SHOW_GUI:
+        if not self.args.no_gui:
             self.window.step(frame)
             self.window.update()
 
