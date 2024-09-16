@@ -5109,7 +5109,7 @@
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def dmx_clamp(n):\n    if math.isnan(n):\n        return 0\n    return int(clamp(n, 0, 255))\ndef dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()",
+        "peekOfCode": "def dmx_clamp(n):\n    if math.isnan(n):\n        return 0\n    return int(clamp(n, 0, 255))\ndef dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        print(\"Using mock DMX controller\")",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -5118,7 +5118,7 @@
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)",
+        "peekOfCode": "def dmx_clamp_list(items):\n    return [int(clamp(item, 0, 255)) for item in items]\nusb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        print(\"Using mock DMX controller\")\n        return MockDmxController()\n    try:\n        print(\"Using ENTTEC Pro DMX controller\")\n        return Controller(usb_path)",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -5127,7 +5127,7 @@
         "kind": 2,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "def get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
+        "peekOfCode": "def get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        print(\"Using mock DMX controller\")\n        return MockDmxController()\n    try:\n        print(\"Using ENTTEC Pro DMX controller\")\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },
@@ -5136,7 +5136,7 @@
         "kind": 5,
         "importPath": "parrot.utils.dmx_utils",
         "description": "parrot.utils.dmx_utils",
-        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        return MockDmxController()\n    try:\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)\n        print(\"Could not connect to DMX controller. Using mock controller instead.\")\n        return MockDmxController()",
+        "peekOfCode": "usb_path = \"/dev/cu.usbserial-EN419206\"\ndef get_controller():\n    if os.environ.get(\"MOCK_DMX\", False) != False:\n        print(\"Using mock DMX controller\")\n        return MockDmxController()\n    try:\n        print(\"Using ENTTEC Pro DMX controller\")\n        return Controller(usb_path)\n    except Exception as e:\n        print(e)",
         "detail": "parrot.utils.dmx_utils",
         "documentation": {}
     },

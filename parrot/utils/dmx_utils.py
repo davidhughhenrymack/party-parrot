@@ -21,9 +21,11 @@ usb_path = "/dev/cu.usbserial-EN419206"
 
 def get_controller():
     if os.environ.get("MOCK_DMX", False) != False:
+        print("Using mock DMX controller")
         return MockDmxController()
 
     try:
+        print("Using ENTTEC Pro DMX controller")
         return Controller(usb_path)
     except Exception as e:
         print(e)
