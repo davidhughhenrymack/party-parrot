@@ -957,14 +957,6 @@
         "documentation": {}
     },
     {
-        "label": "FrameSignal",
-        "importPath": "parrot.director.frame",
-        "description": "parrot.director.frame",
-        "isExtraImport": true,
-        "detail": "parrot.director.frame",
-        "documentation": {}
-    },
-    {
         "label": "PhraseMachine",
         "importPath": "parrot.director.phrase_machine",
         "description": "parrot.director.phrase_machine",
@@ -1747,6 +1739,14 @@
         "description": "parrot.fixtures.chauvet.derby",
         "isExtraImport": true,
         "detail": "parrot.fixtures.chauvet.derby",
+        "documentation": {}
+    },
+    {
+        "label": "MovingHead",
+        "importPath": "parrot.fixtures.moving_head",
+        "description": "parrot.fixtures.moving_head",
+        "isExtraImport": true,
+        "detail": "parrot.fixtures.moving_head",
         "documentation": {}
     },
     {
@@ -4506,7 +4506,7 @@
         "kind": 6,
         "importPath": "parrot.interpreters.strobe",
         "description": "parrot.interpreters.strobe",
-        "peekOfCode": "class StrobeHighSustained(InterpreterBase):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(50)\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        for i in self.group:\n            i.set_strobe(0)",
+        "peekOfCode": "class StrobeHighSustained(InterpreterBase[MovingHead]):\n    hype = 90\n    def step(self, frame, scheme):\n        for i in self.group:\n            i.set_strobe(220)\n            i.set_dimmer(255)\n    def exit(self, frame: Frame, scheme: ColorScheme):\n        for i in self.group:\n            i.set_strobe(0)\n            i.set_dimmer(0)",
         "detail": "parrot.interpreters.strobe",
         "documentation": {}
     },
