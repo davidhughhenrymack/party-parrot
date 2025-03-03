@@ -15,6 +15,7 @@ class State:
         self._hype = 30
         self._theme = themes[0]
         self._venue = venues.dmack
+        self._manual_dimmer = 0  # New property for manual control
 
         # Try to load state from file
         self.load_state()
@@ -63,12 +64,24 @@ class State:
         self._venue = value
         self.events.on_venue_change(self._venue)
 
+    @property
+    def manual_dimmer(self):
+        return self._manual_dimmer
+
+    def set_manual_dimmer(self, value):
+        if self._manual_dimmer == value:
+            return
+
+        self._manual_dimmer = value
+        self.events.on_manual_dimmer_change(self._manual_dimmer)
+
     def save_state(self):
         """Save the current state to a JSON file."""
         state_data = {
             "hype": self._hype,
             "theme_name": self._theme.name if hasattr(self._theme, "name") else None,
             "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
+            "manual_dimmer": self._manual_dimmer,
         }
 
         try:
@@ -114,6 +127,9 @@ class State:
                     ):
                         self._venue = venue
                         break
+
+            if "manual_dimmer" in state_data:
+                self._manual_dimmer = state_data["manual_dimmer"]
 
         except Exception as e:
             print(f"Error loading state: {e}")

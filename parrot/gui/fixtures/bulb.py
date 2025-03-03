@@ -1,8 +1,10 @@
 from parrot.director.frame import Frame
 from .base import FixtureGuiRenderer, render_strobe_dim_color
 from parrot.fixtures import FixtureBase
+from parrot.fixtures.base import ManualGroup
 from tkinter import Canvas
 from parrot.utils.color_extra import dim_color
+from parrot.utils.colour import Color
 
 CIRCLE_SIZE = 30
 
@@ -36,7 +38,22 @@ class BulbRenderer(FixtureGuiRenderer[FixtureBase]):
         )
 
     def render(self, canvas: Canvas, frame: Frame):
-        fill = render_strobe_dim_color(self.fixture, frame)
+        # Check if this fixture is part of a manual group
+        is_manual = False
+        if hasattr(self.fixture, "parent_group") and isinstance(
+            self.fixture.parent_group, ManualGroup
+        ):
+            is_manual = True
+
+        # Get the fill color based on whether it's a manual fixture or not
+        if is_manual:
+            # For manual fixtures, use a white color dimmed by the manual dimmer value
+            dimmer = self.fixture.get_dimmer()
+            fill = dim_color(Color("white"), dimmer)
+        else:
+            # For regular fixtures, use the normal rendering
+            fill = render_strobe_dim_color(self.fixture, frame)
+
         canvas.itemconfig(self.oval, fill=fill)
 
 

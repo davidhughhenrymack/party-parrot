@@ -6,10 +6,10 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.director.phrase_machine import PhraseMachine
 from parrot.fixtures import laser
 
-from parrot.patch_bay import venue_patches
+from parrot.patch_bay import venue_patches, get_manual_group
 from parrot.fixtures.led_par import Par, ParRGB
 from parrot.fixtures.motionstrip import Motionstrip
-from parrot.fixtures.base import FixtureGroup
+from parrot.fixtures.base import FixtureGroup, ManualGroup
 
 from parrot.director.color_schemes import color_schemes
 from parrot.director.color_scheme import ColorScheme
@@ -80,6 +80,9 @@ class Director:
 
         for fixture in all_fixtures:
             if isinstance(fixture, FixtureGroup):
+                # Skip manual groups - they should not be controlled by interpreters
+                if isinstance(fixture, ManualGroup):
+                    continue
                 self.fixture_groups.append(fixture.fixtures)
                 grouped_fixtures.extend(fixture.fixtures)
             else:
@@ -192,6 +195,12 @@ class Director:
             self.shift()
 
     def render(self, dmx):
+        # Get manual group and set its dimmer value
+        manual_group = get_manual_group(self.state.venue)
+        if manual_group:
+            manual_group.set_manual_dimmer(self.state.manual_dimmer)
+
+        # Render all fixtures
         for i in venue_patches[self.state.venue]:
             i.render(dmx)
 

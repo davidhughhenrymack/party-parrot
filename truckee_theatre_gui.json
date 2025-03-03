@@ -1,4 +1,12 @@
 {
+    "manual-bulb-12@12": {
+        "x": 97,
+        "y": 46
+    },
+    "manual-bulb-15@15": {
+        "x": 724,
+        "y": 45
+    },
     "chauvet-colorband-pix@194": {
         "x": 20,
         "y": 120
@@ -116,7 +124,7 @@
         "y": 620
     },
     "chauvet-slimpar-pro-q@45": {
-        "x": 140,
+        "x": 141,
         "y": 620
     },
     "chauvet-slimpar-pro-q@50": {

@@ -168,3 +168,51 @@ class FixtureGroup(FixtureBase):
 
     def __getitem__(self, index):
         return self.fixtures[index]
+
+
+class ManualGroup(FixtureGroup):
+    """A group of fixtures that are only controlled manually, not by automatic interpreters."""
+
+    def __init__(self, fixtures, name="Manual Control Group"):
+        """
+        Initialize a manual control fixture group.
+
+        Args:
+            fixtures: List of fixtures to include in the group
+            name: Optional name for the group
+        """
+        super().__init__(fixtures, name)
+        self.manual_dimmer = 0
+
+        # Set the parent_group attribute on all fixtures
+        for fixture in self.fixtures:
+            fixture.parent_group = self
+
+    def set_manual_dimmer(self, value):
+        """Set the dimmer value for all fixtures in the group."""
+        self.manual_dimmer = value
+        # Update the dimmer value for the group itself
+        self.dimmer_value = value
+
+        for fixture in self.fixtures:
+            # Set the dimmer value for each fixture
+            fixture.set_dimmer(value)
+            # For simple fixtures with just a dimmer channel, set the value directly
+            if fixture.width == 1:
+                fixture.values[0] = int(value * 255)
+                fixture.dimmer_value = value  # Ensure the dimmer value is set
+
+    def get_dimmer(self):
+        """Override to return the manual dimmer value."""
+        return self.manual_dimmer
+
+    def render(self, dmx):
+        """Override to ensure manual dimmer value is applied before rendering."""
+        # Apply the manual dimmer value to all fixtures
+        for fixture in self.fixtures:
+            fixture.dimmer_value = self.manual_dimmer
+            if fixture.width == 1:
+                fixture.values[0] = int(self.manual_dimmer * 255)
+
+        # Call the parent render method
+        super().render(dmx)

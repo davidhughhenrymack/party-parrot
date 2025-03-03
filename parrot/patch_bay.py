@@ -1,6 +1,6 @@
 from parrot.fixtures.led_par import ParRGB, ParRGBAWU
 from parrot.fixtures.motionstrip import Motionstrip38
-from parrot.fixtures.base import FixtureGroup
+from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
 from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot120_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
@@ -14,6 +14,21 @@ from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.uking.laser import FiveBeamLaser
 
 venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre"])
+
+# Create manual control fixtures for each venue
+truckee_manual_fixtures = [
+    FixtureBase(12, "Manual Bulb 12", 1),
+    FixtureBase(15, "Manual Bulb 15", 1),
+]
+
+# Create manual control groups for each venue
+manual_groups = {
+    venues.truckee_theatre: ManualGroup(
+        truckee_manual_fixtures, "Truckee Manual Control"
+    ),
+    venues.dmack: None,
+    venues.mtn_lotus: None,
+}
 
 venue_patches = {
     venues.dmack: [
@@ -41,6 +56,8 @@ venue_patches = {
         ChauvetSpot160_12Ch(172),
     ],
     venues.truckee_theatre: [
+        # Manual control fixtures
+        manual_groups[venues.truckee_theatre],
         # 6 COLORband PiX fixtures (36 channels each)
         FixtureGroup(
             [ChauvetColorBandPiX_36Ch(i) for i in range(194, 375, 36)],
@@ -73,3 +90,8 @@ venue_patches = {
         ),
     ],
 }
+
+
+def get_manual_group(venue):
+    """Get the manual control group for a venue."""
+    return manual_groups.get(venue)

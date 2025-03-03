@@ -5,10 +5,12 @@ from tkinter.ttk import Combobox
 
 from parrot.director.director import Director
 import parrot.director.frame
+from parrot.director.frame import Frame as DirectorFrame
 from parrot.state import State
 from parrot.director.phrase import Phrase
-from parrot.patch_bay import venue_patches, venues
+from parrot.patch_bay import venue_patches, venues, get_manual_group
 from parrot.director.themes import themes
+from parrot.fixtures.base import ManualGroup
 from .fixtures.factory import renderer_for_fixture
 from .fixtures.group import FixtureGroupRenderer
 from parrot.utils.math import distance
@@ -50,7 +52,9 @@ class Window(Tk):
         self.theme_select = Combobox(
             self.top_frame, values=[i.name for i in themes], state="readonly"
         )
-        self.theme_select.current(0)
+        # Set the current theme based on the state
+        current_theme_index = themes.index(state.theme)
+        self.theme_select.current(current_theme_index)
         self.theme_select.bind(
             "<<ComboboxSelected>>",
             lambda e: state.set_theme(themes[self.theme_select.current()]),
@@ -59,15 +63,48 @@ class Window(Tk):
 
         self.top_frame.pack()
 
+        # Create a frame for the main content with canvas and manual control
+        self.main_content_frame = Frame(self, background=BG)
+
+        # Create a frame for manual control
+        self.manual_control_frame = Frame(self.main_content_frame, background=BG)
+
+        # Create vertical slider for manual control
+        self.manual_slider = Scale(
+            self.manual_control_frame,
+            from_=100,
+            to=0,
+            length=400,
+            orient=VERTICAL,
+            bg=BG,
+            fg="white",
+            highlightbackground=BG,
+            troughcolor="#444",
+            label="",
+            command=self.update_manual_dimmer,
+        )
+        self.manual_slider.set(int(self.state.manual_dimmer * 100))
+        self.manual_slider.pack(padx=10, pady=10, fill=Y, expand=True)
+
+        # Only show manual control if there is a manual group for this venue
+        if get_manual_group(self.state.venue):
+            self.manual_control_frame.pack(side=RIGHT, fill=Y)
+
+        # Add event handler for venue change to show/hide manual control
+        self.state.events.on_venue_change += self.update_manual_control_visibility
+
         self.canvas = Canvas(
-            self,
+            self.main_content_frame,
             width=CANVAS_WIDTH,
             height=800,
             bg=BG,
             borderwidth=0,
             selectborderwidth=0,
         )
-        self.canvas.pack()
+        self.canvas.pack(side=LEFT)
+
+        self.main_content_frame.pack()
+
         self._drag_data = {"x": 0, "y": 0, "item": None}
         self.canvas.bind("<ButtonPress-1>", self.drag_start)
         self.canvas.bind("<ButtonRelease-1>", self.drag_stop)
@@ -305,3 +342,30 @@ class Window(Tk):
             else:
                 if renderer.fixture.id in data:
                     renderer.from_json(self.canvas, data[renderer.fixture.id])
+
+    def update_manual_control_visibility(self, venue):
+        """Show or hide manual control based on whether there is a manual group for this venue."""
+        if get_manual_group(venue):
+            self.manual_control_frame.pack(side=RIGHT, fill=Y)
+        else:
+            self.manual_control_frame.pack_forget()
+
+    def update_manual_dimmer(self, val):
+        """Update the manual dimmer value and refresh the GUI."""
+        dimmer_value = float(val) / 100
+        self.state.set_manual_dimmer(dimmer_value)
+
+        # Force an immediate update of the manual fixtures in the GUI
+        manual_group = get_manual_group(self.state.venue)
+        if manual_group:
+            # Update the manual group's dimmer value
+            manual_group.set_manual_dimmer(dimmer_value)
+
+            # Find the manual group renderer and update it
+            for renderer in self.fixture_renderers:
+                if isinstance(renderer.fixture, ManualGroup):
+                    # Create an empty frame with default values
+                    empty_frame = DirectorFrame({})
+                    # Force a render update for the manual group
+                    renderer.render(self.canvas, empty_frame)
+                    break

@@ -2,7 +2,7 @@ from parrot.fixtures.led_par import Par, ParRGB
 from parrot.fixtures.moving_head import MovingHead
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.fixtures.laser import Laser
-from parrot.fixtures.base import FixtureBase, FixtureGroup
+from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 from parrot.gui.fixtures.base import FixtureGuiRenderer
 from parrot.gui.fixtures.bulb import (
     BulbRenderer,
@@ -24,7 +24,11 @@ from parrot.gui.fixtures.group import FixtureGroupRenderer
 
 
 def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:
-    if isinstance(fixture, FixtureGroup):
+    if isinstance(fixture, ManualGroup):
+        renderer = FixtureGroupRenderer(fixture)
+        renderer.setup_renderers(lambda f: BulbRenderer(f))
+        return renderer
+    elif isinstance(fixture, FixtureGroup):
         renderer = FixtureGroupRenderer(fixture)
         renderer.setup_renderers(renderer_for_fixture)
         return renderer
