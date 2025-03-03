@@ -88,6 +88,8 @@ class MicToDmx(object):
         self.frame_count = 0
 
     def quit(self):
+        # Save state before quitting
+        self.state.save_state()
         self.should_stop = True
 
     def run(self):
