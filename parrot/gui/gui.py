@@ -10,6 +10,7 @@ from parrot.director.phrase import Phrase
 from parrot.patch_bay import venue_patches, venues
 from parrot.director.themes import themes
 from .fixtures.factory import renderer_for_fixture
+from .fixtures.group import FixtureGroupRenderer
 from parrot.utils.math import distance
 
 CIRCLE_SIZE = 30
@@ -17,7 +18,7 @@ FIXTURE_MARGIN = 20
 
 BG = "#222"
 
-CANVAS_WIDTH = 500
+CANVAS_WIDTH = 800
 
 SHOW_PLOT = os.environ.get("HIDE_PLOT", "false") != "true"
 
@@ -61,7 +62,7 @@ class Window(Tk):
         self.canvas = Canvas(
             self,
             width=CANVAS_WIDTH,
-            height=400,
+            height=800,
             bg=BG,
             borderwidth=0,
             selectborderwidth=0,
@@ -103,25 +104,24 @@ class Window(Tk):
         )
         self.scale.pack()
 
-
         self.btn_frame = Frame(self, background=BG)
 
-        self.deploy_hype =  Button(
-                self.btn_frame,
-                text="HYPE!!",
-                command=lambda: director.deploy_hype(),
-                highlightbackground=BG,
-                height=2,
-            )
+        self.deploy_hype = Button(
+            self.btn_frame,
+            text="HYPE!!",
+            command=lambda: director.deploy_hype(),
+            highlightbackground=BG,
+            height=2,
+        )
         self.deploy_hype.pack(side=LEFT, padx=5, pady=5)
-        
-        self.shift =  Button(
-                self.btn_frame,
-                text="Shift",
-                command=lambda: director.shift(),
-                highlightbackground=BG,
-                height=2,
-            )
+
+        self.shift = Button(
+            self.btn_frame,
+            text="Shift",
+            command=lambda: director.shift(),
+            highlightbackground=BG,
+            height=2,
+        )
         self.shift.pack(side=LEFT, padx=5, pady=5)
         self.btn_frame.pack()
 
@@ -130,22 +130,40 @@ class Window(Tk):
             self.graph.pack()
 
     def setup_patch(self):
-
         self.canvas.delete("all")
 
+        # Create renderers for all fixtures
         self.fixture_renderers = [
             renderer_for_fixture(fixture) for fixture in venue_patches[self.state.venue]
         ]
 
+        # Set up all renderers
+        for renderer in self.fixture_renderers:
+            renderer.setup(self.canvas)
+
+        # Position renderers, with each group on its own row
         fixture_x = FIXTURE_MARGIN
         fixture_y = FIXTURE_MARGIN
+
         for idx, renderer in enumerate(self.fixture_renderers):
+            # Check if we need to start a new row
             if fixture_x + renderer.width + FIXTURE_MARGIN > CANVAS_WIDTH:
                 fixture_x = FIXTURE_MARGIN
                 fixture_y += 100
-            renderer.setup(self.canvas)
+
+            # Position the renderer
             renderer.set_position(self.canvas, fixture_x, fixture_y)
+
+            # Move to the next position
             fixture_x += renderer.width + FIXTURE_MARGIN
+
+            # If this is a group renderer or the last renderer, start a new row for the next renderer
+            if (
+                isinstance(renderer, FixtureGroupRenderer)
+                or idx == len(self.fixture_renderers) - 1
+            ):
+                fixture_x = FIXTURE_MARGIN
+                fixture_y += 100
 
         self.load()
 
@@ -153,16 +171,28 @@ class Window(Tk):
         self.state.set_phrase(Phrase.build)
 
     def drag_start(self, event):
-        """Begining drag of an object"""
+        """Beginning drag of an object"""
         # record the item and its location
         self._drag_data["item"] = None
         closest = 999999999
-        for i in self.fixture_renderers:
-            dist = distance(event.x, i.x, event.y, i.y)
+
+        # Create a flat list of all renderers, including those inside groups
+        all_renderers = []
+        for renderer in self.fixture_renderers:
+            if isinstance(renderer, FixtureGroupRenderer):
+                # Add individual fixtures from the group
+                all_renderers.extend(renderer.fixture_renderers)
+            else:
+                all_renderers.append(renderer)
+
+        # Find the closest renderer to the click point
+        for renderer in all_renderers:
+            dist = distance(event.x, renderer.x, event.y, renderer.y)
             if dist < closest and dist < 100:
-                self._drag_data["item"] = i
+                self._drag_data["item"] = renderer
                 closest = dist
 
+        # Set the starting position for the drag
         self._drag_data["x"] = event.x
         self._drag_data["y"] = event.y
 
@@ -176,6 +206,10 @@ class Window(Tk):
 
     def drag(self, event):
         """Handle dragging of an object"""
+        # Check if we have a valid item to drag
+        if self._drag_data["item"] is None:
+            return
+
         # compute how much the mouse has moved
         delta_x = event.x - self._drag_data["x"]
         delta_y = event.y - self._drag_data["y"]
@@ -236,8 +270,15 @@ class Window(Tk):
     def save(self):
         data = {}
         filename = f"{self.state.venue.name}_gui.json"
-        for i in self.fixture_renderers:
-            data[i.fixture.id] = i.to_json()
+
+        # Save all renderers, including those inside groups
+        for renderer in self.fixture_renderers:
+            if isinstance(renderer, FixtureGroupRenderer):
+                # Save individual fixtures from the group
+                for fixture_renderer in renderer.fixture_renderers:
+                    data[fixture_renderer.fixture.id] = fixture_renderer.to_json()
+            else:
+                data[renderer.fixture.id] = renderer.to_json()
 
         # write to file
         with open(filename, "w") as f:
@@ -251,7 +292,16 @@ class Window(Tk):
 
         with open(filename, "r") as f:
             data = json.load(f)
-        # load json
-        for i in self.fixture_renderers:
-            if i.fixture.id in data:
-                i.from_json(self.canvas, data[i.fixture.id])
+
+        # load json for all renderers, including those inside groups
+        for renderer in self.fixture_renderers:
+            if isinstance(renderer, FixtureGroupRenderer):
+                # Load individual fixtures from the group
+                for fixture_renderer in renderer.fixture_renderers:
+                    if fixture_renderer.fixture.id in data:
+                        fixture_renderer.from_json(
+                            self.canvas, data[fixture_renderer.fixture.id]
+                        )
+            else:
+                if renderer.fixture.id in data:
+                    renderer.from_json(self.canvas, data[renderer.fixture.id])

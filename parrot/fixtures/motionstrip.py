@@ -37,13 +37,14 @@ class Motionstrip(FixtureWithBulbs):
 
 
 class Motionstrip38(Motionstrip):
-    def __init__(self, patch, pan_lower, pan_upper):
+    def __init__(self, patch, pan_lower, pan_upper, invert_pan=False):
         super().__init__(
             patch, "motionstrip 38", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]
         )
         self.pan_lower = pan_lower
         self.pan_upper = pan_upper
         self.pan_range = pan_upper - pan_lower
+        self.invert_pan = invert_pan
         self.set_pan_speed(128)
         self.set_strobe(0)
 
@@ -52,7 +53,10 @@ class Motionstrip38(Motionstrip):
         self.values[4] = value
 
     def set_pan(self, value):
-        self.values[0] = self.pan_lower + (self.pan_range * value / 255)
+        if not self.invert_pan:
+            self.values[0] = self.pan_lower + (self.pan_range * value / 255)
+        else:
+            self.values[0] = self.pan_lower + (self.pan_range * (255 - value) / 255)
 
     def set_pan_speed(self, value):
         self.values[1] = value

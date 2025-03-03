@@ -9,6 +9,7 @@ from parrot.fixtures import laser
 from parrot.patch_bay import venue_patches
 from parrot.fixtures.led_par import Par, ParRGB
 from parrot.fixtures.motionstrip import Motionstrip
+from parrot.fixtures.base import FixtureGroup
 
 from parrot.director.color_schemes import color_schemes
 from parrot.director.color_scheme import ColorScheme
@@ -70,10 +71,23 @@ class Director:
         ]
         self.fixture_groups = []
 
+        # Get all fixtures from the venue patch
+        all_fixtures = venue_patches[self.state.venue]
+
+        # First, collect any existing FixtureGroup instances
+        grouped_fixtures = []
+        ungrouped_fixtures = []
+
+        for fixture in all_fixtures:
+            if isinstance(fixture, FixtureGroup):
+                self.fixture_groups.append(fixture.fixtures)
+                grouped_fixtures.extend(fixture.fixtures)
+            else:
+                ungrouped_fixtures.append(fixture)
+
+        # Then apply the existing algorithm to ungrouped fixtures
         for cls in to_group:
-            fixtures = [
-                i for i in venue_patches[self.state.venue] if isinstance(i, cls)
-            ]
+            fixtures = [i for i in ungrouped_fixtures if isinstance(i, cls)]
             if len(fixtures) > 0:
                 self.fixture_groups.append(fixtures)
 

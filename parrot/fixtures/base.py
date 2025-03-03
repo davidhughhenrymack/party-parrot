@@ -90,3 +90,81 @@ class GoboWheelEntry:
     def __init__(self, gobo: str, dmx_value: int):
         self.name = gobo
         self.dmx_value = dmx_value
+
+
+class FixtureGroup(FixtureBase):
+    """A group of fixtures that can be controlled together."""
+
+    def __init__(self, fixtures, name=None):
+        """
+        Initialize a fixture group with a list of fixtures.
+
+        Args:
+            fixtures: List of fixtures to include in the group
+            name: Optional name for the group. If not provided, will be generated from fixture types
+        """
+        if not fixtures:
+            raise ValueError("FixtureGroup must contain at least one fixture")
+
+        # Use the address of the first fixture as the group address
+        address = min(fixture.address for fixture in fixtures)
+
+        # Calculate total width based on the fixtures
+        width = sum(fixture.width for fixture in fixtures)
+
+        # Generate a name if not provided
+        if name is None:
+            fixture_type = type(fixtures[0]).__name__
+            if all(isinstance(f, type(fixtures[0])) for f in fixtures):
+                name = f"{len(fixtures)} {fixture_type}s"
+            else:
+                name = "Mixed Fixture Group"
+
+        super().__init__(address, name, width)
+        self.fixtures = fixtures
+
+    def set_color(self, color):
+        super().set_color(color)
+        for fixture in self.fixtures:
+            fixture.set_color(color)
+
+    def set_dimmer(self, value):
+        super().set_dimmer(value)
+        for fixture in self.fixtures:
+            fixture.set_dimmer(value)
+
+    def set_strobe(self, value):
+        super().set_strobe(value)
+        for fixture in self.fixtures:
+            fixture.set_strobe(value)
+
+    def set_pan(self, value):
+        super().set_pan(value)
+        for fixture in self.fixtures:
+            fixture.set_pan(value)
+
+    def set_tilt(self, value):
+        super().set_tilt(value)
+        for fixture in self.fixtures:
+            fixture.set_tilt(value)
+
+    def set_speed(self, value):
+        super().set_speed(value)
+        for fixture in self.fixtures:
+            fixture.set_speed(value)
+
+    def render(self, dmx):
+        for fixture in self.fixtures:
+            fixture.render(dmx)
+
+    def __str__(self) -> str:
+        return f"{self.name} @ {self.address} ({len(self.fixtures)} fixtures)"
+
+    def __iter__(self):
+        return iter(self.fixtures)
+
+    def __len__(self):
+        return len(self.fixtures)
+
+    def __getitem__(self, index):
+        return self.fixtures[index]

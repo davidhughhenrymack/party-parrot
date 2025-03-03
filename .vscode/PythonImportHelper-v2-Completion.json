@@ -3606,7 +3606,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
-        "peekOfCode": "class Motionstrip(FixtureWithBulbs):\n    pass\nclass Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(\n            patch, \"motionstrip 38\", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]\n        )\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower",
+        "peekOfCode": "class Motionstrip(FixtureWithBulbs):\n    pass\nclass Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper, invert_pan=False):\n        super().__init__(\n            patch, \"motionstrip 38\", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]\n        )\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower",
         "detail": "parrot.fixtures.motionstrip",
         "documentation": {}
     },
@@ -3615,7 +3615,7 @@
         "kind": 6,
         "importPath": "parrot.fixtures.motionstrip",
         "description": "parrot.fixtures.motionstrip",
-        "peekOfCode": "class Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper):\n        super().__init__(\n            patch, \"motionstrip 38\", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]\n        )\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.set_pan_speed(128)\n        self.set_strobe(0)",
+        "peekOfCode": "class Motionstrip38(Motionstrip):\n    def __init__(self, patch, pan_lower, pan_upper, invert_pan=False):\n        super().__init__(\n            patch, \"motionstrip 38\", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]\n        )\n        self.pan_lower = pan_lower\n        self.pan_upper = pan_upper\n        self.pan_range = pan_upper - pan_lower\n        self.invert_pan = invert_pan\n        self.set_pan_speed(128)",
         "detail": "parrot.fixtures.motionstrip",
         "documentation": {}
     },

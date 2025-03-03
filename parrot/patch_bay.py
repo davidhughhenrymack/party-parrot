@@ -1,20 +1,19 @@
-import enum
-from parrot.fixtures import (
-    ChauvetSpot160_12Ch,
-    ChauvetSpot120_12Ch,
-    ParRGB,
-    Motionstrip38,
-    FiveBeamLaser,
-    TwoBeamLaser,
-)
-from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS
-from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
-from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
-from parrot.fixtures.chauvet.derby import ChauvetDerby
-from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
-from parrot.fixtures.led_par import ParRGBAWU
+from parrot.fixtures.led_par import ParRGB, ParRGBAWU
+from parrot.fixtures.motionstrip import Motionstrip38
+from parrot.fixtures.base import FixtureGroup
 
-venues = enum.Enum("Venues", ["dmack", "mtn_lotus"])
+from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot120_12Ch
+from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
+from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS
+from parrot.fixtures.chauvet.slimpar_pro_q import ChauvetSlimParProQ_5Ch
+from parrot.fixtures.chauvet.slimpar_pro_h import ChauvetSlimParProH_7Ch
+from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
+import enum
+
+from parrot.fixtures.oultia.laser import TwoBeamLaser
+from parrot.fixtures.uking.laser import FiveBeamLaser
+
+venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre"])
 
 venue_patches = {
     venues.dmack: [
@@ -24,14 +23,9 @@ venue_patches = {
         ChauvetSpot120_12Ch(
             patch=140,
         ),
-        ParRGB(12),
-        ParRGB(19),
-        ParRGB(26),
-        ParRGB(33),
-        ParRGB(40),
-        ParRGB(47),
-        Motionstrip38(59, 0, 256),
-        Motionstrip38(154, 0, 256),
+        *[ParRGB(i) for i in range(12, 48, 7)],
+        Motionstrip38(154, 0, 256, invert_pan=True),
+        Motionstrip38(59, 0, 256, invert_pan=True),
         FiveBeamLaser(100),
         TwoBeamLaser(120),
         # ChauvetRotosphere_28Ch(164),
@@ -45,5 +39,37 @@ venue_patches = {
         TwoBeamLaser(150),
         ChauvetSpot120_12Ch(160),
         ChauvetSpot160_12Ch(172),
+    ],
+    venues.truckee_theatre: [
+        # 6 COLORband PiX fixtures (36 channels each)
+        FixtureGroup(
+            [ChauvetColorBandPiX_36Ch(i) for i in range(194, 375, 36)],
+            "ColorBand PiX Group",
+        ),
+        # 6 SlimPAR Pro H fixtures (7 channels each)
+        FixtureGroup(
+            [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)],
+            "SlimPAR Pro H Group 1",
+        ),
+        # 6 more SlimPAR Pro H fixtures (7 channels each)
+        FixtureGroup(
+            [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
+            "SlimPAR Pro H Group 2",
+        ),
+        # 4 SlimPAR Pro Q fixtures (5 channels each)
+        FixtureGroup(
+            [ChauvetSlimParProQ_5Ch(i) for i in range(154, 170, 5)],
+            "SlimPAR Pro Q Group 1",
+        ),
+        # 4 more SlimPAR Pro Q fixtures (5 channels each)
+        FixtureGroup(
+            [ChauvetSlimParProQ_5Ch(i) for i in range(174, 190, 5)],
+            "SlimPAR Pro Q Group 2",
+        ),
+        # 8 more SlimPAR Pro Q fixtures (5 channels each)
+        FixtureGroup(
+            [ChauvetSlimParProQ_5Ch(i) for i in range(30, 66, 5)],
+            "SlimPAR Pro Q Group 3",
+        ),
     ],
 }

@@ -1,4 +1,5 @@
 from parrot.fixtures import ParRGB
+from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import (
     ColorAlternateBg,
@@ -171,6 +172,32 @@ phrase_interpretations: Dict[
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
                 randomize(PanLatched, MoveCircles),
+            ),
+        ],
+        ChauvetColorBandPiX_36Ch: [
+            combo(
+                hype_switch(
+                    randomize(
+                        combo(Dimmer255, for_bulbs(Twinkle)),
+                        combo(DimmersBeatChase, AllBulbs255),
+                        combo(SlowDecay, AllBulbs255),
+                        # combo(StrobeHighSustained, AllBulbs255),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "GentlePulseTrigger0.1",
+                                    GentlePulse,
+                                    trigger_level=0.1,
+                                )
+                            ),
+                        ),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                        # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
+                    ),
+                    DimmerFadeIn,
+                ),
+                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
             ),
         ],
         Laser: [hype_switch(LaserLatch, Dimmer255), StrobeHighSustained],
