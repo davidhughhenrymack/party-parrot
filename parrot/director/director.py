@@ -102,6 +102,12 @@ class Director:
                 InterpreterArgs(
                     HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
                     self.state.theme.allow_rainbows,
+                    0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
+                    (
+                        100
+                        if not self.state.hype_limiter
+                        else min(100, self.state.hype + 30)
+                    ),
                 ),
             )
             for idx, group in enumerate(self.fixture_groups)
@@ -147,7 +153,12 @@ class Director:
         self.interpreters[eviction_index] = get_interpreter(
             self.state.phrase,
             eviction_group,
-            InterpreterArgs(self.state.hype, self.state.theme.allow_rainbows),
+            InterpreterArgs(
+                self.state.hype,
+                self.state.theme.allow_rainbows,
+                0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
+                100 if not self.state.hype_limiter else min(100, self.state.hype + 30),
+            ),
         )
 
         print(

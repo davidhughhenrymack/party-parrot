@@ -2,5 +2,6 @@
   "hype": 47,
   "theme_name": "Pride",
   "venue_name": "truckee_theatre",
-  "manual_dimmer": 0.0
+  "manual_dimmer": 0.0,
+  "hype_limiter": true
 }

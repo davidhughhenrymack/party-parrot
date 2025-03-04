@@ -185,6 +185,17 @@ class Window(Tk):
             height=2,
         )
         self.shift.pack(side=LEFT, padx=5, pady=5)
+
+        # Add hype limiter toggle button
+        self.hype_limiter_button = Button(
+            self.btn_frame,
+            text="Hype Limiter: ON",
+            command=self.toggle_hype_limiter,
+            highlightbackground="green" if self.state.hype_limiter else BG,
+            height=2,
+        )
+        self.hype_limiter_button.pack(side=LEFT, padx=5, pady=5)
+
         self.btn_frame.pack()
 
         if SHOW_PLOT:
@@ -768,3 +779,12 @@ class Window(Tk):
                 ):
                     # Force a render update for the manual fixture
                     renderer.render(self.canvas, empty_frame)
+
+    def toggle_hype_limiter(self):
+        """Toggle the hype limiter state."""
+        new_state = not self.state.hype_limiter
+        self.state.set_hype_limiter(new_state)
+        self.hype_limiter_button.config(
+            text=f"Hype Limiter: {'ON' if new_state else 'OFF'}",
+            highlightbackground="green" if new_state else BG,
+        )

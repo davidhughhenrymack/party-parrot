@@ -16,6 +16,7 @@ class State:
         self._theme = themes[0]
         self._venue = venues.dmack
         self._manual_dimmer = 0  # New property for manual control
+        self._hype_limiter = True  # New property for hype limiter
 
         # Try to load state from file
         self.load_state()
@@ -75,6 +76,17 @@ class State:
         self._manual_dimmer = value
         self.events.on_manual_dimmer_change(self._manual_dimmer)
 
+    @property
+    def hype_limiter(self):
+        return self._hype_limiter
+
+    def set_hype_limiter(self, value):
+        if self._hype_limiter == value:
+            return
+
+        self._hype_limiter = value
+        self.events.on_hype_limiter_change(self._hype_limiter)
+
     def save_state(self):
         """Save the current state to a JSON file."""
         state_data = {
@@ -82,6 +94,7 @@ class State:
             "theme_name": self._theme.name if hasattr(self._theme, "name") else None,
             "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
             "manual_dimmer": self._manual_dimmer,
+            "hype_limiter": self._hype_limiter,
         }
 
         try:
@@ -130,6 +143,9 @@ class State:
 
             if "manual_dimmer" in state_data:
                 self._manual_dimmer = state_data["manual_dimmer"]
+
+            if "hype_limiter" in state_data:
+                self._hype_limiter = state_data["hype_limiter"]
 
         except Exception as e:
             print(f"Error loading state: {e}")

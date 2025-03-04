@@ -10,14 +10,16 @@ from parrot.utils.colour import Color
 
 T = TypeVar("T", bound=FixtureBase)
 
-InterpreterArgs = namedtuple("InterpreterArgs", ["hype", "allow_rainbows"])
+InterpreterArgs = namedtuple(
+    "InterpreterArgs", ["hype", "allow_rainbows", "min_hype", "max_hype"]
+)
 
 
 def acceptable_test(args: InterpreterArgs, hype, has_rainbow):
     if has_rainbow and not args.allow_rainbows:
         return False
 
-    if hype > args.hype:
+    if hype < args.min_hype or hype > args.max_hype:
         return False
 
     return True
