@@ -10,9 +10,9 @@ import matplotlib
 import time
 
 import math
+
 from parrot.director.director import Director
-from parrot.director.director import Frame
-from parrot.director.frame import FrameSignal
+from parrot.director.frame import Frame, FrameSignal
 from parrot.utils.dmx_utils import get_controller
 
 from parrot.state import State

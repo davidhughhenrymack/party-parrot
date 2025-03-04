@@ -24,6 +24,16 @@ CANVAS_HEIGHT = 800  # Increased canvas height to accommodate more fixtures
 
 SHOW_PLOT = os.environ.get("HIDE_PLOT", "false") != "true"
 
+# Selection box color
+SELECTION_BOX_COLOR = "#aaaaff"
+SELECTION_BOX_ALPHA = 30  # Transparency level (0-255)
+
+# Selection outline properties
+SELECTION_OUTLINE_COLOR = "white"
+SELECTION_OUTLINE_WIDTH = 2
+DEFAULT_OUTLINE_COLOR = "black"
+DEFAULT_OUTLINE_WIDTH = 1
+
 
 class Window(Tk):
     def __init__(self, state: State, quit: callable, director: Director):
@@ -115,7 +125,12 @@ class Window(Tk):
 
         self.main_content_frame.pack(fill=BOTH, expand=True)
 
+        # Initialize selection and drag data
         self._drag_data = {"x": 0, "y": 0, "item": None}
+        self._selection_box = {"start_x": 0, "start_y": 0, "box_id": None}
+        self.selected_renderers = []  # List to track selected renderers
+
+        # Bind mouse events
         self.canvas.bind("<ButtonPress-1>", self.drag_start)
         self.canvas.bind("<ButtonRelease-1>", self.drag_stop)
         self.canvas.bind("<B1-Motion>", self.drag)
@@ -265,7 +280,6 @@ class Window(Tk):
                 # Position each renderer in the row
                 for renderer in row:
                     renderer.set_position(self.canvas, fixture_x, fixture_y)
-                    print(f"position: {renderer.fixture} {fixture_x} {fixture_y}")
                     fixture_x += renderer.width + FIXTURE_MARGIN
 
                 # Move to the next row
@@ -278,6 +292,9 @@ class Window(Tk):
 
         # Load fixture positions from saved file
         self.load()
+
+        # Clear selected renderers when changing venue
+        self.selected_renderers = []
 
         # Configure the canvas scrolling region to include all fixtures
         self.canvas.config(
@@ -292,77 +309,295 @@ class Window(Tk):
     def on_key_press(self, event):
         self.state.set_phrase(Phrase.build)
 
+    def select_renderer(self, renderer, add_to_selection=False):
+        """Select a renderer and show a white outline."""
+        if not add_to_selection:
+            # Deselect all currently selected renderers
+            self.deselect_all_renderers()
+
+        # Add to selection if not already selected
+        if renderer not in self.selected_renderers:
+            self.selected_renderers.append(renderer)
+
+            # Add white outline to the fixture shape(s)
+            # Handle BulbRenderer and variants
+            if hasattr(renderer, "oval"):
+                self.canvas.itemconfig(
+                    renderer.oval,
+                    outline=SELECTION_OUTLINE_COLOR,
+                    width=SELECTION_OUTLINE_WIDTH,
+                )
+
+            # Handle RoundedRectBulbRenderer
+            if hasattr(renderer, "rect_v"):
+                self.canvas.itemconfig(
+                    renderer.rect_v,
+                    outline=SELECTION_OUTLINE_COLOR,
+                    width=SELECTION_OUTLINE_WIDTH,
+                )
+
+            if hasattr(renderer, "corners"):
+                for corner in renderer.corners:
+                    self.canvas.itemconfig(
+                        corner,
+                        outline=SELECTION_OUTLINE_COLOR,
+                        width=SELECTION_OUTLINE_WIDTH,
+                    )
+
+            # Handle MovingHeadRenderer
+            if hasattr(renderer, "base"):
+                self.canvas.itemconfig(
+                    renderer.base,
+                    outline=SELECTION_OUTLINE_COLOR,
+                    width=SELECTION_OUTLINE_WIDTH,
+                )
+                self.canvas.itemconfig(
+                    renderer.head,
+                    outline=SELECTION_OUTLINE_COLOR,
+                    width=SELECTION_OUTLINE_WIDTH,
+                )
+                self.canvas.itemconfig(
+                    renderer.light,
+                    outline=SELECTION_OUTLINE_COLOR,
+                    width=SELECTION_OUTLINE_WIDTH,
+                )
+
+            # Handle MotionstripRenderer and ColorBandRenderer
+            if hasattr(renderer, "shape"):
+                self.canvas.itemconfig(
+                    renderer.shape,
+                    outline=SELECTION_OUTLINE_COLOR,
+                    width=SELECTION_OUTLINE_WIDTH,
+                )
+                if hasattr(renderer, "bulbs"):
+                    for bulb in renderer.bulbs:
+                        self.canvas.itemconfig(
+                            bulb,
+                            outline=SELECTION_OUTLINE_COLOR,
+                            width=SELECTION_OUTLINE_WIDTH,
+                        )
+
+            # Make the patch label white
+            if renderer.patch_label:
+                self.canvas.itemconfig(
+                    renderer.patch_label, fill=SELECTION_OUTLINE_COLOR
+                )
+
+    def deselect_renderer(self, renderer):
+        """Deselect a renderer and remove white outline."""
+        if renderer in self.selected_renderers:
+            self.selected_renderers.remove(renderer)
+
+            # Remove white outline from the fixture shape(s)
+            # Handle BulbRenderer and variants
+            if hasattr(renderer, "oval"):
+                self.canvas.itemconfig(
+                    renderer.oval,
+                    outline=DEFAULT_OUTLINE_COLOR,
+                    width=DEFAULT_OUTLINE_WIDTH,
+                )
+
+            # Handle RoundedRectBulbRenderer
+            if hasattr(renderer, "rect_v"):
+                self.canvas.itemconfig(
+                    renderer.rect_v,
+                    outline=DEFAULT_OUTLINE_COLOR,
+                    width=DEFAULT_OUTLINE_WIDTH,
+                )
+
+            if hasattr(renderer, "corners"):
+                for corner in renderer.corners:
+                    self.canvas.itemconfig(
+                        corner,
+                        outline=DEFAULT_OUTLINE_COLOR,
+                        width=DEFAULT_OUTLINE_WIDTH,
+                    )
+
+            # Handle MovingHeadRenderer
+            if hasattr(renderer, "base"):
+                self.canvas.itemconfig(
+                    renderer.base,
+                    outline=DEFAULT_OUTLINE_COLOR,
+                    width=DEFAULT_OUTLINE_WIDTH,
+                )
+                self.canvas.itemconfig(
+                    renderer.head,
+                    outline=DEFAULT_OUTLINE_COLOR,
+                    width=DEFAULT_OUTLINE_WIDTH,
+                )
+                self.canvas.itemconfig(
+                    renderer.light,
+                    outline=DEFAULT_OUTLINE_COLOR,
+                    width=DEFAULT_OUTLINE_WIDTH,
+                )
+
+            # Handle MotionstripRenderer and ColorBandRenderer
+            if hasattr(renderer, "shape"):
+                self.canvas.itemconfig(
+                    renderer.shape,
+                    outline=DEFAULT_OUTLINE_COLOR,
+                    width=DEFAULT_OUTLINE_WIDTH,
+                )
+                if hasattr(renderer, "bulbs"):
+                    for bulb in renderer.bulbs:
+                        self.canvas.itemconfig(
+                            bulb,
+                            outline=DEFAULT_OUTLINE_COLOR,
+                            width=DEFAULT_OUTLINE_WIDTH,
+                        )
+
+            # Make the patch label gray again
+            if renderer.patch_label:
+                self.canvas.itemconfig(renderer.patch_label, fill="gray")
+
+    def deselect_all_renderers(self):
+        """Deselect all renderers."""
+        # Create a copy of the list to avoid modification during iteration
+        renderers_to_deselect = self.selected_renderers.copy()
+        for renderer in renderers_to_deselect:
+            self.deselect_renderer(renderer)
+
+        # Ensure the list is empty
+        self.selected_renderers = []
+
     def drag_start(self, event):
-        """Beginning drag of an object"""
-        # record the item and its location
-        self._drag_data["item"] = None
+        """Beginning drag of an object or selection box"""
+        # Get canvas coordinates, accounting for scrolling
+        canvas_x = self.canvas.canvasx(event.x)
+        canvas_y = self.canvas.canvasy(event.y)
+
+        # Find if we clicked on a fixture
+        clicked_renderer = None
         closest = 999999999
 
-        # Find the closest renderer to the click point
         for renderer in self.fixture_renderers:
-            # Get the canvas coordinates, accounting for scrolling
-            canvas_x = self.canvas.canvasx(event.x)
-            canvas_y = self.canvas.canvasy(event.y)
-
-            # Check if the click is inside this renderer
             if renderer.contains_point(canvas_x, canvas_y):
-                # Calculate distance to the center of the renderer
                 dist = distance(
                     (canvas_x, canvas_y),
                     (renderer.x + renderer.width / 2, renderer.y + renderer.height / 2),
                 )
                 if dist < closest:
                     closest = dist
-                    self._drag_data["item"] = renderer
+                    clicked_renderer = renderer
 
-        if self._drag_data["item"] is not None:
-            # Record the current position
-            self._drag_data["x"] = event.x
-            self._drag_data["y"] = event.y
+        if clicked_renderer is not None:
+            # Check if we clicked on an already selected renderer
+            if clicked_renderer in self.selected_renderers:
+                # Just set the drag item (all selected renderers will move)
+                self._drag_data["item"] = clicked_renderer
+            else:
+                # Select this renderer (deselecting others unless Shift is held)
+                add_to_selection = event.state & 0x0001  # Check if Shift key is pressed
+                self.select_renderer(clicked_renderer, add_to_selection)
+                self._drag_data["item"] = clicked_renderer
+        else:
+            # Start drawing a selection box
+            self._selection_box["start_x"] = canvas_x
+            self._selection_box["start_y"] = canvas_y
+
+            # Create the selection box with just an outline (no fill)
+            self._selection_box["box_id"] = self.canvas.create_rectangle(
+                canvas_x,
+                canvas_y,
+                canvas_x,
+                canvas_y,
+                outline=SELECTION_BOX_COLOR,
+                fill="",  # No fill, just an outline
+                width=1,
+            )
+
+            # Deselect all renderers when starting a new selection box
+            self.deselect_all_renderers()
+
+        # Record the current mouse position for drag calculations
+        self._drag_data["x"] = event.x
+        self._drag_data["y"] = event.y
 
     def drag_stop(self, event):
-        """End drag of an object"""
-        # reset the drag information
+        """End drag of an object or selection box"""
+        # If we were drawing a selection box
+        if self._selection_box["box_id"] is not None:
+            # Get the final box coordinates
+            canvas_x = self.canvas.canvasx(event.x)
+            canvas_y = self.canvas.canvasy(event.y)
+
+            # Get the box coordinates
+            x1 = min(self._selection_box["start_x"], canvas_x)
+            y1 = min(self._selection_box["start_y"], canvas_y)
+            x2 = max(self._selection_box["start_x"], canvas_x)
+            y2 = max(self._selection_box["start_y"], canvas_y)
+
+            # Select all renderers inside the box
+            for renderer in self.fixture_renderers:
+                # Check if the renderer is inside the selection box
+                if (
+                    renderer.x < x2
+                    and renderer.x + renderer.width > x1
+                    and renderer.y < y2
+                    and renderer.y + renderer.height > y1
+                ):
+                    self.select_renderer(renderer, add_to_selection=True)
+
+            # Delete the selection box
+            self.canvas.delete(self._selection_box["box_id"])
+            self._selection_box["box_id"] = None
+
+        # If we were dragging fixtures, save their positions
+        if self._drag_data["item"] is not None:
+            self.save()
+
+        # Reset the drag information
         self._drag_data["item"] = None
         self._drag_data["x"] = 0
         self._drag_data["y"] = 0
-        self.save()
 
     def drag(self, event):
-        """Handle dragging of an object"""
-        # Check if we have a valid item to drag
+        """Handle dragging of objects or selection box"""
+        # If we're drawing a selection box
+        if self._selection_box["box_id"] is not None:
+            # Update the selection box size
+            canvas_x = self.canvas.canvasx(event.x)
+            canvas_y = self.canvas.canvasy(event.y)
+
+            self.canvas.coords(
+                self._selection_box["box_id"],
+                self._selection_box["start_x"],
+                self._selection_box["start_y"],
+                canvas_x,
+                canvas_y,
+            )
+            return
+
+        # If we're dragging fixtures
         if self._drag_data["item"] is None:
             return
 
-        # compute how much the mouse has moved
+        # Compute how much the mouse has moved
         delta_x = event.x - self._drag_data["x"]
         delta_y = event.y - self._drag_data["y"]
 
-        # Calculate the new position
-        new_x = self._drag_data["item"].x + delta_x
-        new_y = self._drag_data["item"].y + delta_y
-
-        # Clamp only the x position within the canvas width
+        # Get canvas width for clamping
         canvas_width = self.canvas.winfo_width() or CANVAS_WIDTH
 
-        min_x = FIXTURE_MARGIN
-        max_x = canvas_width - self._drag_data["item"].width - FIXTURE_MARGIN
-        new_x = max(min_x, min(new_x, max_x))
+        # If we have selected renderers, move all of them
+        if self.selected_renderers:
+            for renderer in self.selected_renderers:
+                # Calculate the new position
+                new_x = renderer.x + delta_x
+                new_y = renderer.y + delta_y
 
-        # We don't clamp y position for scrollable canvas
-        # This allows fixtures to be positioned anywhere vertically
+                # Clamp only the x position within the canvas width
+                min_x = FIXTURE_MARGIN
+                max_x = canvas_width - renderer.width - FIXTURE_MARGIN
+                new_x = max(min_x, min(new_x, max_x))
 
-        # move the object the appropriate amount
-        self._drag_data["item"].set_position(
-            self.canvas,
-            new_x,
-            new_y,
-        )
+                # Move the renderer
+                renderer.set_position(self.canvas, new_x, new_y)
 
-        # Ensure the canvas scrolls if needed when dragging near the edges
-        self._ensure_visible(new_y)
+            # Ensure the canvas scrolls if needed when dragging near the edges
+            self._ensure_visible(self._drag_data["item"].y + delta_y)
 
-        # record the new position
+        # Record the new position
         self._drag_data["x"] = event.x
         self._drag_data["y"] = event.y
 

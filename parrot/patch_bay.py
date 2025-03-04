@@ -63,40 +63,33 @@ venue_patches = {
         # 6 COLORband PiX fixtures (36 channels each)
         FixtureGroup(
             [ChauvetColorBandPiX_36Ch(i) for i in range(194, 375, 36)],
-            "ColorBand PiX Group",
+            "ColorBand wash",
         ),
         # 6 SlimPAR Pro H fixtures (7 channels each)
         FixtureGroup(
-            [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)],
-            "SlimPAR Pro H Group 1",
+            [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)]
+            + [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
+            "Stage overhead",
         ),
         # 6 more SlimPAR Pro H fixtures (7 channels each)
-        FixtureGroup(
-            [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
-            "SlimPAR Pro H Group 2",
-        ),
         # 4 SlimPAR Pro Q fixtures (5 channels each)
         FixtureGroup(
-            [ChauvetSlimParProQ_5Ch(i) for i in range(154, 170, 5)],
-            "SlimPAR Pro Q Group 1",
-        ),
-        # 4 more SlimPAR Pro Q fixtures (5 channels each)
-        FixtureGroup(
-            [ChauvetSlimParProQ_5Ch(i) for i in range(174, 190, 5)],
-            "SlimPAR Pro Q Group 2",
+            [ChauvetSlimParProQ_5Ch(i) for i in range(154, 170, 5)]
+            + [ChauvetSlimParProQ_5Ch(i) for i in range(174, 190, 5)],
+            "Sidelights",
         ),
         # 8 more SlimPAR Pro Q fixtures (5 channels each)
         FixtureGroup(
             [ChauvetSlimParProQ_5Ch(i) for i in range(30, 66, 5)],
-            "SlimPAR Pro Q Group 3",
+            "Front led wash",
         ),
         FixtureGroup(
             [ChauvetSpot160_12Ch(i) for i in range(400, 400 + 12 * 6, 12)],
-            "Spot 160 Group",
+            "Moving heads back",
         ),
         FixtureGroup(
             [FiveBeamLaser(i) for i in range(480, 480 + 14 * 6, 14)],
-            "Laser Group",
+            "Lasers back",
         ),
     ],
 }

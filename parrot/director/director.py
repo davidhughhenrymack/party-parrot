@@ -94,10 +94,6 @@ class Director:
             if len(fixtures) > 0:
                 self.fixture_groups.append(fixtures)
 
-        for group in self.fixture_groups:
-            for fixture in group:
-                print(f"{fixture}")
-
     def generate_interpreters(self):
         self.interpreters: List[InterpreterBase] = [
             get_interpreter(
