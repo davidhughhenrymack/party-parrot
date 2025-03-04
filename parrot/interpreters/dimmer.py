@@ -79,7 +79,7 @@ class SequenceFadeDimmers(InterpreterBase[T]):
 
 
 class DimmersBeatChase(InterpreterBase[T]):
-    hype = 70
+    hype = 75
 
     def __init__(self, group: List[T], args: InterpreterArgs):
         super().__init__(group, args)

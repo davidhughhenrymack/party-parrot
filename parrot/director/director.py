@@ -137,18 +137,10 @@ class Director:
         eviction_index = random.randint(0, len(self.interpreters) - 1)
         eviction_group = self.fixture_groups[eviction_index]
 
-        # hype_counts = {key: 0 for key in HYPE_BUCKETS}
-
-        # for idx, i in enumerate(self.interpreters):
-        #     if idx != eviction_index:
-        #         hype = i.get_hype()
-        #         bucket = sorted(
-        #             [(bucket, abs(hype - bucket)) for bucket in HYPE_BUCKETS],
-        #             key=lambda i: i[1],
-        #         )[0][0]
-        #         hype_counts[bucket] += 1
-
-        # smallest_bucket = sorted(hype_counts.items(), key=lambda i: i[1])[0][0]
+        hype_bracket = (
+            0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
+            100 if not self.state.hype_limiter else min(100, self.state.hype + 30),
+        )
 
         self.interpreters[eviction_index] = get_interpreter(
             self.state.phrase,
@@ -156,13 +148,13 @@ class Director:
             InterpreterArgs(
                 self.state.hype,
                 self.state.theme.allow_rainbows,
-                0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
-                100 if not self.state.hype_limiter else min(100, self.state.hype + 30),
+                hype_bracket[0],
+                hype_bracket[1],
             ),
         )
 
         print(
-            f"Shifted interpretation for {self.state.phrase} max_hype={self.state.hype}:"
+            f"Shifted interpretation for {self.state.phrase} hype=[{hype_bracket[0]} {hype_bracket[1]}]:"
         )
         print(
             f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]} hype={self.interpreters[eviction_index].get_hype()}"

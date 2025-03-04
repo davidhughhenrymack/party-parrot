@@ -587,8 +587,8 @@ class Window(Tk):
         delta_x = event.x - self._drag_data["x"]
         delta_y = event.y - self._drag_data["y"]
 
-        # Get canvas width for clamping
-        canvas_width = self.canvas.winfo_width() or CANVAS_WIDTH
+        # Always use CANVAS_WIDTH for consistent positioning
+        canvas_width = CANVAS_WIDTH
 
         # If we have selected renderers, move all of them
         if self.selected_renderers:
@@ -678,8 +678,8 @@ class Window(Tk):
 
         # Save all renderers from our flat list
         for renderer in self.fixture_renderers:
-            # Get the position data
-            position_data = renderer.to_json()
+            # Create position data directly from current coordinates
+            position_data = {"x": renderer.x, "y": renderer.y}
 
             # Clamp the position within the canvas boundaries
             position_data = self._clamp_position(position_data, renderer)
@@ -718,7 +718,10 @@ class Window(Tk):
                 # Clamp the position within the canvas boundaries
                 position_data = self._clamp_position(position_data, renderer)
 
-                renderer.from_json(self.canvas, position_data)
+                # Directly set the position instead of using from_json to ensure proper positioning
+                renderer.set_position(
+                    self.canvas, position_data["x"], position_data["y"]
+                )
             else:
                 # This is a new fixture that wasn't in the saved data
                 new_fixtures_added = True
@@ -734,8 +737,9 @@ class Window(Tk):
         # Create a copy of the position data to avoid modifying the original
         clamped_data = position_data.copy()
 
-        # Get the canvas width
-        canvas_width = self.canvas.winfo_width() or CANVAS_WIDTH
+        # Always use CANVAS_WIDTH for consistent positioning
+        # This ensures positions are consistent between saves and loads
+        canvas_width = CANVAS_WIDTH
 
         # Clamp x position only to keep fixtures within the horizontal bounds
         min_x = FIXTURE_MARGIN
