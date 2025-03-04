@@ -24,6 +24,7 @@ class FixtureGuiRenderer(Generic[T]):
         self.fixture = fixture
         self._x = 0
         self._y = 0
+        self.patch_label = None
 
     @property
     def width(self) -> int:
@@ -44,9 +45,31 @@ class FixtureGuiRenderer(Generic[T]):
     def set_position(self, canvas: Canvas, x: int, y: int):
         self._x = x
         self._y = y
+        # Update patch label position if it exists
+        if self.patch_label:
+            # Position the label above the fixture
+            canvas.coords(self.patch_label, self._x + 2, self._y - 10)
 
     def setup(self, canvas: Canvas):
-        pass
+        # Create patch address label
+        patch_text = ""
+        if hasattr(self.fixture, "patch"):
+            patch_text = str(self.fixture.patch)
+        elif hasattr(self.fixture, "id") and "@" in self.fixture.id:
+            # Try to extract patch from ID (format: "name@patch")
+            try:
+                patch_text = self.fixture.id.split("@")[1]
+            except (IndexError, AttributeError):
+                pass
+
+        self.patch_label = canvas.create_text(
+            self._x + 2,
+            self._y - 10,  # Position the label above the fixture
+            text=patch_text,
+            fill="gray",
+            anchor="nw",
+            font=("Arial", 8),
+        )
 
     def render(self, canvas: Canvas, frame: Frame):
         pass
@@ -59,3 +82,17 @@ class FixtureGuiRenderer(Generic[T]):
 
     def from_json(self, canvas, data):
         self.set_position(canvas, data["x"], data["y"])
+
+    def contains_point(self, x, y):
+        """Check if the given point is inside the renderer's area.
+
+        Args:
+            x: X coordinate of the point
+            y: Y coordinate of the point
+
+        Returns:
+            True if the point is inside the renderer's area, False otherwise
+        """
+        return (
+            self.x <= x <= self.x + self.width and self.y <= y <= self.y + self.height
+        )

@@ -46,6 +46,11 @@ class ColorBandRenderer(FixtureGuiRenderer[ChauvetColorBandPiX_36Ch]):
                 )
             )
 
+        # Call parent setup to create the patch label
+        super().setup(canvas)
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
+
     def set_position(self, canvas: Canvas, x: int, y: int):
         super().set_position(canvas, x, y)
 
@@ -68,6 +73,9 @@ class ColorBandRenderer(FixtureGuiRenderer[ChauvetColorBandPiX_36Ch]):
                 self.y + BULB_MARGIN + BULB_DIA,
             )
 
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
+
     def render(self, canvas: Canvas, frame: Frame):
         color = self.fixture.get_color()
         dim = self.fixture.get_dimmer()
@@ -76,3 +84,6 @@ class ColorBandRenderer(FixtureGuiRenderer[ChauvetColorBandPiX_36Ch]):
             zc = zone.get_color()
             zc = dim_color(zc, zone.get_dimmer() / 255)
             canvas.itemconfig(oval, fill=dim_color(zc, dim / 255))
+
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)

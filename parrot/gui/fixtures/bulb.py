@@ -31,11 +31,18 @@ class BulbRenderer(FixtureGuiRenderer[FixtureBase]):
             outline="black",
         )
 
+        # Create patch address label
+        super().setup(canvas)
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
+
     def set_position(self, canvas: Canvas, x: int, y: int):
         super().set_position(canvas, x, y)
         canvas.coords(
             self.oval, self.x, self.y, self.x + self.width, self.y + self.height
         )
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
 
     def render(self, canvas: Canvas, frame: Frame):
         # Check if this fixture is part of a manual group
@@ -55,6 +62,8 @@ class BulbRenderer(FixtureGuiRenderer[FixtureBase]):
             fill = render_strobe_dim_color(self.fixture, frame)
 
         canvas.itemconfig(self.oval, fill=fill)
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
 
 
 class RectBulbRenderer(BulbRenderer):
@@ -69,6 +78,11 @@ class RectBulbRenderer(BulbRenderer):
             fill="black",
             outline="black",
         )
+
+        # Create patch address label
+        super(BulbRenderer, self).setup(canvas)
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
 
 
 class RoundedRectBulbRenderer(BulbRenderer):
@@ -160,6 +174,11 @@ class RoundedRectBulbRenderer(BulbRenderer):
             )
         )
 
+        # Create patch address label
+        super(BulbRenderer, self).setup(canvas)
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
+
     def set_position(self, canvas: Canvas, x: int, y: int):
         super().set_position(canvas, x, y)
 
@@ -220,9 +239,14 @@ class RoundedRectBulbRenderer(BulbRenderer):
             self.y + self.height,
         )
 
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)
+
     def render(self, canvas: Canvas, frame: Frame):
         fill = render_strobe_dim_color(self.fixture, frame)
         canvas.itemconfig(self.oval, fill=fill)
         canvas.itemconfig(self.rect_v, fill=fill)
         for corner in self.corners:
             canvas.itemconfig(corner, fill=fill)
+        # Ensure the patch label is on top
+        canvas.tag_raise(self.patch_label)

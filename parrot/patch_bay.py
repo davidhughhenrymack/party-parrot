@@ -19,6 +19,8 @@ venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre"])
 truckee_manual_fixtures = [
     FixtureBase(12, "Manual Bulb 12", 1),
     FixtureBase(15, "Manual Bulb 15", 1),
+    FixtureBase(21, "Manual Bulb 15", 1),
+    FixtureBase(24, "Manual Bulb 15", 1),
 ]
 
 # Create manual control groups for each venue
@@ -87,6 +89,14 @@ venue_patches = {
         FixtureGroup(
             [ChauvetSlimParProQ_5Ch(i) for i in range(30, 66, 5)],
             "SlimPAR Pro Q Group 3",
+        ),
+        FixtureGroup(
+            [ChauvetSpot160_12Ch(i) for i in range(400, 400 + 12 * 6, 12)],
+            "Spot 160 Group",
+        ),
+        FixtureGroup(
+            [FiveBeamLaser(i) for i in range(480, 480 + 14 * 6, 14)],
+            "Laser Group",
         ),
     ],
 }

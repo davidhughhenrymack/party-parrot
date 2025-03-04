@@ -10,17 +10,17 @@ from parrot.state import State
 from parrot.director.phrase import Phrase
 from parrot.patch_bay import venue_patches, venues, get_manual_group
 from parrot.director.themes import themes
-from parrot.fixtures.base import ManualGroup
+from parrot.fixtures.base import FixtureGroup, ManualGroup
 from .fixtures.factory import renderer_for_fixture
-from .fixtures.group import FixtureGroupRenderer
 from parrot.utils.math import distance
 
 CIRCLE_SIZE = 30
-FIXTURE_MARGIN = 20
+FIXTURE_MARGIN = 10
 
 BG = "#222"
 
 CANVAS_WIDTH = 800
+CANVAS_HEIGHT = 800  # Increased canvas height to accommodate more fixtures
 
 SHOW_PLOT = os.environ.get("HIDE_PLOT", "false") != "true"
 
@@ -93,17 +93,27 @@ class Window(Tk):
         # Add event handler for venue change to show/hide manual control
         self.state.events.on_venue_change += self.update_manual_control_visibility
 
+        # Create canvas with scrollbar
+        self.canvas_frame = Frame(self.main_content_frame, bg=BG)
+
+        # Add vertical scrollbar
+        self.vscrollbar = Scrollbar(self.canvas_frame, orient=VERTICAL)
+        self.vscrollbar.pack(side=RIGHT, fill=Y)
+
         self.canvas = Canvas(
-            self.main_content_frame,
+            self.canvas_frame,
             width=CANVAS_WIDTH,
-            height=800,
+            height=CANVAS_HEIGHT,
             bg=BG,
             borderwidth=0,
             selectborderwidth=0,
+            yscrollcommand=self.vscrollbar.set,
         )
-        self.canvas.pack(side=LEFT)
+        self.vscrollbar.config(command=self.canvas.yview)
+        self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        self.canvas_frame.pack(side=LEFT, fill=BOTH, expand=True)
 
-        self.main_content_frame.pack()
+        self.main_content_frame.pack(fill=BOTH, expand=True)
 
         self._drag_data = {"x": 0, "y": 0, "item": None}
         self.canvas.bind("<ButtonPress-1>", self.drag_start)
@@ -169,40 +179,115 @@ class Window(Tk):
     def setup_patch(self):
         self.canvas.delete("all")
 
-        # Create renderers for all fixtures
+        # Create a flat list of fixtures and track their group membership
+        self.fixtures = []
+        self.fixture_group_map = {}  # Maps fixture to its group
+
+        # Unpack all fixtures from venue_patches, flattening groups
+        for item in venue_patches[self.state.venue]:
+            if isinstance(item, FixtureGroup):
+                # Add all fixtures from the group to our flat list
+                for fixture in item.fixtures:
+                    self.fixtures.append(fixture)
+                    self.fixture_group_map[fixture] = item
+            else:
+                # Individual fixture
+                self.fixtures.append(item)
+                self.fixture_group_map[item] = None  # No group
+
+        # Create renderers for all fixtures in our flat list
         self.fixture_renderers = [
-            renderer_for_fixture(fixture) for fixture in venue_patches[self.state.venue]
+            renderer_for_fixture(fixture) for fixture in self.fixtures
         ]
 
         # Set up all renderers
         for renderer in self.fixture_renderers:
             renderer.setup(self.canvas)
 
+        # Group renderers by their fixture group
+        grouped_renderers = {}
+        for renderer in self.fixture_renderers:
+            group = self.fixture_group_map.get(renderer.fixture)
+            group_id = id(group) if group else None
+            if group_id not in grouped_renderers:
+                grouped_renderers[group_id] = []
+            grouped_renderers[group_id].append(renderer)
+
         # Position renderers, with each group on its own row
-        fixture_x = FIXTURE_MARGIN
         fixture_y = FIXTURE_MARGIN
+        max_y = 0
 
-        for idx, renderer in enumerate(self.fixture_renderers):
-            # Check if we need to start a new row
-            if fixture_x + renderer.width + FIXTURE_MARGIN > CANVAS_WIDTH:
-                fixture_x = FIXTURE_MARGIN
-                fixture_y += 100
+        # Process each group
+        for group_id, renderers in grouped_renderers.items():
+            # Calculate the total width of all renderers in this group
+            total_width = sum(
+                renderer.width for renderer in renderers
+            ) + FIXTURE_MARGIN * (len(renderers) - 1)
 
-            # Position the renderer
-            renderer.set_position(self.canvas, fixture_x, fixture_y)
+            # Determine how many fixtures can fit in a row
+            max_fixtures_per_row = max(
+                1,
+                (CANVAS_WIDTH - 2 * FIXTURE_MARGIN)
+                // (renderers[0].width + FIXTURE_MARGIN),
+            )
 
-            # Move to the next position
-            fixture_x += renderer.width + FIXTURE_MARGIN
+            # Split renderers into rows
+            rows = []
+            current_row = []
+            current_row_width = 0
 
-            # If this is a group renderer or the last renderer, start a new row for the next renderer
-            if (
-                isinstance(renderer, FixtureGroupRenderer)
-                or idx == len(self.fixture_renderers) - 1
-            ):
-                fixture_x = FIXTURE_MARGIN
-                fixture_y += 100
+            for renderer in renderers:
+                # If adding this renderer would exceed the canvas width or max fixtures per row, start a new row
+                if (
+                    len(current_row) >= max_fixtures_per_row
+                    or current_row_width + renderer.width + FIXTURE_MARGIN
+                    > CANVAS_WIDTH - FIXTURE_MARGIN
+                ):
+                    rows.append(current_row)
+                    current_row = []
+                    current_row_width = 0
 
+                current_row.append(renderer)
+                current_row_width += renderer.width + FIXTURE_MARGIN
+
+            # Add the last row if it's not empty
+            if current_row:
+                rows.append(current_row)
+
+            # Position renderers in each row
+            for row in rows:
+                # Calculate the starting x position to center the row
+                row_width = sum(renderer.width for renderer in row) + FIXTURE_MARGIN * (
+                    len(row) - 1
+                )
+                fixture_x = max(FIXTURE_MARGIN, (CANVAS_WIDTH - row_width) // 2)
+
+                # Position each renderer in the row
+                for renderer in row:
+                    renderer.set_position(self.canvas, fixture_x, fixture_y)
+                    print(f"position: {renderer.fixture} {fixture_x} {fixture_y}")
+                    fixture_x += renderer.width + FIXTURE_MARGIN
+
+                # Move to the next row
+                max_row_height = max(renderer.height for renderer in row)
+                fixture_y += max_row_height + FIXTURE_MARGIN
+                max_y = max(max_y, fixture_y)
+
+            # Add extra spacing between groups
+            fixture_y += FIXTURE_MARGIN * 2
+
+        # Load fixture positions from saved file
         self.load()
+
+        # Configure the canvas scrolling region to include all fixtures
+        self.canvas.config(
+            scrollregion=(
+                0,
+                0,
+                CANVAS_WIDTH,
+                max(max_y + FIXTURE_MARGIN, CANVAS_HEIGHT),
+            )
+        )
 
     def on_key_press(self, event):
         self.state.set_phrase(Phrase.build)
@@ -213,25 +298,27 @@ class Window(Tk):
         self._drag_data["item"] = None
         closest = 999999999
 
-        # Create a flat list of all renderers, including those inside groups
-        all_renderers = []
-        for renderer in self.fixture_renderers:
-            if isinstance(renderer, FixtureGroupRenderer):
-                # Add individual fixtures from the group
-                all_renderers.extend(renderer.fixture_renderers)
-            else:
-                all_renderers.append(renderer)
-
         # Find the closest renderer to the click point
-        for renderer in all_renderers:
-            dist = distance(event.x, renderer.x, event.y, renderer.y)
-            if dist < closest and dist < 100:
-                self._drag_data["item"] = renderer
-                closest = dist
+        for renderer in self.fixture_renderers:
+            # Get the canvas coordinates, accounting for scrolling
+            canvas_x = self.canvas.canvasx(event.x)
+            canvas_y = self.canvas.canvasy(event.y)
 
-        # Set the starting position for the drag
-        self._drag_data["x"] = event.x
-        self._drag_data["y"] = event.y
+            # Check if the click is inside this renderer
+            if renderer.contains_point(canvas_x, canvas_y):
+                # Calculate distance to the center of the renderer
+                dist = distance(
+                    (canvas_x, canvas_y),
+                    (renderer.x + renderer.width / 2, renderer.y + renderer.height / 2),
+                )
+                if dist < closest:
+                    closest = dist
+                    self._drag_data["item"] = renderer
+
+        if self._drag_data["item"] is not None:
+            # Record the current position
+            self._drag_data["x"] = event.x
+            self._drag_data["y"] = event.y
 
     def drag_stop(self, event):
         """End drag of an object"""
@@ -250,15 +337,50 @@ class Window(Tk):
         # compute how much the mouse has moved
         delta_x = event.x - self._drag_data["x"]
         delta_y = event.y - self._drag_data["y"]
+
+        # Calculate the new position
+        new_x = self._drag_data["item"].x + delta_x
+        new_y = self._drag_data["item"].y + delta_y
+
+        # Clamp only the x position within the canvas width
+        canvas_width = self.canvas.winfo_width() or CANVAS_WIDTH
+
+        min_x = FIXTURE_MARGIN
+        max_x = canvas_width - self._drag_data["item"].width - FIXTURE_MARGIN
+        new_x = max(min_x, min(new_x, max_x))
+
+        # We don't clamp y position for scrollable canvas
+        # This allows fixtures to be positioned anywhere vertically
+
         # move the object the appropriate amount
         self._drag_data["item"].set_position(
             self.canvas,
-            self._drag_data["item"].x + delta_x,
-            self._drag_data["item"].y + delta_y,
+            new_x,
+            new_y,
         )
+
+        # Ensure the canvas scrolls if needed when dragging near the edges
+        self._ensure_visible(new_y)
+
         # record the new position
         self._drag_data["x"] = event.x
         self._drag_data["y"] = event.y
+
+    def _ensure_visible(self, y_position):
+        """Ensure the given y position is visible in the scrollable canvas."""
+        # Get the current visible region
+        canvas_height = self.canvas.winfo_height()
+        scroll_top = self.canvas.yview()[0] * self.canvas.winfo_height()
+        scroll_bottom = self.canvas.yview()[1] * self.canvas.winfo_height()
+
+        # If the position is near the bottom edge, scroll down
+        if y_position > scroll_bottom - 50:
+            self.canvas.yview_moveto((y_position + 100) / self.canvas.winfo_height())
+        # If the position is near the top edge, scroll up
+        elif y_position < scroll_top + 50:
+            self.canvas.yview_moveto(
+                max(0, (y_position - 100) / self.canvas.winfo_height())
+            )
 
     def step(self, frame: parrot.director.frame.Frame):
         for renderer in self.fixture_renderers:
@@ -308,14 +430,15 @@ class Window(Tk):
         data = {}
         filename = f"{self.state.venue.name}_gui.json"
 
-        # Save all renderers, including those inside groups
+        # Save all renderers from our flat list
         for renderer in self.fixture_renderers:
-            if isinstance(renderer, FixtureGroupRenderer):
-                # Save individual fixtures from the group
-                for fixture_renderer in renderer.fixture_renderers:
-                    data[fixture_renderer.fixture.id] = fixture_renderer.to_json()
-            else:
-                data[renderer.fixture.id] = renderer.to_json()
+            # Get the position data
+            position_data = renderer.to_json()
+
+            # Clamp the position within the canvas boundaries
+            position_data = self._clamp_position(position_data, renderer)
+
+            data[renderer.fixture.id] = position_data
 
         # write to file
         with open(filename, "w") as f:
@@ -323,25 +446,64 @@ class Window(Tk):
 
     def load(self):
         filename = f"{self.state.venue.name}_gui.json"
-        # read from file
+
+        # Check if the file exists
         if not os.path.exists(filename):
+            print(f"No saved layout found for {self.state.venue.name}")
             return
 
-        with open(filename, "r") as f:
-            data = json.load(f)
+        # Load the data from the file
+        try:
+            with open(filename, "r") as f:
+                data = json.load(f)
+        except Exception as e:
+            print(f"Error loading layout: {e}")
+            return
 
-        # load json for all renderers, including those inside groups
+        # Track if we found any new fixtures that weren't in the saved data
+        new_fixtures_added = False
+
+        # Load position data for all renderers in our flat list
         for renderer in self.fixture_renderers:
-            if isinstance(renderer, FixtureGroupRenderer):
-                # Load individual fixtures from the group
-                for fixture_renderer in renderer.fixture_renderers:
-                    if fixture_renderer.fixture.id in data:
-                        fixture_renderer.from_json(
-                            self.canvas, data[fixture_renderer.fixture.id]
-                        )
+            if renderer.fixture.id in data:
+                # Get the position data
+                position_data = data[renderer.fixture.id]
+
+                # Clamp the position within the canvas boundaries
+                position_data = self._clamp_position(position_data, renderer)
+
+                renderer.from_json(self.canvas, position_data)
             else:
-                if renderer.fixture.id in data:
-                    renderer.from_json(self.canvas, data[renderer.fixture.id])
+                # This is a new fixture that wasn't in the saved data
+                new_fixtures_added = True
+
+        # If new fixtures were added, save the updated configuration
+        if new_fixtures_added:
+            self.save()
+
+    def _clamp_position(self, position_data, renderer):
+        """Clamp the position within the canvas boundaries.
+        For a scrollable canvas, we only need to clamp the x-coordinate.
+        """
+        # Create a copy of the position data to avoid modifying the original
+        clamped_data = position_data.copy()
+
+        # Get the canvas width
+        canvas_width = self.canvas.winfo_width() or CANVAS_WIDTH
+
+        # Clamp x position only to keep fixtures within the horizontal bounds
+        min_x = FIXTURE_MARGIN
+        max_x = canvas_width - renderer.width - FIXTURE_MARGIN
+
+        # Only apply clamping if the position is significantly outside the bounds
+        # This prevents minor adjustments that could disrupt existing layouts
+        if clamped_data["x"] < 0 or clamped_data["x"] > canvas_width:
+            clamped_data["x"] = max(min_x, min(clamped_data["x"], max_x))
+
+        # We don't clamp y position for scrollable canvas
+        # This allows fixtures to be positioned anywhere vertically
+
+        return clamped_data
 
     def update_manual_control_visibility(self, venue):
         """Show or hide manual control based on whether there is a manual group for this venue."""
@@ -361,11 +523,13 @@ class Window(Tk):
             # Update the manual group's dimmer value
             manual_group.set_manual_dimmer(dimmer_value)
 
-            # Find the manual group renderer and update it
+            # Find all renderers for fixtures in the manual group and update them
+            empty_frame = DirectorFrame({})  # Create an empty frame with default values
+
             for renderer in self.fixture_renderers:
-                if isinstance(renderer.fixture, ManualGroup):
-                    # Create an empty frame with default values
-                    empty_frame = DirectorFrame({})
-                    # Force a render update for the manual group
+                if (
+                    hasattr(renderer.fixture, "parent_group")
+                    and renderer.fixture.parent_group == manual_group
+                ):
+                    # Force a render update for the manual fixture
                     renderer.render(self.canvas, empty_frame)
-                    break

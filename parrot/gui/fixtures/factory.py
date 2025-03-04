@@ -2,7 +2,7 @@ from parrot.fixtures.led_par import Par, ParRGB
 from parrot.fixtures.moving_head import MovingHead
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.fixtures.laser import Laser
-from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
+from parrot.fixtures.base import FixtureBase, ManualGroup
 from parrot.gui.fixtures.base import FixtureGuiRenderer
 from parrot.gui.fixtures.bulb import (
     BulbRenderer,
@@ -24,13 +24,15 @@ from parrot.gui.fixtures.group import FixtureGroupRenderer
 
 
 def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:
+    """Create a renderer for a fixture.
+
+    Note: This function no longer handles FixtureGroups as they are unpacked by the GUI.
+    ManualGroup is still handled directly for backward compatibility.
+    """
     if isinstance(fixture, ManualGroup):
+        # For backward compatibility, still handle ManualGroup directly
         renderer = FixtureGroupRenderer(fixture)
         renderer.setup_renderers(lambda f: BulbRenderer(f))
-        return renderer
-    elif isinstance(fixture, FixtureGroup):
-        renderer = FixtureGroupRenderer(fixture)
-        renderer.setup_renderers(renderer_for_fixture)
         return renderer
     elif isinstance(fixture, Laser):
         return LaserRenderer(fixture)
@@ -49,6 +51,9 @@ def renderer_for_fixture(fixture: FixtureBase) -> FixtureGuiRenderer:
     elif isinstance(fixture, ChauvetSlimParProH_7Ch):
         return RoundedRectBulbRenderer(fixture)
     elif isinstance(fixture, Par):
+        return BulbRenderer(fixture)
+    # Default case for simple FixtureBase objects (like manual bulbs)
+    elif isinstance(fixture, FixtureBase):
         return BulbRenderer(fixture)
     else:
         raise NotImplementedError(f"Renderer for {fixture} not implemented")

@@ -34,6 +34,9 @@ class FixtureGroupRenderer(FixtureGuiRenderer[FixtureGroup]):
 
     def setup(self, canvas: Canvas):
         """Set up all fixture renderers in the group."""
+        # We don't need a patch label for the group itself
+        self.patch_label = None
+
         for renderer in self.fixture_renderers:
             renderer.setup(canvas)
 
