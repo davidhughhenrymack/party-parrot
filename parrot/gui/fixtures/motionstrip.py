@@ -46,6 +46,9 @@ class MotionstripRenderer(FixtureGuiRenderer[FixtureBase]):
                 )
             )
 
+        # Call parent setup to create DMX address label
+        super().setup(canvas)
+
     def set_position(self, canvas: Canvas, x: int, y: int):
         super().set_position(canvas, x, y)
 

@@ -1,7 +1,8 @@
 {
-  "hype": 100,
+  "hype": 42,
   "theme_name": "Pride",
-  "venue_name": "truckee_theatre",
+  "venue_name": "dmack",
   "manual_dimmer": 0.0,
-  "hype_limiter": true
+  "hype_limiter": true,
+  "show_waveform": false
 }

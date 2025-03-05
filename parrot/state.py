@@ -17,6 +17,7 @@ class State:
         self._venue = venues.dmack
         self._manual_dimmer = 0  # New property for manual control
         self._hype_limiter = True  # New property for hype limiter
+        self._show_waveform = True  # New property for waveform visibility
 
         # Try to load state from file
         self.load_state()
@@ -87,6 +88,17 @@ class State:
         self._hype_limiter = value
         self.events.on_hype_limiter_change(self._hype_limiter)
 
+    @property
+    def show_waveform(self):
+        return self._show_waveform
+
+    def set_show_waveform(self, value):
+        if self._show_waveform == value:
+            return
+
+        self._show_waveform = value
+        self.events.on_show_waveform_change(self._show_waveform)
+
     def save_state(self):
         """Save the current state to a JSON file."""
         state_data = {
@@ -95,6 +107,7 @@ class State:
             "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
             "manual_dimmer": self._manual_dimmer,
             "hype_limiter": self._hype_limiter,
+            "show_waveform": self._show_waveform,
         }
 
         try:
@@ -146,6 +159,9 @@ class State:
 
             if "hype_limiter" in state_data:
                 self._hype_limiter = state_data["hype_limiter"]
+
+            if "show_waveform" in state_data:
+                self._show_waveform = state_data["show_waveform"]
 
         except Exception as e:
             print(f"Error loading state: {e}")

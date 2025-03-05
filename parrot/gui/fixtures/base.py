@@ -54,11 +54,11 @@ class FixtureGuiRenderer(Generic[T]):
         # Create patch address label
         patch_text = ""
         if hasattr(self.fixture, "patch"):
-            patch_text = str(self.fixture.patch)
+            patch_text = f"{self.fixture.patch}"
         elif hasattr(self.fixture, "id") and "@" in self.fixture.id:
             # Try to extract patch from ID (format: "name@patch")
             try:
-                patch_text = self.fixture.id.split("@")[1]
+                patch_text = f"{self.fixture.id.split('@')[1]}"
             except (IndexError, AttributeError):
                 pass
 
@@ -66,7 +66,7 @@ class FixtureGuiRenderer(Generic[T]):
             self._x + 2,
             self._y - 10,  # Position the label above the fixture
             text=patch_text,
-            fill="gray",
+            fill="#aaa",
             anchor="nw",
             font=("Arial", 8),
         )

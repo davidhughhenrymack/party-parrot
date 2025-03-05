@@ -1,6 +1,9 @@
+import logging
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp
 from parrot.utils.string import kebab_case
+
+logger = logging.getLogger(__name__)
 
 
 class FixtureBase:
@@ -46,6 +49,11 @@ class FixtureBase:
 
     def render(self, dmx):
         for i in range(len(self.values)):
+            if self.address + i > 512:
+                logger.warning(
+                    f"Fixture {self.name} @ {self.address} has too many channels, skipping {i} channels"
+                )
+                break
             dmx.set_channel(self.address + i, dmx_clamp(self.values[i]))
 
     def __str__(self) -> str:

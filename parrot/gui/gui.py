@@ -2,6 +2,28 @@ import json
 import os
 from tkinter import *
 from tkinter.ttk import Combobox
+from tkinter import (
+    Tk,
+    Frame,
+    Canvas,
+    Button,
+    Scale,
+    Label,
+    StringVar,
+    LEFT,
+    RIGHT,
+    BOTH,
+    VERTICAL,
+    HORIZONTAL,
+    Y,
+    X,
+    TOP,
+    BOTTOM,
+    NW,
+    SE,
+    Listbox,
+    Toplevel,
+)
 
 from parrot.director.director import Director
 import parrot.director.frame
@@ -13,15 +35,23 @@ from parrot.director.themes import themes
 from parrot.fixtures.base import FixtureGroup, ManualGroup
 from .fixtures.factory import renderer_for_fixture
 from parrot.utils.math import distance
+import sys
 
 CIRCLE_SIZE = 30
 FIXTURE_MARGIN = 10
 
 BG = "#222"
-
-CANVAS_WIDTH = 800
-CANVAS_HEIGHT = 800  # Increased canvas height to accommodate more fixtures
-
+FG = "#d0d0d0"  # Light text color
+ENTRY_BG = "#333"  # Slightly darker than BG for text entry
+ENTRY_FG = "#d0d0d0"  # Same as FG
+BUTTON_BG = "#ddd"  # Same as BG for a seamless look
+BUTTON_FG = "#000"
+BUTTON_BORDER = "#8a2be2"  # Purple border
+BUTTON_ACTIVE_BG = "#333"  # Slightly lighter than button bg
+BUTTON_ACTIVE_FG = "#8a2be2"  # Purple text on press
+HIGHLIGHT_COLOR = "#0078d7"
+CANVAS_WIDTH = 1200
+CANVAS_HEIGHT = 800
 SHOW_PLOT = os.environ.get("HIDE_PLOT", "false") != "true"
 
 # Selection box color
@@ -35,11 +65,171 @@ DEFAULT_OUTLINE_COLOR = "black"
 DEFAULT_OUTLINE_WIDTH = 1
 
 
+class RoundedButton(Button):
+    """A custom button with rounded corners and hover effects."""
+
+    def __init__(self, master=None, **kwargs):
+        # Apply default button style if not overridden
+        button_style = {
+            "background": BUTTON_BG,
+            "foreground": BUTTON_FG,
+            "activebackground": BUTTON_ACTIVE_BG,
+            "activeforeground": BUTTON_ACTIVE_FG,
+            "highlightbackground": BUTTON_BG,  # Same as background to hide border
+            "highlightcolor": BUTTON_BORDER,  # For hover effect
+            "borderwidth": 0,  # No border
+            "relief": "flat",  # No bevel
+            "font": ("calibri", 10, "bold"),
+            "highlightthickness": 0,
+            "padx": 10,
+            "pady": 5,
+        }
+
+        # Update with any provided kwargs
+        button_style.update(kwargs)
+
+        super().__init__(master, **button_style)
+
+        # Store original background color
+        self.original_bg = button_style["background"]
+
+        # Bind events for hover and press effects
+        self.bind("<Enter>", self.on_enter)
+        self.bind("<Leave>", self.on_leave)
+        self.bind("<ButtonPress-1>", self.on_press)
+        self.bind("<ButtonRelease-1>", self.on_release)
+
+    def on_enter(self, event):
+        """Change border color on hover."""
+        # Don't change the background - we want to preserve custom colors
+        pass
+
+    def on_leave(self, event):
+        """Reset border color when mouse leaves."""
+        # Don't change the background - we want to preserve custom colors
+        pass
+
+    def on_press(self, event):
+        """Change text color when button is pressed."""
+        # Store the current background before changing it
+        self.original_bg = self.cget("background")
+        # Use activebackground for press effect
+        self.config(
+            foreground=BUTTON_ACTIVE_FG, background=self.cget("activebackground")
+        )
+
+    def on_release(self, event):
+        """Reset text color when button is released."""
+        # Restore the original background color
+        self.config(foreground=BUTTON_FG, background=self.original_bg)
+
+
+class NonBlockingDropdown:
+    """A custom dropdown that doesn't block the main thread when open."""
+
+    def __init__(self, parent, values, current_index=0, command=None, width=20):
+        self.parent = parent
+        self.values = values
+        self.current_index = current_index
+        self.command = command
+        self.width = width
+        self.popup = None
+        self.is_open = False
+
+        # Create button that looks like a dropdown
+        self.button = RoundedButton(
+            parent,
+            text=self.values[current_index] + " ▼",  # Add caret icon
+            command=self.show_dropdown,
+            width=width,
+        )
+
+    def show_dropdown(self):
+        # If popup is already open, close it
+        if self.popup:
+            self.close_dropdown()
+            return
+
+        # Change button style when dropdown is open
+        self.is_open = True
+        self.button.config(background=BUTTON_ACTIVE_BG, foreground=BUTTON_ACTIVE_FG)
+
+        # Create popup window
+        self.popup = Toplevel(self.parent)
+        self.popup.overrideredirect(True)  # Remove window decorations
+        self.popup.transient(self.parent)  # Make it transient to parent
+
+        # Position popup below button
+        x = self.button.winfo_rootx()
+        y = self.button.winfo_rooty() + self.button.winfo_height()
+        self.popup.geometry(
+            f"{self.button.winfo_width()}x{len(self.values)*20}+{x}+{y}"
+        )
+
+        # Create listbox with values
+        self.listbox = Listbox(
+            self.popup,
+            bg=BUTTON_BG,
+            fg=BUTTON_FG,
+            selectbackground=HIGHLIGHT_COLOR,
+            selectforeground="white",
+            borderwidth=0,
+            highlightthickness=0,
+        )
+        for value in self.values:
+            self.listbox.insert("end", value)
+        self.listbox.select_set(self.current_index)
+        self.listbox.bind("<ButtonRelease-1>", self.on_select)
+        self.listbox.pack(fill=BOTH, expand=True)
+
+        # Close dropdown when focus is lost
+        self.popup.bind("<FocusOut>", lambda e: self.after_idle(self.close_dropdown))
+        self.popup.focus_set()
+
+        # Ensure the main window keeps updating
+        self.parent.update_idletasks()
+
+    def close_dropdown(self):
+        if self.popup:
+            # Reset button style when dropdown is closed
+            self.is_open = False
+            self.button.config(background=BUTTON_BG, foreground=BUTTON_FG)
+            self.popup.destroy()
+            self.popup = None
+
+    def on_select(self, event):
+        if self.listbox.curselection():
+            self.current_index = self.listbox.curselection()[0]
+            self.button.config(
+                text=self.values[self.current_index] + " ▼"
+            )  # Keep caret icon
+            self.close_dropdown()
+            if self.command:
+                # Use after_idle to avoid blocking
+                self.parent.after_idle(lambda: self.command(self.current_index))
+
+    def pack(self, **kwargs):
+        self.button.pack(**kwargs)
+
+    def current(self, index=None):
+        if index is not None:
+            self.current_index = index
+            self.button.config(
+                text=self.values[self.current_index] + " ▼"
+            )  # Keep caret icon
+        return self.current_index
+
+    def after_idle(self, callback):
+        """Schedule a callback to run in the idle loop."""
+        self.parent.after_idle(callback)
+
+
 class Window(Tk):
     def __init__(self, state: State, quit: callable, director: Director):
         super().__init__()
 
         self.state = state
+        self.director = director
         # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)
 
         self.title("Party Parrot")
@@ -47,27 +237,50 @@ class Window(Tk):
         self.configure(bg=BG)
         self.protocol("WM_DELETE_WINDOW", quit)
 
+        self.option_add("*Frame.Background", BG)
+        self.option_add("*Frame.borderWidth", 0)
+
+        self.option_add("*Scale.Background", BG)
+        self.option_add("*Scale.Foreground", BUTTON_FG)
+        self.option_add("*Scale.activeBackground", BUTTON_ACTIVE_BG)
+        self.option_add("*Scale.troughColor", BUTTON_BG)
+        self.option_add("*Scale.highlightBackground", BG)
+        self.option_add("*Scale.highlightThickness", 0)
+
+        self.option_add("*Label.Background", BG)
+        self.option_add("*Label.Foreground", BUTTON_FG)
+
+        self.option_add("*Listbox.Background", BUTTON_BG)
+        self.option_add("*Listbox.Foreground", BUTTON_FG)
+        self.option_add("*Listbox.selectBackground", HIGHLIGHT_COLOR)
+        self.option_add("*Listbox.selectForeground", BUTTON_FG)
+        self.option_add("*Listbox.borderWidth", 0)
+        self.option_add("*Listbox.highlightThickness", 0)
+
+        self.option_add("*Canvas.highlightThickness", 0)
+        self.option_add("*Canvas.borderWidth", 0)
+
         self.top_frame = Frame(self, background=BG)
 
-        self.venue_select = Combobox(
-            self.top_frame, values=[i.name for i in venues], state="readonly"
-        )
-        self.venue_select.current([i for i in venues].index(state.venue))
-        self.venue_select.bind(
-            "<<ComboboxSelected>>",
-            lambda e: state.set_venue([i for i in venues][self.venue_select.current()]),
+        # Replace Combobox with NonBlockingDropdown for venue selection
+        venue_values = [i.name for i in venues]
+        self.venue_select = NonBlockingDropdown(
+            self.top_frame,
+            values=venue_values,
+            current_index=[i for i in venues].index(state.venue),
+            command=lambda idx: state.set_venue([i for i in venues][idx]),
+            width=15,
         )
         self.venue_select.pack(side=LEFT, padx=5, pady=5)
 
-        self.theme_select = Combobox(
-            self.top_frame, values=[i.name for i in themes], state="readonly"
-        )
-        # Set the current theme based on the state
-        current_theme_index = themes.index(state.theme)
-        self.theme_select.current(current_theme_index)
-        self.theme_select.bind(
-            "<<ComboboxSelected>>",
-            lambda e: state.set_theme(themes[self.theme_select.current()]),
+        # Replace Combobox with NonBlockingDropdown for theme selection
+        theme_values = [i.name for i in themes]
+        self.theme_select = NonBlockingDropdown(
+            self.top_frame,
+            values=theme_values,
+            current_index=themes.index(state.theme),
+            command=lambda idx: state.set_theme(themes[idx]),
+            width=15,
         )
         self.theme_select.pack(side=LEFT, padx=5, pady=5)
 
@@ -110,16 +323,25 @@ class Window(Tk):
         self.vscrollbar = Scrollbar(self.canvas_frame, orient=VERTICAL)
         self.vscrollbar.pack(side=RIGHT, fill=Y)
 
+        # Add horizontal scrollbar
+        self.hscrollbar = Scrollbar(self.canvas_frame, orient=HORIZONTAL)
+        self.hscrollbar.pack(side=BOTTOM, fill=X)
+
         self.canvas = Canvas(
             self.canvas_frame,
             width=CANVAS_WIDTH,
             height=CANVAS_HEIGHT,
             bg=BG,
             borderwidth=0,
+            highlightthickness=0,
             selectborderwidth=0,
             yscrollcommand=self.vscrollbar.set,
+            xscrollcommand=self.hscrollbar.set,
         )
         self.vscrollbar.config(command=self.canvas.yview)
+        self.hscrollbar.config(command=self.canvas.xview)
+        self.vscrollbar.pack_forget()  # Hide the vertical scrollbar
+        self.hscrollbar.pack_forget()  # Hide the horizontal scrollbar
         self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         self.canvas_frame.pack(side=LEFT, fill=BOTH, expand=True)
 
@@ -134,28 +356,14 @@ class Window(Tk):
         self.canvas.bind("<ButtonPress-1>", self.drag_start)
         self.canvas.bind("<ButtonRelease-1>", self.drag_stop)
         self.canvas.bind("<B1-Motion>", self.drag)
+        # Bind mouse wheel events for scrolling
+        self.canvas.bind("<MouseWheel>", self.on_mousewheel)  # Windows and macOS
 
         self.setup_patch()
         self.state.events.on_venue_change += lambda x: self.setup_patch()
 
-        # self.phrase_frame = Frame(self, background=BG)
-
-        # self.phrase_buttons = {}
-        # for i in Phrase:
-        #     self.phrase_buttons[i] = Button(
-        #         self.phrase_frame,
-        #         text=i.name,
-        #         command=lambda i=i: self.state.set_phrase(i),
-        #         highlightbackground=BG,
-        #         height=3,
-        #     )
-        #     self.phrase_buttons[i].pack(side=LEFT, padx=5, pady=5)
-
-        # self.phrase_frame.pack()
-
         self.label_var = StringVar()
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
-        # self.label.pack()
 
         self.scale = Scale(
             self, from_=0, to=100, length=CANVAS_WIDTH, orient=HORIZONTAL
@@ -168,39 +376,67 @@ class Window(Tk):
 
         self.btn_frame = Frame(self, background=BG)
 
-        self.deploy_hype = Button(
-            self.btn_frame,
-            text="HYPE!!",
-            command=lambda: director.deploy_hype(),
-            highlightbackground=BG,
-            height=2,
+        self.deploy_hype = RoundedButton(
+            self.btn_frame, text="HYPE!!", command=lambda: director.deploy_hype()
         )
         self.deploy_hype.pack(side=LEFT, padx=5, pady=5)
 
-        self.shift = Button(
-            self.btn_frame,
-            text="Shift",
-            command=lambda: director.shift(),
-            highlightbackground=BG,
-            height=2,
-        )
-        self.shift.pack(side=LEFT, padx=5, pady=5)
-
         # Add hype limiter toggle button
-        self.hype_limiter_button = Button(
+        initial_bg = "#4CAF50" if self.state.hype_limiter else BUTTON_BG
+        initial_active_bg = "#45a049" if self.state.hype_limiter else BUTTON_ACTIVE_BG
+
+        self.hype_limiter_button = RoundedButton(
             self.btn_frame,
-            text="Hype Limiter: ON",
+            text=f"Hype Limiter: {'ON' if self.state.hype_limiter else 'OFF'}",
             command=self.toggle_hype_limiter,
-            highlightbackground="green" if self.state.hype_limiter else BG,
-            height=2,
+            background=initial_bg,
+            activebackground=initial_active_bg,
         )
         self.hype_limiter_button.pack(side=LEFT, padx=5, pady=5)
 
+        self.shift = RoundedButton(
+            self.btn_frame, text="Shift", command=lambda: director.shift()
+        )
+        self.shift.pack(side=LEFT, padx=5, pady=5)
+
+        # Add waveform toggle button with caret icon
+        self.waveform_toggle_button = RoundedButton(
+            self.btn_frame,
+            text="▼",  # Down caret when visible
+            command=self.toggle_waveform,
+        )
+        self.waveform_toggle_button.pack(side=LEFT, padx=5, pady=5)
+
         self.btn_frame.pack()
 
-        if SHOW_PLOT:
-            self.graph = Canvas(self, width=CANVAS_WIDTH, height=100, bg=BG)
-            self.graph.pack()
+        # Create waveform panel (graph)
+        self.graph_frame = Frame(self, background=BG)
+        if SHOW_PLOT and self.state.show_waveform:
+            self.graph = Canvas(
+                self.graph_frame,
+                width=CANVAS_WIDTH,
+                height=100,
+                bg=BG,
+                borderwidth=0,
+                highlightthickness=0,
+            )
+            self.graph.pack(fill=X, expand=True)
+            self.graph_frame.pack(fill=X, expand=True)
+        else:
+            self.graph = Canvas(
+                self.graph_frame,
+                width=CANVAS_WIDTH,
+                height=100,
+                bg=BG,
+                borderwidth=0,
+                highlightthickness=0,
+            )
+            self.graph.pack(fill=X, expand=True)
+            if not self.state.show_waveform:
+                self.waveform_toggle_button.config(text="▲")  # Up caret when hidden
+
+        # Bind window resize event to adjust canvas size
+        self.bind("<Configure>", self.on_window_resize)
 
     def setup_patch(self):
         self.canvas.delete("all")
@@ -312,7 +548,7 @@ class Window(Tk):
             scrollregion=(
                 0,
                 0,
-                CANVAS_WIDTH,
+                max(CANVAS_WIDTH, self.canvas.winfo_width()),
                 max(max_y + FIXTURE_MARGIN, CANVAS_HEIGHT),
             )
         )
@@ -632,7 +868,7 @@ class Window(Tk):
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas, frame)
 
-        if SHOW_PLOT:
+        if SHOW_PLOT and self.state.show_waveform:
             self.step_plot(frame)
 
     def step_plot(self, frame):
@@ -788,7 +1024,92 @@ class Window(Tk):
         """Toggle the hype limiter state."""
         new_state = not self.state.hype_limiter
         self.state.set_hype_limiter(new_state)
-        self.hype_limiter_button.config(
-            text=f"Hype Limiter: {'ON' if new_state else 'OFF'}",
-            highlightbackground="green" if new_state else BG,
-        )
+
+        # Update button text and background color based on state
+        if new_state:
+            # Hype limiter is ON - use green background
+            self.hype_limiter_button.config(
+                text=f"Hype Limiter: ON",
+                background="#4CAF50",  # Green color
+                activebackground="#45a049",  # Slightly darker green for active state
+            )
+        else:
+            # Hype limiter is OFF - use default background
+            self.hype_limiter_button.config(
+                text=f"Hype Limiter: OFF",
+                background=BUTTON_BG,  # Default button background
+                activebackground=BUTTON_ACTIVE_BG,  # Default active background
+            )
+
+    def toggle_waveform(self):
+        """Toggle the waveform panel visibility."""
+        new_state = not self.state.show_waveform
+        self.state.set_show_waveform(new_state)
+
+        if new_state:
+            # Show waveform
+            self.waveform_toggle_button.config(text="▼")  # Down caret
+            self.graph_frame.pack(fill=X, expand=True)
+        else:
+            # Hide waveform
+            self.waveform_toggle_button.config(text="▲")  # Up caret
+            self.graph_frame.pack_forget()
+
+        # Adjust canvas size after showing/hiding waveform
+        self.on_window_resize(None)
+
+    def on_window_resize(self, event):
+        """Adjust canvas size when window is resized."""
+        # If called directly (not from event), create a dummy event
+        if event is None:
+
+            class DummyEvent:
+                pass
+
+            event = DummyEvent()
+            event.widget = self
+            event.height = self.winfo_height()
+
+        # Only respond to the main window's resize events
+        if event.widget == self:
+            # Calculate available height for canvas
+            # (window height minus space needed for other widgets)
+            other_widgets_height = (
+                self.top_frame.winfo_height()
+                + self.scale.winfo_height()
+                + self.btn_frame.winfo_height()
+            )
+            if hasattr(self, "graph_frame") and self.state.show_waveform:
+                other_widgets_height += self.graph_frame.winfo_height()
+
+            # Add some padding
+            other_widgets_height += 40
+
+            # Calculate new canvas height
+            new_height = max(400, event.height - other_widgets_height)
+
+            # Update canvas height
+            self.canvas.config(height=new_height)
+
+            # Update scrolling region
+            current_region = self.canvas.cget("scrollregion").split()
+            if current_region:
+                # Convert string values to integers
+                x1, y1, x2, y2 = map(int, current_region)
+                # Update the scrolling region to account for the new size
+                self.canvas.config(
+                    scrollregion=(
+                        x1,
+                        y1,
+                        max(x2, self.canvas.winfo_width()),
+                        max(y2, new_height),
+                    )
+                )
+
+    def on_mousewheel(self, event):
+        """Handle mouse wheel events for scrolling."""
+        print(event)
+        if event.num == 4:  # Scroll up
+            self.canvas.yview_scroll(-1, "units")
+        elif event.num == 5:  # Scroll down
+            self.canvas.yview_scroll(1, "units")
