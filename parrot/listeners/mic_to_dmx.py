@@ -88,7 +88,11 @@ class MicToDmx(object):
 
         # Start the web server if not disabled
         if not getattr(self.args, "no_web", False):
-            start_web_server(self.state, port=getattr(self.args, "web_port", 4040))
+            start_web_server(
+                self.state,
+                director=self.director,
+                port=getattr(self.args, "web_port", 4040),
+            )
 
         self.frame_count = 0
 

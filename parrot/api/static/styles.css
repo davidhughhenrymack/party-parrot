@@ -39,24 +39,11 @@ body {
     position: relative;
 }
 
-.connection-status {
-    font-size: 12px;
-    margin-top: 10px;
-    color: #aaa;
-}
-
-.connection-status.connected {
-    color: #4CAF50;
-}
-
-.connection-status.disconnected {
-    color: #F44336;
-}
-
 .phrase-buttons {
     display: grid;
     grid-template-columns: 1fr;
     gap: 15px;
+    margin-bottom: 30px;
 }
 
 .phrase-button {
@@ -125,6 +112,57 @@ body {
 
 .phrase-button[data-phrase="blackout"]:hover {
     background-color: #000000;
+}
+
+.hype-container {
+    margin-top: 4em;
+    text-align: center;
+}
+
+.hype-button {
+    background: linear-gradient(45deg, #ff9800, #f44336);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 20px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.hype-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.hype-button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hype-button.active {
+    background: linear-gradient(45deg, #f44336, #ff9800);
+    animation: pulse 1.5s infinite;
+    pointer-events: none;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 152, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    }
 }
 
 @media (min-width: 480px) {

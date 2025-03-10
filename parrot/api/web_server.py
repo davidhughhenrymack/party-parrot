@@ -1,6 +1,7 @@
 import os
 import socket
 import threading
+import time
 from flask import Flask, jsonify, request, send_from_directory
 from parrot.director.phrase import Phrase
 from parrot.state import State
@@ -10,6 +11,12 @@ app = Flask(__name__)
 
 # Global reference to the state object
 state_instance = None
+# Global reference to the director object
+director_instance = None
+# Track when hype was last deployed
+last_hype_time = 0
+# How long hype lasts (in seconds)
+HYPE_DURATION = 8
 
 
 def get_local_ip():
@@ -128,12 +135,14 @@ def create_static_files():
     <div class="container">
         <div class="current-phrase">
             <h2>Current Phrase: <span id="current-phrase">Loading...</span></h2>
-            <div id="connection-status" class="connection-status">Checking connection...</div>
         </div>
         <div class="phrase-buttons">
             <button class="phrase-button" data-phrase="party">Party</button>
             <button class="phrase-button" data-phrase="twinkle">Twinkle</button>
             <button class="phrase-button" data-phrase="blackout">Blackout</button>
+        </div>
+        <div class="hype-container">
+            <button id="deploy-hype" class="hype-button">Deploy Hype 🚀</button>
         </div>
     </div>
     <script src="script.js"></script>
@@ -185,24 +194,11 @@ body {
     position: relative;
 }
 
-.connection-status {
-    font-size: 12px;
-    margin-top: 10px;
-    color: #aaa;
-}
-
-.connection-status.connected {
-    color: #4CAF50;
-}
-
-.connection-status.disconnected {
-    color: #F44336;
-}
-
 .phrase-buttons {
     display: grid;
     grid-template-columns: 1fr;
     gap: 15px;
+    margin-bottom: 30px;
 }
 
 .phrase-button {
@@ -273,6 +269,57 @@ body {
     background-color: #000000;
 }
 
+.hype-container {
+    margin-top: 4em;
+    text-align: center;
+}
+
+.hype-button {
+    background: linear-gradient(45deg, #ff9800, #f44336);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 20px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.hype-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.hype-button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hype-button.active {
+    background: linear-gradient(45deg, #f44336, #ff9800);
+    animation: pulse 1.5s infinite;
+    pointer-events: none;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 152, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    }
+}
+
 @media (min-width: 480px) {
     .phrase-buttons {
         grid-template-columns: 1fr 1fr;
@@ -305,6 +352,12 @@ body {
         });
     });
     
+    // Add event listener to hype button
+    const hypeButton = document.getElementById('deploy-hype');
+    hypeButton.addEventListener('click', function() {
+        deployHype();
+    });
+    
     // Function to update UI for a phrase
     function updateUIForPhrase(phrase) {
         const currentPhraseElement = document.getElementById('current-phrase');
@@ -323,16 +376,100 @@ body {
         });
     }
     
+    // Function to deploy hype
+    function deployHype() {
+        const hypeButton = document.getElementById('deploy-hype');
+        
+        // Don't do anything if already active
+        if (hypeButton.classList.contains('active')) {
+            return;
+        }
+        
+        // Set button to active state
+        hypeButton.classList.add('active');
+        hypeButton.textContent = 'Deploying Hype 🚀🔥';
+        
+        // Send request to deploy hype
+        fetch('/api/hype', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Hype deployed:', data);
+            
+            // Start checking hype status
+            checkHypeStatus();
+        })
+        .catch(error => {
+            console.error('Error deploying hype:', error);
+            
+            // Reset button after error
+            hypeButton.classList.remove('active');
+            hypeButton.textContent = 'Deploy Hype 🚀';
+        });
+    }
+    
+    // Function to check hype status
+    function checkHypeStatus() {
+        const hypeButton = document.getElementById('deploy-hype');
+        
+        fetch('/api/hype/status')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.active) {
+                    // Hype is still active
+                    const remainingSeconds = Math.round(data.remaining * 10) / 10;
+                    hypeButton.textContent = `Hype Active 🔥 (${remainingSeconds}s)`;
+                    
+                    // Check again in 500ms
+                    setTimeout(checkHypeStatus, 500);
+                } else {
+                    // Hype is no longer active
+                    hypeButton.classList.remove('active');
+                    hypeButton.textContent = 'Deploy Hype 🚀';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking hype status:', error);
+                
+                // Reset button after error
+                hypeButton.classList.remove('active');
+                hypeButton.textContent = 'Deploy Hype 🚀';
+            });
+    }
+    
     // Function to update connection status
     function updateConnectionStatus(isConnected) {
-        const statusElement = document.getElementById('connection-status');
-        
-        if (isConnected) {
-            statusElement.textContent = 'Connected to Party Parrot';
-            statusElement.className = 'connection-status connected';
+        // Update UI based on connection status
+        if (!isConnected) {
+            document.getElementById('current-phrase').textContent = 'Not Connected';
+            
+            // Disable hype button when not connected
+            const hypeButton = document.getElementById('deploy-hype');
+            hypeButton.disabled = true;
+            hypeButton.textContent = 'Not Connected';
+            hypeButton.style.opacity = '0.5';
         } else {
-            statusElement.textContent = 'Not connected to Party Parrot - check if the app is running';
-            statusElement.className = 'connection-status disconnected';
+            // Re-enable hype button when connected
+            const hypeButton = document.getElementById('deploy-hype');
+            hypeButton.disabled = false;
+            if (!hypeButton.classList.contains('active')) {
+                hypeButton.textContent = 'Deploy Hype 🚀';
+                hypeButton.style.opacity = '1';
+            }
         }
     }
     
@@ -352,6 +489,9 @@ body {
                 } else {
                     document.getElementById('current-phrase').textContent = 'None';
                 }
+                
+                // Also check hype status
+                checkHypeStatus();
             })
             .catch(error => {
                 console.error('Error fetching phrase:', error);
@@ -405,10 +545,48 @@ body {
         )
 
 
-def start_web_server(state, host="0.0.0.0", port=5000):
+@app.route("/api/hype", methods=["POST"])
+def deploy_hype():
+    """Deploy hype."""
+    global last_hype_time
+
+    if not state_instance or not director_instance:
+        return jsonify({"error": "State or Director not initialized"}), 500
+
+    # Deploy hype
+    director_instance.deploy_hype()
+    last_hype_time = time.time()
+
+    return jsonify(
+        {"success": True, "message": "Hype deployed! 🚀", "duration": HYPE_DURATION}
+    )
+
+
+@app.route("/api/hype/status", methods=["GET"])
+def get_hype_status():
+    """Get the current hype status."""
+    global last_hype_time
+
+    if not state_instance:
+        return jsonify({"error": "State not initialized"}), 500
+
+    current_time = time.time()
+    elapsed = current_time - last_hype_time
+
+    if elapsed < HYPE_DURATION:
+        # Hype is active
+        remaining = HYPE_DURATION - elapsed
+        return jsonify({"active": True, "remaining": remaining})
+    else:
+        # Hype is not active
+        return jsonify({"active": False, "remaining": 0})
+
+
+def start_web_server(state, director=None, host="0.0.0.0", port=5000):
     """Start the web server in a separate thread."""
-    global state_instance
+    global state_instance, director_instance
     state_instance = state
+    director_instance = director
 
     # Create static files
     create_static_files()

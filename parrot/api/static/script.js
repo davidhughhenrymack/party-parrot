@@ -16,6 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Add event listener to hype button
+    const hypeButton = document.getElementById('deploy-hype');
+    hypeButton.addEventListener('click', function() {
+        deployHype();
+    });
+    
     // Function to update UI for a phrase
     function updateUIForPhrase(phrase) {
         const currentPhraseElement = document.getElementById('current-phrase');
@@ -34,16 +40,100 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Function to deploy hype
+    function deployHype() {
+        const hypeButton = document.getElementById('deploy-hype');
+        
+        // Don't do anything if already active
+        if (hypeButton.classList.contains('active')) {
+            return;
+        }
+        
+        // Set button to active state
+        hypeButton.classList.add('active');
+        hypeButton.textContent = 'Deploying Hype 🚀🔥';
+        
+        // Send request to deploy hype
+        fetch('/api/hype', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Hype deployed:', data);
+            
+            // Start checking hype status
+            checkHypeStatus();
+        })
+        .catch(error => {
+            console.error('Error deploying hype:', error);
+            
+            // Reset button after error
+            hypeButton.classList.remove('active');
+            hypeButton.textContent = 'Deploy Hype 🚀';
+        });
+    }
+    
+    // Function to check hype status
+    function checkHypeStatus() {
+        const hypeButton = document.getElementById('deploy-hype');
+        
+        fetch('/api/hype/status')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.active) {
+                    // Hype is still active
+                    const remainingSeconds = Math.round(data.remaining * 10) / 10;
+                    hypeButton.textContent = `Hype Active 🔥 (${remainingSeconds}s)`;
+                    
+                    // Check again in 500ms
+                    setTimeout(checkHypeStatus, 500);
+                } else {
+                    // Hype is no longer active
+                    hypeButton.classList.remove('active');
+                    hypeButton.textContent = 'Deploy Hype 🚀';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking hype status:', error);
+                
+                // Reset button after error
+                hypeButton.classList.remove('active');
+                hypeButton.textContent = 'Deploy Hype 🚀';
+            });
+    }
+    
     // Function to update connection status
     function updateConnectionStatus(isConnected) {
-        const statusElement = document.getElementById('connection-status');
-        
-        if (isConnected) {
-            statusElement.textContent = 'Connected to Party Parrot';
-            statusElement.className = 'connection-status connected';
+        // Update UI based on connection status
+        if (!isConnected) {
+            document.getElementById('current-phrase').textContent = 'Not Connected';
+            
+            // Disable hype button when not connected
+            const hypeButton = document.getElementById('deploy-hype');
+            hypeButton.disabled = true;
+            hypeButton.textContent = 'Not Connected';
+            hypeButton.style.opacity = '0.5';
         } else {
-            statusElement.textContent = 'Not connected to Party Parrot - check if the app is running';
-            statusElement.className = 'connection-status disconnected';
+            // Re-enable hype button when connected
+            const hypeButton = document.getElementById('deploy-hype');
+            hypeButton.disabled = false;
+            if (!hypeButton.classList.contains('active')) {
+                hypeButton.textContent = 'Deploy Hype 🚀';
+                hypeButton.style.opacity = '1';
+            }
         }
     }
     
@@ -63,6 +153,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     document.getElementById('current-phrase').textContent = 'None';
                 }
+                
+                // Also check hype status
+                checkHypeStatus();
             })
             .catch(error => {
                 console.error('Error fetching phrase:', error);

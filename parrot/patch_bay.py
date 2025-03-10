@@ -88,7 +88,7 @@ venue_patches = {
             "Moving heads back",
         ),
         FixtureGroup(
-            [FiveBeamLaser(i) for i in range(480, 480 + 14 * 6, 14)],
+            [FiveBeamLaser(i) for i in range(480, 480 + 14 * 2, 14)],
             "Lasers back",
         ),
     ],
