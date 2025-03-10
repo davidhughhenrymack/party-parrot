@@ -15,35 +15,46 @@ document.addEventListener('DOMContentLoaded', function() {
             // Disable all buttons during request
             phraseButtons.forEach(btn => btn.disabled = true);
             
+            // Update UI immediately for better responsiveness
+            updateUIForPhrase(phrase);
+            
+            // Then send the request
             setPhrase(phrase);
         });
     });
+    
+    // Function to update UI for a phrase
+    function updateUIForPhrase(phrase) {
+        const currentPhraseElement = document.getElementById('current-phrase');
+        currentPhraseElement.textContent = phrase.charAt(0).toUpperCase() + phrase.slice(1);
+        
+        // Update button states
+        phraseButtons.forEach(button => {
+            const btnPhrase = button.getAttribute('data-phrase');
+            
+            // Reset button text
+            button.textContent = btnPhrase.charAt(0).toUpperCase() + btnPhrase.slice(1);
+            button.disabled = false;
+            button.classList.remove('loading');
+            
+            // Set active state
+            if (btnPhrase === phrase) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
     
     // Function to fetch current phrase
     function fetchCurrentPhrase() {
         fetch('/api/phrase')
             .then(response => response.json())
             .then(data => {
-                const currentPhraseElement = document.getElementById('current-phrase');
                 if (data.phrase) {
-                    currentPhraseElement.textContent = data.phrase.charAt(0).toUpperCase() + data.phrase.slice(1);
-                    
-                    // Highlight the active button
-                    phraseButtons.forEach(button => {
-                        if (button.getAttribute('data-phrase') === data.phrase) {
-                            button.classList.add('active');
-                        } else {
-                            button.classList.remove('active');
-                        }
-                        
-                        // Reset button text
-                        const phrase = button.getAttribute('data-phrase');
-                        button.textContent = phrase.charAt(0).toUpperCase() + phrase.slice(1);
-                        button.disabled = false;
-                        button.classList.remove('loading');
-                    });
+                    updateUIForPhrase(data.phrase);
                 } else {
-                    currentPhraseElement.textContent = 'None';
+                    document.getElementById('current-phrase').textContent = 'None';
                 }
             })
             .catch(error => {
@@ -71,32 +82,20 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                fetchCurrentPhrase();
-            } else {
+            if (!data.success) {
                 console.error('Error setting phrase:', data.error);
                 alert('Error setting phrase: ' + data.error);
                 
-                // Reset buttons on error
-                phraseButtons.forEach(button => {
-                    const btnPhrase = button.getAttribute('data-phrase');
-                    button.textContent = btnPhrase.charAt(0).toUpperCase() + btnPhrase.slice(1);
-                    button.disabled = false;
-                    button.classList.remove('loading');
-                });
+                // Refresh to get the actual current state
+                fetchCurrentPhrase();
             }
         })
         .catch(error => {
             console.error('Error setting phrase:', error);
             alert('Error setting phrase');
             
-            // Reset buttons on error
-            phraseButtons.forEach(button => {
-                const btnPhrase = button.getAttribute('data-phrase');
-                button.textContent = btnPhrase.charAt(0).toUpperCase() + btnPhrase.slice(1);
-                button.disabled = false;
-                button.classList.remove('loading');
-            });
+            // Refresh to get the actual current state
+            fetchCurrentPhrase();
         });
     }
     

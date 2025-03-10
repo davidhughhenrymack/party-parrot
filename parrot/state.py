@@ -43,6 +43,8 @@ class State:
             return
 
         self._phrase = value
+        print(f"Thread-safe phrase change to: {value.name}")
+
         # Manually trigger only non-GUI event handlers
         if hasattr(self.events, "on_phrase_change"):
             handlers = getattr(self.events, "on_phrase_change")
@@ -57,6 +59,26 @@ class State:
         # Queue the update for the GUI to process in the main thread
         self._gui_update_queue.put(("phrase", value))
         print(f"Queued GUI update for phrase: {value.name}")
+
+        # Also try to directly update the GUI if possible
+        # This is a workaround for cases where the queue isn't being processed
+        try:
+            import tkinter as tk
+
+            for handler in list(handlers):
+                if "gui" in handler.__module__:
+                    # Schedule the handler to run in the main thread after a short delay
+                    # This gives time for the GUI to become responsive
+                    for window in tk.Tk.winfo_children(tk._default_root):
+                        if hasattr(window, "after"):
+                            print(
+                                f"Scheduling direct GUI update for phrase: {value.name}"
+                            )
+                            window.after(100, lambda v=value, h=handler: h(v))
+                            break
+        except Exception as e:
+            print(f"Could not schedule direct GUI update: {e}")
+            # Fall back to queue-based updates
 
     @property
     def hype(self):
