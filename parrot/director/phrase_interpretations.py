@@ -70,39 +70,17 @@ phrase_interpretations: Dict[
     Phrase,
     Dict[FixtureBase, List[InterpreterBase]],
 ] = {
-    Phrase.intro_outro: {
-        ParRGB: [
-            combo(SlowDecay, ColorAlternateBg),
-        ],
-        ChauvetRotosphere_28Ch: [RotosphereOn],
-    },
-    Phrase.build: {
-        # LEDs off
-        # Moving heads flashing beat, (drawing circles / fixed position)
-        # Motion strip off or bulb flashing to the beat
-        MovingHead: [MoverBeatAndCircle, MoverBeatInFan],
-        Motionstrip: [],
-        ParRGB: [combo(DimmersBeatChase, ColorAlternateBg)],
-    },
-    Phrase.drop: {
-        # LEDs pulsing vividly
-        # Moving sequencing on, drawing circles. maybe strobing
-        # Motion strip swishing
-        # lasers on during intense moments
-        ParRGB: [combo(SlowDecay, ColorAlternateBg)],
-        MovingHead: [combo(DimmersBeatChase, ColorFg, MoveCircles)],
-        Motionstrip: [MotionstripSlowRespond],
-        Laser: [DimmerFadeLatched],
-    },
-    Phrase.breakdown: {
+    Phrase.blackout: {},
+    Phrase.twinkle: {
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
         ParRGB: [combo(GentlePulse, ColorAlternateBg)],
-        MovingHead: [MoverDimAndCircle],
-        Motionstrip: [combo(ColorFg, MoveCircles)],
+        MovingHead: [Dimmer0],
+        Motionstrip: [combo(Dimmer255, ColorBg, for_bulbs(Twinkle))],
+        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, ColorBg, for_bulbs(Twinkle))],
     },
-    Phrase.general: {
+    Phrase.party: {
         Par: [
             combo(
                 randomize(

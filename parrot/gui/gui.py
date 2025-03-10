@@ -1,7 +1,5 @@
 import json
 import os
-from tkinter import *
-from tkinter.ttk import Combobox
 from tkinter import (
     Tk,
     Frame,
@@ -23,6 +21,14 @@ from tkinter import (
     SE,
     Listbox,
     Toplevel,
+    Radiobutton,
+    Scrollbar,
+    RAISED,
+    SUNKEN,
+    FLAT,
+    GROOVE,
+    RIDGE,
+    SOLID,
 )
 
 from parrot.director.director import Director
@@ -137,11 +143,18 @@ class NonBlockingDropdown:
         self.is_open = False
 
         # Create button that looks like a dropdown
-        self.button = RoundedButton(
+        self.button = Button(
             parent,
             text=self.values[current_index] + " ▼",  # Add caret icon
             command=self.show_dropdown,
             width=width,
+            background=BUTTON_BG,
+            foreground=BUTTON_FG,
+            activebackground=BUTTON_ACTIVE_BG,
+            activeforeground=BUTTON_ACTIVE_FG,
+            relief=FLAT,
+            borderwidth=1,
+            highlightthickness=0,
         )
 
     def show_dropdown(self):
@@ -230,7 +243,7 @@ class Window(Tk):
 
         self.state = state
         self.director = director
-        # state.events.on_phrase_change += lambda phrase: self.on_phrase_change(phrase)
+        state.events.on_phrase_change += self.on_phrase_change
 
         self.title("Party Parrot")
         # set background color to black
@@ -262,10 +275,52 @@ class Window(Tk):
 
         self.top_frame = Frame(self, background=BG)
 
+        # Create a frame for phrase selection radio buttons
+        self.phrase_frame = Frame(self.top_frame, background=BG)
+
+        # Create a variable to track the selected phrase
+        # Handle the case when state.phrase is None
+        default_phrase = state.phrase.name if state.phrase else ""
+        self.phrase_var = StringVar(value=default_phrase)
+
+        # Store phrase buttons for later reference
+        self.phrase_buttons = {}
+
+        # Create buttons for each phrase instead of radio buttons
+        for phrase in Phrase:
+            btn = RoundedButton(
+                self.phrase_frame,
+                text=phrase.name.capitalize(),
+                command=lambda phrase=phrase: self._select_phrase(phrase),
+                background=BG,
+                foreground=(
+                    HIGHLIGHT_COLOR if phrase.name == default_phrase else BUTTON_FG
+                ),
+                activebackground=BUTTON_ACTIVE_BG,
+                activeforeground=BUTTON_ACTIVE_FG,
+                highlightthickness=1,
+                highlightbackground=(
+                    HIGHLIGHT_COLOR if phrase.name == default_phrase else BG
+                ),
+                borderwidth=1,
+                relief=FLAT,
+                padx=10,
+                pady=4,
+                width=8,
+            )
+            btn.pack(side=LEFT, padx=2)
+            self.phrase_buttons[phrase.name] = btn
+
+        # Pack the phrase frame on the left side of the top frame
+        self.phrase_frame.pack(side=LEFT, padx=10, pady=5)
+
+        # Create a frame for the existing dropdown selectors
+        self.selectors_frame = Frame(self.top_frame, background=BG)
+
         # Replace Combobox with NonBlockingDropdown for venue selection
         venue_values = [i.name for i in venues]
         self.venue_select = NonBlockingDropdown(
-            self.top_frame,
+            self.selectors_frame,
             values=venue_values,
             current_index=[i for i in venues].index(state.venue),
             command=lambda idx: state.set_venue([i for i in venues][idx]),
@@ -276,7 +331,7 @@ class Window(Tk):
         # Replace Combobox with NonBlockingDropdown for theme selection
         theme_values = [i.name for i in themes]
         self.theme_select = NonBlockingDropdown(
-            self.top_frame,
+            self.selectors_frame,
             values=theme_values,
             current_index=themes.index(state.theme),
             command=lambda idx: state.set_theme(themes[idx]),
@@ -284,7 +339,10 @@ class Window(Tk):
         )
         self.theme_select.pack(side=LEFT, padx=5, pady=5)
 
-        self.top_frame.pack()
+        # Pack the selectors frame on the right side of the top frame
+        self.selectors_frame.pack(side=RIGHT, padx=10, pady=5)
+
+        self.top_frame.pack(fill=X)
 
         # Create a frame for the main content with canvas and manual control
         self.main_content_frame = Frame(self, background=BG)
@@ -372,12 +430,22 @@ class Window(Tk):
         self.scale.bind(
             "<ButtonRelease-1>", lambda e: self.state.set_hype(self.scale.get())
         )
-        self.scale.pack()
+        # Only show the scale if hype limiter is ON
+        if self.state.hype_limiter:
+            self.scale.pack()
+        else:
+            self.scale.pack_forget()
+
+        # Connect to hype limiter change event to show/hide the scale
+        self.state.events.on_hype_limiter_change += self.update_hype_scale_visibility
 
         self.btn_frame = Frame(self, background=BG)
 
+        # Create a left frame for most buttons
+        self.left_btn_frame = Frame(self.btn_frame, background=BG)
+
         self.deploy_hype = RoundedButton(
-            self.btn_frame, text="HYPE!!", command=lambda: director.deploy_hype()
+            self.left_btn_frame, text="HYPE!!", command=lambda: director.deploy_hype()
         )
         self.deploy_hype.pack(side=LEFT, padx=5, pady=5)
 
@@ -386,8 +454,8 @@ class Window(Tk):
         initial_active_bg = "#45a049" if self.state.hype_limiter else BUTTON_ACTIVE_BG
 
         self.hype_limiter_button = RoundedButton(
-            self.btn_frame,
-            text=f"Hype Limiter: {'ON' if self.state.hype_limiter else 'OFF'}",
+            self.left_btn_frame,
+            text="Hype Limiter: ON" if self.state.hype_limiter else "Hype Limiter: OFF",
             command=self.toggle_hype_limiter,
             background=initial_bg,
             activebackground=initial_active_bg,
@@ -395,19 +463,36 @@ class Window(Tk):
         self.hype_limiter_button.pack(side=LEFT, padx=5, pady=5)
 
         self.shift = RoundedButton(
-            self.btn_frame, text="Shift", command=lambda: director.shift()
+            self.left_btn_frame, text="Shift", command=lambda: director.shift()
         )
         self.shift.pack(side=LEFT, padx=5, pady=5)
 
+        # Add "Shift all" button that calls generate_interpreters
+        self.shift_all = RoundedButton(
+            self.left_btn_frame,
+            text="Shift All",
+            command=lambda: director.generate_interpreters(),
+        )
+        self.shift_all.pack(side=LEFT, padx=5, pady=5)
+
+        # Pack the left frame
+        self.left_btn_frame.pack(side=LEFT)
+
+        # Create a right frame for the caret button
+        self.right_btn_frame = Frame(self.btn_frame, background=BG)
+
         # Add waveform toggle button with caret icon
         self.waveform_toggle_button = RoundedButton(
-            self.btn_frame,
+            self.right_btn_frame,
             text="▼",  # Down caret when visible
             command=self.toggle_waveform,
         )
-        self.waveform_toggle_button.pack(side=LEFT, padx=5, pady=5)
+        self.waveform_toggle_button.pack(side=RIGHT, padx=5, pady=5)
 
-        self.btn_frame.pack()
+        # Pack the right frame
+        self.right_btn_frame.pack(side=RIGHT, fill=X, expand=True)
+
+        self.btn_frame.pack(fill=X)
 
         # Create waveform panel (graph)
         self.graph_frame = Frame(self, background=BG)
@@ -553,8 +638,49 @@ class Window(Tk):
             )
         )
 
-    def on_key_press(self, event):
-        self.state.set_phrase(Phrase.build)
+    def _select_phrase(self, phrase):
+        """Handle phrase button selection and update UI."""
+        # Do nothing if the phrase is already selected
+        if self.state.phrase == phrase:
+            return
+
+        # Update the state
+        self.state.set_phrase(phrase)
+
+        # Generate new interpreters for the selected phrase
+        self.director.generate_interpreters()
+
+        # Update button appearances
+        self._update_phrase_buttons(phrase)
+
+    def on_phrase_change(self, phrase):
+        """Update the phrase selection when the state changes."""
+        if phrase:
+            # Generate new interpreters for the changed phrase
+            self.director.generate_interpreters()
+
+            # Update button appearances
+            self._update_phrase_buttons(phrase)
+
+    def _update_phrase_buttons(self, phrase):
+        """Update the appearance of phrase buttons based on selection."""
+        # Reset all buttons to default appearance
+        for btn_name, btn in self.phrase_buttons.items():
+            btn.config(
+                background=BG,
+                foreground=BUTTON_FG,
+                highlightthickness=1,
+                highlightbackground=BG,
+            )
+
+        # Highlight the selected button
+        if phrase and phrase.name in self.phrase_buttons:
+            self.phrase_buttons[phrase.name].config(
+                background=BG,
+                foreground=HIGHLIGHT_COLOR,
+                highlightthickness=1,
+                highlightbackground=HIGHLIGHT_COLOR,
+            )
 
     def select_renderer(self, renderer, add_to_selection=False):
         """Select a renderer and show a white outline."""
@@ -1021,25 +1147,30 @@ class Window(Tk):
                     renderer.render(self.canvas, empty_frame)
 
     def toggle_hype_limiter(self):
-        """Toggle the hype limiter state."""
+        """Toggle the hype limiter on/off."""
         new_state = not self.state.hype_limiter
         self.state.set_hype_limiter(new_state)
 
-        # Update button text and background color based on state
+        # Update button appearance
         if new_state:
-            # Hype limiter is ON - use green background
             self.hype_limiter_button.config(
-                text=f"Hype Limiter: ON",
-                background="#4CAF50",  # Green color
-                activebackground="#45a049",  # Slightly darker green for active state
+                text="Hype Limiter: ON",
+                background="#4CAF50",
+                activebackground="#45a049",
             )
         else:
-            # Hype limiter is OFF - use default background
             self.hype_limiter_button.config(
-                text=f"Hype Limiter: OFF",
-                background=BUTTON_BG,  # Default button background
-                activebackground=BUTTON_ACTIVE_BG,  # Default active background
+                text="Hype Limiter: OFF",
+                background=BUTTON_BG,
+                activebackground=BUTTON_ACTIVE_BG,
             )
+
+    def update_hype_scale_visibility(self, hype_limiter_enabled):
+        """Show or hide the hype scale based on hype limiter state."""
+        if hype_limiter_enabled:
+            self.scale.pack()
+        else:
+            self.scale.pack_forget()
 
     def toggle_waveform(self):
         """Toggle the waveform panel visibility."""

@@ -43,7 +43,7 @@ class Director:
         self.start_time = time.time()
         self.state = state
 
-        self.state.set_phrase(Phrase.general)
+        self.state.set_phrase(Phrase.party)
 
         self.setup_patch()
         self.generate_color_scheme()

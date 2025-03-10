@@ -16,7 +16,7 @@ class State:
         self._theme = themes[0]
         self._venue = venues.dmack
         self._manual_dimmer = 0  # New property for manual control
-        self._hype_limiter = True  # New property for hype limiter
+        self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
 
         # Try to load state from file

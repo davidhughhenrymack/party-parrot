@@ -8,6 +8,8 @@ class Par(FixtureBase):
 
 
 class ParRGB(Par):
+    "David's Par RGB fixture"
+
     def __init__(self, patch):
         super().__init__(patch, "led par", 7)
 
