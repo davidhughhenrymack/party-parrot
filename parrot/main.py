@@ -13,6 +13,8 @@ def parse_arguments():
     )
     parser.add_argument("--no-gui", action="store_true", help="Disable GUI")
     parser.add_argument("--plot", action="store_true", help="Enable plotting")
+    parser.add_argument("--web-port", type=int, default=4040, help="Web server port")
+    parser.add_argument("--no-web", action="store_true", help="Disable web server")
     return parser.parse_args()
 
 

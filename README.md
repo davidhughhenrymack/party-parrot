@@ -23,6 +23,26 @@ Via Entec Pro USB -> DMX
 
 `./main.sh`
 
+# Web Interface
+
+Party Parrot includes a mobile-friendly web interface that allows you to control the lighting phrases from any device on your local network. When the application starts, it will display a URL in the console that you can use to access the web interface.
+
+The web interface provides buttons to switch between different lighting phrases:
+- **Party**: High-energy lighting with beat detection
+- **Twinkle**: Gentle, ambient lighting effects
+- **Blackout**: Turn off all lighting fixtures
+
+Changes made through the web interface are thread-safe and will be immediately reflected in the lighting system.
+
+You can customize the web server with the following command-line options:
+- `--web-port PORT`: Set the web server port (default: 4040)
+- `--no-web`: Disable the web server
+
+Example:
+```
+./main.sh --web-port 8080
+```
+
 # List devices
 
 `poetry run python -m DMXEnttecPro.utils`

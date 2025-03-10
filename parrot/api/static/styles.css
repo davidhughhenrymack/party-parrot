@@ -1,0 +1,112 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #ff9800;
+}
+
+.current-phrase {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.phrase-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.phrase-button {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.phrase-button:hover {
+    background-color: #1976d2;
+}
+
+.phrase-button:active {
+    background-color: #0d47a1;
+}
+
+.phrase-button.active {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+.phrase-button.active::after {
+    content: "✓";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.phrase-button[data-phrase="party"] {
+    background-color: #f44336;
+}
+
+.phrase-button[data-phrase="party"]:hover {
+    background-color: #d32f2f;
+}
+
+.phrase-button[data-phrase="twinkle"] {
+    background-color: #9c27b0;
+}
+
+.phrase-button[data-phrase="twinkle"]:hover {
+    background-color: #7b1fa2;
+}
+
+.phrase-button[data-phrase="blackout"] {
+    background-color: #212121;
+}
+
+.phrase-button[data-phrase="blackout"]:hover {
+    background-color: #000000;
+}
+
+@media (min-width: 480px) {
+    .phrase-buttons {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .phrase-button[data-phrase="blackout"] {
+        grid-column: span 2;
+    }
+}

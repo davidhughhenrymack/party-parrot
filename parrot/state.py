@@ -1,5 +1,6 @@
 import json
 import os
+import queue
 from events import Events
 from parrot.director.phrase import Phrase
 from parrot.director.themes import themes, get_theme_by_name
@@ -19,6 +20,9 @@ class State:
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
 
+        # Queue for GUI updates from other threads
+        self._gui_update_queue = queue.Queue()
+
         # Try to load state from file
         self.load_state()
 
@@ -32,6 +36,27 @@ class State:
 
         self._phrase = value
         self.events.on_phrase_change(self._phrase)
+
+    def set_phrase_thread_safe(self, value: Phrase):
+        """Set the phrase in a thread-safe way, avoiding GUI updates."""
+        if self._phrase == value:
+            return
+
+        self._phrase = value
+        # Manually trigger only non-GUI event handlers
+        if hasattr(self.events, "on_phrase_change"):
+            handlers = getattr(self.events, "on_phrase_change")
+            # Filter out GUI-related handlers
+            for handler in list(handlers):
+                if "gui" not in handler.__module__:
+                    try:
+                        handler(value)
+                    except Exception as e:
+                        print(f"Error in event handler: {e}")
+
+        # Queue the update for the GUI to process in the main thread
+        self._gui_update_queue.put(("phrase", value))
+        print(f"Queued GUI update for phrase: {value.name}")
 
     @property
     def hype(self):
@@ -165,3 +190,34 @@ class State:
 
         except Exception as e:
             print(f"Error loading state: {e}")
+
+    def process_gui_updates(self):
+        """Process any pending GUI updates from the queue."""
+        try:
+            while True:
+                # Get update from queue (non-blocking)
+                update = self._gui_update_queue.get_nowait()
+
+                # Process the update
+                update_type, value = update
+
+                if update_type == "phrase":
+                    # Update the phrase in the GUI
+                    if self._phrase != value:
+                        self._phrase = value
+                        # Only trigger GUI-related handlers
+                        if hasattr(self.events, "on_phrase_change"):
+                            handlers = getattr(self.events, "on_phrase_change")
+                            for handler in list(handlers):
+                                if "gui" in handler.__module__:
+                                    try:
+                                        handler(value)
+                                    except Exception as e:
+                                        print(f"Error in GUI event handler: {e}")
+
+                # Mark the task as done
+                self._gui_update_queue.task_done()
+
+        except queue.Empty:
+            # No more updates to process
+            pass

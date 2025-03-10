@@ -18,6 +18,7 @@ from parrot.utils.dmx_utils import get_controller
 from parrot.state import State
 from parrot.utils.colour import Color
 from parrot.utils.tracemalloc import display_top
+from parrot.api import start_web_server
 
 THRESHOLD = 0  # dB
 RATE = 44100
@@ -85,6 +86,10 @@ class MicToDmx(object):
         if not self.args.no_gui:
             self.window = Window(self.state, lambda: self.quit(), self.director)
 
+        # Start the web server if not disabled
+        if not getattr(self.args, "no_web", False):
+            start_web_server(self.state, port=getattr(self.args, "web_port", 4040))
+
         self.frame_count = 0
 
     def quit(self):
@@ -143,9 +148,14 @@ class MicToDmx(object):
         total = 0
         frame_buffer = []
 
+        # Process any pending GUI updates
+        self.state.process_gui_updates()
+
         while total < INPUT_FRAMES_PER_BLOCK:
             while self.stream.get_read_available() <= 0:
                 time.sleep(0.01)
+                # Process GUI updates while waiting for audio
+                self.state.process_gui_updates()
             while (
                 self.stream.get_read_available() > 0 and total < INPUT_FRAMES_PER_BLOCK
             ):

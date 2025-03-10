@@ -51,8 +51,8 @@ class Director:
 
         self.warmup_complete = False
 
-        # self.state.events.on_phrase_change += lambda s: self.generate_interpreters()
-        # self.state.events.on_hype_change += lambda s: self.generate_interpreters()
+        # Register event handlers
+        self.state.events.on_phrase_change += self.on_phrase_change
         self.state.events.on_theme_change += lambda s: self.generate_color_scheme()
         self.state.events.on_venue_change += lambda s: self.setup_patch()
 
@@ -207,3 +207,9 @@ class Director:
 
     def deploy_hype(self):
         self.phrase_machine.deploy_hype(self.last_frame)
+
+    def on_phrase_change(self, phrase):
+        """Handle phrase changes, including those from the web interface."""
+        print(f"Phrase changed to: {phrase.name}")
+        # Regenerate interpreters if needed
+        self.generate_interpreters()

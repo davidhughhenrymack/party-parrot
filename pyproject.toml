@@ -16,6 +16,7 @@ events = "^0.5"
 tk = "^0.1.0"
 black = "^24.4.2"
 pyenttec = "^1.4"
+flask = "^3.1.0"
 
 
 [build-system]
