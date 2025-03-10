@@ -8,13 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const phrase = this.getAttribute('data-phrase');
             
-            // Show loading state
-            this.classList.add('loading');
-            this.textContent = `Setting ${phrase}...`;
-            
-            // Disable all buttons during request
-            phraseButtons.forEach(btn => btn.disabled = true);
-            
             // Update UI immediately for better responsiveness
             updateUIForPhrase(phrase);
             
@@ -32,11 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
         phraseButtons.forEach(button => {
             const btnPhrase = button.getAttribute('data-phrase');
             
-            // Reset button text
-            button.textContent = btnPhrase.charAt(0).toUpperCase() + btnPhrase.slice(1);
-            button.disabled = false;
-            button.classList.remove('loading');
-            
             // Set active state
             if (btnPhrase === phrase) {
                 button.classList.add('active');
@@ -46,10 +34,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Function to update connection status
+    function updateConnectionStatus(isConnected) {
+        const statusElement = document.getElementById('connection-status');
+        
+        if (isConnected) {
+            statusElement.textContent = 'Connected to Party Parrot';
+            statusElement.className = 'connection-status connected';
+        } else {
+            statusElement.textContent = 'Not connected to Party Parrot - check if the app is running';
+            statusElement.className = 'connection-status disconnected';
+        }
+    }
+    
     // Function to fetch current phrase
     function fetchCurrentPhrase() {
         fetch('/api/phrase')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                updateConnectionStatus(true);
+                return response.json();
+            })
             .then(data => {
                 if (data.phrase) {
                     updateUIForPhrase(data.phrase);
@@ -59,14 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error fetching phrase:', error);
-                document.getElementById('current-phrase').textContent = 'Error';
+                document.getElementById('current-phrase').textContent = 'Not Connected';
+                updateConnectionStatus(false);
                 
                 // Reset buttons on error
                 phraseButtons.forEach(button => {
-                    const phrase = button.getAttribute('data-phrase');
-                    button.textContent = phrase.charAt(0).toUpperCase() + phrase.slice(1);
-                    button.disabled = false;
-                    button.classList.remove('loading');
+                    button.classList.remove('active');
                 });
             });
     }
@@ -80,7 +85,13 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ phrase: phrase }),
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            updateConnectionStatus(true);
+            return response.json();
+        })
         .then(data => {
             if (!data.success) {
                 console.error('Error setting phrase:', data.error);
@@ -92,22 +103,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error setting phrase:', error);
-            alert('Error setting phrase');
+            updateConnectionStatus(false);
             
             // Refresh to get the actual current state
             fetchCurrentPhrase();
         });
     }
-    
-    // Add CSS for loading state
-    const style = document.createElement('style');
-    style.textContent = `
-        .phrase-button.loading {
-            opacity: 0.7;
-            cursor: wait;
-        }
-    `;
-    document.head.appendChild(style);
     
     // Refresh current phrase every 5 seconds
     setInterval(fetchCurrentPhrase, 5000);
