@@ -148,9 +148,55 @@ body {
 }
 
 .hype-button.active {
-    background: linear-gradient(45deg, #f44336, #ff9800);
+    background-color: #ff3d00;
     animation: pulse 1.5s infinite;
-    pointer-events: none;
+}
+
+.manual-dimmer-container {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.manual-dimmer-container h3 {
+    margin-bottom: 15px;
+    color: #ffffff;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 15px;
+    border-radius: 5px;
+    background: #333333;
+    outline: none;
+    margin-bottom: 10px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #ff3d00;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #ff3d00;
+    cursor: pointer;
+}
+
+.dimmer-value {
+    font-size: 18px;
+    color: #ffffff;
+    margin-top: 5px;
 }
 
 @keyframes pulse {

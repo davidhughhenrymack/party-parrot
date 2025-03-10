@@ -203,6 +203,99 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Initial connection check
+    updateConnectionStatus(true);
+    
     // Refresh current phrase every 5 seconds
     setInterval(fetchCurrentPhrase, 5000);
+    
+    // Check connection status every 5 seconds
+    setInterval(function() {
+        fetch('/api/phrase')
+            .then(response => {
+                updateConnectionStatus(true);
+            })
+            .catch(error => {
+                updateConnectionStatus(false);
+            });
+    }, 5000);
+    
+    // Check for manual dimmer support and initialize if available
+    checkManualDimmerSupport();
+    
+    // Periodically check for manual dimmer support in case venue changes
+    setInterval(checkManualDimmerSupport, 5000);
+    
+    // Function to check if the venue supports manual dimmers
+    function checkManualDimmerSupport() {
+        fetch('/api/manual_dimmer')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const dimmerContainer = document.getElementById('manual-dimmer-container');
+                
+                // Only show the manual dimmer if it's supported
+                if (data.supported) {
+                    // Show the manual dimmer container
+                    dimmerContainer.style.display = 'block';
+                    
+                    // Set the initial value
+                    const slider = document.getElementById('manual-dimmer-slider');
+                    const valueDisplay = document.getElementById('dimmer-value');
+                    
+                    // Convert from 0-1 to 0-100
+                    const value = Math.round(data.value * 100);
+                    slider.value = value;
+                    valueDisplay.textContent = value;
+                    
+                    // Add event listener for slider changes
+                    slider.addEventListener('input', function() {
+                        // Update the display value
+                        valueDisplay.textContent = this.value;
+                    });
+                    
+                    // Add event listener for when slider is released
+                    slider.addEventListener('change', function() {
+                        // Send the new value to the server
+                        setManualDimmer(this.value / 100);
+                    });
+                } else {
+                    // Hide the manual dimmer container if not supported
+                    dimmerContainer.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking manual dimmer support:', error);
+                // Hide the manual dimmer container if there's an error
+                const dimmerContainer = document.getElementById('manual-dimmer-container');
+                dimmerContainer.style.display = 'none';
+            });
+    }
+    
+    // Function to set the manual dimmer value
+    function setManualDimmer(value) {
+        fetch('/api/manual_dimmer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ value: value })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Manual dimmer set:', data);
+        })
+        .catch(error => {
+            console.error('Error setting manual dimmer:', error);
+        });
+    }
 });

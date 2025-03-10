@@ -75,10 +75,11 @@ phrase_interpretations: Dict[
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
-        ParRGB: [combo(GentlePulse, ColorAlternateBg)],
+        Par: [combo(GentlePulse, ColorAlternateBg)],
         MovingHead: [Dimmer0],
         Motionstrip: [combo(Dimmer255, ColorBg, for_bulbs(Twinkle))],
         ChauvetColorBandPiX_36Ch: [combo(Dimmer255, ColorBg, for_bulbs(Twinkle))],
+        Laser: [Dimmer0],
     },
     Phrase.party: {
         Par: [

@@ -22,7 +22,6 @@ from tkinter import (
     Listbox,
     Toplevel,
     Radiobutton,
-    Scrollbar,
     RAISED,
     SUNKEN,
     FLAT,
@@ -36,7 +35,7 @@ import parrot.director.frame
 from parrot.director.frame import Frame as DirectorFrame
 from parrot.state import State
 from parrot.director.phrase import Phrase
-from parrot.patch_bay import venue_patches, venues, get_manual_group
+from parrot.patch_bay import venue_patches, venues, get_manual_group, has_manual_dimmer
 from parrot.director.themes import themes
 from parrot.fixtures.base import FixtureGroup, ManualGroup
 from .fixtures.factory import renderer_for_fixture
@@ -368,6 +367,15 @@ class Window(Tk):
         # Create a frame for manual control
         self.manual_control_frame = Frame(self.main_content_frame, background=BG)
 
+        # Add a label for the manual dimmer
+        Label(
+            self.manual_control_frame,
+            text="Manual Dimmer",
+            bg=BG,
+            fg="white",
+            font=("Arial", 10),
+        ).pack(padx=5, pady=5)
+
         # Create vertical slider for manual control
         self.manual_slider = Scale(
             self.manual_control_frame,
@@ -385,24 +393,17 @@ class Window(Tk):
         self.manual_slider.set(int(self.state.manual_dimmer * 100))
         self.manual_slider.pack(padx=10, pady=10, fill=Y, expand=True)
 
-        # Only show manual control if there is a manual group for this venue
-        if get_manual_group(self.state.venue):
+        # Only show manual control if there is a manual group or manual dimmers for this venue
+        if get_manual_group(self.state.venue) or has_manual_dimmer(self.state.venue):
             self.manual_control_frame.pack(side=RIGHT, fill=Y)
 
         # Add event handler for venue change to show/hide manual control
         self.state.events.on_venue_change += self.update_manual_control_visibility
 
-        # Create canvas with scrollbar
+        # Create canvas frame
         self.canvas_frame = Frame(self.main_content_frame, bg=BG)
 
-        # Add vertical scrollbar
-        self.vscrollbar = Scrollbar(self.canvas_frame, orient=VERTICAL)
-        self.vscrollbar.pack(side=RIGHT, fill=Y)
-
-        # Add horizontal scrollbar
-        self.hscrollbar = Scrollbar(self.canvas_frame, orient=HORIZONTAL)
-        self.hscrollbar.pack(side=BOTTOM, fill=X)
-
+        # Create canvas with fixed position
         self.canvas = Canvas(
             self.canvas_frame,
             width=CANVAS_WIDTH,
@@ -411,13 +412,7 @@ class Window(Tk):
             borderwidth=0,
             highlightthickness=0,
             selectborderwidth=0,
-            yscrollcommand=self.vscrollbar.set,
-            xscrollcommand=self.hscrollbar.set,
         )
-        self.vscrollbar.config(command=self.canvas.yview)
-        self.hscrollbar.config(command=self.canvas.xview)
-        self.vscrollbar.pack_forget()  # Hide the vertical scrollbar
-        self.hscrollbar.pack_forget()  # Hide the horizontal scrollbar
         self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         self.canvas_frame.pack(side=LEFT, fill=BOTH, expand=True)
 
@@ -432,8 +427,6 @@ class Window(Tk):
         self.canvas.bind("<ButtonPress-1>", self.drag_start)
         self.canvas.bind("<ButtonRelease-1>", self.drag_stop)
         self.canvas.bind("<B1-Motion>", self.drag)
-        # Bind mouse wheel events for scrolling
-        self.canvas.bind("<MouseWheel>", self.on_mousewheel)  # Windows and macOS
 
         self.setup_patch()
         self.state.events.on_venue_change += lambda x: self.setup_patch()
@@ -648,16 +641,6 @@ class Window(Tk):
 
         # Clear selected renderers when changing venue
         self.selected_renderers = []
-
-        # Configure the canvas scrolling region to include all fixtures
-        self.canvas.config(
-            scrollregion=(
-                0,
-                0,
-                max(CANVAS_WIDTH, self.canvas.winfo_width()),
-                max(max_y + FIXTURE_MARGIN, CANVAS_HEIGHT),
-            )
-        )
 
     def _force_update_button_appearance(self, phrase):
         """Force update the button appearance for the given phrase."""
@@ -902,16 +885,6 @@ class Window(Tk):
             button.update_idletasks()
             self.update_idletasks()
 
-            # Ensure the button is visible by scrolling to it if needed
-            if hasattr(self, "_ensure_visible"):
-                try:
-                    # Get the y position of the button
-                    y_position = button.winfo_rooty() - self.winfo_rooty()
-                    self._ensure_visible(y_position)
-                except:
-                    # Ignore any errors that might occur when trying to ensure visibility
-                    pass
-
     def select_renderer(self, renderer, add_to_selection=False):
         """Select a renderer and show a white outline."""
         if not add_to_selection:
@@ -1065,9 +1038,9 @@ class Window(Tk):
 
     def drag_start(self, event):
         """Beginning drag of an object or selection box"""
-        # Get canvas coordinates, accounting for scrolling
-        canvas_x = self.canvas.canvasx(event.x)
-        canvas_y = self.canvas.canvasy(event.y)
+        # Get canvas coordinates
+        canvas_x = event.x
+        canvas_y = event.y
 
         # Find if we clicked on a fixture
         clicked_renderer = None
@@ -1121,8 +1094,8 @@ class Window(Tk):
         # If we were drawing a selection box
         if self._selection_box["box_id"] is not None:
             # Get the final box coordinates
-            canvas_x = self.canvas.canvasx(event.x)
-            canvas_y = self.canvas.canvasy(event.y)
+            canvas_x = event.x
+            canvas_y = event.y
 
             # Get the box coordinates
             x1 = min(self._selection_box["start_x"], canvas_x)
@@ -1159,8 +1132,8 @@ class Window(Tk):
         # If we're drawing a selection box
         if self._selection_box["box_id"] is not None:
             # Update the selection box size
-            canvas_x = self.canvas.canvasx(event.x)
-            canvas_y = self.canvas.canvasy(event.y)
+            canvas_x = event.x
+            canvas_y = event.y
 
             self.canvas.coords(
                 self._selection_box["box_id"],
@@ -1181,6 +1154,7 @@ class Window(Tk):
 
         # Always use CANVAS_WIDTH for consistent positioning
         canvas_width = CANVAS_WIDTH
+        canvas_height = CANVAS_HEIGHT
 
         # If we have selected renderers, move all of them
         if self.selected_renderers:
@@ -1189,27 +1163,22 @@ class Window(Tk):
                 new_x = renderer.x + delta_x
                 new_y = renderer.y + delta_y
 
-                # Clamp only the x position within the canvas width
+                # Clamp the position within the canvas boundaries
                 min_x = FIXTURE_MARGIN
                 max_x = canvas_width - renderer.width - FIXTURE_MARGIN
                 new_x = max(min_x, min(new_x, max_x))
 
+                # Clamp y position as well for fixed canvas
+                min_y = FIXTURE_MARGIN
+                max_y = canvas_height - renderer.height - FIXTURE_MARGIN
+                new_y = max(min_y, min(new_y, max_y))
+
                 # Move the renderer
                 renderer.set_position(self.canvas, new_x, new_y)
-
-            # Ensure the canvas scrolls if needed when dragging near the edges
-            self._ensure_visible(self._drag_data["item"].y + delta_y)
 
         # Record the new position
         self._drag_data["x"] = event.x
         self._drag_data["y"] = event.y
-
-    def _ensure_visible(self, y_position):
-        """Ensure that the given y position is visible in the canvas."""
-        # Calculate the fraction of the canvas height to scroll to
-        self.canvas.yview_moveto(
-            max(0, (y_position - 100) / self.canvas.winfo_height())
-        )
 
     def step(self, frame: parrot.director.frame.Frame):
         # Process any pending GUI updates from the web app
@@ -1319,7 +1288,7 @@ class Window(Tk):
 
     def _clamp_position(self, position_data, renderer):
         """Clamp the position within the canvas boundaries.
-        For a scrollable canvas, we only need to clamp the x-coordinate.
+        For a fixed canvas, we need to clamp both x and y coordinates.
         """
         # Create a copy of the position data to avoid modifying the original
         clamped_data = position_data.copy()
@@ -1327,8 +1296,9 @@ class Window(Tk):
         # Always use CANVAS_WIDTH for consistent positioning
         # This ensures positions are consistent between saves and loads
         canvas_width = CANVAS_WIDTH
+        canvas_height = CANVAS_HEIGHT
 
-        # Clamp x position only to keep fixtures within the horizontal bounds
+        # Clamp x position to keep fixtures within the horizontal bounds
         min_x = FIXTURE_MARGIN
         max_x = canvas_width - renderer.width - FIXTURE_MARGIN
 
@@ -1337,14 +1307,19 @@ class Window(Tk):
         if clamped_data["x"] < 0 or clamped_data["x"] > canvas_width:
             clamped_data["x"] = max(min_x, min(clamped_data["x"], max_x))
 
-        # We don't clamp y position for scrollable canvas
-        # This allows fixtures to be positioned anywhere vertically
+        # Clamp y position to keep fixtures within the vertical bounds
+        min_y = FIXTURE_MARGIN
+        max_y = canvas_height - renderer.height - FIXTURE_MARGIN
+
+        # Apply y clamping if the position is outside the bounds
+        if clamped_data["y"] < 0 or clamped_data["y"] > canvas_height:
+            clamped_data["y"] = max(min_y, min(clamped_data["y"], max_y))
 
         return clamped_data
 
     def update_manual_control_visibility(self, venue):
-        """Show or hide manual control based on whether there is a manual group for this venue."""
-        if get_manual_group(venue):
+        """Show or hide manual control based on whether there is a manual group or manual dimmers for this venue."""
+        if get_manual_group(venue) or has_manual_dimmer(venue):
             self.manual_control_frame.pack(side=RIGHT, fill=Y)
         else:
             self.manual_control_frame.pack_forget()
@@ -1370,6 +1345,9 @@ class Window(Tk):
                 ):
                     # Force a render update for the manual fixture
                     renderer.render(self.canvas, empty_frame)
+
+        # Even if there's no manual group, we still want to update the state
+        # This allows venues with manual dimmers but no manual group to use the slider value
 
     def toggle_hype_limiter(self):
         """Toggle the hype limiter on/off."""
@@ -1446,29 +1424,6 @@ class Window(Tk):
 
             # Update canvas height
             self.canvas.config(height=new_height)
-
-            # Update scrolling region
-            current_region = self.canvas.cget("scrollregion").split()
-            if current_region:
-                # Convert string values to integers
-                x1, y1, x2, y2 = map(int, current_region)
-                # Update the scrolling region to account for the new size
-                self.canvas.config(
-                    scrollregion=(
-                        x1,
-                        y1,
-                        max(x2, self.canvas.winfo_width()),
-                        max(y2, new_height),
-                    )
-                )
-
-    def on_mousewheel(self, event):
-        """Handle mouse wheel events for scrolling."""
-        print(event)
-        if event.num == 4:  # Scroll up
-            self.canvas.yview_scroll(-1, "units")
-        elif event.num == 5:  # Scroll down
-            self.canvas.yview_scroll(1, "units")
 
     def check_gui_updates(self):
         """Periodically check for GUI updates from other threads (like the web app)."""

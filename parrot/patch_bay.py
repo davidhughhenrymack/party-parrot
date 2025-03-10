@@ -32,6 +32,13 @@ manual_groups = {
     venues.mtn_lotus: None,
 }
 
+# Track which venues have manual dimmers
+has_manual_dimmers = {
+    venues.truckee_theatre: True,
+    venues.dmack: False,
+    venues.mtn_lotus: False,
+}
+
 venue_patches = {
     venues.dmack: [
         ChauvetSpot160_12Ch(
@@ -98,3 +105,8 @@ venue_patches = {
 def get_manual_group(venue):
     """Get the manual control group for a venue."""
     return manual_groups.get(venue)
+
+
+def has_manual_dimmer(venue):
+    """Check if a venue has manual dimmers."""
+    return has_manual_dimmers.get(venue, False)

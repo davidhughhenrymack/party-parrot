@@ -27,6 +27,7 @@ class Dimmer0(InterpreterBase):
     def step(self, frame, scheme):
         for i in self.group:
             i.set_dimmer(0)
+            i.set_strobe(0)
 
 
 class DimmerFadeIn(InterpreterBase):

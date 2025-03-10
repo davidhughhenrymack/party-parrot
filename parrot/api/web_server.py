@@ -5,6 +5,7 @@ import time
 from flask import Flask, jsonify, request, send_from_directory
 from parrot.director.phrase import Phrase
 from parrot.state import State
+from parrot.patch_bay import has_manual_dimmer
 
 # Create Flask app
 app = Flask(__name__)
@@ -143,6 +144,11 @@ def create_static_files():
         </div>
         <div class="hype-container">
             <button id="deploy-hype" class="hype-button">Deploy Hype 🚀</button>
+        </div>
+        <div id="manual-dimmer-container" class="manual-dimmer-container" style="display: none;">
+            <h3>Manual Dimmer</h3>
+            <input type="range" id="manual-dimmer-slider" min="0" max="100" value="0" class="slider">
+            <div class="dimmer-value"><span id="dimmer-value">0</span>%</div>
         </div>
     </div>
     <script src="script.js"></script>
@@ -303,9 +309,55 @@ body {
 }
 
 .hype-button.active {
-    background: linear-gradient(45deg, #f44336, #ff9800);
+    background-color: #ff3d00;
     animation: pulse 1.5s infinite;
-    pointer-events: none;
+}
+
+.manual-dimmer-container {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.manual-dimmer-container h3 {
+    margin-bottom: 15px;
+    color: #ffffff;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 15px;
+    border-radius: 5px;
+    background: #333333;
+    outline: none;
+    margin-bottom: 10px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #ff3d00;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #ff3d00;
+    cursor: pointer;
+}
+
+.dimmer-value {
+    font-size: 18px;
+    color: #ffffff;
+    margin-top: 5px;
 }
 
 @keyframes pulse {
@@ -539,8 +591,101 @@ body {
         });
     }
     
+    // Initial connection check
+    updateConnectionStatus(true);
+    
     // Refresh current phrase every 5 seconds
     setInterval(fetchCurrentPhrase, 5000);
+    
+    // Check connection status every 5 seconds
+    setInterval(function() {
+        fetch('/api/phrase')
+            .then(response => {
+                updateConnectionStatus(true);
+            })
+            .catch(error => {
+                updateConnectionStatus(false);
+            });
+    }, 5000);
+    
+    // Check for manual dimmer support and initialize if available
+    checkManualDimmerSupport();
+    
+    // Periodically check for manual dimmer support in case venue changes
+    setInterval(checkManualDimmerSupport, 5000);
+    
+    // Function to check if the venue supports manual dimmers
+    function checkManualDimmerSupport() {
+        fetch('/api/manual_dimmer')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const dimmerContainer = document.getElementById('manual-dimmer-container');
+                
+                // Only show the manual dimmer if it's supported
+                if (data.supported) {
+                    // Show the manual dimmer container
+                    dimmerContainer.style.display = 'block';
+                    
+                    // Set the initial value
+                    const slider = document.getElementById('manual-dimmer-slider');
+                    const valueDisplay = document.getElementById('dimmer-value');
+                    
+                    // Convert from 0-1 to 0-100
+                    const value = Math.round(data.value * 100);
+                    slider.value = value;
+                    valueDisplay.textContent = value;
+                    
+                    // Add event listener for slider changes
+                    slider.addEventListener('input', function() {
+                        // Update the display value
+                        valueDisplay.textContent = this.value;
+                    });
+                    
+                    // Add event listener for when slider is released
+                    slider.addEventListener('change', function() {
+                        // Send the new value to the server
+                        setManualDimmer(this.value / 100);
+                    });
+                } else {
+                    // Hide the manual dimmer container if not supported
+                    dimmerContainer.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking manual dimmer support:', error);
+                // Hide the manual dimmer container if there's an error
+                const dimmerContainer = document.getElementById('manual-dimmer-container');
+                dimmerContainer.style.display = 'none';
+            });
+    }
+    
+    // Function to set the manual dimmer value
+    function setManualDimmer(value) {
+        fetch('/api/manual_dimmer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ value: value })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Manual dimmer set:', data);
+        })
+        .catch(error => {
+            console.error('Error setting manual dimmer:', error);
+        });
+    }
 });"""
         )
 
@@ -566,20 +711,40 @@ def deploy_hype():
 def get_hype_status():
     """Get the current hype status."""
     global last_hype_time
-
-    if not state_instance:
-        return jsonify({"error": "State not initialized"}), 500
-
     current_time = time.time()
     elapsed = current_time - last_hype_time
 
     if elapsed < HYPE_DURATION:
-        # Hype is active
+        # Hype is still active
         remaining = HYPE_DURATION - elapsed
         return jsonify({"active": True, "remaining": remaining})
     else:
-        # Hype is not active
+        # Hype is no longer active
         return jsonify({"active": False, "remaining": 0})
+
+
+@app.route("/api/manual_dimmer", methods=["GET"])
+def get_manual_dimmer():
+    """Get the current manual dimmer value."""
+    if state_instance:
+        venue = state_instance.venue
+        has_dimmer = has_manual_dimmer(venue)
+        return jsonify({"value": state_instance.manual_dimmer, "supported": has_dimmer})
+    return jsonify({"value": 0, "supported": False})
+
+
+@app.route("/api/manual_dimmer", methods=["POST"])
+def set_manual_dimmer():
+    """Set the manual dimmer value."""
+    if state_instance:
+        data = request.json
+        if "value" in data:
+            value = float(data["value"])
+            # Ensure value is between 0 and 1
+            value = max(0, min(1, value))
+            state_instance.set_manual_dimmer(value)
+            return jsonify({"success": True, "value": value})
+    return jsonify({"success": False, "error": "Invalid request"})
 
 
 def start_web_server(state, director=None, host="0.0.0.0", port=5000):
