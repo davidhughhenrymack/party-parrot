@@ -152,7 +152,7 @@ class State:
             "hype": self._hype,
             "theme_name": self._theme.name if hasattr(self._theme, "name") else None,
             "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
-            "manual_dimmer": self._manual_dimmer,
+            "manual_dimmer": 0,  # We do not want to restart the app with lights on
             "hype_limiter": self._hype_limiter,
             "show_waveform": self._show_waveform,
         }
