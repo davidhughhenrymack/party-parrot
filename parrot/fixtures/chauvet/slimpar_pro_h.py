@@ -22,7 +22,7 @@ class ChauvetSlimParProH_7Ch(Par):
 
     def set_dimmer(self, value):
         super().set_dimmer(value)
-        self.values[0] = clamp(int(value * 255), 0, 255)
+        self.values[0] = int(((value / 255) ** 2) * 255)
 
     def set_color(self, color):
         super().set_color(color)

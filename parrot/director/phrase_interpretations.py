@@ -89,7 +89,7 @@ phrase_interpretations: Dict[
                     SequenceFadeDimmers,
                     hype_switch(
                         randomize(
-                            OnWhenNoSustained,
+                            # OnWhenNoSustained,
                             GentlePulse,
                             VerySlowDecay,
                             SlowSustained,
@@ -110,7 +110,7 @@ phrase_interpretations: Dict[
                         DimmerFadeLatched,
                         SequenceDimmers,
                         SequenceFadeDimmers,
-                        OnWhenNoSustained,
+                        # OnWhenNoSustained,
                         with_args(
                             "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
                         ),
@@ -133,7 +133,6 @@ phrase_interpretations: Dict[
                         combo(Dimmer255, for_bulbs(Twinkle)),
                         combo(DimmersBeatChase, AllBulbs255),
                         combo(SlowDecay, AllBulbs255),
-                        # combo(StrobeHighSustained, AllBulbs255),
                         combo(
                             Dimmer255,
                             for_bulbs(
@@ -145,7 +144,6 @@ phrase_interpretations: Dict[
                             ),
                         ),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
-                        # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
                     ),
                     DimmerFadeIn,
                 ),
@@ -160,7 +158,6 @@ phrase_interpretations: Dict[
                         combo(Dimmer255, for_bulbs(Twinkle)),
                         combo(DimmersBeatChase, AllBulbs255),
                         combo(SlowDecay, AllBulbs255),
-                        # combo(StrobeHighSustained, AllBulbs255),
                         combo(
                             Dimmer255,
                             for_bulbs(
@@ -172,7 +169,6 @@ phrase_interpretations: Dict[
                             ),
                         ),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
-                        # combo(Dimmer255, for_bulbs(SequenceFadeDimmers)),
                     ),
                     DimmerFadeIn,
                 ),
@@ -189,7 +185,7 @@ phrase_interpretations: Dict[
                     for_bulbs(GentlePulse),
                     DimmerFadeLatched4s,
                     SlowSustained,
-                    OnWhenNoSustained,
+                    # OnWhenNoSustained,
                     # StrobeHighSustained,
                 ),
             ),

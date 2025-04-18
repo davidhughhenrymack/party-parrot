@@ -8,12 +8,14 @@ class ColorBandPixZone(FixtureBase):
     Represents a single zone (3 channels - RGB) in the COLORband PiX fixture
     """
 
-    def __init__(self, address):
+    def __init__(self, address, parent):
         super().__init__(address, "colorband pix zone", 3)
+        self.parent = parent
 
     def render_values(self, values):
         # Apply color with dimming
-        c = dim_color(self.get_color(), self.get_dimmer() / 255)
+        parent_dimmer = self.parent.get_dimmer()
+        c = dim_color(self.get_color(), self.get_dimmer() / 255 * parent_dimmer / 255)
 
         values[self.address + 0] = int(c.red * 255)  # Red
         values[self.address + 1] = int(c.green * 255)  # Green
@@ -39,7 +41,7 @@ class ChauvetColorBandPiX_36Ch(FixtureWithBulbs):
         for i in range(12):
             # The zone's address is relative to the fixture's address
             zone_address = i * 3
-            zone = ColorBandPixZone(zone_address)
+            zone = ColorBandPixZone(zone_address, self)
             zones.append(zone)
 
         super().__init__(address, "chauvet colorband pix", 36, zones)

@@ -26,7 +26,7 @@ from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
 
 SHIFT_AFTER = 60
-WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "40")), 1)
+WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
 
 HYPE_BUCKETS = [10, 40, 70]
 

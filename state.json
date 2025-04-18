@@ -4,5 +4,5 @@
   "venue_name": "truckee_theatre",
   "manual_dimmer": 0,
   "hype_limiter": false,
-  "show_waveform": false
+  "show_waveform": true
 }
