@@ -80,7 +80,7 @@ class ColorBandRenderer(FixtureGuiRenderer[ChauvetColorBandPiX_36Ch]):
         color = self.fixture.get_color()
         dim = self.fixture.get_dimmer()
 
-        for i, (oval, zone) in enumerate(zip(self.bulbs, self.fixture.get_zones())):
+        for i, (oval, zone) in enumerate(zip(self.bulbs, self.fixture.get_bulbs())):
             zc = zone.get_color()
             zc = dim_color(zc, zone.get_dimmer() / 255)
             canvas.itemconfig(oval, fill=dim_color(zc, dim / 255))

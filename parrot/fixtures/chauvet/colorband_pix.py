@@ -15,14 +15,9 @@ class ColorBandPixZone(FixtureBase):
         # Apply color with dimming
         c = dim_color(self.get_color(), self.get_dimmer() / 255)
 
-        # Calculate the relative offset within the parent fixture's values array
-        # This is important because the address is absolute, but values is relative to the fixture
-        offset = self.address - values.address if hasattr(values, "address") else 0
-
-        # Set RGB values
-        values[offset + 0] = int(c.red * 255)  # Red
-        values[offset + 1] = int(c.green * 255)  # Green
-        values[offset + 2] = int(c.blue * 255)  # Blue
+        values[self.address + 0] = int(c.red * 255)  # Red
+        values[self.address + 1] = int(c.green * 255)  # Green
+        values[self.address + 2] = int(c.blue * 255)  # Blue
 
 
 class ChauvetColorBandPiX_36Ch(FixtureWithBulbs):
@@ -48,16 +43,3 @@ class ChauvetColorBandPiX_36Ch(FixtureWithBulbs):
             zones.append(zone)
 
         super().__init__(address, "chauvet colorband pix", 36, zones)
-
-    def set_zone_color(self, zone_index, color):
-        """
-        Set the color for a specific zone (0-11)
-        """
-        if 0 <= zone_index < len(self.bulbs):
-            self.bulbs[zone_index].set_color(color)
-
-    def get_zones(self):
-        """
-        Return all zones (same as get_bulbs but with a more descriptive name)
-        """
-        return self.get_bulbs()

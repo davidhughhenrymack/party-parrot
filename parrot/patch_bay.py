@@ -17,10 +17,7 @@ venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre"])
 
 # Create manual control fixtures for each venue
 truckee_manual_fixtures = [
-    FixtureBase(12, "Manual Bulb 12", 1),
-    FixtureBase(15, "Manual Bulb 15", 1),
-    FixtureBase(21, "Manual Bulb 15", 1),
-    FixtureBase(24, "Manual Bulb 15", 1),
+    *[FixtureBase(i, f"Manual Bulb {i}", 1) for i in range(1, 9)],
 ]
 
 # Create manual control groups for each venue
@@ -91,7 +88,7 @@ venue_patches = {
             "Front led wash",
         ),
         FixtureGroup(
-            [ChauvetSpot160_12Ch(i) for i in range(400, 400 + 12 * 6, 12)],
+            [ChauvetSpot160_12Ch(i) for i in range(425, 425 + 12 * 6, 12)],
             "Moving heads back",
         ),
         FixtureGroup(
