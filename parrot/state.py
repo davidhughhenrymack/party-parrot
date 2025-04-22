@@ -2,7 +2,7 @@ import json
 import os
 import queue
 from events import Events
-from parrot.director.phrase import Phrase
+from parrot.director.mode import Mode
 from parrot.director.themes import themes, get_theme_by_name
 from parrot.patch_bay import venues
 
@@ -12,7 +12,7 @@ class State:
         self.events = Events()
 
         # Default values
-        self._phrase = None
+        self._mode = None
         self._hype = 30
         self._theme = themes[0]
         self._venue = venues.dmack
@@ -27,27 +27,27 @@ class State:
         self.load_state()
 
     @property
-    def phrase(self):
-        return self._phrase
+    def mode(self):
+        return self._mode
 
-    def set_phrase(self, value: Phrase):
-        if self._phrase == value:
+    def set_mode(self, value: Mode):
+        if self._mode == value:
             return
 
-        self._phrase = value
-        self.events.on_phrase_change(self._phrase)
+        self._mode = value
+        self.events.on_mode_change(self._mode)
 
-    def set_phrase_thread_safe(self, value: Phrase):
-        """Set the phrase in a thread-safe way, avoiding GUI updates."""
-        if self._phrase == value:
+    def set_mode_thread_safe(self, value: Mode):
+        """Set the mode in a thread-safe way, avoiding GUI updates."""
+        if self._mode == value:
             return
 
-        self._phrase = value
-        print(f"Thread-safe phrase change to: {value.name}")
+        self._mode = value
+        print(f"Thread-safe mode change to: {value.name}")
 
         # Manually trigger only non-GUI event handlers
-        if hasattr(self.events, "on_phrase_change"):
-            handlers = getattr(self.events, "on_phrase_change")
+        if hasattr(self.events, "on_mode_change"):
+            handlers = getattr(self.events, "on_mode_change")
             # Filter out GUI-related handlers
             for handler in list(handlers):
                 if "gui" not in handler.__module__:
@@ -57,8 +57,8 @@ class State:
                         print(f"Error in event handler: {e}")
 
         # Queue the update for the GUI to process in the main thread
-        self._gui_update_queue.put(("phrase", value))
-        print(f"Queued GUI update for phrase: {value.name}")
+        self._gui_update_queue.put(("mode", value))
+        print(f"Queued GUI update for mode: {value.name}")
 
         # Also try to directly update the GUI if possible
         # This is a workaround for cases where the queue isn't being processed
@@ -72,7 +72,7 @@ class State:
                     for window in tk.Tk.winfo_children(tk._default_root):
                         if hasattr(window, "after"):
                             print(
-                                f"Scheduling direct GUI update for phrase: {value.name}"
+                                f"Scheduling direct GUI update for mode: {value.name}"
                             )
                             window.after(100, lambda v=value, h=handler: h(v))
                             break
@@ -223,13 +223,13 @@ class State:
                 # Process the update
                 update_type, value = update
 
-                if update_type == "phrase":
-                    # Update the phrase in the GUI
-                    if self._phrase != value:
-                        self._phrase = value
+                if update_type == "mode":
+                    # Update the mode in the GUI
+                    if self._mode != value:
+                        self._mode = value
                         # Only trigger GUI-related handlers
-                        if hasattr(self.events, "on_phrase_change"):
-                            handlers = getattr(self.events, "on_phrase_change")
+                        if hasattr(self.events, "on_mode_change"):
+                            handlers = getattr(self.events, "on_mode_change")
                             for handler in list(handlers):
                                 if "gui" in handler.__module__:
                                     try:

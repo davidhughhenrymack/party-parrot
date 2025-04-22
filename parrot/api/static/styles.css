@@ -30,7 +30,7 @@ body {
     padding: 20px;
 }
 
-.current-phrase {
+.current-mode {
     background-color: #1e1e1e;
     padding: 20px;
     border-radius: 8px;
@@ -39,14 +39,14 @@ body {
     position: relative;
 }
 
-.phrase-buttons {
+.mode-buttons {
     display: grid;
     grid-template-columns: 1fr;
     gap: 15px;
     margin-bottom: 30px;
 }
 
-.phrase-button {
+.mode-button {
     background-color: #2196f3;
     color: white;
     border: none;
@@ -59,23 +59,23 @@ body {
     overflow: hidden;
 }
 
-.phrase-button:hover {
+.mode-button:hover {
     background-color: #1976d2;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.phrase-button:active {
+.mode-button:active {
     background-color: #0d47a1;
     transform: translateY(0);
 }
 
-.phrase-button.active {
+.mode-button.active {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     transform: scale(1.05);
 }
 
-.phrase-button.active::after {
+.mode-button.active::after {
     content: "✓";
     position: absolute;
     top: 10px;
@@ -90,27 +90,27 @@ body {
     justify-content: center;
 }
 
-.phrase-button[data-phrase="party"] {
+.mode-button[data-mode="party"] {
     background-color: #f44336;
 }
 
-.phrase-button[data-phrase="party"]:hover {
+.mode-button[data-mode="party"]:hover {
     background-color: #d32f2f;
 }
 
-.phrase-button[data-phrase="twinkle"] {
+.mode-button[data-mode="twinkle"] {
     background-color: #9c27b0;
 }
 
-.phrase-button[data-phrase="twinkle"]:hover {
+.mode-button[data-mode="twinkle"]:hover {
     background-color: #7b1fa2;
 }
 
-.phrase-button[data-phrase="blackout"] {
+.mode-button[data-mode="blackout"] {
     background-color: #212121;
 }
 
-.phrase-button[data-phrase="blackout"]:hover {
+.mode-button[data-mode="blackout"]:hover {
     background-color: #000000;
 }
 
@@ -212,11 +212,11 @@ body {
 }
 
 @media (min-width: 480px) {
-    .phrase-buttons {
+    .mode-buttons {
         grid-template-columns: 1fr 1fr;
     }
     
-    .phrase-button[data-phrase="blackout"] {
+    .mode-button[data-mode="blackout"] {
         grid-column: span 2;
     }
 }

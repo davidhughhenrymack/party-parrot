@@ -34,7 +34,7 @@ from parrot.director.director import Director
 import parrot.director.frame
 from parrot.director.frame import Frame as DirectorFrame
 from parrot.state import State
-from parrot.director.phrase import Phrase
+from parrot.director.mode import Mode
 from parrot.patch_bay import venue_patches, venues, get_manual_group, has_manual_dimmer
 from parrot.director.themes import themes
 from parrot.fixtures.base import FixtureGroup, ManualGroup
@@ -251,7 +251,7 @@ class Window(Tk):
 
         self.state = state
         self.director = director
-        state.events.on_phrase_change += self.on_phrase_change
+        state.events.on_mode_change += self.on_mode_change
 
         self.title("Party Parrot")
         # set background color to black
@@ -283,35 +283,35 @@ class Window(Tk):
 
         self.top_frame = Frame(self, background=BG)
 
-        # Create a frame for phrase selection radio buttons
-        self.phrase_frame = Frame(self.top_frame, background=BG)
+        # Create a frame for mode selection radio buttons
+        self.mode_frame = Frame(self.top_frame, background=BG)
 
-        # Create a variable to track the selected phrase
-        # Handle the case when state.phrase is None
-        default_phrase = state.phrase.name if state.phrase else ""
-        self.phrase_var = StringVar(value=default_phrase)
+        # Create a variable to track the selected mode
+        # Handle the case when state.mode is None
+        default_mode = state.mode.name if state.mode else ""
+        self.mode_var = StringVar(value=default_mode)
 
-        # Flag to track if phrase change was initiated locally
-        self.local_phrase_change = False
+        # Flag to track if mode change was initiated locally
+        self.local_mode_change = False
 
-        # Store phrase buttons for later reference
-        self.phrase_buttons = {}
+        # Store mode buttons for later reference
+        self.mode_buttons = {}
 
-        # Create buttons for each phrase instead of radio buttons
-        for phrase in Phrase:
+        # Create buttons for each mode instead of radio buttons
+        for mode in Mode:
             btn = RoundedButton(
-                self.phrase_frame,
-                text=phrase.name.capitalize(),
-                command=lambda phrase=phrase: self._select_phrase(phrase),
+                self.mode_frame,
+                text=mode.name.capitalize(),
+                command=lambda mode=mode: self._select_mode(mode),
                 background=BG,
                 foreground=(
-                    HIGHLIGHT_COLOR if phrase.name == default_phrase else BUTTON_FG
+                    HIGHLIGHT_COLOR if mode.name == default_mode else BUTTON_FG
                 ),
                 activebackground=BUTTON_ACTIVE_BG,
                 activeforeground=BUTTON_ACTIVE_FG,
                 highlightthickness=1,
                 highlightbackground=(
-                    HIGHLIGHT_COLOR if phrase.name == default_phrase else BG
+                    HIGHLIGHT_COLOR if mode.name == default_mode else BG
                 ),
                 borderwidth=1,
                 relief=FLAT,
@@ -320,14 +320,14 @@ class Window(Tk):
                 width=8,
             )
             btn.pack(side=LEFT, padx=2)
-            self.phrase_buttons[phrase.name] = btn
+            self.mode_buttons[mode.name] = btn
 
-        # Pack the phrase frame on the left side of the top frame
-        self.phrase_frame.pack(side=LEFT, padx=10, pady=5)
+        # Pack the mode frame on the left side of the top frame
+        self.mode_frame.pack(side=LEFT, padx=10, pady=5)
 
         # Add a status label to show web app changes
         self.status_label = Label(
-            self.phrase_frame, text="", font=("Arial", 8), fg=HIGHLIGHT_COLOR, bg=BG
+            self.mode_frame, text="", font=("Arial", 8), fg=HIGHLIGHT_COLOR, bg=BG
         )
         self.status_label.pack(side=BOTTOM, pady=5)
 
@@ -642,16 +642,16 @@ class Window(Tk):
         # Clear selected renderers when changing venue
         self.selected_renderers = []
 
-    def _force_update_button_appearance(self, phrase):
-        """Force update the button appearance for the given phrase."""
-        if not phrase or phrase.name not in self.phrase_buttons:
+    def _force_update_button_appearance(self, mode):
+        """Force update the button appearance for the given mode."""
+        if not mode or mode.name not in self.mode_buttons:
             return
 
-        print(f"GUI: Force updating button appearance for {phrase.name}")
+        print(f"GUI: Force updating button appearance for {mode.name}")
 
         # First reset ALL buttons to default appearance
-        for btn_name, btn in self.phrase_buttons.items():
-            if btn_name != phrase.name:  # Skip the button we're about to highlight
+        for btn_name, btn in self.mode_buttons.items():
+            if btn_name != mode.name:  # Skip the button we're about to highlight
                 btn.config(
                     background=BG,
                     foreground=BUTTON_FG,
@@ -663,7 +663,7 @@ class Window(Tk):
                 btn.update_idletasks()
 
         # Get the button
-        button = self.phrase_buttons[phrase.name]
+        button = self.mode_buttons[mode.name]
 
         # Apply highlighting
         button.config(
@@ -681,73 +681,73 @@ class Window(Tk):
         # Update the root window to ensure changes are visible
         self.update_idletasks()
 
-    def _select_phrase(self, phrase):
-        """Handle phrase button selection and update UI."""
-        # Do nothing if the phrase is already selected
-        if self.state.phrase == phrase:
+    def _select_mode(self, mode):
+        """Handle mode button selection and update UI."""
+        # Do nothing if the mode is already selected
+        if self.state.mode == mode:
             return
 
         # Set flag to indicate this is a local change
-        self.local_phrase_change = True
+        self.local_mode_change = True
 
         # Update the state
-        self.state.set_phrase(phrase)
+        self.state.set_mode(mode)
 
-        # Generate new interpreters for the selected phrase
+        # Generate new interpreters for the selected mode
         self.director.generate_interpreters()
 
         # Update button appearances
-        self._update_phrase_buttons(phrase)
+        self._update_mode_buttons(mode)
 
         # Force update the button appearance
-        self._force_update_button_appearance(phrase)
+        self._force_update_button_appearance(mode)
 
         # Reset the flag
-        self.local_phrase_change = False
+        self.local_mode_change = False
 
-    def on_phrase_change(self, phrase):
-        """Update the phrase selection when the state changes."""
-        if phrase:
-            print(f"GUI: on_phrase_change called for {phrase.name}")
+    def on_mode_change(self, mode):
+        """Update the mode selection when the state changes."""
+        if mode:
+            print(f"GUI: on_mode_change called for {mode.name}")
 
-            # Generate new interpreters for the changed phrase
+            # Generate new interpreters for the changed mode
             self.director.generate_interpreters()
 
-            # Update the phrase variable to match the current phrase
-            if hasattr(self, "phrase_var"):
-                self.phrase_var.set(phrase.name)
+            # Update the mode variable to match the current mode
+            if hasattr(self, "mode_var"):
+                self.mode_var.set(mode.name)
 
             # Only show web app notification if this wasn't a local change
-            if not self.local_phrase_change and phrase.name in self.phrase_buttons:
-                print(f"GUI: External change detected for phrase {phrase.name}")
+            if not self.local_mode_change and mode.name in self.mode_buttons:
+                print(f"GUI: External change detected for mode {mode.name}")
 
                 # Schedule multiple updates to ensure the UI refreshes
                 # This is a workaround for Tkinter's sometimes unreliable updates
                 def update_ui():
-                    print(f"GUI: Scheduled update for {phrase.name}")
+                    print(f"GUI: Scheduled update for {mode.name}")
                     # Update all buttons first
-                    self._update_phrase_buttons(phrase)
+                    self._update_mode_buttons(mode)
                     # Force update the button appearance
-                    self._force_update_button_appearance(phrase)
+                    self._force_update_button_appearance(mode)
                     # Flash the button
-                    button = self.phrase_buttons[phrase.name]
+                    button = self.mode_buttons[mode.name]
                     button.config(background=HIGHLIGHT_COLOR, foreground=BG)
                     button.update_idletasks()
                     # Show status message
                     self.status_label.config(
-                        text=f"Phrase changed to '{phrase.name}' from web app"
+                        text=f"mode changed to '{mode.name}' from web app"
                     )
                     # Schedule reset
                     self.after(300, lambda: reset_button())
 
                 def reset_button():
-                    print(f"GUI: Resetting button for {phrase.name}")
-                    button = self.phrase_buttons[phrase.name]
+                    print(f"GUI: Resetting button for {mode.name}")
+                    button = self.mode_buttons[mode.name]
                     if button.winfo_exists():
                         # Update all buttons again
-                        self._update_phrase_buttons(phrase)
+                        self._update_mode_buttons(mode)
                         # Force update again
-                        self._force_update_button_appearance(phrase)
+                        self._force_update_button_appearance(mode)
                     # Clear status after a delay
                     self.after(4700, lambda: self.status_label.config(text=""))
 
@@ -758,132 +758,45 @@ class Window(Tk):
                 self.after(200, update_ui)
             else:
                 # Always update button appearances, even for local changes
-                print(f"GUI: Updating buttons for local change to {phrase.name}")
-                self._update_phrase_buttons(phrase)
+                print(f"GUI: Updating buttons for local change to {mode.name}")
+                self._update_mode_buttons(mode)
                 # Force update the button appearance
-                self._force_update_button_appearance(phrase)
+                self._force_update_button_appearance(mode)
 
-    def _update_phrase_buttons(self, phrase):
-        """Update the appearance of phrase buttons based on selection."""
-        if not phrase:
-            print("GUI: Cannot update buttons - phrase is None")
+    def _update_mode_buttons(self, mode):
+        """Update the appearance of mode buttons based on selection."""
+        if not mode:
+            print("GUI: Cannot update buttons - mode is None")
             return
 
-        print(f"GUI: Updating all phrase buttons, highlighting {phrase.name}")
+        print(f"GUI: Updating all mode buttons, highlighting {mode.name}")
 
-        # First, reset ALL buttons to default appearance
-        for btn_name, btn in self.phrase_buttons.items():
-            btn.config(
-                background=BG,
-                foreground=BUTTON_FG,
-                highlightthickness=0,
-                highlightbackground=BG,
-                borderwidth=1,
-                relief=FLAT,
-            )
-            btn.update_idletasks()
-
-        try:
-            # Then, recreate only the selected button to force a refresh
-            if phrase.name in self.phrase_buttons:
-                selected_button = self.phrase_buttons[phrase.name]
-                # Get the button's position info before destroying it
-                button_info = {
-                    "row": (
-                        selected_button.grid_info()["row"]
-                        if "row" in selected_button.grid_info()
-                        else None
-                    ),
-                    "column": (
-                        selected_button.grid_info()["column"]
-                        if "column" in selected_button.grid_info()
-                        else None
-                    ),
-                    "pack_info": (
-                        selected_button.pack_info()
-                        if hasattr(selected_button, "pack_info")
-                        else None
-                    ),
-                }
-
-                # Create a new button with the same properties but highlighted
-                new_button = RoundedButton(
-                    self.phrase_frame,
-                    text=phrase.name.capitalize(),
-                    command=lambda p=phrase: self._select_phrase(p),
+        # Update all buttons
+        for btn_name, btn in self.mode_buttons.items():
+            if btn_name == mode.name:
+                # Selected button style
+                btn.config(
                     background=BG,
                     foreground=HIGHLIGHT_COLOR,
-                    activebackground=BUTTON_ACTIVE_BG,
-                    activeforeground=BUTTON_ACTIVE_FG,
                     highlightthickness=2,
                     highlightbackground=HIGHLIGHT_COLOR,
                     borderwidth=1,
                     relief=FLAT,
-                    padx=10,
-                    pady=4,
-                    width=8,
                 )
-
-                # Replace the old button with the new one
-                selected_button.destroy()
-                self.phrase_buttons[phrase.name] = new_button
-
-                # Restore the button's position
-                if button_info["pack_info"]:
-                    new_button.pack(side=LEFT, padx=2)
-                elif (
-                    button_info["row"] is not None and button_info["column"] is not None
-                ):
-                    new_button.grid(
-                        row=button_info["row"], column=button_info["column"]
-                    )
-                else:
-                    new_button.pack(side=LEFT, padx=2)
-
-                # Force update
-                new_button.update_idletasks()
-                self.update_idletasks()
-        except Exception as e:
-            print(f"Error recreating button: {e}")
-            # Fall back to the old method if recreation fails
-            self._update_phrase_buttons_fallback(phrase)
-
-    def _update_phrase_buttons_fallback(self, phrase):
-        """Fallback method to update button appearance if recreation fails."""
-        print(f"GUI: Using fallback method to update buttons for {phrase.name}")
-
-        # Reset ALL buttons to default appearance
-        for btn_name, btn in self.phrase_buttons.items():
-            # Use a completely different style for non-selected buttons
-            btn.config(
-                background=BG,
-                foreground=BUTTON_FG,
-                highlightthickness=0,  # No border for non-selected buttons
-                highlightbackground=BG,
-                borderwidth=1,
-                relief=FLAT,
-            )
-            # Force update
+            else:
+                # Non-selected button style
+                btn.config(
+                    background=BG,
+                    foreground=BUTTON_FG,
+                    highlightthickness=0,
+                    highlightbackground=BG,
+                    borderwidth=1,
+                    relief=FLAT,
+                )
             btn.update_idletasks()
 
-        # Highlight the selected button with a completely different style
-        if phrase and phrase.name in self.phrase_buttons:
-            print(f"GUI: Highlighting button for {phrase.name}")
-            button = self.phrase_buttons[phrase.name]
-
-            # Use a distinctive style for the selected button
-            button.config(
-                background=BG,
-                foreground=HIGHLIGHT_COLOR,
-                highlightthickness=2,  # Visible border
-                highlightbackground=HIGHLIGHT_COLOR,
-                borderwidth=1,
-                relief=FLAT,
-            )
-
-            # Force update
-            button.update_idletasks()
-            self.update_idletasks()
+        # Force update the window
+        self.update_idletasks()
 
     def select_renderer(self, renderer, add_to_selection=False):
         """Select a renderer and show a white outline."""
@@ -1434,14 +1347,14 @@ class Window(Tk):
             # Force a refresh of the UI
             self.update_idletasks()
 
-            # Check if any phrase buttons need to be refreshed
-            if self.state.phrase and self.state.phrase.name in self.phrase_buttons:
+            # Check if any mode buttons need to be refreshed
+            if self.state.mode and self.state.mode.name in self.mode_buttons:
                 # Count how many buttons are highlighted
                 highlighted_buttons = 0
-                for btn_name, btn in self.phrase_buttons.items():
+                for btn_name, btn in self.mode_buttons.items():
                     if btn.cget("highlightbackground") == HIGHLIGHT_COLOR:
                         highlighted_buttons += 1
-                        if btn_name != self.state.phrase.name:
+                        if btn_name != self.state.mode.name:
                             # Found a button that shouldn't be highlighted
                             print(
                                 f"GUI: Found incorrect highlight on {btn_name}, fixing..."
@@ -1456,16 +1369,16 @@ class Window(Tk):
                             )
                             btn.update_idletasks()
 
-                # Ensure the current phrase button is properly highlighted
-                current_button = self.phrase_buttons[self.state.phrase.name]
+                # Ensure the current mode button is properly highlighted
+                current_button = self.mode_buttons[self.state.mode.name]
                 if (
                     current_button.cget("highlightbackground") != HIGHLIGHT_COLOR
                     or highlighted_buttons != 1
                 ):
                     print(
-                        f"GUI: Fixing highlight for {self.state.phrase.name} in periodic check"
+                        f"GUI: Fixing highlight for {self.state.mode.name} in periodic check"
                     )
-                    self._force_update_button_appearance(self.state.phrase)
+                    self._force_update_button_appearance(self.state.mode)
         except Exception as e:
             print(f"Error in GUI update check: {e}")
 

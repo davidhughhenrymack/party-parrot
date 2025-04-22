@@ -3,7 +3,7 @@ import time
 import os
 from typing import List
 from parrot.director.frame import Frame, FrameSignal
-from parrot.director.phrase_machine import PhraseMachine
+from parrot.director.mode_machine import ModeMachine
 from parrot.fixtures import laser
 
 from parrot.patch_bay import venue_patches, get_manual_group
@@ -15,11 +15,11 @@ from parrot.director.color_schemes import color_schemes
 from parrot.director.color_scheme import ColorScheme
 
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
-from parrot.director.phrase import Phrase
+from parrot.director.mode import Mode
 from parrot.fixtures.laser import Laser
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
-from .phrase_interpretations import get_interpreter
+from .mode_interpretations import get_interpreter
 
 from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
@@ -43,16 +43,16 @@ class Director:
         self.start_time = time.time()
         self.state = state
 
-        self.state.set_phrase(Phrase.party)
+        self.state.set_mode(Mode.party)
 
         self.setup_patch()
         self.generate_color_scheme()
-        self.phrase_machine = PhraseMachine(state)
+        self.mode_machine = ModeMachine(state)
 
         self.warmup_complete = False
 
         # Register event handlers
-        self.state.events.on_phrase_change += self.on_phrase_change
+        self.state.events.on_mode_change += self.on_mode_change
         self.state.events.on_theme_change += lambda s: self.generate_color_scheme()
         self.state.events.on_venue_change += lambda s: self.setup_patch()
 
@@ -97,7 +97,7 @@ class Director:
     def generate_interpreters(self):
         self.interpreters: List[InterpreterBase] = [
             get_interpreter(
-                self.state.phrase,
+                self.state.mode,
                 group,
                 InterpreterArgs(
                     HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
@@ -113,7 +113,7 @@ class Director:
             for idx, group in enumerate(self.fixture_groups)
         ]
 
-        print(f"Generated interpretation for {self.state.phrase}:")
+        print(f"Generated interpretation for {self.state.mode}:")
         for i in self.interpreters:
             print(f"    {str(i)} {[str(j) for j in i.group]} hype={i.get_hype()}")
 
@@ -143,7 +143,7 @@ class Director:
         )
 
         self.interpreters[eviction_index] = get_interpreter(
-            self.state.phrase,
+            self.state.mode,
             eviction_group,
             InterpreterArgs(
                 self.state.hype,
@@ -154,7 +154,7 @@ class Director:
         )
 
         print(
-            f"Shifted interpretation for {self.state.phrase} hype=[{hype_bracket[0]} {hype_bracket[1]}]:"
+            f"Shifted interpretation for {self.state.mode} hype=[{hype_bracket[0]} {hype_bracket[1]}]:"
         )
         print(
             f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]} hype={self.interpreters[eviction_index].get_hype()}"
@@ -179,7 +179,7 @@ class Director:
 
         frame = frame * warmup_phase
 
-        additional_signals = self.phrase_machine.step(frame)
+        additional_signals = self.mode_machine.step(frame)
         frame.extend(additional_signals)
 
         for i in self.interpreters:
@@ -206,10 +206,10 @@ class Director:
         dmx.submit()
 
     def deploy_hype(self):
-        self.phrase_machine.deploy_hype(self.last_frame)
+        self.mode_machine.deploy_hype(self.last_frame)
 
-    def on_phrase_change(self, phrase):
-        """Handle phrase changes, including those from the web interface."""
-        print(f"Phrase changed to: {phrase.name}")
+    def on_mode_change(self, mode):
+        """Handle mode changes, including those from the web interface."""
+        print(f"mode changed to: {mode.name}")
         # Regenerate interpreters if needed
         self.generate_interpreters()

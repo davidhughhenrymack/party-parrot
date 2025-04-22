@@ -23,6 +23,25 @@ Via Entec Pro USB -> DMX
 
 `./main.sh`
 
+# Testing
+
+To run the test suite:
+
+```bash
+# Run all tests
+poetry run python -m unittest discover -s parrot
+
+# Run specific test files
+poetry run python -m unittest parrot/director/test_director.py
+poetry run python -m unittest parrot/fixtures/test_base.py
+poetry run python -m unittest parrot/test_main.py
+```
+
+The test suite includes unit tests for:
+- Fixture base classes and groups
+- Director initialization and color scheme management
+- Command-line argument parsing
+
 # Web Interface
 
 Party Parrot includes a mobile-friendly web interface that allows you to control the lighting phrases from any device on your local network. When the application starts, it will display a URL in the console that you can use to access the web interface.

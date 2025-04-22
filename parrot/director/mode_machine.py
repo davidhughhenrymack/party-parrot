@@ -8,7 +8,7 @@ HYPE_DECAY = 0.01
 HYPE_TRIGGER_DELTA = 0.3
 
 
-class PhraseMachine:
+class ModeMachine:
     def __init__(self, state: State):
         self.state = state
         self.sustained_high_trough_time = None

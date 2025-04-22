@@ -3,7 +3,7 @@ import socket
 import threading
 import time
 from flask import Flask, jsonify, request, send_from_directory
-from parrot.director.phrase import Phrase
+from parrot.director.mode import Mode
 from parrot.state import State
 from parrot.patch_bay import has_manual_dimmer
 
@@ -34,38 +34,38 @@ def get_local_ip():
         return "127.0.0.1"  # Fallback to localhost
 
 
-@app.route("/api/phrase", methods=["GET"])
-def get_phrase():
-    """Get the current phrase."""
-    if state_instance and state_instance.phrase:
+@app.route("/api/mode", methods=["GET"])
+def get_mode():
+    """Get the current mode."""
+    if state_instance and state_instance.mode:
         return jsonify(
             {
-                "phrase": state_instance.phrase.name,
-                "available_phrases": [p.name for p in Phrase],
+                "mode": state_instance.mode.name,
+                "available_modes": [p.name for p in Mode],
             }
         )
-    return jsonify({"phrase": None, "available_phrases": [p.name for p in Phrase]})
+    return jsonify({"mode": None, "available_modes": [p.name for p in Mode]})
 
 
-@app.route("/api/phrase", methods=["POST"])
-def set_phrase():
-    """Set the current phrase."""
+@app.route("/api/mode", methods=["POST"])
+def set_mode():
+    """Set the current mode."""
     if not state_instance:
         return jsonify({"error": "State not initialized"}), 500
 
     data = request.json
-    if not data or "phrase" not in data:
-        return jsonify({"error": "Missing phrase parameter"}), 400
+    if not data or "mode" not in data:
+        return jsonify({"error": "Missing mode parameter"}), 400
 
-    phrase_name = data["phrase"]
+    mode_name = data["mode"]
     try:
-        phrase = Phrase[phrase_name]
+        mode = Mode[mode_name]
 
         # Return success immediately to make the web UI responsive
-        response = jsonify({"success": True, "phrase": phrase.name})
+        response = jsonify({"success": True, "mode": mode.name})
 
-        # Use the thread-safe method to set the phrase (after preparing the response)
-        state_instance.set_phrase_thread_safe(phrase)
+        # Use the thread-safe method to set the mode (after preparing the response)
+        state_instance.set_mode_thread_safe(mode)
 
         # Try to directly update the GUI if possible
         try:
@@ -75,11 +75,11 @@ def set_phrase():
                 for window in tk.Tk.winfo_children(tk._default_root):
                     if hasattr(window, "_force_update_button_appearance"):
                         print(
-                            f"Web server: Directly updating GUI for phrase: {phrase.name}"
+                            f"Web server: Directly updating GUI for mode: {mode.name}"
                         )
                         # Schedule the update to run in the main thread
                         window.after(
-                            100, lambda: window._force_update_button_appearance(phrase)
+                            100, lambda: window._force_update_button_appearance(mode)
                         )
                         break
         except Exception as e:
@@ -90,7 +90,7 @@ def set_phrase():
         return (
             jsonify(
                 {
-                    "error": f"Invalid phrase: {phrase_name}. Available phrases: {[p.name for p in Phrase]}"
+                    "error": f"Invalid mode: {mode_name}. Available modes: {[p.name for p in Mode]}"
                 }
             ),
             400,
@@ -134,13 +134,13 @@ def create_static_files():
 <body>
     <div class="parrot-background"></div>
     <div class="container">
-        <div class="current-phrase">
-            <h2>Current Phrase: <span id="current-phrase">Loading...</span></h2>
+        <div class="current-mode">
+            <h2>Current mode: <span id="current-mode">Loading...</span></h2>
         </div>
-        <div class="phrase-buttons">
-            <button class="phrase-button" data-phrase="party">Party</button>
-            <button class="phrase-button" data-phrase="twinkle">Twinkle</button>
-            <button class="phrase-button" data-phrase="blackout">Blackout</button>
+        <div class="mode-buttons">
+            <button class="mode-button" data-mode="party">Party</button>
+            <button class="mode-button" data-mode="twinkle">Twinkle</button>
+            <button class="mode-button" data-mode="blackout">Blackout</button>
         </div>
         <div class="hype-container">
             <button id="deploy-hype" class="hype-button">Deploy Hype 🚀</button>
@@ -191,7 +191,7 @@ body {
     padding: 20px;
 }
 
-.current-phrase {
+.current-mode {
     background-color: #1e1e1e;
     padding: 20px;
     border-radius: 8px;
@@ -200,14 +200,14 @@ body {
     position: relative;
 }
 
-.phrase-buttons {
+.mode-buttons {
     display: grid;
     grid-template-columns: 1fr;
     gap: 15px;
     margin-bottom: 30px;
 }
 
-.phrase-button {
+.mode-button {
     background-color: #2196f3;
     color: white;
     border: none;
@@ -220,23 +220,23 @@ body {
     overflow: hidden;
 }
 
-.phrase-button:hover {
+.mode-button:hover {
     background-color: #1976d2;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.phrase-button:active {
+.mode-button:active {
     background-color: #0d47a1;
     transform: translateY(0);
 }
 
-.phrase-button.active {
+.mode-button.active {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     transform: scale(1.05);
 }
 
-.phrase-button.active::after {
+.mode-button.active::after {
     content: "✓";
     position: absolute;
     top: 10px;
@@ -251,27 +251,27 @@ body {
     justify-content: center;
 }
 
-.phrase-button[data-phrase="party"] {
+.mode-button[data-mode="party"] {
     background-color: #f44336;
 }
 
-.phrase-button[data-phrase="party"]:hover {
+.mode-button[data-mode="party"]:hover {
     background-color: #d32f2f;
 }
 
-.phrase-button[data-phrase="twinkle"] {
+.mode-button[data-mode="twinkle"] {
     background-color: #9c27b0;
 }
 
-.phrase-button[data-phrase="twinkle"]:hover {
+.mode-button[data-mode="twinkle"]:hover {
     background-color: #7b1fa2;
 }
 
-.phrase-button[data-phrase="blackout"] {
+.mode-button[data-mode="blackout"] {
     background-color: #212121;
 }
 
-.phrase-button[data-phrase="blackout"]:hover {
+.mode-button[data-mode="blackout"]:hover {
     background-color: #000000;
 }
 
@@ -373,11 +373,11 @@ body {
 }
 
 @media (min-width: 480px) {
-    .phrase-buttons {
+    .mode-buttons {
         grid-template-columns: 1fr 1fr;
     }
     
-    .phrase-button[data-phrase="blackout"] {
+    .mode-button[data-mode="blackout"] {
         grid-column: span 2;
     }
 }"""
@@ -387,20 +387,20 @@ body {
     with open(os.path.join(static_dir, "script.js"), "w") as f:
         f.write(
             """document.addEventListener('DOMContentLoaded', function() {
-    // Get current phrase on page load
-    fetchCurrentPhrase();
+    // Get current mode on page load
+    fetchCurrentmode();
     
-    // Add event listeners to phrase buttons
-    const phraseButtons = document.querySelectorAll('.phrase-button');
-    phraseButtons.forEach(button => {
+    // Add event listeners to mode buttons
+    const modeButtons = document.querySelectorAll('.mode-button');
+    modeButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const phrase = this.getAttribute('data-phrase');
+            const mode = this.getAttribute('data-mode');
             
             // Update UI immediately for better responsiveness
-            updateUIForPhrase(phrase);
+            updateUIFormode(mode);
             
             // Then send the request
-            setPhrase(phrase);
+            setmode(mode);
         });
     });
     
@@ -410,17 +410,17 @@ body {
         deployHype();
     });
     
-    // Function to update UI for a phrase
-    function updateUIForPhrase(phrase) {
-        const currentPhraseElement = document.getElementById('current-phrase');
-        currentPhraseElement.textContent = phrase.charAt(0).toUpperCase() + phrase.slice(1);
+    // Function to update UI for a mode
+    function updateUIFormode(mode) {
+        const currentmodeElement = document.getElementById('current-mode');
+        currentmodeElement.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
         
         // Update button states
-        phraseButtons.forEach(button => {
-            const btnPhrase = button.getAttribute('data-phrase');
+        modeButtons.forEach(button => {
+            const btnmode = button.getAttribute('data-mode');
             
             // Set active state
-            if (btnPhrase === phrase) {
+            if (btnmode === mode) {
                 button.classList.add('active');
             } else {
                 button.classList.remove('active');
@@ -507,7 +507,7 @@ body {
     function updateConnectionStatus(isConnected) {
         // Update UI based on connection status
         if (!isConnected) {
-            document.getElementById('current-phrase').textContent = 'Not Connected';
+            document.getElementById('current-mode').textContent = 'Not Connected';
             
             // Disable hype button when not connected
             const hypeButton = document.getElementById('deploy-hype');
@@ -525,9 +525,9 @@ body {
         }
     }
     
-    // Function to fetch current phrase
-    function fetchCurrentPhrase() {
-        fetch('/api/phrase')
+    // Function to fetch current mode
+    function fetchCurrentmode() {
+        fetch('/api/mode')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -536,35 +536,35 @@ body {
                 return response.json();
             })
             .then(data => {
-                if (data.phrase) {
-                    updateUIForPhrase(data.phrase);
+                if (data.mode) {
+                    updateUIFormode(data.mode);
                 } else {
-                    document.getElementById('current-phrase').textContent = 'None';
+                    document.getElementById('current-mode').textContent = 'None';
                 }
                 
                 // Also check hype status
                 checkHypeStatus();
             })
             .catch(error => {
-                console.error('Error fetching phrase:', error);
-                document.getElementById('current-phrase').textContent = 'Not Connected';
+                console.error('Error fetching mode:', error);
+                document.getElementById('current-mode').textContent = 'Not Connected';
                 updateConnectionStatus(false);
                 
                 // Reset buttons on error
-                phraseButtons.forEach(button => {
+                modeButtons.forEach(button => {
                     button.classList.remove('active');
                 });
             });
     }
     
-    // Function to set phrase
-    function setPhrase(phrase) {
-        fetch('/api/phrase', {
+    // Function to set mode
+    function setmode(mode) {
+        fetch('/api/mode', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ phrase: phrase }),
+            body: JSON.stringify({ mode: mode }),
         })
         .then(response => {
             if (!response.ok) {
@@ -575,31 +575,31 @@ body {
         })
         .then(data => {
             if (!data.success) {
-                console.error('Error setting phrase:', data.error);
-                alert('Error setting phrase: ' + data.error);
+                console.error('Error setting mode:', data.error);
+                alert('Error setting mode: ' + data.error);
                 
                 // Refresh to get the actual current state
-                fetchCurrentPhrase();
+                fetchCurrentmode();
             }
         })
         .catch(error => {
-            console.error('Error setting phrase:', error);
+            console.error('Error setting mode:', error);
             updateConnectionStatus(false);
             
             // Refresh to get the actual current state
-            fetchCurrentPhrase();
+            fetchCurrentmode();
         });
     }
     
     // Initial connection check
     updateConnectionStatus(true);
     
-    // Refresh current phrase every 5 seconds
-    setInterval(fetchCurrentPhrase, 5000);
+    // Refresh current mode every 5 seconds
+    setInterval(fetchCurrentmode, 5000);
     
     // Check connection status every 5 seconds
     setInterval(function() {
-        fetch('/api/phrase')
+        fetch('/api/mode')
             .then(response => {
                 updateConnectionStatus(true);
             })

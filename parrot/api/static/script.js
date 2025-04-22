@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Get current phrase on page load
-    fetchCurrentPhrase();
+    // Get current mode on page load
+    fetchCurrentmode();
     
-    // Add event listeners to phrase buttons
-    const phraseButtons = document.querySelectorAll('.phrase-button');
-    phraseButtons.forEach(button => {
+    // Add event listeners to mode buttons
+    const modeButtons = document.querySelectorAll('.mode-button');
+    modeButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const phrase = this.getAttribute('data-phrase');
+            const mode = this.getAttribute('data-mode');
             
             // Update UI immediately for better responsiveness
-            updateUIForPhrase(phrase);
+            updateUIFormode(mode);
             
             // Then send the request
-            setPhrase(phrase);
+            setmode(mode);
         });
     });
     
@@ -22,17 +22,17 @@ document.addEventListener('DOMContentLoaded', function() {
         deployHype();
     });
     
-    // Function to update UI for a phrase
-    function updateUIForPhrase(phrase) {
-        const currentPhraseElement = document.getElementById('current-phrase');
-        currentPhraseElement.textContent = phrase.charAt(0).toUpperCase() + phrase.slice(1);
+    // Function to update UI for a mode
+    function updateUIFormode(mode) {
+        const currentmodeElement = document.getElementById('current-mode');
+        currentmodeElement.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
         
         // Update button states
-        phraseButtons.forEach(button => {
-            const btnPhrase = button.getAttribute('data-phrase');
+        modeButtons.forEach(button => {
+            const btnmode = button.getAttribute('data-mode');
             
             // Set active state
-            if (btnPhrase === phrase) {
+            if (btnmode === mode) {
                 button.classList.add('active');
             } else {
                 button.classList.remove('active');
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateConnectionStatus(isConnected) {
         // Update UI based on connection status
         if (!isConnected) {
-            document.getElementById('current-phrase').textContent = 'Not Connected';
+            document.getElementById('current-mode').textContent = 'Not Connected';
             
             // Disable hype button when not connected
             const hypeButton = document.getElementById('deploy-hype');
@@ -137,9 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to fetch current phrase
-    function fetchCurrentPhrase() {
-        fetch('/api/phrase')
+    // Function to fetch current mode
+    function fetchCurrentmode() {
+        fetch('/api/mode')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -148,35 +148,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                if (data.phrase) {
-                    updateUIForPhrase(data.phrase);
+                if (data.mode) {
+                    updateUIFormode(data.mode);
                 } else {
-                    document.getElementById('current-phrase').textContent = 'None';
+                    document.getElementById('current-mode').textContent = 'None';
                 }
                 
                 // Also check hype status
                 checkHypeStatus();
             })
             .catch(error => {
-                console.error('Error fetching phrase:', error);
-                document.getElementById('current-phrase').textContent = 'Not Connected';
+                console.error('Error fetching mode:', error);
+                document.getElementById('current-mode').textContent = 'Not Connected';
                 updateConnectionStatus(false);
                 
                 // Reset buttons on error
-                phraseButtons.forEach(button => {
+                modeButtons.forEach(button => {
                     button.classList.remove('active');
                 });
             });
     }
     
-    // Function to set phrase
-    function setPhrase(phrase) {
-        fetch('/api/phrase', {
+    // Function to set mode
+    function setmode(mode) {
+        fetch('/api/mode', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ phrase: phrase }),
+            body: JSON.stringify({ mode: mode }),
         })
         .then(response => {
             if (!response.ok) {
@@ -187,31 +187,31 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (!data.success) {
-                console.error('Error setting phrase:', data.error);
-                alert('Error setting phrase: ' + data.error);
+                console.error('Error setting mode:', data.error);
+                alert('Error setting mode: ' + data.error);
                 
                 // Refresh to get the actual current state
-                fetchCurrentPhrase();
+                fetchCurrentmode();
             }
         })
         .catch(error => {
-            console.error('Error setting phrase:', error);
+            console.error('Error setting mode:', error);
             updateConnectionStatus(false);
             
             // Refresh to get the actual current state
-            fetchCurrentPhrase();
+            fetchCurrentmode();
         });
     }
     
     // Initial connection check
     updateConnectionStatus(true);
     
-    // Refresh current phrase every 5 seconds
-    setInterval(fetchCurrentPhrase, 5000);
+    // Refresh current mode every 5 seconds
+    setInterval(fetchCurrentmode, 5000);
     
     // Check connection status every 5 seconds
     setInterval(function() {
-        fetch('/api/phrase')
+        fetch('/api/mode')
             .then(response => {
                 updateConnectionStatus(true);
             })

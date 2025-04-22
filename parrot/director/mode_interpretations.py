@@ -1,4 +1,3 @@
-from parrot.fixtures import ParRGB
 from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import (
@@ -13,22 +12,17 @@ from parrot.interpreters.base import (
     Noop,
     with_args,
 )
-from parrot.director.phrase import Phrase
-from parrot.interpreters.motionstrip import MotionstripSlowRespond, PanLatched
+from parrot.director.mode import Mode
+from parrot.interpreters.motionstrip import PanLatched
 from parrot.interpreters.movers import (
-    MoverBeatAndCircle,
-    MoverBeatInFan,
-    MoverDimAndCircle,
     MoverGobo,
     MoverNoGobo,
 )
 from parrot.interpreters.rotosphere import (
-    RotosphereOn,
     Spin,
     RotosphereSpinColor,
 )
 from parrot.interpreters.slow import (
-    OnWhenNoSustained,
     SlowDecay,
     SlowSustained,
     VerySlowDecay,
@@ -57,21 +51,20 @@ from parrot.interpreters.dimmer import Dimmer0
 from parrot.interpreters.randomize import randomize, weighted_randomize
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.interpreters.bulbs import AllBulbs255, for_bulbs
-from parrot.director.phrase_interpretations import with_args
+from parrot.director.mode_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
 from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.interpreters.hype import hype_switch
 from parrot.fixtures.led_par import Par
 from parrot.fixtures.chauvet.derby import ChauvetDerby
-from parrot.utils.colour import Color
 
 
-phrase_interpretations: Dict[
-    Phrase,
+mode_interpretations: Dict[
+    Mode,
     Dict[FixtureBase, List[InterpreterBase]],
 ] = {
-    Phrase.blackout: {},
-    Phrase.twinkle: {
+    Mode.blackout: {},
+    Mode.twinkle: {
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
@@ -81,7 +74,7 @@ phrase_interpretations: Dict[
         ChauvetColorBandPiX_36Ch: [combo(Dimmer255, ColorBg, for_bulbs(Twinkle))],
         Laser: [Dimmer0],
     },
-    Phrase.party: {
+    Mode.party: {
         Par: [
             combo(
                 randomize(
@@ -213,9 +206,9 @@ phrase_interpretations: Dict[
 
 
 def get_interpreter(
-    phrase: Phrase, fixture_group: List[FixtureBase], args: InterpreterArgs
+    phrase: Mode, fixture_group: List[FixtureBase], args: InterpreterArgs
 ) -> Union[InterpreterBase]:
-    for k, v in phrase_interpretations[phrase].items():
+    for k, v in mode_interpretations[phrase].items():
         if isinstance(fixture_group, list) and isinstance(fixture_group[0], k):
             c = randomize(*v)
             interp = c(fixture_group, args)
