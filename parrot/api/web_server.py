@@ -6,6 +6,8 @@ from flask import Flask, jsonify, request, send_from_directory
 from parrot.director.mode import Mode
 from parrot.state import State
 from parrot.patch_bay import has_manual_dimmer
+from parrot.director.scenes import scenes
+from parrot.state import state_instance
 
 # Create Flask app
 app = Flask(__name__)
@@ -745,6 +747,31 @@ def set_manual_dimmer():
             state_instance.set_manual_dimmer(value)
             return jsonify({"success": True, "value": value})
     return jsonify({"success": False, "error": "Invalid request"})
+
+
+@app.route("/api/scenes", methods=["GET"])
+def get_scenes():
+    """Get the list of available scenes."""
+    return jsonify(list(scenes.keys()))
+
+
+@app.route("/api/scene/<scene_name>", methods=["GET"])
+def get_scene_value(scene_name):
+    """Get the current value for a scene."""
+    if state_instance and scene_name in scenes:
+        return jsonify({"value": state_instance.scene_values.get(scene_name, 0)})
+    return jsonify({"value": 0})
+
+
+@app.route("/api/scene/<scene_name>", methods=["POST"])
+def set_scene_value(scene_name):
+    """Set the value for a scene."""
+    if state_instance and scene_name in scenes:
+        data = request.get_json()
+        value = float(data.get("value", 0))
+        state_instance.set_scene_value(scene_name, value)
+        return jsonify({"success": True})
+    return jsonify({"success": False})
 
 
 def start_web_server(state, director=None, host="0.0.0.0", port=5000):

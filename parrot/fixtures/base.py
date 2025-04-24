@@ -2,20 +2,43 @@ import logging
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp
 from parrot.utils.string import kebab_case
+from enum import Enum
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 
+class FixtureTag(Enum):
+    """Tags that can be applied to fixtures to categorize them."""
+
+    MANUAL = "manual"  # Manual control fixtures
+    PAR = "par"  # Par fixtures
+    MOVING_HEAD = "moving_head"  # Moving head fixtures
+    MOTIONSTRIP = "motionstrip"  # Motion strip fixtures
+    LASER = "laser"  # Laser fixtures
+    ROTOSPHERE = "rotosphere"  # Rotosphere fixtures
+    DERBY = "derby"  # Derby fixtures
+
+
 class FixtureBase:
-    def __init__(self, address, name, width):
+    def __init__(
+        self,
+        address: int,
+        name: str,
+        width: int,
+        tags: Optional[List[FixtureTag]] = None,
+    ):
         self.address = address
         self.name = name
         self.width = width
-        self.values = [0 for i in range(width)]
+        self.values = [0] * width
         self.color_value = Color("black")
         self.dimmer_value = 0
         self.strobe_value = 0
         self.speed_value = 0
+        self.tags = []  # Always start with empty tag list
+        if tags:
+            self.tags.extend(tags)  # Add any provided tags
 
     def set_color(self, color: Color):
         self.color_value = color
@@ -62,6 +85,18 @@ class FixtureBase:
     @property
     def id(self):
         return f"{kebab_case(self.name)}@{self.address}"
+
+    def has_tag(self, tag: FixtureTag) -> bool:
+        """Check if this fixture has a specific tag."""
+        return tag in self.tags
+
+    def has_any_tag(self, tags: List[FixtureTag]) -> bool:
+        """Check if this fixture has any of the specified tags."""
+        return any(tag in self.tags for tag in tags)
+
+    def has_all_tags(self, tags: List[FixtureTag]) -> bool:
+        """Check if this fixture has all of the specified tags."""
+        return all(tag in self.tags for tag in tags)
 
 
 class FixtureWithBulbs(FixtureBase):

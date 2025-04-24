@@ -3,8 +3,9 @@ import os
 import queue
 from events import Events
 from parrot.director.mode import Mode
-from parrot.director.themes import themes, get_theme_by_name
+from parrot.director.themes import themes, get_theme_by_name, Theme
 from parrot.patch_bay import venues
+from typing import Dict
 
 
 class State:
@@ -12,19 +13,20 @@ class State:
         self.events = Events()
 
         # Default values
-        self._mode = None
-        self._hype = 30
-        self._theme = themes[0]
-        self._venue = venues.dmack
+        self._mode = Mode.party
+        self._hype = 0
+        self._theme = get_theme_by_name("Rave")
+        self._venue = venues.truckee_theatre
         self._manual_dimmer = 0  # New property for manual control
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
+        self.scene_values = {}  # Track scene slider values
 
         # Queue for GUI updates from other threads
         self._gui_update_queue = queue.Queue()
 
         # Try to load state from file
-        self.load_state()
+        self.load()
 
     @property
     def mode(self):
@@ -36,6 +38,7 @@ class State:
 
         self._mode = value
         self.events.on_mode_change(self._mode)
+        self.save()
 
     def set_mode_thread_safe(self, value: Mode):
         """Set the mode in a thread-safe way, avoiding GUI updates."""
@@ -90,6 +93,7 @@ class State:
 
         self._hype = value
         self.events.on_hype_change(self._hype)
+        self.save()
 
     @property
     def theme(self):
@@ -101,6 +105,7 @@ class State:
 
         self._theme = value
         self.events.on_theme_change(self._theme)
+        self.save()
 
     @property
     def venue(self):
@@ -112,6 +117,7 @@ class State:
 
         self._venue = value
         self.events.on_venue_change(self._venue)
+        self.save()
 
     @property
     def manual_dimmer(self):
@@ -134,6 +140,7 @@ class State:
 
         self._hype_limiter = value
         self.events.on_hype_limiter_change(self._hype_limiter)
+        self.save()
 
     @property
     def show_waveform(self):
@@ -145,73 +152,39 @@ class State:
 
         self._show_waveform = value
         self.events.on_show_waveform_change(self._show_waveform)
+        self.save()
 
-    def save_state(self):
-        """Save the current state to a JSON file."""
-        state_data = {
+    def set_scene_value(self, scene_name: str, value: float):
+        """Set the value for a scene (0-1)."""
+        self.scene_values[scene_name] = value
+        self.save()
+
+    def save(self):
+        """Save state to file."""
+        data = {
             "hype": self._hype,
-            "theme_name": self._theme.name if hasattr(self._theme, "name") else None,
-            "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
-            "manual_dimmer": 0,  # We do not want to restart the app with lights on
+            "theme_name": self._theme.name,
+            "venue_name": self._venue.name,
+            "mode": self._mode.name,
             "hype_limiter": self._hype_limiter,
             "show_waveform": self._show_waveform,
+            "scene_values": self.scene_values,
         }
+        with open("state.json", "w") as f:
+            json.dump(data, f)
 
-        try:
-            with open("state.json", "w") as f:
-                json.dump(state_data, f, indent=2)
-        except Exception as e:
-            print(f"Error saving state: {e}")
-
-    def load_state(self):
-        """Load state from a JSON file if it exists."""
-        if not os.path.exists("state.json"):
-            return
-
-        try:
+    def load(self):
+        """Load state from file."""
+        if os.path.exists("state.json"):
             with open("state.json", "r") as f:
-                state_data = json.load(f)
-
-            # Set values from loaded state
-            if "hype" in state_data:
-                self._hype = state_data["hype"]
-
-            # Handle theme loading - try theme_name first, then fall back to theme_index for backward compatibility
-            if "theme_name" in state_data and state_data["theme_name"]:
-                try:
-                    self._theme = get_theme_by_name(state_data["theme_name"])
-                except ValueError:
-                    # If theme name not found, keep default
-                    print(
-                        f"Theme '{state_data['theme_name']}' not found, using default"
-                    )
-            elif "theme_index" in state_data and 0 <= state_data["theme_index"] < len(
-                themes
-            ):
-                # Backward compatibility with old format
-                self._theme = themes[state_data["theme_index"]]
-
-            if "venue_name" in state_data and state_data["venue_name"]:
-                # Find venue by name
-                for venue in venues.__dict__.values():
-                    if (
-                        hasattr(venue, "name")
-                        and venue.name == state_data["venue_name"]
-                    ):
-                        self._venue = venue
-                        break
-
-            if "manual_dimmer" in state_data:
-                self._manual_dimmer = state_data["manual_dimmer"]
-
-            if "hype_limiter" in state_data:
-                self._hype_limiter = state_data["hype_limiter"]
-
-            if "show_waveform" in state_data:
-                self._show_waveform = state_data["show_waveform"]
-
-        except Exception as e:
-            print(f"Error loading state: {e}")
+                data = json.load(f)
+                self._hype = data.get("hype", 0)
+                self._theme = get_theme_by_name(data.get("theme_name", "Rave"))
+                self._venue = getattr(venues, data.get("venue_name", "truckee_theatre"))
+                self._mode = getattr(Mode, data.get("mode", "party"))
+                self._hype_limiter = data.get("hype_limiter", False)
+                self._show_waveform = data.get("show_waveform", True)
+                self.scene_values = data.get("scene_values", {})
 
     def process_gui_updates(self):
         """Process any pending GUI updates from the queue."""
@@ -243,3 +216,7 @@ class State:
         except queue.Empty:
             # No more updates to process
             pass
+
+
+# Create a singleton instance
+state_instance = State()

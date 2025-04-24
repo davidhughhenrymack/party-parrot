@@ -1,15 +1,15 @@
 import random
 import time
 import os
-from typing import List
+from typing import List, Dict
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.mode_machine import ModeMachine
 from parrot.fixtures import laser
 
-from parrot.patch_bay import venue_patches, get_manual_group
+from parrot.patch_bay import venue_patches, get_manual_group, venues
 from parrot.fixtures.led_par import Par, ParRGB
 from parrot.fixtures.motionstrip import Motionstrip
-from parrot.fixtures.base import FixtureGroup, ManualGroup
+from parrot.fixtures.base import FixtureGroup, ManualGroup, FixtureBase
 
 from parrot.director.color_schemes import color_schemes
 from parrot.director.color_scheme import ColorScheme
@@ -20,10 +20,12 @@ from parrot.fixtures.laser import Laser
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
 from .mode_interpretations import get_interpreter
+from parrot.director.scenes import get_scene_interpreter
 
 from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
+import numpy as np
 
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
@@ -42,6 +44,10 @@ class Director:
         self.shift_count = 0
         self.start_time = time.time()
         self.state = state
+        self.last_frame = None
+        self.mode_machine = None
+        self.scene_values = {}  # Track scene slider values
+        self.interpreters = {}  # Cache of interpreters for each mode/scene
 
         self.state.set_mode(Mode.party)
 
@@ -95,29 +101,28 @@ class Director:
                 self.fixture_groups.append(fixtures)
 
     def generate_interpreters(self):
-        self.interpreters: List[InterpreterBase] = [
-            get_interpreter(
-                self.state.mode,
-                group,
-                InterpreterArgs(
-                    HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
-                    self.state.theme.allow_rainbows,
-                    0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
-                    (
-                        100
-                        if not self.state.hype_limiter
-                        else min(100, self.state.hype + 30)
-                    ),
-                ),
-            )
-            for idx, group in enumerate(self.fixture_groups)
-        ]
+        """Generate interpreters for the current mode and scenes."""
+        self.interpreters = {}
 
-        print(f"Generated interpretation for {self.state.mode}:")
-        for i in self.interpreters:
-            print(f"    {str(i)} {[str(j) for j in i.group]} hype={i.get_hype()}")
+        # Generate mode interpreters
+        mode = self.state.mode
+        for fixture_group in venue_patches[self.state.venue]:
+            if isinstance(fixture_group, list):
+                interpreter = get_interpreter(mode, fixture_group, InterpreterArgs())
+                if interpreter:
+                    self.interpreters[(mode, fixture_group[0].address)] = interpreter
 
-        print()
+        # Generate scene interpreters
+        for scene_name in self.scene_values:
+            for fixture_group in venue_patches[self.state.venue]:
+                if isinstance(fixture_group, list):
+                    interpreter = get_scene_interpreter(
+                        scene_name, fixture_group, InterpreterArgs()
+                    )
+                    if interpreter:
+                        self.interpreters[(scene_name, fixture_group[0].address)] = (
+                            interpreter
+                        )
 
     def generate_color_scheme(self):
         s = random.choice(self.state.theme.color_scheme)
@@ -194,14 +199,36 @@ class Director:
             self.shift()
 
     def render(self, dmx):
-        # Get manual group and set its dimmer value
-        manual_group = get_manual_group(self.state.venue)
-        if manual_group:
-            manual_group.set_manual_dimmer(self.state.manual_dimmer)
+        """Render all fixtures with highest-takes-precedence logic."""
+        # Create a temporary DMX buffer to store all values
+        temp_dmx = np.zeros(512, dtype=np.uint8)
 
-        # Render all fixtures
-        for i in venue_patches[self.state.venue]:
-            i.render(dmx)
+        # Render all interpreters
+        for (source, address), interpreter in self.interpreters.items():
+            # Get the multiplier for this source
+            if isinstance(source, Mode):
+                multiplier = 1.0  # Mode always runs at full strength
+            else:
+                multiplier = self.scene_values.get(source, 0.0)
+
+            if multiplier > 0:
+                # Create a temporary fixture to capture the values
+                temp_fixture = interpreter.group[0]
+                interpreter.step(self.last_frame, None)
+
+                # Apply the values to the temporary DMX buffer
+                for i in range(temp_fixture.width):
+                    channel = temp_fixture.address + i - 1  # Convert to 0-based
+                    if channel >= 0 and channel < 512:
+                        # Take the highest value
+                        temp_dmx[channel] = max(
+                            temp_dmx[channel], int(temp_fixture.values[i] * multiplier)
+                        )
+
+        # Copy the final values to the real DMX buffer
+        for i in range(512):
+            if temp_dmx[i] > 0:
+                dmx.set_channel(i + 1, temp_dmx[i])  # Convert back to 1-based
 
         dmx.submit()
 
@@ -212,4 +239,9 @@ class Director:
         """Handle mode changes, including those from the web interface."""
         print(f"mode changed to: {mode.name}")
         # Regenerate interpreters if needed
+        self.generate_interpreters()
+
+    def set_scene_value(self, scene_name: str, value: float):
+        """Set the value for a scene (0-1)."""
+        self.scene_values[scene_name] = value
         self.generate_interpreters()

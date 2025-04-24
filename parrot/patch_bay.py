@@ -1,6 +1,8 @@
-from parrot.fixtures.led_par import ParRGB, ParRGBAWU
+from parrot.fixtures.led_par import ParRGB, ParRGBAWU, Par
 from parrot.fixtures.motionstrip import Motionstrip38
-from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
+from parrot.fixtures.base import FixtureBase, FixtureGroup, FixtureTag
+from parrot.fixtures.moving_head import MovingHead
+from typing import Dict, List, Optional
 
 from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot120_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
@@ -15,47 +17,20 @@ from parrot.fixtures.uking.laser import FiveBeamLaser
 
 venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre"])
 
-# Create manual control fixtures for each venue
-truckee_manual_fixtures = [
-    *[FixtureBase(i, f"Manual Bulb {i}", 1) for i in range(1, 9)],
-]
-
-# Create manual control groups for each venue
-manual_groups = {
-    venues.truckee_theatre: ManualGroup(
-        truckee_manual_fixtures, "Truckee Manual Control"
-    ),
-    venues.dmack: None,
-    venues.mtn_lotus: None,
-}
-
-# Track which venues have manual dimmers
-has_manual_dimmers = {
-    venues.truckee_theatre: True,
-    venues.dmack: False,
-    venues.mtn_lotus: False,
-}
-
 venue_patches = {
     venues.dmack: [
-        ChauvetSpot160_12Ch(
-            patch=1,
-        ),
-        ChauvetSpot120_12Ch(
-            patch=140,
-        ),
+        ChauvetSpot160_12Ch(patch=1),
+        ChauvetSpot120_12Ch(patch=140),
         *[ParRGB(i) for i in range(12, 48, 7)],
         Motionstrip38(154, 0, 256, invert_pan=True),
         Motionstrip38(59, 0, 256, invert_pan=True),
         FiveBeamLaser(100),
         TwoBeamLaser(120),
-        # ChauvetRotosphere_28Ch(164),
     ],
     venues.mtn_lotus: [
         *[ParRGBAWU(i) for i in range(10, 90, 10)],
         Motionstrip38(80, 0, 256),
         Motionstrip38(108, 0, 256),
-        # GigbarMove ILS 50 channel
         *ChauvetGigBarMoveILS(100),
         TwoBeamLaser(150),
         ChauvetSpot120_12Ch(160),
@@ -63,7 +38,10 @@ venue_patches = {
     ],
     venues.truckee_theatre: [
         # Manual control fixtures
-        manual_groups[venues.truckee_theatre],
+        FixtureGroup(
+            [FixtureBase(i, f"Manual Bulb {i}", 1) for i in range(1, 9)],
+            "Truckee Manual Control",
+        ),
         # 6 COLORband PiX fixtures (36 channels each)
         FixtureGroup(
             [ChauvetColorBandPiX_36Ch(i) for i in range(194, 375, 36)],
@@ -99,11 +77,50 @@ venue_patches = {
 }
 
 
-def get_manual_group(venue):
-    """Get the manual control group for a venue."""
-    return manual_groups.get(venue)
+def get_fixture_types() -> List[type[FixtureBase]]:
+    """Get all fixture types used across all venues."""
+    fixture_types = set()
+    for venue_fixtures in venue_patches.values():
+        for fixture in venue_fixtures:
+            if isinstance(fixture, FixtureGroup):
+                for sub_fixture in fixture:
+                    fixture_types.add(type(sub_fixture))
+            else:
+                fixture_types.add(type(fixture))
+    return list(fixture_types)
 
 
-def has_manual_dimmer(venue):
-    """Check if a venue has manual dimmers."""
-    return has_manual_dimmers.get(venue, False)
+def get_fixture_addresses(fixture_type: type[FixtureBase]) -> List[int]:
+    """Get all addresses for a given fixture type across all venues."""
+    addresses = set()
+    for venue_fixtures in venue_patches.values():
+        for fixture in venue_fixtures:
+            if isinstance(fixture, FixtureGroup):
+                for sub_fixture in fixture:
+                    if isinstance(sub_fixture, fixture_type):
+                        addresses.add(sub_fixture.address)
+            elif isinstance(fixture, fixture_type):
+                addresses.add(fixture.address)
+    return sorted(list(addresses))
+
+
+def has_manual_dimmer(venue: venues) -> bool:
+    """Check if a venue has manual dimmer fixtures."""
+    for fixture in venue_patches[venue]:
+        if isinstance(fixture, FixtureGroup):
+            for sub_fixture in fixture:
+                if isinstance(sub_fixture, FixtureBase) and sub_fixture.width == 1:
+                    return True
+        elif isinstance(fixture, FixtureBase) and fixture.width == 1:
+            return True
+    return False
+
+
+def get_manual_group(venue: venues) -> Optional[FixtureGroup]:
+    """Get the manual dimmer fixture group for a venue."""
+    for fixture in venue_patches[venue]:
+        if isinstance(fixture, FixtureGroup):
+            # Check if all fixtures in the group are manual dimmers
+            if all(isinstance(f, FixtureBase) and f.width == 1 for f in fixture):
+                return fixture
+    return None
