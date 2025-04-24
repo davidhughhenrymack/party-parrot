@@ -64,22 +64,22 @@ mode_interpretations: Dict[
     Dict[FixtureBase, List[InterpreterBase]],
 ] = {
     Mode.blackout: {},
-    Mode.twinkle: {
-        # Leds pulsing gently
-        # Movers slowly moving, on low dimmer, drawing circles
-        # Motion strip slowly moving and pulsing along bulbs
-        Par: [combo(signal_switch(GentlePulse), ColorAlternateBg)],
-        MovingHead: [combo(signal_switch(GentlePulse), ColorAlternateBg)],
-        Motionstrip: [combo(signal_switch(Dimmer255), ColorBg, for_bulbs(Twinkle))],
+    Mode.gentle: {
+        Par: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
+        MovingHead: [
+            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg, MoveCircles)
+        ],
+        Motionstrip: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
         ChauvetColorBandPiX_36Ch: [
-            combo(
-                signal_switch(combo(Dimmer255, for_bulbs(Twinkle), DimmersBeatChase)),
-                ColorBg,
-            )
+            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
         ],
         Laser: [signal_switch(Dimmer0)],
+        ChauvetRotosphere_28Ch: [
+            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
+        ],
+        ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
     },
-    Mode.party: {
+    Mode.rave: {
         Par: [
             combo(
                 signal_switch(

@@ -274,7 +274,6 @@ class Window(Tk):
         state.events.on_mode_change += self.on_mode_change
 
         self.title("Party Parrot")
-        # set background color to black
         self.configure(bg=BG)
         self.protocol("WM_DELETE_WINDOW", quit)
 
@@ -307,7 +306,6 @@ class Window(Tk):
         self.mode_frame = Frame(self.top_frame, background=BG)
 
         # Create a variable to track the selected mode
-        # Handle the case when state.mode is None
         default_mode = state.mode.name if state.mode else ""
         self.mode_var = StringVar(value=default_mode)
 
@@ -317,8 +315,9 @@ class Window(Tk):
         # Store mode buttons for later reference
         self.mode_buttons = {}
 
-        # Create buttons for each mode instead of radio buttons
-        for mode in Mode:
+        # Create buttons for each mode in the desired order
+        mode_order = [Mode.blackout, Mode.gentle, Mode.rave]
+        for mode in mode_order:
             btn = RoundedButton(
                 self.mode_frame,
                 text=mode.name.capitalize(),
@@ -579,6 +578,47 @@ class Window(Tk):
         # Set up periodic check for GUI updates (every 100ms)
         self.after(100, self.check_gui_updates)
 
+        # Add keyboard bindings
+        self.bind(
+            "<KeyPress-i>",
+            lambda e: self._handle_signal_button_press(FrameSignal.small_pulse),
+        )
+        self.bind(
+            "<KeyRelease-i>",
+            lambda e: self._handle_signal_button_release(FrameSignal.small_pulse),
+        )
+        self.bind(
+            "<KeyPress-g>",
+            lambda e: self._handle_signal_button_press(FrameSignal.big_pulse),
+        )
+        self.bind(
+            "<KeyRelease-g>",
+            lambda e: self._handle_signal_button_release(FrameSignal.big_pulse),
+        )
+        self.bind(
+            "<KeyPress-h>",
+            lambda e: self._handle_signal_button_press(FrameSignal.strobe),
+        )
+        self.bind(
+            "<KeyRelease-h>",
+            lambda e: self._handle_signal_button_release(FrameSignal.strobe),
+        )
+        self.bind(
+            "<KeyPress-j>",
+            lambda e: self._handle_signal_button_press(FrameSignal.dampen),
+        )
+        self.bind(
+            "<KeyRelease-j>",
+            lambda e: self._handle_signal_button_release(FrameSignal.dampen),
+        )
+        self.bind("<KeyRelease-e>", lambda e: self._select_mode(Mode.gentle))
+        self.bind("<KeyRelease-c>", lambda e: self._select_mode(Mode.rave))
+        self.bind("<KeyRelease-d>", lambda e: self._select_mode(Mode.blackout))
+        self.bind("<KeyRelease-s>", lambda e: self.director.shift())
+
+        # Focus the window to receive keyboard events
+        self.focus_set()
+
     def setup_patch(self):
         self.canvas.delete("all")
 
@@ -689,8 +729,6 @@ class Window(Tk):
         if not mode or mode.name not in self.mode_buttons:
             return
 
-        print(f"GUI: Force updating button appearance for {mode.name}")
-
         # First reset ALL buttons to default appearance
         for btn_name, btn in self.mode_buttons.items():
             if btn_name != mode.name:  # Skip the button we're about to highlight
@@ -750,8 +788,6 @@ class Window(Tk):
     def on_mode_change(self, mode):
         """Update the mode selection when the state changes."""
         if mode:
-            print(f"GUI: on_mode_change called for {mode.name}")
-
             # Generate new interpreters for the changed mode
             self.director.generate_interpreters()
 
@@ -761,12 +797,8 @@ class Window(Tk):
 
             # Only show web app notification if this wasn't a local change
             if not self.local_mode_change and mode.name in self.mode_buttons:
-                print(f"GUI: External change detected for mode {mode.name}")
-
                 # Schedule multiple updates to ensure the UI refreshes
-                # This is a workaround for Tkinter's sometimes unreliable updates
                 def update_ui():
-                    print(f"GUI: Scheduled update for {mode.name}")
                     # Update all buttons first
                     self._update_mode_buttons(mode)
                     # Force update the button appearance
@@ -783,7 +815,6 @@ class Window(Tk):
                     self.after(300, lambda: reset_button())
 
                 def reset_button():
-                    print(f"GUI: Resetting button for {mode.name}")
                     button = self.mode_buttons[mode.name]
                     if button.winfo_exists():
                         # Update all buttons again
@@ -794,13 +825,11 @@ class Window(Tk):
                     self.after(4700, lambda: self.status_label.config(text=""))
 
                 # Schedule the update to run after a short delay
-                # This gives time for the GUI to become responsive
                 self.after_idle(update_ui)
                 # Also schedule a backup update in case the first one doesn't work
                 self.after(200, update_ui)
             else:
                 # Always update button appearances, even for local changes
-                print(f"GUI: Updating buttons for local change to {mode.name}")
                 self._update_mode_buttons(mode)
                 # Force update the button appearance
                 self._force_update_button_appearance(mode)
@@ -808,10 +837,7 @@ class Window(Tk):
     def _update_mode_buttons(self, mode):
         """Update the appearance of mode buttons based on selection."""
         if not mode:
-            print("GUI: Cannot update buttons - mode is None")
             return
-
-        print(f"GUI: Updating all mode buttons, highlighting {mode.name}")
 
         # Update all buttons
         for btn_name, btn in self.mode_buttons.items():

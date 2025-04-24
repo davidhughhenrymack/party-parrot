@@ -23,6 +23,11 @@ class State:
         # Queue for GUI updates from other threads
         self._gui_update_queue = queue.Queue()
 
+        # Initialize signal states
+        from parrot.director.signal_states import SignalStates
+
+        self.signal_states = SignalStates()
+
         # Try to load state from file
         self.load_state()
 
@@ -79,6 +84,19 @@ class State:
         except Exception as e:
             print(f"Could not schedule direct GUI update: {e}")
             # Fall back to queue-based updates
+
+    def set_effect_thread_safe(self, effect: str):
+        """Set the effect in a thread-safe way."""
+        try:
+            from parrot.director.frame import FrameSignal
+
+            signal = FrameSignal[effect]
+            if hasattr(self, "signal_states"):
+                self.signal_states.set_signal(signal, 1.0)
+                print(f"Thread-safe effect change to: {effect}")
+        except Exception as e:
+            print(f"Error setting effect: {e}")
+            raise
 
     @property
     def hype(self):

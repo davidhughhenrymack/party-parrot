@@ -40,14 +40,14 @@ body {
 }
 
 .mode-buttons {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
     margin-bottom: 30px;
 }
 
 .mode-button {
-    background-color: #2196f3;
+    background-color: #333333;
     color: white;
     border: none;
     border-radius: 8px;
@@ -71,8 +71,9 @@ body {
 }
 
 .mode-button.active {
+    background-color: #2196f3;
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
 .mode-button.active::after {
@@ -90,36 +91,40 @@ body {
     justify-content: center;
 }
 
-.mode-button[data-mode="party"] {
+.mode-button[data-mode="blackout"] {
     background-color: #f44336;
 }
 
-.mode-button[data-mode="party"]:hover {
+.mode-button[data-mode="blackout"]:hover {
     background-color: #d32f2f;
 }
 
-.mode-button[data-mode="twinkle"] {
+.mode-button[data-mode="gentle"] {
     background-color: #9c27b0;
 }
 
-.mode-button[data-mode="twinkle"]:hover {
+.mode-button[data-mode="gentle"]:hover {
     background-color: #7b1fa2;
 }
 
-.mode-button[data-mode="blackout"] {
-    background-color: #212121;
+.mode-button[data-mode="rave"] {
+    background-color: #2196f3;
 }
 
-.mode-button[data-mode="blackout"]:hover {
-    background-color: #000000;
+.mode-button[data-mode="rave"]:hover {
+    background-color: #1976d2;
 }
 
-.hype-container {
+.effect-buttons {
     margin-top: 4em;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
 }
 
-.hype-button {
+.effect-button {
     background: linear-gradient(45deg, #ff9800, #f44336);
     color: white;
     border: none;
@@ -134,20 +139,19 @@ body {
     overflow: hidden;
     width: 100%;
     max-width: 400px;
-    margin: 0 auto;
 }
 
-.hype-button:hover {
+.effect-button:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
-.hype-button:active {
+.effect-button:active {
     transform: translateY(0) scale(0.98);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.hype-button.active {
+.effect-button.active {
     background-color: #ff3d00;
     animation: pulse 1.5s infinite;
 }

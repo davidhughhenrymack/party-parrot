@@ -1,4 +1,4 @@
 from enum import Enum
 
 
-Mode = Enum("Mode", ["party", "twinkle", "blackout"])
+Mode = Enum("Mode", ["rave", "blackout", "gentle"])

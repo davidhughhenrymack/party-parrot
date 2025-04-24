@@ -41,7 +41,7 @@ class Director:
         self.start_time = time.time()
         self.state = state
 
-        self.state.set_mode(Mode.party)
+        self.state.set_mode(Mode.rave)
         self.setup_patch()
         self.generate_color_scheme()
 

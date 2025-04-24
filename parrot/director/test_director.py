@@ -27,7 +27,7 @@ class TestDirector(unittest.TestCase):
     def test_mode_change(self):
         """Test that mode changes trigger interpreter regeneration"""
         with patch.object(self.director, "generate_interpreters") as mock_gen:
-            self.director.on_mode_change(Mode.party)
+            self.director.on_mode_change(Mode.rave)
             mock_gen.assert_called_once()
 
     def test_shift_color_scheme(self):
