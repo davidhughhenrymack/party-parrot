@@ -111,7 +111,7 @@ class Director:
 
         print(f"Generated interpretation for {self.state.mode}:")
         for i in self.interpreters:
-            print(f"    {str(i)} {[str(j) for j in i.group]} hype={i.get_hype()}")
+            print(f"    {str(i)} {[str(j) for j in i.group]}")
 
         print()
 

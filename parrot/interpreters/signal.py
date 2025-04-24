@@ -121,6 +121,9 @@ def signal_switch(
 
         def exit(self, frame: Frame, scheme: ColorScheme):
             self.interp_std.exit(frame, scheme)
+            for fixture in self.group:
+                fixture.set_strobe(0)
+
             if self.twinkle_interp:
                 self.twinkle_interp.exit(frame, scheme)
 
