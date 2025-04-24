@@ -15,7 +15,6 @@ class TestDirector(unittest.TestCase):
     def test_initialization(self):
         """Test that the director initializes correctly"""
         self.assertIsNotNone(self.director.scheme)
-        self.assertIsNotNone(self.director.mode_machine)
         self.assertEqual(self.director.state, self.state)
         self.assertFalse(self.director.warmup_complete)
 

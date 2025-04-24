@@ -19,6 +19,7 @@ from parrot.state import State
 from parrot.utils.colour import Color
 from parrot.utils.tracemalloc import display_top
 from parrot.api import start_web_server
+from parrot.director.signal_states import SignalStates
 
 THRESHOLD = 0  # dB
 RATE = 44100
@@ -76,6 +77,7 @@ class MicToDmx(object):
         self.signal_stat_last = 0
 
         self.state = State()
+        self.signal_states = SignalStates()
 
         self.should_stop = False
 
@@ -84,7 +86,9 @@ class MicToDmx(object):
         self.director = Director(self.state)
 
         if not self.args.no_gui:
-            self.window = Window(self.state, lambda: self.quit(), self.director)
+            self.window = Window(
+                self.state, lambda: self.quit(), self.director, self.signal_states
+            )
 
         # Start the web server if not disabled
         if not getattr(self.args, "no_web", False):
@@ -264,9 +268,11 @@ class MicToDmx(object):
                 -SPECTOGRAPH_BUFFER_SIZE:
             ]
 
-        frame = Frame(
-            values,
-        )
+        # Create frame with audio values
+        frame = Frame(values)
+
+        # Add signal states to the frame
+        frame.extend(self.signal_states.get_states())
 
         frame.timeseries = {
             FrameSignal.freq_high.name: timeseries[FrameSignal.freq_high],

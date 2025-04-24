@@ -54,7 +54,7 @@ from parrot.interpreters.bulbs import AllBulbs255, for_bulbs
 from parrot.director.mode_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
 from parrot.interpreters.strobe import StrobeHighSustained
-from parrot.interpreters.hype import hype_switch
+from parrot.interpreters.signal import signal_switch
 from parrot.fixtures.led_par import Par
 from parrot.fixtures.chauvet.derby import ChauvetDerby
 
@@ -68,26 +68,24 @@ mode_interpretations: Dict[
         # Leds pulsing gently
         # Movers slowly moving, on low dimmer, drawing circles
         # Motion strip slowly moving and pulsing along bulbs
-        Par: [combo(GentlePulse, ColorAlternateBg)],
-        MovingHead: [Dimmer0],
-        Motionstrip: [combo(Dimmer255, ColorBg, for_bulbs(Twinkle))],
-        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, ColorBg, for_bulbs(Twinkle))],
-        Laser: [Dimmer0],
+        Par: [combo(signal_switch(GentlePulse), ColorAlternateBg)],
+        MovingHead: [combo(signal_switch(GentlePulse), ColorAlternateBg)],
+        Motionstrip: [combo(signal_switch(Dimmer255), ColorBg, for_bulbs(Twinkle))],
+        ChauvetColorBandPiX_36Ch: [
+            combo(signal_switch(Dimmer255), ColorBg, for_bulbs(Twinkle))
+        ],
+        Laser: [signal_switch(Dimmer0)],
     },
     Mode.party: {
         Par: [
             combo(
-                randomize(
-                    DimmersBeatChase,
-                    SequenceFadeDimmers,
-                    hype_switch(
-                        randomize(
-                            # OnWhenNoSustained,
-                            GentlePulse,
-                            VerySlowDecay,
-                            SlowSustained,
-                        ),
-                        randomize(StrobeHighSustained, DimmersBeatChase),
+                signal_switch(
+                    randomize(
+                        DimmersBeatChase,
+                        SequenceFadeDimmers,
+                        GentlePulse,
+                        VerySlowDecay,
+                        SlowSustained,
                     ),
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
@@ -95,7 +93,7 @@ mode_interpretations: Dict[
         ],
         MovingHead: [
             combo(
-                hype_switch(
+                signal_switch(
                     randomize(
                         DimmersBeatChase,
                         SlowDecay,
@@ -103,12 +101,10 @@ mode_interpretations: Dict[
                         DimmerFadeLatched,
                         SequenceDimmers,
                         SequenceFadeDimmers,
-                        # OnWhenNoSustained,
                         with_args(
                             "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
                         ),
                     ),
-                    StrobeHighSustained,
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
                 randomize(MoveCircles, MoveNod),
@@ -119,9 +115,8 @@ mode_interpretations: Dict[
             )
         ],
         Motionstrip: [
-            # MotionstripSlowRespond,
             combo(
-                hype_switch(
+                signal_switch(
                     randomize(
                         combo(Dimmer255, for_bulbs(Twinkle)),
                         combo(DimmersBeatChase, AllBulbs255),
@@ -138,7 +133,6 @@ mode_interpretations: Dict[
                         ),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                     ),
-                    DimmerFadeIn,
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
                 randomize(PanLatched, MoveCircles),
@@ -146,7 +140,7 @@ mode_interpretations: Dict[
         ],
         ChauvetColorBandPiX_36Ch: [
             combo(
-                hype_switch(
+                signal_switch(
                     randomize(
                         combo(Dimmer255, for_bulbs(Twinkle)),
                         combo(DimmersBeatChase, AllBulbs255),
@@ -163,12 +157,11 @@ mode_interpretations: Dict[
                         ),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                     ),
-                    DimmerFadeIn,
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
             ),
         ],
-        Laser: [hype_switch(LaserLatch, Dimmer255), StrobeHighSustained],
+        Laser: [signal_switch(LaserLatch), StrobeHighSustained],
         ChauvetRotosphere_28Ch: [
             combo(
                 RotosphereSpinColor,
@@ -178,8 +171,6 @@ mode_interpretations: Dict[
                     for_bulbs(GentlePulse),
                     DimmerFadeLatched4s,
                     SlowSustained,
-                    # OnWhenNoSustained,
-                    # StrobeHighSustained,
                 ),
             ),
             combo(
@@ -199,7 +190,7 @@ mode_interpretations: Dict[
                     SlowDecay,
                     Dimmer0,
                 ),
-            )
+            ),
         ],
     },
 }

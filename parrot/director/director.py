@@ -3,11 +3,9 @@ import time
 import os
 from typing import List
 from parrot.director.frame import Frame, FrameSignal
-from parrot.director.mode_machine import ModeMachine
-from parrot.fixtures import laser
 
 from parrot.patch_bay import venue_patches, get_manual_group
-from parrot.fixtures.led_par import Par, ParRGB
+from parrot.fixtures.led_par import Par
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.fixtures.base import FixtureGroup, ManualGroup
 
@@ -44,10 +42,8 @@ class Director:
         self.state = state
 
         self.state.set_mode(Mode.party)
-
         self.setup_patch()
         self.generate_color_scheme()
-        self.mode_machine = ModeMachine(state)
 
         self.warmup_complete = False
 
@@ -178,9 +174,6 @@ class Director:
             self.warmup_complete = True
 
         frame = frame * warmup_phase
-
-        additional_signals = self.mode_machine.step(frame)
-        frame.extend(additional_signals)
 
         for i in self.interpreters:
             i.step(frame, scheme)

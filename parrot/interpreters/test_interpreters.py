@@ -18,6 +18,8 @@ from parrot.interpreters.combo import combo
 from parrot.utils.colour import Color
 from parrot.director.color_scheme import ColorScheme
 import random
+from parrot.interpreters.signal import signal_switch
+from parrot.fixtures.base import FixtureWithBulbs
 
 
 class TestInterpreters(unittest.TestCase):
@@ -34,7 +36,10 @@ class TestInterpreters(unittest.TestCase):
             FrameSignal.freq_low: 0.2,
             FrameSignal.sustained_low: 0.1,
             FrameSignal.sustained_high: 0.4,
-            FrameSignal.hype: 0.6,
+            FrameSignal.strobe: 0.0,
+            FrameSignal.big_pulse: 0.0,
+            FrameSignal.small_pulse: 0.0,
+            FrameSignal.twinkle: 0.0,
         }
         timeseries = {
             FrameSignal.freq_all.name: [0.5] * 200,
@@ -42,7 +47,10 @@ class TestInterpreters(unittest.TestCase):
             FrameSignal.freq_low.name: [0.2] * 200,
             FrameSignal.sustained_low.name: [0.1] * 200,
             FrameSignal.sustained_high.name: [0.4] * 200,
-            FrameSignal.hype.name: [0.6] * 200,
+            FrameSignal.strobe.name: [0.0] * 200,
+            FrameSignal.big_pulse.name: [0.0] * 200,
+            FrameSignal.small_pulse.name: [0.0] * 200,
+            FrameSignal.twinkle.name: [0.0] * 200,
         }
         self.frame = Frame(frame_values, timeseries)
 
@@ -137,6 +145,75 @@ class TestInterpreters(unittest.TestCase):
 
         self.fixture.set_dimmer.assert_called_with(255)
         self.fixture.set_color.assert_called_with(test_color)
+
+    def test_signal_switch(self):
+        """Test that SignalSwitch responds to different signals"""
+        # Create a mock fixture that supports bulbs
+        self.fixture = MagicMock(spec=FixtureWithBulbs)
+        self.fixture.get_dimmer.return_value = 0.0
+        self.fixture.get_color.return_value = Color("black")
+        # Create mock bulbs
+        mock_bulbs = [MagicMock() for _ in range(3)]  # Create 3 mock bulbs
+        self.fixture.bulbs = mock_bulbs
+        self.fixture.get_bulbs.return_value = mock_bulbs
+
+        # Create a test frame with our new signals
+        frame_values = {
+            FrameSignal.freq_all: 0.5,
+            FrameSignal.freq_high: 0.3,
+            FrameSignal.freq_low: 0.2,
+            FrameSignal.sustained_low: 0.1,
+            FrameSignal.sustained_high: 0.4,
+            FrameSignal.strobe: 0.0,
+            FrameSignal.big_pulse: 0.0,
+            FrameSignal.small_pulse: 0.0,
+            FrameSignal.twinkle: 0.0,
+        }
+        timeseries = {
+            FrameSignal.freq_all.name: [0.5] * 200,
+            FrameSignal.freq_high.name: [0.3] * 200,
+            FrameSignal.freq_low.name: [0.2] * 200,
+            FrameSignal.sustained_low.name: [0.1] * 200,
+            FrameSignal.sustained_high.name: [0.4] * 200,
+            FrameSignal.strobe.name: [0.0] * 200,
+            FrameSignal.big_pulse.name: [0.0] * 200,
+            FrameSignal.small_pulse.name: [0.0] * 200,
+            FrameSignal.twinkle.name: [0.0] * 200,
+        }
+        self.frame = Frame(frame_values, timeseries)
+
+        # Create a simple standard interpreter
+        class SimpleInterpreter(InterpreterBase):
+            def step(self, frame, scheme):
+                pass
+
+            def exit(self, frame, scheme):
+                pass
+
+        # Patch random to ensure our fixture responds to all signals
+        with patch(
+            "random.random", return_value=0.0
+        ):  # Return 0.0 to be less than all probabilities
+            # Create the signal switch interpreter
+            interpreter = signal_switch(SimpleInterpreter)([self.fixture], self.args)
+
+            # Test strobe signal
+            self.fixture.reset_mock()
+            self.frame.values = {
+                FrameSignal.freq_all: 0.5,
+                FrameSignal.freq_high: 0.3,
+                FrameSignal.freq_low: 0.2,
+                FrameSignal.sustained_low: 0.1,
+                FrameSignal.sustained_high: 0.4,
+                FrameSignal.strobe: 0.8,  # Only strobe is high
+                FrameSignal.big_pulse: 0.0,
+                FrameSignal.small_pulse: 0.0,
+                FrameSignal.twinkle: 0.0,
+            }
+            interpreter.step(self.frame, Color("white"))
+            self.fixture.set_strobe.assert_called_with(220)
+            # The dimmer value should be 0.0 when no signal is active
+            self.fixture.set_dimmer.assert_called_with(0.0)
 
 
 if __name__ == "__main__":

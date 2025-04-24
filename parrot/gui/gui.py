@@ -32,7 +32,7 @@ from tkinter import (
 
 from parrot.director.director import Director
 import parrot.director.frame
-from parrot.director.frame import Frame as DirectorFrame
+from parrot.director.frame import Frame as DirectorFrame, FrameSignal
 from parrot.state import State
 from parrot.director.mode import Mode
 from parrot.patch_bay import venue_patches, venues, get_manual_group, has_manual_dimmer
@@ -41,6 +41,7 @@ from parrot.fixtures.base import FixtureGroup, ManualGroup
 from .fixtures.factory import renderer_for_fixture
 from parrot.utils.math import distance
 import sys
+from parrot.director.signal_states import SignalStates
 
 CIRCLE_SIZE = 30
 FIXTURE_MARGIN = 10
@@ -73,7 +74,7 @@ DEFAULT_OUTLINE_WIDTH = 1
 class RoundedButton(Button):
     """A custom button with rounded corners and hover effects."""
 
-    def __init__(self, master=None, **kwargs):
+    def __init__(self, master=None, release_command=None, press_command=None, **kwargs):
         # Apply default button style if not overridden
         button_style = {
             "background": BUTTON_BG,
@@ -106,6 +107,9 @@ class RoundedButton(Button):
         self.bind("<ButtonPress-1>", self.on_press)
         self.bind("<ButtonRelease-1>", self.on_release)
 
+        self.release_command = release_command
+        self.press_command = press_command
+
     def on_enter(self, event):
         """Change border color on hover."""
         # Don't change the background - we want to preserve custom colors
@@ -125,8 +129,10 @@ class RoundedButton(Button):
 
         # Use activebackground for press effect
         self.config(
-            foreground=BUTTON_ACTIVE_FG, background=self.cget("activebackground")
+            foreground=BUTTON_ACTIVE_FG,
+            background=self.cget("activebackground"),
         )
+        self.press_command()
 
     def on_release(self, event):
         """Reset text color when button is released."""
@@ -136,6 +142,7 @@ class RoundedButton(Button):
             background=self.original_bg,
             highlightbackground=self.original_highlight_bg,
         )
+        self.release_command()
 
 
 class NonBlockingDropdown:
@@ -246,11 +253,18 @@ class NonBlockingDropdown:
 
 
 class Window(Tk):
-    def __init__(self, state: State, quit: callable, director: Director):
+    def __init__(
+        self,
+        state: State,
+        quit: callable,
+        director: Director,
+        signal_states: SignalStates,
+    ):
         super().__init__()
 
         self.state = state
         self.director = director
+        self.signal_states = signal_states
         state.events.on_mode_change += self.on_mode_change
 
         self.title("Party Parrot")
@@ -434,44 +448,55 @@ class Window(Tk):
         self.label_var = StringVar()
         self.label = Label(self, textvariable=self.label_var, bg=BG, fg="white")
 
-        self.scale = Scale(
-            self, from_=0, to=100, length=CANVAS_WIDTH, orient=HORIZONTAL
-        )
-        self.scale.set(self.state.hype)
-        self.scale.bind(
-            "<ButtonRelease-1>", lambda e: self.state.set_hype(self.scale.get())
-        )
-        # Only show the scale if hype limiter is ON
-        if self.state.hype_limiter:
-            self.scale.pack()
-        else:
-            self.scale.pack_forget()
-
-        # Connect to hype limiter change event to show/hide the scale
-        self.state.events.on_hype_limiter_change += self.update_hype_scale_visibility
-
         self.btn_frame = Frame(self, background=BG)
 
         # Create a left frame for most buttons
         self.left_btn_frame = Frame(self.btn_frame, background=BG)
 
-        self.deploy_hype = RoundedButton(
-            self.left_btn_frame, text="HYPE!!", command=lambda: director.deploy_hype()
-        )
-        self.deploy_hype.pack(side=LEFT, padx=5, pady=5)
-
-        # Add hype limiter toggle button
-        initial_bg = "#4CAF50" if self.state.hype_limiter else BUTTON_BG
-        initial_active_bg = "#45a049" if self.state.hype_limiter else BUTTON_ACTIVE_BG
-
-        self.hype_limiter_button = RoundedButton(
+        # Create signal buttons
+        self.strobe_button = RoundedButton(
             self.left_btn_frame,
-            text="Hype Limiter: ON" if self.state.hype_limiter else "Hype Limiter: OFF",
-            command=self.toggle_hype_limiter,
-            background=initial_bg,
-            activebackground=initial_active_bg,
+            text="Strobe",
+            press_command=lambda: self._handle_signal_button_press(FrameSignal.strobe),
+            release_command=lambda: self._handle_signal_button_release(
+                FrameSignal.strobe
+            ),
         )
-        self.hype_limiter_button.pack(side=LEFT, padx=5, pady=5)
+        self.strobe_button.pack(side=LEFT, padx=5, pady=5)
+
+        self.big_pulse_button = RoundedButton(
+            self.left_btn_frame,
+            text="Big Pulse",
+            press_command=lambda: self._handle_signal_button_press(
+                FrameSignal.big_pulse
+            ),
+            release_command=lambda: self._handle_signal_button_release(
+                FrameSignal.big_pulse
+            ),
+        )
+        self.big_pulse_button.pack(side=LEFT, padx=5, pady=5)
+
+        self.small_pulse_button = RoundedButton(
+            self.left_btn_frame,
+            text="Small Pulse",
+            press_command=lambda: self._handle_signal_button_press(
+                FrameSignal.small_pulse
+            ),
+            release_command=lambda: self._handle_signal_button_release(
+                FrameSignal.small_pulse
+            ),
+        )
+        self.small_pulse_button.pack(side=LEFT, padx=5, pady=5)
+
+        self.twinkle_button = RoundedButton(
+            self.left_btn_frame,
+            text="Twinkle",
+            press_command=lambda: self._handle_signal_button_press(FrameSignal.twinkle),
+            release_command=lambda: self._handle_signal_button_release(
+                FrameSignal.twinkle
+            ),
+        )
+        self.twinkle_button.pack(side=LEFT, padx=5, pady=5)
 
         self.shift = RoundedButton(
             self.left_btn_frame, text="Shift", command=lambda: director.shift()
@@ -1097,6 +1122,9 @@ class Window(Tk):
         # Process any pending GUI updates from the web app
         self.state.process_gui_updates()
 
+        # Update the frame with our signal states
+        frame.extend(self.signal_states.get_states())
+
         # Continue with normal rendering
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas, frame)
@@ -1262,32 +1290,6 @@ class Window(Tk):
         # Even if there's no manual group, we still want to update the state
         # This allows venues with manual dimmers but no manual group to use the slider value
 
-    def toggle_hype_limiter(self):
-        """Toggle the hype limiter on/off."""
-        new_state = not self.state.hype_limiter
-        self.state.set_hype_limiter(new_state)
-
-        # Update button appearance
-        if new_state:
-            self.hype_limiter_button.config(
-                text="Hype Limiter: ON",
-                background="#4CAF50",
-                activebackground="#45a049",
-            )
-        else:
-            self.hype_limiter_button.config(
-                text="Hype Limiter: OFF",
-                background=BUTTON_BG,
-                activebackground=BUTTON_ACTIVE_BG,
-            )
-
-    def update_hype_scale_visibility(self, hype_limiter_enabled):
-        """Show or hide the hype scale based on hype limiter state."""
-        if hype_limiter_enabled:
-            self.scale.pack()
-        else:
-            self.scale.pack_forget()
-
     def toggle_waveform(self):
         """Toggle the waveform panel visibility."""
         new_state = not self.state.show_waveform
@@ -1322,9 +1324,7 @@ class Window(Tk):
             # Calculate available height for canvas
             # (window height minus space needed for other widgets)
             other_widgets_height = (
-                self.top_frame.winfo_height()
-                + self.scale.winfo_height()
-                + self.btn_frame.winfo_height()
+                self.top_frame.winfo_height() + self.btn_frame.winfo_height()
             )
             if hasattr(self, "graph_frame") and self.state.show_waveform:
                 other_widgets_height += self.graph_frame.winfo_height()
@@ -1384,3 +1384,32 @@ class Window(Tk):
 
         # Schedule the next check (every 100ms for more responsive updates)
         self.after(100, self.check_gui_updates)
+
+    def _handle_signal_button_release(self, signal: FrameSignal):
+        """Handle signal button release."""
+        # Get the button
+        button = getattr(self, f"{signal.name}_button")
+
+        # Set signal to low
+        self.signal_states.set_signal(signal, 0.0)
+
+        button.config(
+            background=BUTTON_BG,
+            foreground=BUTTON_FG,
+        )
+
+    def _handle_signal_button_press(self, signal: FrameSignal):
+        """Handle signal button press/release."""
+        # Get the button
+        button = getattr(self, f"{signal.name}_button")
+
+        # Press the button
+        button.config(
+            background=BUTTON_ACTIVE_BG,
+            foreground=BUTTON_ACTIVE_FG,
+        )
+        # Set signal to high
+        self.signal_states.set_signal(signal, 1.0)
+
+        # Update the button state
+        button.update_idletasks()
