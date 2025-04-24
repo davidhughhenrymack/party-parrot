@@ -4,8 +4,8 @@ from parrot.interpreters.base import (
     FlashBeat,
     InterpreterArgs,
     InterpreterBase,
-    MoveCircles,
 )
+from parrot.interpreters.move import MoveCircles
 from parrot.interpreters.dimmer import Dimmer255, Dimmer30, SequenceDimmers
 from parrot.interpreters.combo import combo
 from parrot.fixtures.moving_head import MovingHead

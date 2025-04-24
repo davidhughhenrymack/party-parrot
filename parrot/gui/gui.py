@@ -12,22 +12,12 @@ from tkinter import (
     RIGHT,
     BOTH,
     VERTICAL,
-    HORIZONTAL,
     Y,
     X,
-    TOP,
     BOTTOM,
-    NW,
-    SE,
     Listbox,
     Toplevel,
-    Radiobutton,
-    RAISED,
-    SUNKEN,
     FLAT,
-    GROOVE,
-    RIDGE,
-    SOLID,
 )
 
 from parrot.director.director import Director
@@ -37,10 +27,9 @@ from parrot.state import State
 from parrot.director.mode import Mode
 from parrot.patch_bay import venue_patches, venues, get_manual_group, has_manual_dimmer
 from parrot.director.themes import themes
-from parrot.fixtures.base import FixtureGroup, ManualGroup
+from parrot.fixtures.base import FixtureGroup
 from .fixtures.factory import renderer_for_fixture
 from parrot.utils.math import distance
-import sys
 from parrot.director.signal_states import SignalStates
 
 CIRCLE_SIZE = 30
@@ -614,7 +603,8 @@ class Window(Tk):
         self.bind("<KeyRelease-e>", lambda e: self._select_mode(Mode.gentle))
         self.bind("<KeyRelease-c>", lambda e: self._select_mode(Mode.rave))
         self.bind("<KeyRelease-d>", lambda e: self._select_mode(Mode.blackout))
-        self.bind("<KeyRelease-s>", lambda e: self.director.shift())
+        self.bind("<KeyRelease-s>", lambda e: self.director.generate_interpreters())
+        self.bind("<KeyRelease-o>", lambda e: self.director.shift())
 
         # Focus the window to receive keyboard events
         self.focus_set()

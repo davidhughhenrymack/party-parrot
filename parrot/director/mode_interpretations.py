@@ -7,8 +7,6 @@ from parrot.interpreters.base import (
     ColorRainbow,
     InterpreterArgs,
     InterpreterBase,
-    MoveCircles,
-    MoveNod,
     Noop,
     with_args,
 )
@@ -57,6 +55,7 @@ from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.interpreters.signal import signal_switch
 from parrot.fixtures.led_par import Par
 from parrot.fixtures.chauvet.derby import ChauvetDerby
+from parrot.interpreters.move import MoveCircles, MoveNod, MoveFigureEight, MoveFan
 
 
 mode_interpretations: Dict[
@@ -65,56 +64,31 @@ mode_interpretations: Dict[
 ] = {
     Mode.blackout: {},
     Mode.gentle: {
-        Par: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
-        MovingHead: [
-            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg, MoveCircles)
-        ],
-        Motionstrip: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
-        ChauvetColorBandPiX_36Ch: [
-            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
-        ],
-        Laser: [signal_switch(Dimmer0)],
-        ChauvetRotosphere_28Ch: [
-            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
-        ],
-        ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
-    },
-    Mode.rave: {
         Par: [
             combo(
                 signal_switch(
                     randomize(
-                        DimmersBeatChase,
                         SequenceFadeDimmers,
                         GentlePulse,
                         VerySlowDecay,
                         SlowSustained,
-                    ),
+                    )
                 ),
-                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
-            ),
+                ColorBg,
+            )
         ],
         MovingHead: [
             combo(
                 signal_switch(
                     randomize(
-                        DimmersBeatChase,
-                        SlowDecay,
-                        GentlePulse,
-                        DimmerFadeLatched,
-                        SequenceDimmers,
                         SequenceFadeDimmers,
-                        with_args(
-                            "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
-                        ),
-                    ),
+                        GentlePulse,
+                        VerySlowDecay,
+                        SlowSustained,
+                    )
                 ),
-                weighted_randomize((95, ColorFg), (5, ColorRainbow)),
-                randomize(MoveCircles, MoveNod),
-                weighted_randomize(
-                    (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
-                    (90, MoverNoGobo),
-                ),
+                ColorBg,
+                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
             )
         ],
         Motionstrip: [
@@ -134,6 +108,74 @@ mode_interpretations: Dict[
                                 )
                             ),
                         ),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                    ),
+                ),
+                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                randomize(PanLatched, MoveCircles),
+            ),
+        ],
+        ChauvetColorBandPiX_36Ch: [
+            combo(
+                signal_switch(
+                    randomize(
+                        for_bulbs(SequenceFadeDimmers),
+                        for_bulbs(GentlePulse),
+                        VerySlowDecay,
+                        SlowSustained,
+                        for_bulbs(Twinkle),
+                    )
+                ),
+                ColorBg,
+            )
+        ],
+        Laser: [signal_switch(Dimmer0)],
+        ChauvetRotosphere_28Ch: [
+            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
+        ],
+        ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
+    },
+    Mode.rave: {
+        Par: [
+            combo(
+                signal_switch(
+                    randomize(
+                        DimmersBeatChase,
+                        GentlePulse,
+                    ),
+                ),
+                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
+            ),
+        ],
+        MovingHead: [
+            combo(
+                signal_switch(
+                    randomize(
+                        DimmersBeatChase,
+                        SlowDecay,
+                        GentlePulse,
+                        DimmerFadeLatched,
+                        SequenceDimmers,
+                        SequenceFadeDimmers,
+                        # with_args(
+                        #     "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
+                        # ),
+                    ),
+                ),
+                weighted_randomize((95, ColorFg), (5, ColorRainbow)),
+                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                weighted_randomize(
+                    (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
+                    (90, MoverNoGobo),
+                ),
+            )
+        ],
+        Motionstrip: [
+            combo(
+                signal_switch(
+                    randomize(
+                        combo(Dimmer255, for_bulbs(Twinkle)),
+                        combo(DimmersBeatChase, AllBulbs255),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                     ),
                 ),

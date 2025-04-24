@@ -2,7 +2,8 @@ import math
 import random
 from typing import List
 from parrot.director.frame import FrameSignal
-from parrot.interpreters.base import InterpreterArgs, InterpreterBase, MoveCircles
+from parrot.interpreters.base import InterpreterArgs, InterpreterBase
+from parrot.interpreters.move import MoveCircles
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.combo import combo
