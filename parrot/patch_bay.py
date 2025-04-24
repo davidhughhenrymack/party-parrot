@@ -69,8 +69,8 @@ venue_patches = {
         # ),
         # 6 SlimPAR Pro H fixtures (7 channels each)
         FixtureGroup(
-            [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)],
-            # + [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
+            # [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)],
+            [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
             "Stage overhead",
         ),
         # 6 more SlimPAR Pro H fixtures (7 channels each)
@@ -90,13 +90,13 @@ venue_patches = {
             "Moving heads crescent",
         ),
         FixtureGroup(
-            [ChauvetSpot160_12Ch(i) for i in range(84, 84 + 12 * 4, 12)],
+            [ChauvetSpot160_12Ch(i) for i in range(200, 200 + 12 * 4, 12)],
             "Moving heads dj",
         ),
         FixtureGroup(
             [
-                Motionstrip38(112, 0, 256, invert_pan=True),
-                Motionstrip38(112 + 38, 0, 256, invert_pan=True),
+                Motionstrip38(300, 0, 256, invert_pan=True),
+                Motionstrip38(300 + 38, 0, 256, invert_pan=True),
             ],
             "Motion strip (doubled)",
         ),

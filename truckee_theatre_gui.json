@@ -1,27 +1,27 @@
 {
-    "chauvet-slimpar-pro-h@70": {
-        "x": 267,
-        "y": 181
+    "chauvet-slimpar-pro-h@112": {
+        "x": 277,
+        "y": 243
     },
-    "chauvet-slimpar-pro-h@77": {
-        "x": 307,
-        "y": 181
+    "chauvet-slimpar-pro-h@119": {
+        "x": 317,
+        "y": 243
     },
-    "chauvet-slimpar-pro-h@84": {
-        "x": 347,
-        "y": 181
+    "chauvet-slimpar-pro-h@126": {
+        "x": 357,
+        "y": 243
     },
-    "chauvet-slimpar-pro-h@91": {
-        "x": 387,
-        "y": 181
+    "chauvet-slimpar-pro-h@133": {
+        "x": 397,
+        "y": 243
     },
-    "chauvet-slimpar-pro-h@98": {
-        "x": 427,
-        "y": 181
+    "chauvet-slimpar-pro-h@140": {
+        "x": 437,
+        "y": 243
     },
-    "chauvet-slimpar-pro-h@105": {
-        "x": 467,
-        "y": 181
+    "chauvet-slimpar-pro-h@147": {
+        "x": 477,
+        "y": 243
     },
     "chauvet-slimpar-pro-q@154": {
         "x": 48,
@@ -64,12 +64,12 @@
         "y": 257
     },
     "chauvet-intimidator-160@24": {
-        "x": 235,
-        "y": 95
+        "x": 179,
+        "y": 139
     },
     "chauvet-intimidator-160@36": {
-        "x": 499,
-        "y": 107
+        "x": 565,
+        "y": 143
     },
     "chauvet-intimidator-160@48": {
         "x": 641,
@@ -79,28 +79,28 @@
         "x": 749,
         "y": 387
     },
-    "chauvet-intimidator-160@84": {
-        "x": 295,
-        "y": 77
+    "chauvet-intimidator-160@200": {
+        "x": 304,
+        "y": 79
     },
-    "chauvet-intimidator-160@96": {
-        "x": 352,
-        "y": 76
+    "chauvet-intimidator-160@212": {
+        "x": 354,
+        "y": 79
     },
-    "chauvet-intimidator-160@108": {
-        "x": 398,
-        "y": 76
+    "chauvet-intimidator-160@224": {
+        "x": 404,
+        "y": 79
     },
-    "chauvet-intimidator-160@120": {
-        "x": 446,
-        "y": 77
+    "chauvet-intimidator-160@236": {
+        "x": 454,
+        "y": 79
     },
-    "motionstrip-38@112": {
-        "x": 198,
-        "y": 31
+    "motionstrip-38@300": {
+        "x": 311,
+        "y": 41
     },
-    "motionstrip-38@150": {
-        "x": 511,
-        "y": 23
+    "motionstrip-38@338": {
+        "x": 403,
+        "y": 41
     }
 }
