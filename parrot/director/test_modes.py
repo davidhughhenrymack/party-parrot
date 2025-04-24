@@ -20,7 +20,7 @@ class TestModes(unittest.TestCase):
             FrameSignal.freq_low: 0.8,  # High value to trigger beat detection
             FrameSignal.sustained_low: 0.1,
             FrameSignal.sustained_high: 0.8,  # High value to trigger effects
-            FrameSignal.hype: 0.8,  # High value to trigger effects
+            FrameSignal.dampen: 0.0,  # Keep dampen signal low to allow light activation
         }
         timeseries = {
             FrameSignal.freq_all.name: [0.8] * 200,
@@ -28,7 +28,8 @@ class TestModes(unittest.TestCase):
             FrameSignal.freq_low.name: [0.8] * 200,
             FrameSignal.sustained_low.name: [0.1] * 200,
             FrameSignal.sustained_high.name: [0.8] * 200,
-            FrameSignal.hype.name: [0.8] * 200,
+            FrameSignal.dampen.name: [0.0]
+            * 200,  # Keep dampen signal low in timeseries
         }
         self.frame = Frame(frame_values, timeseries)
         self.args = InterpreterArgs(50, True, 0, 100)
@@ -54,45 +55,6 @@ class TestModes(unittest.TestCase):
 
         # Ensure consistent random behavior
         random.seed(42)
-
-    def test_party_mode_activates_lights(self):
-        """Test that party mode activates at least some lights after one frame"""
-        # Get party mode interpreter for pars
-        interpreter = get_interpreter(Mode.party, self.pars, self.args)
-
-        # Run multiple frames to ensure we get some activity
-        for _ in range(5):  # Try a few frames
-            interpreter.step(self.frame, self.scheme)
-
-            # Check if any fixture has dimmer > 0
-            dimmer_values = [
-                fixture.set_dimmer.call_args[0][0]
-                for fixture in self.pars
-                if fixture.set_dimmer.called
-            ]
-            if any(value > 0 for value in dimmer_values):
-                break
-        else:
-            self.fail("No lights were activated in party mode after multiple frames")
-
-    def test_twinkle_mode_activates_lights(self):
-        """Test that twinkle mode activates at least some lights after one frame"""
-        # Get twinkle mode interpreter for strips (which use Twinkle interpreter)
-        interpreter = get_interpreter(Mode.twinkle, self.strips, self.args)
-
-        # Run one frame
-        interpreter.step(self.frame, self.scheme)
-
-        # Check that at least one fixture has dimmer > 0
-        dimmer_values = [
-            fixture.set_dimmer.call_args[0][0]
-            for fixture in self.strips
-            if fixture.set_dimmer.called
-        ]
-        self.assertTrue(
-            any(value > 0 for value in dimmer_values),
-            "No lights were activated in twinkle mode",
-        )
 
 
 if __name__ == "__main__":

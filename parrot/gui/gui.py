@@ -74,7 +74,13 @@ DEFAULT_OUTLINE_WIDTH = 1
 class RoundedButton(Button):
     """A custom button with rounded corners and hover effects."""
 
-    def __init__(self, master=None, release_command=None, press_command=None, **kwargs):
+    def __init__(
+        self,
+        master=None,
+        release_command=lambda: None,
+        press_command=lambda: None,
+        **kwargs,
+    ):
         # Apply default button style if not overridden
         button_style = {
             "background": BUTTON_BG,
@@ -498,24 +504,35 @@ class Window(Tk):
         )
         self.twinkle_button.pack(side=LEFT, padx=5, pady=5)
 
-        self.shift = RoundedButton(
-            self.left_btn_frame, text="Shift", command=lambda: director.shift()
-        )
-        self.shift.pack(side=LEFT, padx=5, pady=5)
-
-        # Add "Shift all" button that calls generate_interpreters
-        self.shift_all = RoundedButton(
+        self.dampen_button = RoundedButton(
             self.left_btn_frame,
-            text="Shift All",
-            command=lambda: director.generate_interpreters(),
+            text="Dampen",
+            press_command=lambda: self._handle_signal_button_press(FrameSignal.dampen),
+            release_command=lambda: self._handle_signal_button_release(
+                FrameSignal.dampen
+            ),
         )
-        self.shift_all.pack(side=LEFT, padx=5, pady=5)
+        self.dampen_button.pack(side=LEFT, padx=5, pady=5)
 
         # Pack the left frame
         self.left_btn_frame.pack(side=LEFT)
 
-        # Create a right frame for the caret button
+        # Create a right frame for the shift buttons and caret
         self.right_btn_frame = Frame(self.btn_frame, background=BG)
+
+        # Add shift buttons to the right frame
+        self.shift = RoundedButton(
+            self.right_btn_frame, text="Shift", command=lambda: director.shift()
+        )
+        self.shift.pack(side=RIGHT, padx=5, pady=5)
+
+        # Add "Shift all" button that calls generate_interpreters
+        self.shift_all = RoundedButton(
+            self.right_btn_frame,
+            text="Shift All",
+            command=lambda: director.generate_interpreters(),
+        )
+        self.shift_all.pack(side=RIGHT, padx=5, pady=5)
 
         # Add waveform toggle button with caret icon
         self.waveform_toggle_button = RoundedButton(

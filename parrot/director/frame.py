@@ -13,6 +13,7 @@ class FrameSignal(enum.Enum):
     big_pulse = "big_pulse"
     small_pulse = "small_pulse"
     twinkle = "twinkle"
+    dampen = "dampen"
 
 
 class Frame:

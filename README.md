@@ -29,12 +29,7 @@ To run the test suite:
 
 ```bash
 # Run all tests
-poetry run python -m unittest discover -s parrot
-
-# Run specific test files
-poetry run python -m unittest parrot/director/test_director.py
-poetry run python -m unittest parrot/fixtures/test_base.py
-poetry run python -m unittest parrot/test_main.py
+poetry run python -m pytest
 ```
 
 The test suite includes unit tests for:

@@ -72,7 +72,10 @@ mode_interpretations: Dict[
         MovingHead: [combo(signal_switch(GentlePulse), ColorAlternateBg)],
         Motionstrip: [combo(signal_switch(Dimmer255), ColorBg, for_bulbs(Twinkle))],
         ChauvetColorBandPiX_36Ch: [
-            combo(signal_switch(Dimmer255), ColorBg, for_bulbs(Twinkle))
+            combo(
+                signal_switch(combo(Dimmer255, for_bulbs(Twinkle), DimmersBeatChase)),
+                ColorBg,
+            )
         ],
         Laser: [signal_switch(Dimmer0)],
     },

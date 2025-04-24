@@ -62,17 +62,15 @@ venue_patches = {
         ChauvetSpot160_12Ch(172),
     ],
     venues.truckee_theatre: [
-        # Manual control fixtures
-        manual_groups[venues.truckee_theatre],
         # 6 COLORband PiX fixtures (36 channels each)
-        FixtureGroup(
-            [ChauvetColorBandPiX_36Ch(i) for i in range(194, 375, 36)],
-            "ColorBand wash",
-        ),
+        # FixtureGroup(
+        #     [ChauvetColorBandPiX_36Ch(i) for i in range(194, 375, 36)],
+        #     "ColorBand wash",
+        # ),
         # 6 SlimPAR Pro H fixtures (7 channels each)
         FixtureGroup(
-            [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)]
-            + [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
+            [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)],
+            # + [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
             "Stage overhead",
         ),
         # 6 more SlimPAR Pro H fixtures (7 channels each)
@@ -83,17 +81,24 @@ venue_patches = {
             "Sidelights",
         ),
         # 8 more SlimPAR Pro Q fixtures (5 channels each)
+        # FixtureGroup(
+        #     [ChauvetSlimParProQ_5Ch(i) for i in range(30, 66, 5)],
+        #     "Front led wash",
+        # ),
         FixtureGroup(
-            [ChauvetSlimParProQ_5Ch(i) for i in range(30, 66, 5)],
-            "Front led wash",
+            [ChauvetSpot160_12Ch(i) for i in range(0, 0 + 12 * 6, 12)],
+            "Moving heads crescent",
         ),
         FixtureGroup(
-            [ChauvetSpot160_12Ch(i) for i in range(425, 425 + 12 * 6, 12)],
-            "Moving heads back",
+            [ChauvetSpot160_12Ch(i) for i in range(84, 84 + 12 * 4, 12)],
+            "Moving heads dj",
         ),
         FixtureGroup(
-            [FiveBeamLaser(i) for i in range(480, 480 + 14 * 2, 14)],
-            "Lasers back",
+            [
+                Motionstrip38(112, 0, 256, invert_pan=True),
+                Motionstrip38(112 + 38, 0, 256, invert_pan=True),
+            ],
+            "Motion strip (doubled)",
         ),
     ],
 }

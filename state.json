@@ -1,8 +1,8 @@
 {
   "hype": 42,
-  "theme_name": "Rave",
+  "theme_name": "Pride",
   "venue_name": "truckee_theatre",
   "manual_dimmer": 0,
   "hype_limiter": false,
-  "show_waveform": true
+  "show_waveform": false
 }

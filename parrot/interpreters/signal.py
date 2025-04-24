@@ -12,9 +12,10 @@ T = TypeVar("T", bound=FixtureBase)
 
 # Probability constants for each signal
 STROBE_PROBABILITY = 0.4
-BIG_PULSE_PROBABILITY = 0.6
+BIG_PULSE_PROBABILITY = 0.7
 SMALL_PULSE_PROBABILITY = 0.3
 TWINKLE_PROBABILITY = 0.6
+DAMPEN_PROBABILITY = 0.9
 
 # Decay rates for pulses
 BIG_PULSE_DECAY = 0.9
@@ -41,6 +42,7 @@ def signal_switch(
             self.responds_to_big_pulse = random.random() < BIG_PULSE_PROBABILITY
             self.responds_to_small_pulse = random.random() < SMALL_PULSE_PROBABILITY
             self.responds_to_twinkle = random.random() < TWINKLE_PROBABILITY
+            self.responds_to_dampen = random.random() < DAMPEN_PROBABILITY
 
             # Initialize state
             self.big_pulse_dimmer = 0.0
@@ -78,7 +80,13 @@ def signal_switch(
                         self.small_pulse_dimmer * SMALL_PULSE_DECAY
                     )
 
-            # Set dimmer to the maximum of the pulse values
+            # Handle dampen signal
+            if self.responds_to_dampen and frame[FrameSignal.dampen] > 0.5:
+                for fixture in self.group:
+                    fixture.set_dimmer(0)  # Force dimmer to 0 when dampen is high
+                return  # Skip further dimmer processing when dampen is active
+
+            # Set dimmer to the maximum of the pulse values and standard interpreter's dimmer
             for fixture in self.group:
                 current_dimmer = max(
                     self.big_pulse_dimmer,
@@ -126,6 +134,8 @@ def signal_switch(
                 signals.append("small_pulse")
             if self.responds_to_twinkle:
                 signals.append("twinkle")
+            if self.responds_to_dampen:
+                signals.append("dampen")
             return f"SignalSwitch({self.interp_std}, responds to: {', '.join(signals)})"
 
     return SignalSwitch

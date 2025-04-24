@@ -1,3 +1,3 @@
 #! /bin/bash
 
-poetry run python -m unittest discover -s parrot
+poetry run python -m pytest
