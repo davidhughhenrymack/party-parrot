@@ -156,9 +156,23 @@ class Director:
             f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]} hype={self.interpreters[eviction_index].get_hype()}"
         )
 
+    def ensure_each_signal_is_enabled(self):
+        """Makes a list of every interpreter that is a SignalSwitch. Then for each signal they handle, ensures
+        at least one interpreter handles it. If not, a randomly selected SignalSwitch has the un-handled signal enabled.
+        """
+        signal_switches = [
+            i
+            for i in self.interpreters
+            if hasattr(i, "responds_to") and hasattr(i, "set_enabled")
+        ]
+        for signal in FrameSignal:
+            if not any(i.responds_to.get(signal, False) for i in signal_switches):
+                random.choice(signal_switches).set_enabled(signal, True)
+
     def shift(self):
         self.shift_color_scheme()
         self.shift_interpreter()
+        self.ensure_each_signal_is_enabled()
 
         self.last_shift_time = time.time()
         self.shift_count += 1

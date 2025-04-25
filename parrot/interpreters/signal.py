@@ -1,5 +1,5 @@
 import random
-from typing import List, Type, TypeVar
+from typing import Dict, List, Type, TypeVar
 
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame, FrameSignal
@@ -11,11 +11,13 @@ from parrot.interpreters.dimmer import Twinkle
 T = TypeVar("T", bound=FixtureBase)
 
 # Probability constants for each signal
-STROBE_PROBABILITY = 0.4
-BIG_PULSE_PROBABILITY = 0.7
-SMALL_PULSE_PROBABILITY = 0.3
-TWINKLE_PROBABILITY = 0.6
-DAMPEN_PROBABILITY = 0.9
+SIGNAL_PROBABILITIES = {
+    FrameSignal.strobe: 0.4,
+    FrameSignal.big_pulse: 0.7,
+    FrameSignal.small_pulse: 0.3,
+    FrameSignal.twinkle: 0.6,
+    FrameSignal.dampen: 0.9,
+}
 
 # Decay rates for pulses
 BIG_PULSE_DECAY = 0.9
@@ -38,11 +40,10 @@ def signal_switch(
             self.args = args  # Store args for use in twinkle interpreter
 
             # Randomly decide which signals to respond to
-            self.responds_to_strobe = random.random() < STROBE_PROBABILITY
-            self.responds_to_big_pulse = random.random() < BIG_PULSE_PROBABILITY
-            self.responds_to_small_pulse = random.random() < SMALL_PULSE_PROBABILITY
-            self.responds_to_twinkle = random.random() < TWINKLE_PROBABILITY
-            self.responds_to_dampen = random.random() < DAMPEN_PROBABILITY
+            self.responds_to = {
+                signal: random.random() < probability
+                for signal, probability in SIGNAL_PROBABILITIES.items()
+            }
 
             # Initialize state
             self.big_pulse_dimmer = 0.0
@@ -50,12 +51,19 @@ def signal_switch(
             self.twinkle_interp = None
             self.twinkle_active = False
 
+        def is_enabled(self, signal: FrameSignal) -> bool:
+            return self.responds_to.get(signal, False)
+
+        def set_enabled(self, signal: FrameSignal, enabled: bool):
+            if signal in self.responds_to:
+                self.responds_to[signal] = enabled
+
         def step(self, frame: Frame, scheme: ColorScheme):
             # Always run standard interpreter first
             self.interp_std.step(frame, scheme)
 
-            # Handle each signal if we respond to it
-            if self.responds_to_strobe:
+            # Handle strobe signal
+            if self.responds_to.get(FrameSignal.strobe, False):
                 if frame[FrameSignal.strobe] > 0.5:
                     for fixture in self.group:
                         fixture.set_strobe(220)
@@ -65,14 +73,15 @@ def signal_switch(
                         fixture.set_strobe(0)
                         # Don't reset dimmer here as it might be controlled by other signals
 
-            # Handle pulses
-            if self.responds_to_big_pulse:
+            # Handle big pulse
+            if self.responds_to.get(FrameSignal.big_pulse, False):
                 if frame[FrameSignal.big_pulse] > 0.5:
                     self.big_pulse_dimmer = 225
                 else:
                     self.big_pulse_dimmer = self.big_pulse_dimmer * BIG_PULSE_DECAY
 
-            if self.responds_to_small_pulse:
+            # Handle small pulse
+            if self.responds_to.get(FrameSignal.small_pulse, False):
                 if frame[FrameSignal.small_pulse] > 0.5:
                     self.small_pulse_dimmer = 225
                 else:
@@ -81,7 +90,10 @@ def signal_switch(
                     )
 
             # Handle dampen signal
-            if self.responds_to_dampen and frame[FrameSignal.dampen] > 0.5:
+            if (
+                self.responds_to.get(FrameSignal.dampen, False)
+                and frame[FrameSignal.dampen] > 0.5
+            ):
                 for fixture in self.group:
                     fixture.set_dimmer(0)  # Force dimmer to 0 when dampen is high
                 return  # Skip further dimmer processing when dampen is active
@@ -95,7 +107,8 @@ def signal_switch(
                 )
                 fixture.set_dimmer(current_dimmer)
 
-            if self.responds_to_twinkle:
+            # Handle twinkle
+            if self.responds_to.get(FrameSignal.twinkle, False):
                 if frame[FrameSignal.twinkle] > 0.5:
                     if not self.twinkle_active:
                         self.twinkle_active = True
@@ -128,17 +141,9 @@ def signal_switch(
                 self.twinkle_interp.exit(frame, scheme)
 
         def __str__(self) -> str:
-            signals = []
-            if self.responds_to_strobe:
-                signals.append("strobe")
-            if self.responds_to_big_pulse:
-                signals.append("big_pulse")
-            if self.responds_to_small_pulse:
-                signals.append("small_pulse")
-            if self.responds_to_twinkle:
-                signals.append("twinkle")
-            if self.responds_to_dampen:
-                signals.append("dampen")
+            signals = [
+                signal.name for signal, enabled in self.responds_to.items() if enabled
+            ]
             return f"SignalSwitch({self.interp_std}, responds to: {', '.join(signals)})"
 
     return SignalSwitch
