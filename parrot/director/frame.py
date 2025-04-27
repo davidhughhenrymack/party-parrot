@@ -10,9 +10,9 @@ class FrameSignal(enum.Enum):
     sustained_low = "sustained_low"
     sustained_high = "sustained_high"
     strobe = "strobe"
-    big_pulse = "big_pulse"
-    small_pulse = "small_pulse"
-    twinkle = "twinkle"
+    big_blinder = "big_blinder"
+    small_blinder = "small_blinder"
+    pulse = "pulse"
     dampen = "dampen"
 
 

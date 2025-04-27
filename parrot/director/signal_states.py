@@ -6,9 +6,9 @@ class SignalStates:
     def __init__(self):
         self.states: Dict[FrameSignal, float] = {
             FrameSignal.strobe: 0.0,
-            FrameSignal.big_pulse: 0.0,
-            FrameSignal.small_pulse: 0.0,
-            FrameSignal.twinkle: 0.0,
+            FrameSignal.big_blinder: 0.0,
+            FrameSignal.small_blinder: 0.0,
+            FrameSignal.pulse: 0.0,
         }
 
     def set_signal(self, signal: FrameSignal, value: float):

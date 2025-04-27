@@ -4,6 +4,7 @@ from parrot.director.frame import FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
 from parrot.utils.math import clamp
+import time
 
 
 T = TypeVar("T", bound=FixtureBase)
@@ -21,6 +22,8 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
         edge_hardness=2.0,
         pulse_width=0.3,
         speed=1.0,
+        min_valid_y_range=10,
+        cooldown_time=1.5,  # Minimum time between pulses in seconds
     ):
         super().__init__(group, args)
         self.signal = signal
@@ -28,6 +31,8 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
         self.edge_hardness = edge_hardness
         self.pulse_width = pulse_width
         self.speed = speed
+        self.min_valid_y_range = min_valid_y_range
+        self.cooldown_time = cooldown_time
 
         # Initialize state
         self.pulse_position = 0
@@ -36,6 +41,7 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
         self.y_start = 0
         self.y_end = 0
         self.y_range = 0
+        self.last_activation_time = 0
 
     def _calculate_spatial_range(self):
         # Filter fixtures with valid y positions
@@ -56,11 +62,20 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
         self.y_end = max_y + (y_range * 0.3)
         self.y_range = self.y_end - self.y_start
 
+        if self.y_range < self.min_valid_y_range:
+            return False
+
         return True
 
     def step(self, frame, scheme):
+        current_time = time.time()
+
         # Check if we should start a new pulse
-        if frame[self.signal] > self.trigger_level and not self.active:
+        if (
+            frame[self.signal] > self.trigger_level
+            and not self.active
+            and current_time - self.last_activation_time >= self.cooldown_time
+        ):
             # Recalculate spatial range when starting a new pulse
             if not self._calculate_spatial_range():
                 # If no valid fixtures, just turn everything off
@@ -70,6 +85,7 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
 
             self.active = True
             self.pulse_position = self.y_start
+            self.last_activation_time = current_time
 
         if self.active:
             # Move the pulse downward

@@ -37,9 +37,9 @@ class TestInterpreters(unittest.TestCase):
             FrameSignal.sustained_low: 0.1,
             FrameSignal.sustained_high: 0.4,
             FrameSignal.strobe: 0.0,
-            FrameSignal.big_pulse: 0.0,
-            FrameSignal.small_pulse: 0.0,
-            FrameSignal.twinkle: 0.0,
+            FrameSignal.big_blinder: 0.0,
+            FrameSignal.small_blinder: 0.0,
+            FrameSignal.pulse: 0.0,
         }
         timeseries = {
             FrameSignal.freq_all.name: [0.5] * 200,
@@ -48,9 +48,9 @@ class TestInterpreters(unittest.TestCase):
             FrameSignal.sustained_low.name: [0.1] * 200,
             FrameSignal.sustained_high.name: [0.4] * 200,
             FrameSignal.strobe.name: [0.0] * 200,
-            FrameSignal.big_pulse.name: [0.0] * 200,
-            FrameSignal.small_pulse.name: [0.0] * 200,
-            FrameSignal.twinkle.name: [0.0] * 200,
+            FrameSignal.big_blinder.name: [0.0] * 200,
+            FrameSignal.small_blinder.name: [0.0] * 200,
+            FrameSignal.pulse.name: [0.0] * 200,
         }
         self.frame = Frame(frame_values, timeseries)
 
@@ -165,9 +165,9 @@ class TestInterpreters(unittest.TestCase):
             FrameSignal.sustained_low: 0.1,
             FrameSignal.sustained_high: 0.4,
             FrameSignal.strobe: 0.0,
-            FrameSignal.big_pulse: 0.0,
-            FrameSignal.small_pulse: 0.0,
-            FrameSignal.twinkle: 0.0,
+            FrameSignal.big_blinder: 0.0,
+            FrameSignal.small_blinder: 0.0,
+            FrameSignal.pulse: 0.0,
         }
         timeseries = {
             FrameSignal.freq_all.name: [0.5] * 200,
@@ -176,9 +176,9 @@ class TestInterpreters(unittest.TestCase):
             FrameSignal.sustained_low.name: [0.1] * 200,
             FrameSignal.sustained_high.name: [0.4] * 200,
             FrameSignal.strobe.name: [0.0] * 200,
-            FrameSignal.big_pulse.name: [0.0] * 200,
-            FrameSignal.small_pulse.name: [0.0] * 200,
-            FrameSignal.twinkle.name: [0.0] * 200,
+            FrameSignal.big_blinder.name: [0.0] * 200,
+            FrameSignal.small_blinder.name: [0.0] * 200,
+            FrameSignal.pulse.name: [0.0] * 200,
         }
         self.frame = Frame(frame_values, timeseries)
 
@@ -206,9 +206,9 @@ class TestInterpreters(unittest.TestCase):
                 FrameSignal.sustained_low: 0.1,
                 FrameSignal.sustained_high: 0.4,
                 FrameSignal.strobe: 0.8,  # Only strobe is high
-                FrameSignal.big_pulse: 0.0,
-                FrameSignal.small_pulse: 0.0,
-                FrameSignal.twinkle: 0.0,
+                FrameSignal.big_blinder: 0.0,
+                FrameSignal.small_blinder: 0.0,
+                FrameSignal.pulse: 0.0,
             }
             interpreter.step(self.frame, Color("white"))
             self.fixture.set_strobe.assert_called_with(220)

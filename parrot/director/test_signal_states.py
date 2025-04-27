@@ -27,9 +27,9 @@ class TestSignalStates(unittest.TestCase):
         states = self.signal_states.get_states()
         for signal in [
             FrameSignal.strobe,
-            FrameSignal.big_pulse,
-            FrameSignal.small_pulse,
-            FrameSignal.twinkle,
+            FrameSignal.big_blinder,
+            FrameSignal.small_blinder,
+            FrameSignal.pulse,
         ]:
             self.assertEqual(states[signal], 0.0)
 
@@ -39,7 +39,7 @@ class TestSignalStates(unittest.TestCase):
         states = self.signal_states.get_states()
         self.assertEqual(states[FrameSignal.strobe], 1.0)
         self.assertEqual(
-            states[FrameSignal.big_pulse], 0.0
+            states[FrameSignal.big_blinder], 0.0
         )  # Others should remain unchanged
 
     def test_get_states_returns_copy(self):

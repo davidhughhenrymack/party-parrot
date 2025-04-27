@@ -68,6 +68,7 @@ class RoundedButton(Button):
         master=None,
         release_command=lambda: None,
         press_command=lambda: None,
+        signal=None,
         **kwargs,
     ):
         # Apply default button style if not overridden
@@ -104,6 +105,7 @@ class RoundedButton(Button):
 
         self.release_command = release_command
         self.press_command = press_command
+        self.signal = signal
 
     def on_enter(self, event):
         """Change border color on hover."""
@@ -455,52 +457,46 @@ class Window(Tk):
             release_command=lambda: self._handle_signal_button_release(
                 FrameSignal.strobe
             ),
+            signal=FrameSignal.strobe,
         )
         self.strobe_button.pack(side=LEFT, padx=5, pady=5)
 
-        self.big_pulse_button = RoundedButton(
+        self.big_blinder_button = RoundedButton(
             self.left_btn_frame,
-            text="Big Pulse",
+            text="Big Blinder",
             press_command=lambda: self._handle_signal_button_press(
-                FrameSignal.big_pulse
+                FrameSignal.big_blinder
             ),
             release_command=lambda: self._handle_signal_button_release(
-                FrameSignal.big_pulse
+                FrameSignal.big_blinder
             ),
+            signal=FrameSignal.big_blinder,
         )
-        self.big_pulse_button.pack(side=LEFT, padx=5, pady=5)
+        self.big_blinder_button.pack(side=LEFT, padx=5, pady=5)
 
-        self.small_pulse_button = RoundedButton(
+        self.small_blinder_button = RoundedButton(
             self.left_btn_frame,
-            text="Small Pulse",
+            text="Small Blinder",
             press_command=lambda: self._handle_signal_button_press(
-                FrameSignal.small_pulse
+                FrameSignal.small_blinder
             ),
             release_command=lambda: self._handle_signal_button_release(
-                FrameSignal.small_pulse
+                FrameSignal.small_blinder
             ),
+            signal=FrameSignal.small_blinder,
         )
-        self.small_pulse_button.pack(side=LEFT, padx=5, pady=5)
+        self.small_blinder_button.pack(side=LEFT, padx=5, pady=5)
 
-        self.twinkle_button = RoundedButton(
+        self.pulse_button = RoundedButton(
             self.left_btn_frame,
-            text="Twinkle",
-            press_command=lambda: self._handle_signal_button_press(FrameSignal.twinkle),
+            text="Pulse",
+            press_command=lambda: self._handle_signal_button_press(FrameSignal.pulse),
             release_command=lambda: self._handle_signal_button_release(
-                FrameSignal.twinkle
+                FrameSignal.pulse
             ),
+            signal=FrameSignal.pulse,
         )
-        self.twinkle_button.pack(side=LEFT, padx=5, pady=5)
-
-        self.dampen_button = RoundedButton(
-            self.left_btn_frame,
-            text="Dampen",
-            press_command=lambda: self._handle_signal_button_press(FrameSignal.dampen),
-            release_command=lambda: self._handle_signal_button_release(
-                FrameSignal.dampen
-            ),
-        )
-        self.dampen_button.pack(side=LEFT, padx=5, pady=5)
+        self.pulse_button.pack(side=LEFT, padx=5, pady=5)
 
         # Pack the left frame
         self.left_btn_frame.pack(side=LEFT)
@@ -578,19 +574,19 @@ class Window(Tk):
         # Add keyboard bindings
         self.bind(
             "<KeyPress-i>",
-            lambda e: self._handle_signal_button_press(FrameSignal.small_pulse),
+            lambda e: self._handle_signal_button_press(FrameSignal.small_blinder),
         )
         self.bind(
             "<KeyRelease-i>",
-            lambda e: self._handle_signal_button_release(FrameSignal.small_pulse),
+            lambda e: self._handle_signal_button_release(FrameSignal.small_blinder),
         )
         self.bind(
             "<KeyPress-g>",
-            lambda e: self._handle_signal_button_press(FrameSignal.big_pulse),
+            lambda e: self._handle_signal_button_press(FrameSignal.big_blinder),
         )
         self.bind(
             "<KeyRelease-g>",
-            lambda e: self._handle_signal_button_release(FrameSignal.big_pulse),
+            lambda e: self._handle_signal_button_release(FrameSignal.big_blinder),
         )
         self.bind(
             "<KeyPress-h>",
@@ -602,11 +598,11 @@ class Window(Tk):
         )
         self.bind(
             "<KeyPress-j>",
-            lambda e: self._handle_signal_button_press(FrameSignal.dampen),
+            lambda e: self._handle_signal_button_press(FrameSignal.pulse),
         )
         self.bind(
             "<KeyRelease-j>",
-            lambda e: self._handle_signal_button_release(FrameSignal.dampen),
+            lambda e: self._handle_signal_button_release(FrameSignal.pulse),
         )
         self.bind("<KeyRelease-e>", lambda e: self._select_mode(Mode.gentle))
         self.bind("<KeyRelease-c>", lambda e: self._select_mode(Mode.rave))
