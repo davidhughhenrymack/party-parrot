@@ -80,7 +80,9 @@ def random_color():
     return key
 
 
-scheme_random = [generate_random_scheme(random_color()) for _ in range(10)]
+scheme_random = [
+    generate_random_scheme(Color(random.choice(available_colors))) for _ in range(10)
+]
 
 scheme_berlin = [
     generate_random_scheme(

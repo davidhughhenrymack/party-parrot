@@ -3,6 +3,7 @@ import random
 from typing import List
 from parrot.interpreters.base import InterpreterBase, InterpreterArgs
 from parrot.fixtures.base import FixtureBase
+from colorama import Fore, Style
 
 
 class MoveCircles(InterpreterBase):
@@ -14,6 +15,9 @@ class MoveCircles(InterpreterBase):
             self.phase = random.choice([0, math.pi])
         else:
             self.phase = phase
+
+    def __str__(self):
+        return f"🔄 {Fore.GREEN}Circles{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
@@ -30,6 +34,9 @@ class MoveNod(InterpreterBase):
         super().__init__(group, args)
         self.multiplier = multiplier
         self.phase = phase
+
+    def __str__(self):
+        return f"⬆️⬇️ {Fore.GREEN}Nod{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
@@ -49,6 +56,9 @@ class MoveFigureEight(InterpreterBase):
         else:
             self.phase = phase
 
+    def __str__(self):
+        return f"∞ {Fore.GREEN}FigureEight{Style.RESET_ALL}"
+
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
             # Figure eight pattern using Lissajous curve
@@ -65,6 +75,9 @@ class MoveFan(InterpreterBase):
         super().__init__(group, args)
         self.multiplier = multiplier
         self.spread = spread
+
+    def __str__(self):
+        return f"↔️ {Fore.GREEN}Fan{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
         # Calculate the middle index

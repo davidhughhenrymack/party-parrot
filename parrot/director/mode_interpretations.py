@@ -51,6 +51,7 @@ from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.interpreters.bulbs import AllBulbs255, for_bulbs
 from parrot.director.mode_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
+from parrot.interpreters.spatial import HardSpatialPulse, SoftSpatialPulse
 from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.interpreters.signal import signal_switch
 from parrot.fixtures.led_par import Par
@@ -72,6 +73,7 @@ mode_interpretations: Dict[
                         GentlePulse,
                         VerySlowDecay,
                         SlowSustained,
+                        SoftSpatialPulse,
                     )
                 ),
                 ColorBg,
@@ -85,6 +87,7 @@ mode_interpretations: Dict[
                         GentlePulse,
                         VerySlowDecay,
                         SlowSustained,
+                        SoftSpatialPulse,
                     )
                 ),
                 ColorBg,
@@ -142,6 +145,7 @@ mode_interpretations: Dict[
                     randomize(
                         DimmersBeatChase,
                         GentlePulse,
+                        HardSpatialPulse,
                     ),
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
@@ -151,15 +155,13 @@ mode_interpretations: Dict[
             combo(
                 signal_switch(
                     randomize(
+                        HardSpatialPulse,
                         DimmersBeatChase,
                         SlowDecay,
                         GentlePulse,
                         DimmerFadeLatched,
                         SequenceDimmers,
                         SequenceFadeDimmers,
-                        # with_args(
-                        #     "FadeLatchAt0.3", DimmerFadeLatchedRandom, latch_at=0.3
-                        # ),
                     ),
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),

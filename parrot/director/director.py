@@ -2,6 +2,7 @@ import random
 import time
 import os
 from typing import List
+from colorama import Fore, Style, init
 from parrot.director.frame import Frame, FrameSignal
 
 from parrot.patch_bay import venue_patches, get_manual_group
@@ -22,6 +23,7 @@ from .mode_interpretations import get_interpreter
 from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
+from parrot.utils.color_utils import format_color_scheme
 
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
@@ -41,7 +43,7 @@ class Director:
         self.start_time = time.time()
         self.state = state
 
-        self.state.set_mode(Mode.rave)
+        self.state.set_mode(Mode.gentle)
         self.setup_patch()
         self.generate_color_scheme()
 
@@ -90,6 +92,24 @@ class Director:
             if len(fixtures) > 0:
                 self.fixture_groups.append(fixtures)
 
+    def format_fixture_names(self, fixtures):
+        # Format fixtures
+        fixtures = [str(j) for j in fixtures]
+        if len(fixtures) > 1:
+            # Check if all fixtures have same name
+            base_names = [f.split(" @ ")[0] for f in fixtures]
+            if len(set(base_names)) == 1:
+                # Get all addresses
+                addresses = [int(f.split(" @ ")[1]) for f in fixtures]
+                min_addr = min(addresses)
+                max_addr = max(addresses)
+                fixture_str = f"{base_names[0]} @ {min_addr}-{max_addr}"
+            else:
+                fixture_str = ", ".join(fixtures)
+        else:
+            fixture_str = fixtures[0]
+        return fixture_str
+
     def generate_interpreters(self):
         self.interpreters: List[InterpreterBase] = [
             get_interpreter(
@@ -111,14 +131,17 @@ class Director:
 
         print(f"Generated interpretation for {self.state.mode}:")
         for i in self.interpreters:
-            print(f"    {str(i)} {[str(j) for j in i.group]}")
+            fixture_str = self.format_fixture_names(i.group)
+            print(
+                f"{Fore.BLUE}{fixture_str} {Style.RESET_ALL}{str(i)}{Style.RESET_ALL}"
+            )
 
         print()
 
     def generate_color_scheme(self):
         s = random.choice(self.state.theme.color_scheme)
         self.scheme.push(s)
-        print(f"Shifting to {s}")
+        print(f"Shifting to {format_color_scheme(s)}")
 
     def shift_color_scheme(self):
         s = random.choice(self.state.theme.color_scheme)
@@ -126,8 +149,9 @@ class Director:
         ct = self.scheme.render().to_list()
         idx = random.randint(0, 2)
         ct[idx] = st[idx]
-        self.scheme.push(ColorScheme.from_list(ct))
-        print(f"Shifting to {ColorScheme.from_list(ct)}")
+        new_scheme = ColorScheme.from_list(ct)
+        self.scheme.push(new_scheme)
+        print(f"Shifting to {format_color_scheme(new_scheme)}")
 
     def shift_interpreter(self):
         eviction_index = random.randint(0, len(self.interpreters) - 1)
@@ -149,11 +173,10 @@ class Director:
             ),
         )
 
+        fixture_str = self.format_fixture_names(eviction_group)
+        print(f"Shifted interpretation for {self.state.mode}:{Style.RESET_ALL}")
         print(
-            f"Shifted interpretation for {self.state.mode} hype=[{hype_bracket[0]} {hype_bracket[1]}]:"
-        )
-        print(
-            f"    {str(self.interpreters[eviction_index] )} {[str(j) for j in eviction_group]} hype={self.interpreters[eviction_index].get_hype()}"
+            f"{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {str(self.interpreters[eviction_index])}{Style.RESET_ALL}"
         )
 
     def ensure_each_signal_is_enabled(self):
@@ -165,6 +188,9 @@ class Director:
             for i in self.interpreters
             if hasattr(i, "responds_to") and hasattr(i, "set_enabled")
         ]
+        if not signal_switches:
+            return
+
         for signal in FrameSignal:
             if not any(i.responds_to.get(signal, False) for i in signal_switches):
                 random.choice(signal_switches).set_enabled(signal, True)

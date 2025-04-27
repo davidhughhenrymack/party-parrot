@@ -141,9 +141,6 @@ def signal_switch(
                 self.twinkle_interp.exit(frame, scheme)
 
         def __str__(self) -> str:
-            signals = [
-                signal.name for signal, enabled in self.responds_to.items() if enabled
-            ]
-            return f"SignalSwitch({self.interp_std}, responds to: {', '.join(signals)})"
+            return str(self.interp_std)
 
     return SignalSwitch

@@ -45,6 +45,7 @@ class FixtureGuiRenderer(Generic[T]):
     def set_position(self, canvas: Canvas, x: int, y: int):
         self._x = x
         self._y = y
+        self.fixture.set_position(x, y)
         # Update patch label position if it exists
         if self.patch_label:
             # Position the label above the fixture

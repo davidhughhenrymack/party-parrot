@@ -7,6 +7,7 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.director.color_scheme import ColorScheme
 from parrot.utils.colour import Color
+from colorama import Fore, Style
 
 T = TypeVar("T", bound=FixtureBase)
 
@@ -47,7 +48,7 @@ class InterpreterBase(Generic[T]):
         return acceptable_test(args, cls.hype, cls.has_rainbow)
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}"
+        return f"{Fore.YELLOW}{self.__class__.__name__}{Style.RESET_ALL}"
 
 
 def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
@@ -88,18 +89,27 @@ class Noop(InterpreterBase):
 class ColorFg(InterpreterBase):
     hype = 30
 
+    def __str__(self):
+        return f"🎨{Fore.MAGENTA}Fg{Style.RESET_ALL}"
+
     def step(self, frame, scheme):
         for i in self.group:
             i.set_color(scheme.fg)
 
 
 class ColorAlternateBg(InterpreterBase):
+    def __str__(self):
+        return f"🔄{Fore.MAGENTA}AlternateBg{Style.RESET_ALL}"
+
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
             fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)
 
 
 class ColorBg(InterpreterBase):
+    def __str__(self):
+        return f"🎨{Fore.MAGENTA}Bg{Style.RESET_ALL}"
+
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
             fixture.set_color(scheme.bg)
@@ -108,6 +118,9 @@ class ColorBg(InterpreterBase):
 class ColorRainbow(InterpreterBase):
     has_rainbow = True
     hype = 40
+
+    def __str__(self):
+        return f"🌈{Fore.MAGENTA}Rainbow{Style.RESET_ALL}"
 
     def __init__(self, group, args, color_speed=0.08, color_phase_spread=0.2):
         super().__init__(group, args)
@@ -127,6 +140,9 @@ class ColorRainbow(InterpreterBase):
 
 class FlashBeat(InterpreterBase):
     hype = 70
+
+    def __str__(self):
+        return f"⚡{Fore.MAGENTA}FlashBeat{Style.RESET_ALL}"
 
     def __init__(self, group, args):
         super().__init__(group, args)

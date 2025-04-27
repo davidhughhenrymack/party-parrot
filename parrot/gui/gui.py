@@ -514,6 +514,14 @@ class Window(Tk):
         )
         self.shift.pack(side=RIGHT, padx=5, pady=5)
 
+        # Add "Shift Colors" button that calls shift_color_scheme
+        self.shift_colors = RoundedButton(
+            self.right_btn_frame,
+            text="Shift Colors",
+            command=lambda: director.shift_color_scheme(),
+        )
+        self.shift_colors.pack(side=RIGHT, padx=5, pady=5)
+
         # Add "Shift all" button that calls generate_interpreters
         self.shift_all = RoundedButton(
             self.right_btn_frame,

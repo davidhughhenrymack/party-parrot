@@ -1,4 +1,5 @@
 import logging
+from typing import Optional, Tuple
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp
 from parrot.utils.string import kebab_case
@@ -16,6 +17,17 @@ class FixtureBase:
         self.dimmer_value = 0
         self.strobe_value = 0
         self.speed_value = 0
+        self.x: Optional[int] = None
+        self.y: Optional[int] = None
+
+    def set_position(self, x: int, y: int):
+        """Set the position of the fixture in the venue (e.g. it's x,y coordinate from the gui rendering)"""
+        self.x = x
+        self.y = y
+
+    def get_position(self) -> Tuple[int, int]:
+        """Get the position of the fixture in the venue (e.g. it's x,y coordinate from the gui rendering)"""
+        return self.x, self.y
 
     def set_color(self, color: Color):
         self.color_value = color
