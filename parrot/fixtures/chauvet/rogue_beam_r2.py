@@ -24,21 +24,21 @@ dmx_layout = {
 
 
 color_wheel = [
-    ColorWheelEntry(Color("#FFFFFF"), 0),  # Open (white)
-    ColorWheelEntry(Color("#FF0000"), 5),  # Red (1)
-    ColorWheelEntry(Color("#FFD700"), 9),  # Deep yellow (2)
-    ColorWheelEntry(Color("#008080"), 13),  # Turquoise (3)
-    ColorWheelEntry(Color("#00FF00"), 17),  # Green (4)
-    ColorWheelEntry(Color("#32CD32"), 21),  # Light green (5)
-    ColorWheelEntry(Color("#800080"), 25),  # Light purple (6)
-    ColorWheelEntry(Color("#FF00FF"), 29),  # Pink (7)
-    ColorWheelEntry(Color("#FFFF00"), 33),  # Light yellow (8)
-    ColorWheelEntry(Color("#FF00FF"), 37),  # Magenta (9)
-    ColorWheelEntry(Color("#0000FF"), 41),  # Blue (10)
-    ColorWheelEntry(Color("#FFA500"), 45),  # CTO 3200K (11)
-    ColorWheelEntry(Color("#FFA500"), 49),  # CTO 5600K (12)
-    ColorWheelEntry(Color("#FFA500"), 53),  # CTO 6500K (13)
-    ColorWheelEntry(Color("#800080"), 57),  # UV (14)
+    ColorWheelEntry(Color("white"), 2),  # Open (white)
+    ColorWheelEntry(Color("red"), 6),  # Red (1)
+    # ColorWheelEntry(Color("#FFD700"), 10),  # Deep yellow (2)
+    ColorWheelEntry(Color("Turquoise"), 14),  # Turquoise (3)
+    ColorWheelEntry(Color("green"), 18),  # Green (4)
+    ColorWheelEntry(Color("lightgreen"), 22),  # Light green (5)
+    ColorWheelEntry(Color("Lightpink"), 26),  # Light purple (6)
+    ColorWheelEntry(Color("pink"), 30),  # Pink (7)
+    # ColorWheelEntry(Color("#FFFF00"), 34),  # Light yellow (8)
+    ColorWheelEntry(Color("magenta"), 38),  # Magenta (9)
+    ColorWheelEntry(Color("blue"), 42),  # Blue (10)
+    # ColorWheelEntry(Color("#FFA500"), 46),  # CTO 3200K (11)
+    # ColorWheelEntry(Color("#FFA500"), 50),  # CTO 5600K (12)
+    # ColorWheelEntry(Color("#FFA500"), 54),  # CTO 6500K (13)
+    ColorWheelEntry(Color("BlueViolet"), 58),  # UV (14)
     # Split colors: 61-127
     # Clockwise scroll (fast → slow): 128-189
     # Stop: 190-193
@@ -100,3 +100,6 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
             strobe_shutter_upper=131,
             disable_fine=False,
         )
+
+        self.disable_blackout_on_all_fn = 225
+        self.set("control", self.disable_blackout_on_all_fn)

@@ -1,6 +1,10 @@
 {
     "chauvet-rogue-beam-r2@1": {
-        "x": 582,
-        "y": 94
+        "x": 565,
+        "y": 48
+    },
+    "chauvet-rogue-beam-r2@16": {
+        "x": 630,
+        "y": 48
     }
 }

@@ -89,13 +89,16 @@ venue_patches = {
         #     "Front led wash",
         # ),
         FixtureGroup(
-            [ChauvetRogueBeamR2(i) for i in range(0, 0 + 15 * 6, 15)],
+            [
+                *[ChauvetRogueBeamR2(i) for i in range(1, 1 + 15 * 6, 15)],
+                *[ParRGB(i) for i in range(95, 95 + 6 * 7, 7)],
+            ],
             "Moving heads crescent",
         ),
-        FixtureGroup(
-            [ChauvetSpot160_12Ch(i) for i in range(200, 200 + 12 * 4, 12)],
-            "Moving heads dj",
-        ),
+        # FixtureGroup(
+        #     [ChauvetSpot160_12Ch(i) for i in range(200, 200 + 12 * 4, 12)],
+        #     "Moving heads dj",
+        # ),
         FixtureGroup(
             [
                 Motionstrip38(300, 0, 256, invert_pan=True),
@@ -106,7 +109,7 @@ venue_patches = {
     ],
     venues.crux_test: [
         FixtureGroup(
-            [ChauvetRogueBeamR2(1)],
+            [ChauvetRogueBeamR2(1), ChauvetRogueBeamR2(16)],
             "Rogue Beams",
         ),
     ],

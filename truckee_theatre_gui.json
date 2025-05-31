@@ -1,106 +1,114 @@
 {
     "chauvet-slimpar-pro-h@112": {
-        "x": 279,
+        "x": 274,
         "y": 301
     },
     "chauvet-slimpar-pro-h@119": {
-        "x": 319,
+        "x": 314,
         "y": 301
     },
     "chauvet-slimpar-pro-h@126": {
-        "x": 359,
+        "x": 354,
         "y": 301
     },
     "chauvet-slimpar-pro-h@133": {
-        "x": 399,
+        "x": 394,
         "y": 301
     },
     "chauvet-slimpar-pro-h@140": {
-        "x": 439,
+        "x": 434,
         "y": 301
     },
     "chauvet-slimpar-pro-h@147": {
-        "x": 479,
+        "x": 474,
         "y": 301
     },
     "chauvet-slimpar-pro-q@154": {
-        "x": 48,
-        "y": 88
+        "x": 46,
+        "y": 135
     },
     "chauvet-slimpar-pro-q@159": {
-        "x": 48,
-        "y": 133
+        "x": 46,
+        "y": 180
     },
     "chauvet-slimpar-pro-q@164": {
-        "x": 50,
-        "y": 176
+        "x": 48,
+        "y": 223
     },
     "chauvet-slimpar-pro-q@169": {
-        "x": 49,
-        "y": 217
+        "x": 47,
+        "y": 264
     },
     "chauvet-slimpar-pro-q@174": {
-        "x": 725,
-        "y": 82
+        "x": 710,
+        "y": 112
     },
     "chauvet-slimpar-pro-q@179": {
-        "x": 725,
-        "y": 123
+        "x": 710,
+        "y": 153
     },
     "chauvet-slimpar-pro-q@184": {
-        "x": 725,
-        "y": 164
+        "x": 710,
+        "y": 194
     },
     "chauvet-slimpar-pro-q@189": {
-        "x": 724,
-        "y": 208
+        "x": 709,
+        "y": 238
     },
-    "chauvet-rogue-beam-r2@0": {
-        "x": 244,
-        "y": 145
+    "chauvet-rogue-beam-r2@1": {
+        "x": 150,
+        "y": 187
     },
-    "chauvet-rogue-beam-r2@15": {
-        "x": 294,
-        "y": 145
+    "chauvet-rogue-beam-r2@16": {
+        "x": 240,
+        "y": 118
     },
-    "chauvet-rogue-beam-r2@30": {
-        "x": 344,
-        "y": 145
-    },
-    "chauvet-rogue-beam-r2@45": {
-        "x": 394,
-        "y": 145
-    },
-    "chauvet-rogue-beam-r2@60": {
-        "x": 444,
-        "y": 145
-    },
-    "chauvet-rogue-beam-r2@75": {
-        "x": 494,
-        "y": 145
-    },
-    "chauvet-intimidator-160@200": {
-        "x": 306,
-        "y": 81
-    },
-    "chauvet-intimidator-160@212": {
-        "x": 354,
-        "y": 79
-    },
-    "chauvet-intimidator-160@224": {
-        "x": 404,
-        "y": 79
-    },
-    "chauvet-intimidator-160@236": {
-        "x": 453,
+    "chauvet-rogue-beam-r2@31": {
+        "x": 340,
         "y": 82
     },
+    "chauvet-rogue-beam-r2@46": {
+        "x": 393,
+        "y": 83
+    },
+    "chauvet-rogue-beam-r2@61": {
+        "x": 498,
+        "y": 105
+    },
+    "chauvet-rogue-beam-r2@76": {
+        "x": 573,
+        "y": 181
+    },
+    "led-par@95": {
+        "x": 155,
+        "y": 230
+    },
+    "led-par@102": {
+        "x": 246,
+        "y": 157
+    },
+    "led-par@109": {
+        "x": 348,
+        "y": 128
+    },
+    "led-par@116": {
+        "x": 397,
+        "y": 129
+    },
+    "led-par@123": {
+        "x": 499,
+        "y": 153
+    },
+    "led-par@130": {
+        "x": 579,
+        "y": 226
+    },
     "motionstrip-38@300": {
-        "x": 311,
-        "y": 41
+        "x": 309,
+        "y": 40
     },
     "motionstrip-38@338": {
-        "x": 403,
-        "y": 41
+        "x": 410,
+        "y": 39
     }
 }
