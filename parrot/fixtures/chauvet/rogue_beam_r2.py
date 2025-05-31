@@ -1,6 +1,7 @@
 from parrot.utils.colour import Color
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.fixtures.base import GoboWheelEntry, ColorWheelEntry
+import time
 
 
 # DMX layout:
@@ -59,7 +60,7 @@ gobo_wheel = [
     GoboWheelEntry("gobo10", 31),  # Gobo 10
     GoboWheelEntry("gobo11", 34),  # Gobo 11
     GoboWheelEntry("gobo12", 37),  # Gobo 12
-    GoboWheelEntry("gobo13", 40),  # Gobo 13
+    GoboWheelEntry("starburst", 40),  # Gobo 13
     GoboWheelEntry("gobo14", 43),  # Gobo 14
     GoboWheelEntry("gobo15", 46),  # Gobo 15
     GoboWheelEntry("gobo16", 49),  # Gobo 16
@@ -80,7 +81,7 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
         pan_upper=450,
         tilt_lower=0,
         tilt_upper=90,
-        dimmer_upper=255,
+        dimmer_upper=200,
     ):
         super().__init__(
             patch=patch,
@@ -101,5 +102,34 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
             disable_fine=False,
         )
 
-        self.disable_blackout_on_all_fn = 225
-        self.set("control", self.disable_blackout_on_all_fn)
+        self.control_disable_blackout_on_all_fn = 85  # 3 sec hold
+        self.control_lamp_on = 135  # 1 sec hold
+        self.set("control", self.control_disable_blackout_on_all_fn)
+
+        # Startup sequence state
+        self._startup_sequence_started = False
+        self._startup_sequence_complete = False
+        self._startup_sequence_start_time = None
+
+    def render(self, dmx):
+        # Handle startup sequence
+        if not self._startup_sequence_complete:
+            current_time = time.time()
+
+            # Start the sequence if not started
+            if not self._startup_sequence_started:
+                self._startup_sequence_started = True
+                self._startup_sequence_start_time = current_time
+                self.set("control", self.control_lamp_on)
+
+            # After 1 second, switch to disable blackout
+            elif current_time - self._startup_sequence_start_time >= 1:
+                self.set("control", self.control_disable_blackout_on_all_fn)
+
+            # After 4 seconds (1 + 3), complete the sequence
+            if current_time - self._startup_sequence_start_time >= 4:
+                self._startup_sequence_complete = True
+                self.set("control", 0)
+
+        # Call the base render function
+        super().render(dmx)

@@ -60,9 +60,9 @@ class FixtureBase:
         return self.speed_value
 
     def render(self, dmx):
-        print("-" * 20)
+        # print("-" * 20)
         for i in range(len(self.values)):
-            print(f"{self.address + i:03d} = {int(self.values[i])}")
+            # print(f"{self.address + i:03d} = {int(self.values[i])}")
             if self.address + i > 512:
                 logger.warning(
                     f"Fixture {self.name} @ {self.address} has too many channels, skipping {i} channels"

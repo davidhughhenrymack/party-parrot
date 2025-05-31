@@ -27,6 +27,9 @@ class ParRGB(Par):
         self.values[2] = color.green * 255
         self.values[3] = color.blue * 255
 
+    def set_gobo(self, name):
+        pass
+
 
 class ParRGBAWU(Par):
     "Mountain Lotus Par fixture"
