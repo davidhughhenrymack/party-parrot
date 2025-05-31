@@ -3,6 +3,7 @@ from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
 from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot120_12Ch
+from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS
 from parrot.fixtures.chauvet.slimpar_pro_q import ChauvetSlimParProQ_5Ch
@@ -13,7 +14,7 @@ import enum
 from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.uking.laser import FiveBeamLaser
 
-venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre"])
+venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre", "crux_test"])
 
 # Create manual control fixtures for each venue
 truckee_manual_fixtures = [
@@ -27,6 +28,7 @@ manual_groups = {
     ),
     venues.dmack: None,
     venues.mtn_lotus: None,
+    venues.crux_test: None,
 }
 
 # Track which venues have manual dimmers
@@ -34,6 +36,7 @@ has_manual_dimmers = {
     venues.truckee_theatre: True,
     venues.dmack: False,
     venues.mtn_lotus: False,
+    venues.crux_test: False,
 }
 
 venue_patches = {
@@ -86,7 +89,7 @@ venue_patches = {
         #     "Front led wash",
         # ),
         FixtureGroup(
-            [ChauvetSpot160_12Ch(i) for i in range(0, 0 + 12 * 6, 12)],
+            [ChauvetRogueBeamR2(i) for i in range(0, 0 + 15 * 6, 15)],
             "Moving heads crescent",
         ),
         FixtureGroup(
@@ -99,6 +102,12 @@ venue_patches = {
                 Motionstrip38(300 + 38, 0, 256, invert_pan=True),
             ],
             "Motion strip (doubled)",
+        ),
+    ],
+    venues.crux_test: [
+        FixtureGroup(
+            [ChauvetRogueBeamR2(1)],
+            "Rogue Beams",
         ),
     ],
 }

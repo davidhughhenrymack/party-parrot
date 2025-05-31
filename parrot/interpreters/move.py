@@ -85,7 +85,7 @@ class MoveFan(InterpreterBase):
 
         for idx, fixture in enumerate(self.group):
             # Calculate position relative to middle (-1 to 1)
-            rel_pos = (idx - middle_idx) / middle_idx
+            rel_pos = (idx - middle_idx) / (middle_idx + 0.00001)
             # Apply sine wave motion with spread
             pan = (
                 math.sin(frame.time * self.multiplier) * rel_pos * self.spread * 127

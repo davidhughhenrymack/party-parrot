@@ -20,6 +20,11 @@ class ChauvetMoverBase(MovingHead):
         tilt_lower=0,
         tilt_upper=90,
         dimmer_upper=255,
+        shutter_open=6,
+        speed_value=0,
+        strobe_shutter_lower=4,
+        strobe_shutter_upper=76,
+        disable_fine=False,
     ):
         super().__init__(patch, name, width, gobo_wheel)
         self.pan_lower = pan_lower / 540 * 255
@@ -31,8 +36,12 @@ class ChauvetMoverBase(MovingHead):
         self.dimmer_upper = dimmer_upper
         self.dmx_layout = dmx_layout
         self.color_wheel = color_wheel
+        self.shutter_open_value = shutter_open
+        self.strobe_shutter_lower = strobe_shutter_lower
+        self.strobe_shutter_upper = strobe_shutter_upper
+        self.disable_fine = disable_fine
 
-        self.set_speed(0)
+        self.set_speed(speed_value)
         self.set_shutter_open()
 
     def set(self, name, value):
@@ -49,7 +58,9 @@ class ChauvetMoverBase(MovingHead):
         projected = self.pan_lower + (self.pan_range * value / 255)
         super().set_pan_angle(projected / 255 * 540)
         self.set("pan_coarse", int(projected))
-        self.set("pan_fine", int((projected - self.values[0]) * 255))
+
+        if not self.disable_fine:
+            self.set("pan_fine", int((projected - self.values[0]) * 255))
 
     # 0 - 255
     def set_tilt(self, value):
@@ -57,7 +68,9 @@ class ChauvetMoverBase(MovingHead):
         super().set_tilt_angle(projected / 255 * 270)
 
         self.set("tilt_coarse", int(projected))
-        self.set("tilt_fine", int((projected - self.values[2]) * 255))
+
+        if not self.disable_fine:
+            self.set("tilt_fine", int((projected - self.values[2]) * 255))
 
     def set_speed(self, value):
         self.set("speed", value)
@@ -86,10 +99,15 @@ class ChauvetMoverBase(MovingHead):
 
     def set_strobe(self, value):
         super().set_strobe(value)
-        lower = 4
-        upper = 76
+
+        if value < 10:
+            self.set_shutter_open()
+            return
+
+        lower = self.strobe_shutter_lower
+        upper = self.strobe_shutter_upper
         scaled = lower + (upper - lower) * value / 255
         self.set("shutter", scaled)
 
     def set_shutter_open(self):
-        self.set("shutter", 6)
+        self.set("shutter", self.shutter_open_value)
