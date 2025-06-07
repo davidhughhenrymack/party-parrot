@@ -605,6 +605,8 @@ class Window(Tk):
             lambda e: self._handle_signal_button_release(FrameSignal.pulse),
         )
         self.bind("<KeyRelease-e>", lambda e: self._select_mode(Mode.gentle))
+        self.bind("<KeyRelease-f>", lambda e: self._select_mode(Mode.gentle))
+
         self.bind("<KeyRelease-c>", lambda e: self._select_mode(Mode.rave))
         self.bind("<KeyRelease-d>", lambda e: self._select_mode(Mode.blackout))
         self.bind("<KeyRelease-s>", lambda e: self.director.generate_interpreters())

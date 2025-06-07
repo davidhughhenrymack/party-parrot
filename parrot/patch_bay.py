@@ -71,11 +71,11 @@ venue_patches = {
         #     "ColorBand wash",
         # ),
         # 6 SlimPAR Pro H fixtures (7 channels each)
-        FixtureGroup(
-            # [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)],
-            [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
-            "Stage overhead",
-        ),
+        # FixtureGroup(
+        #     # [ChauvetSlimParProH_7Ch(i) for i in range(70, 106, 7)],
+        #     [ChauvetSlimParProH_7Ch(i) for i in range(112, 148, 7)],
+        #     "Stage overhead",
+        # ),
         # 6 more SlimPAR Pro H fixtures (7 channels each)
         # 4 SlimPAR Pro Q fixtures (5 channels each)
         FixtureGroup(
@@ -84,21 +84,21 @@ venue_patches = {
             "Sidelights",
         ),
         # 8 more SlimPAR Pro Q fixtures (5 channels each)
-        # FixtureGroup(
-        #     [ChauvetSlimParProQ_5Ch(i) for i in range(30, 66, 5)],
-        #     "Front led wash",
-        # ),
+        FixtureGroup(
+            [ChauvetSlimParProQ_5Ch(i) for i in range(30, 66, 5)],
+            "Front led wash",
+        ),
         FixtureGroup(
             [
-                *[ChauvetRogueBeamR2(i) for i in range(1, 1 + 15 * 6, 15)],
-                *[ParRGB(i) for i in range(95, 95 + 6 * 7, 7)],
+                *[ChauvetRogueBeamR2(i) for i in range(191, 191 + 15 * 6, 15)],
+                *[ParRGB(i) for i in range(67, 67 + 6 * 7, 7)],
             ],
             "Moving heads crescent",
         ),
-        # FixtureGroup(
-        #     [ChauvetSpot160_12Ch(i) for i in range(200, 200 + 12 * 4, 12)],
-        #     "Moving heads dj",
-        # ),
+        FixtureGroup(
+            [ChauvetSpot160_12Ch(1), ChauvetSpot120_12Ch(13)],
+            "Mirror ball",
+        ),
         FixtureGroup(
             [
                 Motionstrip38(300, 0, 256, invert_pan=True),
@@ -106,6 +106,7 @@ venue_patches = {
             ],
             "Motion strip (doubled)",
         ),
+        FixtureGroup([ParRGB(i) for i in range(400, 400 + 6 * 7, 7)], "Spare Pars"),
     ],
     venues.crux_test: [
         FixtureGroup(
