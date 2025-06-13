@@ -37,7 +37,7 @@ class Motionstrip(FixtureWithBulbs):
 
 
 class Motionstrip38(Motionstrip):
-    def __init__(self, patch, pan_lower, pan_upper, invert_pan=False):
+    def __init__(self, patch, pan_lower=0, pan_upper=255, invert_pan=False):
         super().__init__(
             patch, "motionstrip 38", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]
         )

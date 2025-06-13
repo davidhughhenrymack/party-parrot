@@ -7,8 +7,6 @@ from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS
 from parrot.fixtures.chauvet.slimpar_pro_q import ChauvetSlimParProQ_5Ch
-from parrot.fixtures.chauvet.slimpar_pro_h import ChauvetSlimParProH_7Ch
-from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 import enum
 
 from parrot.fixtures.oultia.laser import TwoBeamLaser
@@ -96,17 +94,26 @@ venue_patches = {
             "Moving heads crescent",
         ),
         FixtureGroup(
-            [ChauvetSpot160_12Ch(1), ChauvetSpot120_12Ch(13)],
+            [
+                ChauvetSpot160_12Ch(
+                    1,
+                ),
+                ChauvetSpot120_12Ch(
+                    13,
+                ),
+                ParRGB(450),
+                ParRGB(460),
+            ],
             "Mirror ball",
         ),
         FixtureGroup(
             [
-                Motionstrip38(300, 0, 256, invert_pan=True),
-                Motionstrip38(300 + 38, 0, 256, invert_pan=True),
+                Motionstrip38(300, pan_lower=128, pan_upper=256),
+                Motionstrip38(300 + 38, pan_lower=128, pan_upper=256),
             ],
             "Motion strip (doubled)",
         ),
-        FixtureGroup([ParRGB(i) for i in range(400, 400 + 6 * 7, 7)], "Spare Pars"),
+        FixtureGroup([ParRGB(i) for i in range(400, 400 + 4 * 7, 7)], "Spare Pars"),
     ],
     venues.crux_test: [
         FixtureGroup(
