@@ -19,6 +19,12 @@ pyenttec = "^1.4"
 flask = "^3.1.0"
 colorama = "^0.4.6"
 pytest = "^8.3.5"
+pillow = "^10.0.0"
+moderngl = "^5.8.2"
+fonttools = "^4.47.0"
+pygame = "^2.5.0"
+av = "11.0.0"
+skia-python = "^138.0"
 
 
 [build-system]

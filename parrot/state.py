@@ -19,6 +19,7 @@ class State:
         self._manual_dimmer = 0  # New property for manual control
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
+        self._vj_mode = False  # New property for VJ display mode
 
         # Queue for GUI updates from other threads
         self._gui_update_queue = queue.Queue()
@@ -163,6 +164,18 @@ class State:
 
         self._show_waveform = value
         self.events.on_show_waveform_change(self._show_waveform)
+
+    @property
+    def vj_mode(self):
+        return self._vj_mode
+
+    def set_vj_mode(self, value):
+        """Set the VJ display mode."""
+        if self._vj_mode == value:
+            return
+
+        self._vj_mode = value
+        # Note: We don't save VJ mode to state - it's a temporary display toggle
 
     def save_state(self):
         """Save the current state to a JSON file."""

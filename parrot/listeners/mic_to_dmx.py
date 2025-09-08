@@ -20,6 +20,10 @@ from parrot.utils.colour import Color
 from parrot.utils.tracemalloc import display_top
 from parrot.api import start_web_server
 from parrot.director.signal_states import SignalStates
+from colorama import Fore, Style, init
+
+# Initialize colorama for colored output
+init(autoreset=True)
 
 THRESHOLD = 0  # dB
 RATE = 44100

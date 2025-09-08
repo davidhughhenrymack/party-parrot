@@ -3,6 +3,7 @@ import math
 import os
 
 from parrot.utils.mock_controller import MockDmxController
+from colorama import Fore, Style
 from .math import clamp
 
 
@@ -21,13 +22,15 @@ usb_path = "/dev/cu.usbserial-EN419206"
 
 def get_controller():
     if os.environ.get("MOCK_DMX", False) != False:
-        print("Using mock DMX controller")
+        print(f"{Fore.YELLOW}🎛️ DMX: Mock Controller{Style.RESET_ALL}")
         return MockDmxController()
 
     try:
-        print("Using ENTTEC Pro DMX controller")
+        print(f"{Fore.GREEN}🎛️ DMX: ENTTEC Pro Controller{Style.RESET_ALL}")
         return Controller(usb_path)
     except Exception as e:
         print(e)
-        print("Could not connect to DMX controller. Using mock controller instead.")
+        print(
+            f"{Fore.YELLOW}🎛️ DMX: Mock Controller (hardware not found){Style.RESET_ALL}"
+        )
         return MockDmxController()

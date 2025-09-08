@@ -268,28 +268,17 @@ class Window(Tk):
         self.configure(bg=BG)
         self.protocol("WM_DELETE_WINDOW", quit)
 
-        self.option_add("*Frame.Background", BG)
-        self.option_add("*Frame.borderWidth", 0)
+        # macOS window visibility fixes
+        self.geometry("1200x800+100+100")  # Set size and position
+        self.lift()  # Bring to front
+        self.attributes("-topmost", True)  # Temporarily stay on top
+        self.focus_force()  # Force focus
 
-        self.option_add("*Scale.Background", BG)
-        self.option_add("*Scale.Foreground", BUTTON_FG)
-        self.option_add("*Scale.activeBackground", BUTTON_ACTIVE_BG)
-        self.option_add("*Scale.troughColor", BUTTON_BG)
-        self.option_add("*Scale.highlightBackground", BG)
-        self.option_add("*Scale.highlightThickness", 0)
+        # Remove topmost after window is shown
+        self.after(2000, lambda: self.attributes("-topmost", False))
 
-        self.option_add("*Label.Background", BG)
-        self.option_add("*Label.Foreground", BUTTON_FG)
-
-        self.option_add("*Listbox.Background", BUTTON_BG)
-        self.option_add("*Listbox.Foreground", BUTTON_FG)
-        self.option_add("*Listbox.selectBackground", HIGHLIGHT_COLOR)
-        self.option_add("*Listbox.selectForeground", BUTTON_FG)
-        self.option_add("*Listbox.borderWidth", 0)
-        self.option_add("*Listbox.highlightThickness", 0)
-
-        self.option_add("*Canvas.highlightThickness", 0)
-        self.option_add("*Canvas.borderWidth", 0)
+        # Skip option_add calls that cause macOS crashes
+        # Individual widgets will be styled directly
 
         self.top_frame = Frame(self, background=BG)
 
@@ -308,6 +297,19 @@ class Window(Tk):
 
         # Create buttons for each mode in the desired order
         mode_order = [Mode.blackout, Mode.gentle, Mode.rave]
+
+        # Add VJ toggle button
+        self.vj_button = Button(
+            self.mode_frame,
+            text="🎬 Toggle VJ",
+            command=self.toggle_vj_display,
+            background=BUTTON_BG,
+            foreground=BUTTON_FG,
+            borderwidth=1,
+            relief="raised",
+            font=("Arial", 10, "bold"),
+        )
+        self.vj_button.pack(side=LEFT, padx=5)
         for mode in mode_order:
             btn = RoundedButton(
                 self.mode_frame,
@@ -611,9 +613,21 @@ class Window(Tk):
         self.bind("<KeyRelease-d>", lambda e: self._select_mode(Mode.blackout))
         self.bind("<KeyRelease-s>", lambda e: self.director.generate_interpreters())
         self.bind("<KeyRelease-o>", lambda e: self.director.shift())
+        self.bind("<KeyPress-space>", lambda e: self.toggle_vj_display())
 
         # Focus the window to receive keyboard events
         self.focus_set()
+
+        # VJ display components - embed in main window to avoid Toplevel issues
+        from parrot.vj.display import VJDisplayManager
+
+        self.vj_display_manager = VJDisplayManager(state, director)
+        self.vj_window = None  # Will create embedded VJ display instead
+        self.vj_canvas = None
+        self.vj_visible = False
+
+        # Create embedded VJ display after main window is set up
+        self.after_idle(self._create_embedded_vj_display)
 
     def setup_patch(self):
         self.canvas.delete("all")
@@ -1168,6 +1182,9 @@ class Window(Tk):
         for renderer in self.fixture_renderers:
             renderer.render(self.canvas, frame)
 
+        # Update VJ display if enabled
+        self.vj_display_manager.update()
+
         if SHOW_PLOT and self.state.show_waveform:
             self.step_plot(frame)
 
@@ -1424,6 +1441,10 @@ class Window(Tk):
         # Schedule the next check (every 100ms for more responsive updates)
         self.after(100, self.check_gui_updates)
 
+    def toggle_vj_display(self):
+        """Toggle between lighting view and VJ view"""
+        self.vj_display_manager.toggle()
+
     def _handle_signal_button_release(self, signal: FrameSignal):
         """Handle signal button release."""
         # Get the button
@@ -1450,5 +1471,138 @@ class Window(Tk):
         # Set signal to high
         self.signal_states.set_signal(signal, 1.0)
 
-        # Update the button state
-        button.update_idletasks()
+    def _create_embedded_vj_display(self):
+        """Create embedded VJ display in main window"""
+        try:
+            # Create VJ canvas in the main window (hidden initially)
+            self.vj_canvas = Canvas(
+                self,
+                bg="black",
+                borderwidth=0,
+                highlightthickness=0,
+                cursor="none",  # Hide cursor over VJ display
+            )
+
+            # Don't pack it initially (hidden)
+            print("✅ Embedded VJ display created (hidden)")
+
+        except Exception as e:
+            print(f"Failed to create embedded VJ display: {e}")
+            self.vj_canvas = None
+
+    def toggle_vj_display(self):
+        """Toggle VJ display visibility"""
+        try:
+            if not self.vj_canvas:
+                print("⚠️ VJ canvas not available")
+                return
+
+            if not self.vj_visible:
+                # Show VJ display
+                self.vj_canvas.pack(fill=BOTH, expand=True)
+                self.vj_visible = True
+                self.vj_display_manager.set_active(True)
+                print("✅ VJ display shown")
+
+                # Update with current VJ frame
+                self._update_vj_display()
+
+            else:
+                # Hide VJ display
+                self.vj_canvas.pack_forget()
+                self.vj_visible = False
+                self.vj_display_manager.set_active(False)
+                print("✅ VJ display hidden")
+
+        except Exception as e:
+            print(f"VJ toggle error: {e}")
+
+    def _update_vj_display(self):
+        """Update embedded VJ display"""
+        try:
+            if not self.vj_visible or not self.vj_canvas:
+                return
+
+            # Get canvas dimensions
+            canvas_width = self.vj_canvas.winfo_width()
+            canvas_height = self.vj_canvas.winfo_height()
+
+            if canvas_width <= 1 or canvas_height <= 1:
+                # Canvas not ready, try again later
+                self.after(100, self._update_vj_display)
+                return
+
+            # Get VJ frame from director
+            vj_frame = self.director.get_vj_frame()
+
+            # If no frame from director, try getting directly from VJ director
+            if (
+                vj_frame is None
+                and hasattr(self.director, "vj_director")
+                and self.director.vj_director
+            ):
+                vj_frame = self.director.vj_director.get_current_frame()
+
+            if vj_frame is not None and vj_frame.size > 0:
+                try:
+                    from PIL import Image, ImageTk
+
+                    # Ensure frame is in correct format
+                    if len(vj_frame.shape) == 3 and vj_frame.shape[2] >= 3:
+                        # Use RGB channels, ensure uint8
+                        rgb_frame = vj_frame[:, :, :3].astype(np.uint8)
+                        pil_image = Image.fromarray(rgb_frame)
+                    else:
+                        pil_image = Image.fromarray(vj_frame.astype(np.uint8))
+
+                    # Resize to fill canvas completely
+                    pil_image = pil_image.resize(
+                        (canvas_width, canvas_height), Image.LANCZOS
+                    )
+
+                    # Convert to PhotoImage
+                    photo = ImageTk.PhotoImage(pil_image)
+
+                    # Clear canvas and add image (full screen, no overlays)
+                    self.vj_canvas.delete("all")
+                    self.vj_canvas.create_image(0, 0, anchor="nw", image=photo)
+
+                    # Keep reference to prevent garbage collection
+                    self.vj_canvas.image = photo
+
+                except Exception as e:
+                    # Show error pattern instead of black screen
+                    self.vj_canvas.delete("all")
+                    self.vj_canvas.create_rectangle(
+                        0, 0, canvas_width, canvas_height, fill="red", outline="white"
+                    )
+                    self.vj_canvas.create_text(
+                        canvas_width // 2,
+                        canvas_height // 2,
+                        text=f"VJ ERROR: {str(e)[:30]}",
+                        fill="white",
+                        font=("Arial", 14, "bold"),
+                    )
+            else:
+                # Show test pattern if no VJ frame
+                self.vj_canvas.delete("all")
+                self.vj_canvas.create_rectangle(
+                    0, 0, canvas_width, canvas_height, fill="purple", outline="gold"
+                )
+                self.vj_canvas.create_text(
+                    canvas_width // 2,
+                    canvas_height // 2,
+                    text="🎆 VJ SYSTEM ACTIVE 🎆",
+                    fill="white",
+                    font=("Arial", 20, "bold"),
+                )
+
+            # Schedule next update (target 30 FPS for smooth display)
+            if self.vj_visible:
+                self.after(33, self._update_vj_display)  # 30 FPS for smooth VJ
+
+        except Exception as e:
+            print(f"VJ update error: {e}")
+            # Schedule retry
+            if self.vj_visible:
+                self.after(500, self._update_vj_display)

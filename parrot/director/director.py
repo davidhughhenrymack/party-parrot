@@ -3,6 +3,9 @@ import time
 import os
 from typing import List
 from colorama import Fore, Style, init
+
+# Initialize colorama
+init(autoreset=True)
 from parrot.director.frame import Frame, FrameSignal
 
 from parrot.patch_bay import venue_patches, get_manual_group
@@ -24,6 +27,7 @@ from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
 from parrot.utils.color_utils import format_color_scheme
+from parrot.director.vj_director import VJDirector
 
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
@@ -48,6 +52,9 @@ class Director:
         self.generate_color_scheme()
 
         self.warmup_complete = False
+
+        # Initialize VJ Director
+        self.vj_director = VJDirector(state)
 
         # Register event handlers
         self.state.events.on_mode_change += self.on_mode_change
@@ -200,6 +207,10 @@ class Director:
         self.shift_interpreter()
         self.ensure_each_signal_is_enabled()
 
+        # Also shift VJ interpreters
+        if self.vj_director:
+            self.vj_director.shift_vj_interpreters()
+
         self.last_shift_time = time.time()
         self.shift_count += 1
 
@@ -215,8 +226,13 @@ class Director:
 
         frame = frame * warmup_phase
 
+        # Update lighting interpreters
         for i in self.interpreters:
             i.step(frame, scheme)
+
+        # Update VJ system
+        if self.vj_director:
+            self.vj_director.step(frame, scheme)
 
         if (
             time.time() - self.last_shift_time > SHIFT_AFTER
@@ -243,6 +259,22 @@ class Director:
 
     def on_mode_change(self, mode):
         """Handle mode changes, including those from the web interface."""
-        print(f"mode changed to: {mode.name}")
+        print(f"{Fore.MAGENTA}🎭 Mode: {mode.name}{Style.RESET_ALL}")
         # Regenerate interpreters if needed
         self.generate_interpreters()
+
+    def get_vj_frame(self):
+        """Get the current VJ frame for display"""
+        if self.vj_director:
+            return self.vj_director.get_current_frame()
+        return None
+
+    def get_vj_info(self):
+        """Get VJ system information"""
+        if self.vj_director:
+            return {
+                "enabled": self.vj_director.is_enabled(),
+                "performance": self.vj_director.get_performance_info(),
+                "layers": self.vj_director.get_layer_info(),
+            }
+        return {"enabled": False}

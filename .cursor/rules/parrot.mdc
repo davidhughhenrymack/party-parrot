@@ -6,3 +6,4 @@ alwaysApply: true
 
 Use pytest for tests
 Run everything using poetry
+DO NOT MAKE FALLBACKS, instead make simple one-branch working code. An exception is providing a fallback for missing DMX converter.
