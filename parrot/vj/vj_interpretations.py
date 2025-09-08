@@ -75,12 +75,20 @@ from parrot.vj.config import CONFIG
 def create_blackout_layers(width: int, height: int) -> List:
     """Create layers for blackout mode"""
     return [
+        # Layer 0: Black background
         SolidLayer(
             "background",
             color=(0, 0, 0),
             alpha=255,
             z_order=0,
-        )
+        ),
+        # Layer 1: Video (very low alpha for subtle effect)
+        VideoLayer(
+            "video",
+            CONFIG["video_directory"],
+            loop=True,
+            z_order=1,
+        ),
     ]
 
 
@@ -103,8 +111,6 @@ def create_gentle_layers(width: int, height: int) -> List:
         ),
         # Layer 2: "DEAD SEXY" text with alpha masking
         TextLayer("DEAD SEXY", name="text", alpha_mask=True, z_order=2),
-        # Layer 3: Gentle floating golden pyramids
-        GoldenPyramidsLayer("gentle_pyramids", pyramid_count=4),
     ]
 
 
@@ -133,10 +139,15 @@ def create_rave_layers(width: int, height: int) -> List:
 # Interpreter factory functions for each mode
 def create_blackout_interpreters(layers: List, args: InterpreterArgs) -> List:
     """Create interpreters for blackout mode"""
-    return [
-        # Just keep everything static and black
-        AlphaStatic(layers, args, alpha=1.0)
-    ]
+    video_layers = [l for l in layers if isinstance(l, VideoLayer)]
+
+    interpreters = []
+
+    # Video with very low alpha for subtle effect
+    if video_layers:
+        interpreters.append(AlphaStatic(video_layers, args, alpha=0.3))
+
+    return interpreters
 
 
 def create_gentle_interpreters(layers: List, args: InterpreterArgs) -> List:
@@ -157,8 +168,8 @@ def create_gentle_interpreters(layers: List, args: InterpreterArgs) -> List:
                 video_layers,
                 args,
                 signal=FrameSignal.sustained_low,
-                min_alpha=0.3,
-                max_alpha=0.8,
+                min_alpha=0.7,  # Higher minimum to ensure video is visible
+                max_alpha=1.0,
                 smoothing=0.05,
             )
         )
@@ -220,9 +231,9 @@ def create_rave_interpreters(layers: List, args: InterpreterArgs) -> List:
                     video_layers,
                     args,
                     signal=FrameSignal.freq_all,
-                    threshold=0.5,
+                    threshold=0.3,  # Lower threshold for more responsiveness
                     flash_alpha=1.0,
-                    base_alpha=0.6,
+                    base_alpha=0.8,  # Higher base alpha to ensure video is visible
                 ),
                 # Beat-synchronized video switching
                 VideoSelectorBeat(

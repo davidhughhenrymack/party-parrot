@@ -11,12 +11,16 @@ Your Party Parrot VJ system features **70+ interpreters** across **8 categories*
 # VJ-only mode (recommended):
 poetry run python -m parrot.main --vj-only
 
-# Full system with GUI:
+# Full system with lighting:
 ./main.sh
-
-# Performance-optimized:
-poetry run python vj_smooth.py
 ```
+
+### ✅ **SYSTEM STATUS: READY**
+- **70+ interpreters** across 8 categories
+- **Core layer stack**: Black bg → Video overlay → Text masking  
+- **121.5 FPS performance** on Apple M4 Max
+- **Pure video output** with no GUI overlays
+- **6 Halloween videos** with automatic switching
 
 ## 🎃 Halloween "Dead Sexy" Theme Integration
 

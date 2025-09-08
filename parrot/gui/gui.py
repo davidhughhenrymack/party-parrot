@@ -1497,22 +1497,26 @@ class Window(Tk):
                 print("⚠️ VJ canvas not available")
                 return
 
-            if not self.vj_visible:
-                # Show VJ display
-                self.vj_canvas.pack(fill=BOTH, expand=True)
-                self.vj_visible = True
-                self.vj_display_manager.set_active(True)
-                print("✅ VJ display shown")
-
-                # Update with current VJ frame
-                self._update_vj_display()
-
-            else:
-                # Hide VJ display
-                self.vj_canvas.pack_forget()
-                self.vj_visible = False
-                self.vj_display_manager.set_active(False)
-                print("✅ VJ display hidden")
+        if not self.vj_visible:
+            # Show VJ display - PURE VIDEO OUTPUT
+            self.vj_canvas.pack(fill=BOTH, expand=True)
+            self.vj_visible = True
+            self.vj_display_manager.set_active(True)
+            
+            # Hide all other GUI elements when VJ is active
+            self.top_frame.pack_forget()  # Hide controls
+            
+            # Update with current VJ frame
+            self._update_vj_display()
+            
+        else:
+            # Hide VJ display and restore GUI
+            self.vj_canvas.pack_forget()
+            self.vj_visible = False
+            self.vj_display_manager.set_active(False)
+            
+            # Restore GUI elements
+            self.top_frame.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
         except Exception as e:
             print(f"VJ toggle error: {e}")
@@ -1547,13 +1551,15 @@ class Window(Tk):
                 try:
                     from PIL import Image, ImageTk
 
-                    # Ensure frame is in correct format
+                    # Ensure frame is in correct format and fix orientation
                     if len(vj_frame.shape) == 3 and vj_frame.shape[2] >= 3:
-                        # Use RGB channels, ensure uint8
+                        # Use RGB channels, ensure uint8, fix upside-down
                         rgb_frame = vj_frame[:, :, :3].astype(np.uint8)
+                        rgb_frame = np.flipud(rgb_frame)  # Fix upside-down video
                         pil_image = Image.fromarray(rgb_frame)
                     else:
-                        pil_image = Image.fromarray(vj_frame.astype(np.uint8))
+                        corrected_frame = np.flipud(vj_frame.astype(np.uint8))
+                        pil_image = Image.fromarray(corrected_frame)
 
                     # Resize to fill canvas completely
                     pil_image = pil_image.resize(
@@ -1571,30 +1577,16 @@ class Window(Tk):
                     self.vj_canvas.image = photo
 
                 except Exception as e:
-                    # Show error pattern instead of black screen
+                    # Show black screen on error (pure video output)
                     self.vj_canvas.delete("all")
                     self.vj_canvas.create_rectangle(
-                        0, 0, canvas_width, canvas_height, fill="red", outline="white"
-                    )
-                    self.vj_canvas.create_text(
-                        canvas_width // 2,
-                        canvas_height // 2,
-                        text=f"VJ ERROR: {str(e)[:30]}",
-                        fill="white",
-                        font=("Arial", 14, "bold"),
+                        0, 0, canvas_width, canvas_height, fill="black"
                     )
             else:
-                # Show test pattern if no VJ frame
+                # Show black screen if no VJ frame (pure video output)
                 self.vj_canvas.delete("all")
                 self.vj_canvas.create_rectangle(
-                    0, 0, canvas_width, canvas_height, fill="purple", outline="gold"
-                )
-                self.vj_canvas.create_text(
-                    canvas_width // 2,
-                    canvas_height // 2,
-                    text="🎆 VJ SYSTEM ACTIVE 🎆",
-                    fill="white",
-                    font=("Arial", 20, "bold"),
+                    0, 0, canvas_width, canvas_height, fill="black"
                 )
 
             # Schedule next update (target 30 FPS for smooth display)

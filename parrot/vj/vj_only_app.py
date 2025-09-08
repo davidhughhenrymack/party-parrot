@@ -46,90 +46,32 @@ class VJOnlyGUI(tk.Tk):
         self._create_interface()
 
     def _create_interface(self):
-        """Create VJ control interface"""
-        # Top control frame
-        control_frame = Frame(self, bg="#222")
-        control_frame.pack(fill="x", padx=10, pady=5)
-
-        # Mode buttons
-        Label(
-            control_frame,
-            text="🎭 Mode:",
-            bg="#222",
-            fg="white",
-            font=("Arial", 12, "bold"),
-        ).pack(side=LEFT, padx=5)
-
-        for mode in [Mode.gentle, Mode.rave, Mode.blackout]:
-            btn = Button(
-                control_frame,
-                text=mode.name.capitalize(),
-                command=lambda m=mode: self._set_mode(m),
-                bg="#444",
-                fg="white",
-                font=("Arial", 10),
-            )
-            btn.pack(side=LEFT, padx=2)
-
-        # VJ toggle button
-        self.vj_toggle_btn = Button(
-            control_frame,
-            text="🎬 Show VJ Display",
-            command=self._toggle_vj,
-            bg="#8a2be2",
-            fg="white",
-            font=("Arial", 12, "bold"),
-        )
-        self.vj_toggle_btn.pack(side=LEFT, padx=10)
-
-        # Status label
-        self.status_label = Label(
-            control_frame,
-            text="🎵 VJ System Ready",
-            bg="#222",
-            fg="#00ff00",
-            font=("Arial", 10),
-        )
-        self.status_label.pack(side=LEFT, padx=10)
-
-        # VJ display canvas (hidden initially)
+        """Create pure VJ interface - no UI elements"""
+        # VJ display canvas - PURE VIDEO OUTPUT ONLY
         self.vj_canvas = Canvas(
             self,
             bg="black",
             borderwidth=0,
             highlightthickness=0,
+            cursor="none",  # No cursor
         )
+        self.vj_canvas.pack(fill="both", expand=True)  # Full window
 
-        # Bind keys
-        self.bind("<KeyPress-space>", lambda e: self._toggle_vj())
+        # Bind minimal controls (hidden from display)
+        self.bind("<KeyPress-Escape>", lambda e: self.quit())
         self.bind("<KeyPress-1>", lambda e: self._set_mode(Mode.gentle))
         self.bind("<KeyPress-2>", lambda e: self._set_mode(Mode.rave))
         self.bind("<KeyPress-3>", lambda e: self._set_mode(Mode.blackout))
         self.focus_set()
 
+        # Start VJ display immediately
+        self.vj_visible = True
+        self._start_vj_updates()
+
     def _set_mode(self, mode: Mode):
         """Set VJ mode"""
         self.state.set_mode(mode)
-        self.status_label.config(text=f"🎭 Mode: {mode.name}")
         print(f"{Fore.MAGENTA}🎭 VJ Mode: {mode.name}{Style.RESET_ALL}")
-
-    def _toggle_vj(self):
-        """Toggle VJ display"""
-        if not self.vj_visible:
-            # Show VJ display
-            self.vj_canvas.pack(fill=BOTH, expand=True, padx=10, pady=5)
-            self.vj_visible = True
-            self.vj_toggle_btn.config(text="🎬 Hide VJ Display", bg="#ff4444")
-            self.status_label.config(text="🎆 VJ Display Active", fg="#ffff00")
-            print(f"{Fore.CYAN}🎬 VJ Display: ON{Style.RESET_ALL}")
-            self._start_vj_updates()
-        else:
-            # Hide VJ display
-            self.vj_canvas.pack_forget()
-            self.vj_visible = False
-            self.vj_toggle_btn.config(text="🎬 Show VJ Display", bg="#8a2be2")
-            self.status_label.config(text="🎵 VJ System Ready", fg="#00ff00")
-            print(f"{Fore.CYAN}🎬 VJ Display: OFF{Style.RESET_ALL}")
 
     def _start_vj_updates(self):
         """Start VJ display updates"""
@@ -155,11 +97,14 @@ class VJOnlyGUI(tk.Tk):
         try:
             from PIL import Image, ImageTk
 
-            # Convert numpy to PIL image
+            # Convert numpy to PIL image and fix orientation
             if len(vj_frame.shape) == 3 and vj_frame.shape[2] >= 3:
-                pil_image = Image.fromarray(vj_frame[:, :, :3])
+                rgb_frame = vj_frame[:, :, :3].astype(np.uint8)
+                rgb_frame = np.flipud(rgb_frame)  # Fix upside-down video
+                pil_image = Image.fromarray(rgb_frame)
             else:
-                pil_image = Image.fromarray(vj_frame)
+                corrected_frame = np.flipud(vj_frame.astype(np.uint8))
+                pil_image = Image.fromarray(corrected_frame)
 
             # Resize to canvas
             canvas_width = self.vj_canvas.winfo_width()

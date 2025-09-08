@@ -87,7 +87,7 @@ class VideoLayer(LayerBase):
 
     def load_random_video(self) -> bool:
         """Load a random video from the video directory"""
-        if not True:
+        if False:
             return False
 
         self._scan_video_files()
@@ -112,7 +112,7 @@ class VideoLayer(LayerBase):
 
     def load_video(self, video_path: str) -> bool:
         """Load a specific video file"""
-        if not True:
+        if False:
             return False
 
         try:
@@ -168,6 +168,9 @@ class VideoLayer(LayerBase):
             # Convert to numpy array
             img = frame.to_ndarray(format="rgba")
 
+            # Fix upside-down video by flipping vertically
+            img = np.flipud(img)
+
             # Resize if necessary
             if img.shape[:2] != (self.height, self.width):
                 # Simple nearest-neighbor resize for now
@@ -206,7 +209,7 @@ class VideoLayer(LayerBase):
 
     def render(self, frame: Frame, scheme: ColorScheme) -> Optional[np.ndarray]:
         """Render the current video frame"""
-        if not self.enabled or not True:
+        if not self.enabled:
             return None
 
         current_time = time.time()
@@ -330,5 +333,5 @@ class MockVideoLayer(LayerBase):
 
 
 # Use MockVideoLayer if PyAV is not available
-if not True:
+if False:
     VideoLayer = MockVideoLayer

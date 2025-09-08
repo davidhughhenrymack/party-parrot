@@ -30,15 +30,17 @@ class AlphaFade(VJInterpreterBase):
         """Update layer alpha based on signal strength"""
         signal_value = frame[self.signal]
 
-        # Map signal value to alpha range
-        target_alpha = self.min_alpha + (self.max_alpha - self.min_alpha) * signal_value
+        # Map signal value to alpha range (ensure video stays visible)
+        target_alpha = max(
+            0.5, self.min_alpha + (self.max_alpha - self.min_alpha) * signal_value
+        )
 
         # Apply smoothing
         self.current_alpha += (target_alpha - self.current_alpha) * self.smoothing
 
-        # Apply alpha to all layers
+        # Apply alpha to all layers (ensure minimum visibility)
         for layer in self.layers:
-            layer.set_alpha(self.current_alpha)
+            layer.set_alpha(max(0.5, self.current_alpha))
 
     def __str__(self) -> str:
         return f"AlphaFade({self.signal.name})"
@@ -84,9 +86,9 @@ class AlphaFlash(VJInterpreterBase):
                     self.current_alpha = self.base_alpha
                     self.is_flashing = False
 
-        # Apply alpha to all layers
+        # Apply alpha to all layers (ensure minimum visibility)
         for layer in self.layers:
-            layer.set_alpha(self.current_alpha)
+            layer.set_alpha(max(0.5, self.current_alpha))
 
     def __str__(self) -> str:
         return f"AlphaFlash({self.signal.name})"
