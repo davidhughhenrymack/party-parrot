@@ -95,7 +95,7 @@ class ChauvetMoverBase(MovingHead):
             raise ValueError(f"Unknown gobo {name}")
 
         gobo = acceptable_gobos[0]
-        self.set("gobo", gobo.dmx_value)
+        self.set("gobo_wheel", gobo.dmx_value)
 
     def set_strobe(self, value):
         super().set_strobe(value)
