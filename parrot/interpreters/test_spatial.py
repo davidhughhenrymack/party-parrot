@@ -1,13 +1,18 @@
-import unittest
+import pytest
 from unittest.mock import MagicMock, patch
 from parrot.director.frame import Frame, FrameSignal
 from parrot.interpreters.base import InterpreterArgs
-from parrot.interpreters.spatial import SpatialDownwardsPulse
+from parrot.interpreters.spatial import (
+    SpatialDownwardsPulse,
+    HardSpatialPulse,
+    SoftSpatialPulse,
+)
 from parrot.fixtures.base import FixtureBase
 
 
-class TestSpatialDownwardsPulse(unittest.TestCase):
-    def setUp(self):
+class TestSpatialDownwardsPulse:
+    def setup_method(self):
+        """Setup for each test method"""
         # Create mock fixtures with different y positions
         self.fixtures = []
         for i in range(5):
@@ -29,7 +34,37 @@ class TestSpatialDownwardsPulse(unittest.TestCase):
 
         self.scheme = MagicMock()
 
+    def test_spatial_downwards_pulse_hype(self):
+        """Test SpatialDownwardsPulse hype level"""
+        assert SpatialDownwardsPulse.hype == 60
+
+    def test_spatial_downwards_pulse_initialization(self):
+        """Test SpatialDownwardsPulse initialization with custom parameters"""
+        interpreter = SpatialDownwardsPulse(
+            self.fixtures,
+            self.args,
+            signal=FrameSignal.freq_low,
+            trigger_level=0.4,
+            edge_hardness=3.0,
+            pulse_width=0.25,
+            speed=1.5,
+            min_valid_y_range=15,
+            cooldown_time=2.0,
+        )
+
+        assert interpreter.signal == FrameSignal.freq_low
+        assert interpreter.trigger_level == 0.4
+        assert interpreter.edge_hardness == 3.0
+        assert interpreter.pulse_width == 0.25
+        assert interpreter.speed == 1.5
+        assert interpreter.min_valid_y_range == 15
+        assert interpreter.cooldown_time == 2.0
+        assert interpreter.pulse_position == 0
+        assert interpreter.active == False
+        assert interpreter.valid_fixtures == []
+
     def test_pulse_movement(self):
+        """Test SpatialDownwardsPulse movement over time"""
         # Create interpreter with default parameters
         interpreter = SpatialDownwardsPulse(self.fixtures, self.args)
 
@@ -41,9 +76,10 @@ class TestSpatialDownwardsPulse(unittest.TestCase):
         # Verify that fixtures were set with varying intensities
         # based on their y position relative to the pulse
         for fixture in self.fixtures:
-            self.assertTrue(fixture.set_dimmer.called)
+            assert fixture.set_dimmer.called
 
     def test_pulse_trigger(self):
+        """Test SpatialDownwardsPulse trigger behavior"""
         # Create interpreter with custom trigger level
         interpreter = SpatialDownwardsPulse(self.fixtures, self.args, trigger_level=0.4)
 
@@ -66,9 +102,10 @@ class TestSpatialDownwardsPulse(unittest.TestCase):
 
         # Verify pulse started
         for fixture in self.fixtures:
-            self.assertTrue(fixture.set_dimmer.called)
+            assert fixture.set_dimmer.called
 
     def test_pulse_width_and_edge_hardness(self):
+        """Test SpatialDownwardsPulse with custom width and edge hardness"""
         # Create interpreter with custom width and edge hardness
         interpreter = SpatialDownwardsPulse(
             self.fixtures, self.args, pulse_width=0.2, edge_hardness=3.0
@@ -84,4 +121,89 @@ class TestSpatialDownwardsPulse(unittest.TestCase):
         intensities = [
             call[0][0] for call in self.fixtures[0].set_dimmer.call_args_list
         ]
-        self.assertTrue(all(0 <= i <= 255 for i in intensities))
+        assert all(0 <= i <= 255 for i in intensities)
+
+    def test_calculate_spatial_range(self):
+        """Test _calculate_spatial_range method"""
+        interpreter = SpatialDownwardsPulse(self.fixtures, self.args)
+
+        # Should return True with valid fixtures
+        result = interpreter._calculate_spatial_range()
+        assert result == True
+        assert len(interpreter.valid_fixtures) == 5
+        assert interpreter.y_range > 0
+
+    def test_calculate_spatial_range_no_valid_fixtures(self):
+        """Test _calculate_spatial_range with no valid fixtures"""
+        # Create fixtures without y positions
+        fixtures_no_y = [MagicMock(spec=FixtureBase) for _ in range(3)]
+        for fixture in fixtures_no_y:
+            fixture.y = None
+
+        interpreter = SpatialDownwardsPulse(fixtures_no_y, self.args)
+        result = interpreter._calculate_spatial_range()
+        assert result == False
+        assert len(interpreter.valid_fixtures) == 0
+
+    def test_calculate_spatial_range_insufficient_range(self):
+        """Test _calculate_spatial_range with insufficient y range"""
+        # Create fixtures with very close y positions
+        close_fixtures = []
+        for i in range(3):
+            fixture = MagicMock(spec=FixtureBase)
+            fixture.y = i * 0.1  # Very small spacing
+            close_fixtures.append(fixture)
+
+        interpreter = SpatialDownwardsPulse(
+            close_fixtures, self.args, min_valid_y_range=10
+        )
+        result = interpreter._calculate_spatial_range()
+        assert result == False
+
+    def test_cooldown_initialization(self):
+        """Test SpatialDownwardsPulse cooldown initialization"""
+        interpreter = SpatialDownwardsPulse(self.fixtures, self.args, cooldown_time=2.0)
+        assert interpreter.cooldown_time == 2.0
+        assert interpreter.last_activation_time == 0
+
+
+class TestHardSpatialPulse:
+    def setup_method(self):
+        """Setup for each test method"""
+        self.fixtures = [MagicMock(spec=FixtureBase) for _ in range(3)]
+        for i, fixture in enumerate(self.fixtures):
+            fixture.y = i * 5
+        self.args = InterpreterArgs(50, True, 0, 100)
+
+    def test_hard_spatial_pulse_properties(self):
+        """Test HardSpatialPulse has correct properties"""
+        # This is created using with_args, so test the wrapper
+        interpreter_class = HardSpatialPulse
+        interpreter = interpreter_class(self.fixtures, self.args)
+
+        # Should have modified hype and parameters
+        assert interpreter.get_hype() == 90
+        assert interpreter.interpreter.edge_hardness == 4.0
+        assert interpreter.interpreter.pulse_width == 0.2
+        assert interpreter.interpreter.speed == 2.0
+
+
+class TestSoftSpatialPulse:
+    def setup_method(self):
+        """Setup for each test method"""
+        self.fixtures = [MagicMock(spec=FixtureBase) for _ in range(3)]
+        for i, fixture in enumerate(self.fixtures):
+            fixture.y = i * 5
+        self.args = InterpreterArgs(50, True, 0, 100)
+
+    def test_soft_spatial_pulse_properties(self):
+        """Test SoftSpatialPulse has correct properties"""
+        # This is created using with_args, so test the wrapper
+        interpreter_class = SoftSpatialPulse
+        interpreter = interpreter_class(self.fixtures, self.args)
+
+        # Should have modified hype and parameters
+        assert interpreter.get_hype() == 30
+        assert interpreter.interpreter.edge_hardness == 1.5
+        assert interpreter.interpreter.pulse_width == 0.4
+        assert interpreter.interpreter.speed == 0.5
