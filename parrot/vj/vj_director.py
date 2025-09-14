@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import random
 import time
-from typing import Optional
 from beartype import beartype
 
 from parrot.director.frame import Frame
@@ -22,129 +20,55 @@ class VJDirector:
     """
 
     def __init__(self):
-        self.canvas: Optional[BaseInterpretationNode] = None
+        self.canvas: BaseInterpretationNode = VideoPlayer(fn_group="bg")
         self.last_shift_time = time.time()
         self.shift_count = 0
-        self._canvas_entered = False
+        self.window = None  # Will be set by the window manager
 
-        # Initialize with a simple video player canvas
-        self.setup_canvas()
+        # Thread-safe frame data storage
+        self._latest_frame = None
+        self._latest_scheme = None
 
-    def setup_canvas(self):
-        """Setup the initial canvas composition"""
-        # For now, start with a simple video player
-        # Later this can be expanded to LayerCompose with multiple effects
-        self.canvas = VideoPlayer(fn_group="bg")
-        self._canvas_entered = False  # Reset enter flag when canvas changes
-
-    def step(self, frame: Frame, scheme: ColorScheme):
-        """
-        Process a frame update from the main director.
-        This is called in sync with the audio processing.
-        """
-        if not self.canvas:
-            return
-
-        # The canvas doesn't need to do anything special on step
-        # The actual rendering happens when render() is called
-        pass
+    def setup(self, context):
+        """Setup the canvas with GL context and generate initial state"""
+        self.canvas.enter_recursive(context)
+        vibe = Vibe(Mode.gentle)
+        self.canvas.generate_recursive(vibe)
 
     def render(self, context, frame: Frame, scheme: ColorScheme):
-        """
-        Render the VJ content and return the result.
-        This is called by the VJ window during its render loop.
-        """
-        if not self.canvas:
-            return None
+        """Render the VJ content and return the result"""
+        return self.canvas.render(frame, scheme, context)
 
-        # Enter canvas on first render when we have context
-        if not self._canvas_entered:
-            try:
-                self.canvas.enter_recursive(context)
-                # Generate initial video selection
-                from parrot.director.mode import Mode
+    def update_frame_data(self, frame: Frame, scheme: ColorScheme):
+        """Update frame data (thread-safe, called from director thread)"""
+        self._latest_frame = frame
+        self._latest_scheme = scheme
 
-                vibe = Vibe(Mode.gentle)
-                self.canvas.generate_recursive(vibe)
-                self._canvas_entered = True
-            except Exception as e:
-                print(f"Error entering VJ canvas: {e}")
-                return None
+    def get_latest_frame_data(self):
+        """Get latest frame data (called from main thread)"""
+        return self._latest_frame, self._latest_scheme
 
-        try:
-            return self.canvas.render(frame, scheme, context)
-        except Exception as e:
-            print(f"Error rendering VJ canvas: {e}")
-            return None
+    def shift(self, mode: Mode, threshold: float = 1.0):
 
-    def shift(self, mode: Mode, shift_percentage: float = 1.0):
-        """
-        Shift the VJ interpretation based on mode change.
+        vibe = Vibe(mode)
+        self.canvas.generate_recursive(vibe, threshold)
+        self.last_shift_time = time.time()
+        self.shift_count += 1
 
-        Args:
-            mode: The new mode to adapt to
-            shift_percentage: How much of the node tree to regenerate (0.0 to 1.0)
-        """
-        if not self.canvas:
-            return
-
-        # Reduced logging for cleaner output
-        if shift_percentage >= 1.0:
-            print(f"🎬 VJ mode: {mode.name}")
-
-        try:
-            # Create vibe for the new mode
-            vibe = Vibe(mode)
-
-            if shift_percentage >= 1.0:
-                # Full regeneration
-                self.canvas.generate_recursive(vibe)
-            elif shift_percentage > 0.0:
-                # Partial regeneration - for now just do full regeneration
-                # TODO: Implement selective regeneration based on percentage
-                self.canvas.generate_recursive(vibe)
-
-            self.last_shift_time = time.time()
-            self.shift_count += 1
-
-        except Exception as e:
-            print(f"Error during VJ shift: {e}")
-
-    def recursive_generate(self, vibe: Vibe, percentage: float = 1.0):
-        """
-        Recursively regenerate nodes based on percentage.
-        This allows for partial shifts where only some nodes are updated.
-
-        Args:
-            vibe: The vibe to generate for
-            percentage: Percentage of nodes to regenerate (0.0 to 1.0)
-        """
-        if not self.canvas:
-            return
-
-        if percentage >= 1.0:
-            # Full regeneration
-            self.canvas.generate_recursive(vibe)
-        elif percentage > 0.0:
-            # For now, implement simple random regeneration
-            # TODO: Implement more sophisticated partial regeneration
-            if random.random() < percentage:
-                self.canvas.generate_recursive(vibe)
-
-    def get_canvas(self) -> Optional[BaseInterpretationNode]:
+    def get_canvas(self) -> BaseInterpretationNode:
         """Get the current canvas for external access"""
         return self.canvas
 
-    def set_canvas(self, canvas: BaseInterpretationNode):
-        """Set a new canvas composition"""
-        if self.canvas:
-            self.canvas.exit_recursive()
-
+    def set_canvas(self, canvas: BaseInterpretationNode, context):
+        """Set a new canvas composition and set it up"""
+        self.canvas.exit_recursive()
         self.canvas = canvas
-        self._canvas_entered = False  # Reset enter flag for new canvas
+        self.canvas.enter_recursive(context)
+
+    def set_window(self, window):
+        """Set the window for rendering"""
+        self.window = window
 
     def cleanup(self):
         """Clean up resources"""
-        if self.canvas:
-            self.canvas.exit_recursive()
-            self.canvas = None
+        self.canvas.exit_recursive()

@@ -203,7 +203,7 @@ class Director:
 
         # Shift VJ director if available
         if self.vj_director:
-            self.vj_director.shift(self.state.mode, shift_percentage=1.0)
+            self.vj_director.shift(self.state.mode, threshold=1.0)
 
         self.last_shift_time = time.time()
         self.shift_count += 1
@@ -223,9 +223,9 @@ class Director:
         for i in self.interpreters:
             i.step(frame, scheme)
 
-        # Step VJ director if available
+        # Store latest frame for VJ system (thread-safe)
         if self.vj_director:
-            self.vj_director.step(frame, scheme)
+            self.vj_director.update_frame_data(frame, scheme)
 
         if (
             time.time() - self.last_shift_time > SHIFT_AFTER
@@ -262,4 +262,4 @@ class Director:
 
         # Notify VJ director of mode change
         if self.vj_director:
-            self.vj_director.shift(mode, shift_percentage=0.5)
+            self.vj_director.shift(mode, threshold=0.5)

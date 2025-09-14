@@ -179,30 +179,8 @@ class MicToDmx(object):
             # Get the configured window class
             window_cls = self.vj_window_manager.get_window_class()
 
-            # Store reference to self for the window to access
-            mic_to_dmx_ref = self
-
-            # Create a custom window class that gets frame data from our system
-            class IntegratedVJWindow(window_cls):
-                def __init__(self, **kwargs):
-                    self.mic_to_dmx = mic_to_dmx_ref
-                    super().__init__(**kwargs)
-
-                def render(self, time: float, frame_time: float):
-                    # Get the latest frame data from the audio system
-                    if (
-                        hasattr(self.mic_to_dmx, "last_frame")
-                        and self.mic_to_dmx.last_frame
-                    ):
-                        if hasattr(self.mic_to_dmx.director, "scheme"):
-                            scheme = self.mic_to_dmx.director.scheme.render()
-                            self.step(self.mic_to_dmx.last_frame, scheme)
-
-                    # Call the original render method
-                    super().render(time, frame_time)
-
-            # Run the integrated VJ window
-            mglw.run_window_config(IntegratedVJWindow)
+            # Run the VJ window (director will handle frame updates)
+            mglw.run_window_config(window_cls)
 
             # Restore original argv
             sys.argv = original_argv

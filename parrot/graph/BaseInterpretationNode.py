@@ -82,15 +82,20 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         """
         pass
 
-    def generate_recursive(self, vibe: Vibe):
+    def generate_recursive(self, vibe: Vibe, threshold: float = 1.0):
         """
         Recursively generates this node and all its input nodes.
         Calls generate() on this node, then generate_recursive() on all nodes in all_inputs.
         If your class has other types of input nodes beyond all_inputs, override this method.
+
+        Args:
+            vibe: The vibe to generate for
+            threshold: Probability (0.0-1.0) of calling generate on this node and descendants
         """
-        self.generate(vibe)
-        for input_node in self.all_inputs:
-            input_node.generate_recursive(vibe)
+        if random.random() < threshold:
+            self.generate(vibe)
+            for input_node in self.all_inputs:
+                input_node.generate_recursive(vibe, threshold)
 
     def render(self, frame: Frame, scheme: ColorScheme, context: C) -> RR:
         """
@@ -137,9 +142,9 @@ class Random(BaseInterpretationNode[C, RR, RR]):
             if self._context is not None:
                 self.current_operation.enter(self._context)
 
-    def generate_recursive(self, vibe: Vibe):
+    def generate_recursive(self, vibe: Vibe, threshold: float = 1.0):
         self.generate(vibe)
-        self.current_operation.generate_recursive(vibe)
+        self.current_operation.generate_recursive(vibe, threshold)
 
     def render(self, frame: Frame, scheme: ColorScheme, context: C) -> RR:
         return self.current_operation.render(frame, scheme, context)

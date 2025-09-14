@@ -61,5 +61,12 @@ def create_multi_video_canvas():
 # Usage example:
 # canvas = create_example_canvas()
 # canvas.enter_recursive(gl_context)
-# canvas.generate_recursive(vibe)
+# canvas.generate_recursive(vibe, threshold=1.0)  # Full regeneration
+# canvas.generate_recursive(vibe, threshold=0.3)  # Partial regeneration (30% chance)
 # framebuffer = canvas.render(frame, scheme, gl_context)
+
+# VJDirector usage:
+# vj_director = VJDirector()
+# vj_director.setup(gl_context)  # Must be called with GL context
+# vj_director.shift(mode, threshold=0.5)  # Partial shift
+# framebuffer = vj_director.render(gl_context, frame, scheme)

@@ -428,7 +428,7 @@ class TestRandomNode:
         # Verify that generate was called on random node and generate_recursive on current operation
         random_node.generate.assert_called_once_with(self.mock_vibe)
         random_node.current_operation.generate_recursive.assert_called_once_with(
-            self.mock_vibe
+            self.mock_vibe, 1.0
         )
 
 
