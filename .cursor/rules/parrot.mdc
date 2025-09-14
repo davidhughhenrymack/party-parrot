@@ -4,5 +4,11 @@ globs:
 alwaysApply: true
 ---
 
-Use pytest for tests
-Run everything using poetry
+Launch tests with `just test`
+Launch main app with `just launch`
+
+
+Write tests in pytest. Tests should be succint and maintainable. Avoid test sprawl.
+
+Use poetry to manage dependencies and to launch commands with `poetry run ...`
+

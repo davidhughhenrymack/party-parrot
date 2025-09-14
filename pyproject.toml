@@ -21,6 +21,10 @@ colorama = "^0.4.6"
 pytest = "^8.3.5"
 
 
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.18.1"
+coverage = "^7.10.6"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
