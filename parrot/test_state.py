@@ -126,7 +126,7 @@ class TestState:
     def test_save_state(self):
         """Test saving state to JSON file."""
         state = State()
-        state.set_hype(50)
+        state.set_hype(50.0)
         state.set_manual_dimmer(0.8)
         state.set_hype_limiter(True)
         state.set_show_waveform(False)

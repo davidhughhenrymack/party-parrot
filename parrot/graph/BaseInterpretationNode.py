@@ -24,7 +24,7 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
     Abstract base class for a node in a graph.
     """
 
-    def __init__(self, children: List[BaseInterpretationNode[C, Any, RI]]):
+    def __init__(self, children: List[BaseInterpretationNode[C, Any, RI]] = []):
         self.children = children
 
     @property

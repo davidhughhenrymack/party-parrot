@@ -4,9 +4,13 @@ globs:
 alwaysApply: true
 ---
 
+Party Parrot is a system that listens to the microphone in realtime, and processes it to make DMX lighting and visuals that respond to dance music.
+
 Launch tests with `just test`
 Launch main app with `just launch`
 
+We use beartype to enforce types.
+Decorate classes and lone methods with @beartype. Use unit tests to provide simple testing of this typing.
 
 Write tests in pytest. Tests should be succint and maintainable. Avoid test sprawl.
 

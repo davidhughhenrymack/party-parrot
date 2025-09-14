@@ -2,11 +2,13 @@ import json
 import os
 import queue
 from events import Events
+from beartype import beartype
 from parrot.director.mode import Mode
 from parrot.director.themes import themes, get_theme_by_name
 from parrot.patch_bay import venues
 
 
+@beartype
 class State:
     def __init__(self):
         self.events = Events()

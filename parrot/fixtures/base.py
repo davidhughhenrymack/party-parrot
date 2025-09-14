@@ -1,5 +1,6 @@
 import logging
-from typing import Optional, Tuple
+from typing import Optional
+from beartype import beartype
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp
 from parrot.utils.string import kebab_case
@@ -7,6 +8,7 @@ from parrot.utils.string import kebab_case
 logger = logging.getLogger(__name__)
 
 
+@beartype
 class FixtureBase:
     def __init__(self, address, name, width):
         self.address = address
@@ -25,7 +27,7 @@ class FixtureBase:
         self.x = x
         self.y = y
 
-    def get_position(self) -> Tuple[int, int]:
+    def get_position(self) -> tuple[int, int]:
         """Get the position of the fixture in the venue (e.g. it's x,y coordinate from the gui rendering)"""
         return self.x, self.y
 
@@ -78,6 +80,7 @@ class FixtureBase:
         return f"{kebab_case(self.name)}@{self.address}"
 
 
+@beartype
 class FixtureWithBulbs(FixtureBase):
     def __init__(self, address, name, width, bulbs):
         super().__init__(address, name, width)
@@ -102,18 +105,21 @@ class FixtureWithBulbs(FixtureBase):
         super().render(dmx)
 
 
+@beartype
 class ColorWheelEntry:
     def __init__(self, color: Color, dmx_value: int):
         self.color = color
         self.dmx_value = dmx_value
 
 
+@beartype
 class GoboWheelEntry:
     def __init__(self, gobo: str, dmx_value: int):
         self.name = gobo
         self.dmx_value = dmx_value
 
 
+@beartype
 class FixtureGroup(FixtureBase):
     """A group of fixtures that can be controlled together."""
 
@@ -192,6 +198,7 @@ class FixtureGroup(FixtureBase):
         return self.fixtures[index]
 
 
+@beartype
 class ManualGroup(FixtureGroup):
     """A group of fixtures that are only controlled manually, not by automatic interpreters."""
 

@@ -2,7 +2,8 @@ from collections import namedtuple
 from enum import Enum
 import math
 import random
-from typing import Generic, List, TypeVar
+from typing import Generic, TypeVar
+from beartype import beartype
 from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.director.color_scheme import ColorScheme
@@ -16,6 +17,7 @@ InterpreterArgs = namedtuple(
 )
 
 
+@beartype
 def acceptable_test(args: InterpreterArgs, hype, has_rainbow):
     if has_rainbow and not args.allow_rainbows:
         return False
@@ -26,11 +28,12 @@ def acceptable_test(args: InterpreterArgs, hype, has_rainbow):
     return True
 
 
+@beartype
 class InterpreterBase(Generic[T]):
     has_rainbow = False
     hype = 0
 
-    def __init__(self, group: List[T], args: InterpreterArgs):
+    def __init__(self, group: list[T], args: InterpreterArgs):
         self.group = group
         self.interpreter_args = args
 
@@ -51,6 +54,7 @@ class InterpreterBase(Generic[T]):
         return f"{Fore.YELLOW}{self.__class__.__name__}{Style.RESET_ALL}"
 
 
+@beartype
 def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
 
     class WithArgs(InterpreterBase):
@@ -81,11 +85,13 @@ def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
     return WithArgs
 
 
+@beartype
 class Noop(InterpreterBase):
     def step(self, frame, scheme):
         pass
 
 
+@beartype
 class ColorFg(InterpreterBase):
     hype = 30
 
@@ -97,6 +103,7 @@ class ColorFg(InterpreterBase):
             i.set_color(scheme.fg)
 
 
+@beartype
 class ColorAlternateBg(InterpreterBase):
     def __str__(self):
         return f"🔄{Fore.MAGENTA}AlternateBg{Style.RESET_ALL}"
@@ -106,6 +113,7 @@ class ColorAlternateBg(InterpreterBase):
             fixture.set_color(scheme.bg if idx % 2 == 0 else scheme.bg_contrast)
 
 
+@beartype
 class ColorBg(InterpreterBase):
     def __str__(self):
         return f"🎨{Fore.MAGENTA}Bg{Style.RESET_ALL}"
@@ -115,6 +123,7 @@ class ColorBg(InterpreterBase):
             fixture.set_color(scheme.bg)
 
 
+@beartype
 class ColorRainbow(InterpreterBase):
     has_rainbow = True
     hype = 40
@@ -138,6 +147,7 @@ class ColorRainbow(InterpreterBase):
             fixture.set_color(color)
 
 
+@beartype
 class FlashBeat(InterpreterBase):
     hype = 70
 

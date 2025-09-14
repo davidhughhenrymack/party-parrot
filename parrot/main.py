@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from beartype.claw import beartype_this_package
 from parrot.listeners.mic_to_dmx import MicToDmx
 
 import argparse
@@ -19,6 +20,9 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
+    # Enable beartype runtime type checking for the entire package
+    beartype_this_package()
+
     args = parse_arguments()
 
     app = MicToDmx(args)

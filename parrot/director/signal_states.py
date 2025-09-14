@@ -1,10 +1,11 @@
 from parrot.director.frame import FrameSignal
-from typing import Dict
+from beartype import beartype
 
 
+@beartype
 class SignalStates:
     def __init__(self):
-        self.states: Dict[FrameSignal, float] = {
+        self.states: dict[FrameSignal, float] = {
             FrameSignal.strobe: 0.0,
             FrameSignal.big_blinder: 0.0,
             FrameSignal.small_blinder: 0.0,
@@ -15,6 +16,6 @@ class SignalStates:
         """Set a signal state value."""
         self.states[signal] = value
 
-    def get_states(self) -> Dict[FrameSignal, float]:
+    def get_states(self) -> dict[FrameSignal, float]:
         """Get all signal states."""
         return self.states.copy()

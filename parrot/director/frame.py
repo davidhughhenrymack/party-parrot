@@ -1,8 +1,11 @@
 import enum
 import time
-from typing import Any
+from typing import Any, Union
+from beartype import beartype
+import numpy as np
 
 
+@beartype
 class FrameSignal(enum.Enum):
     freq_all = "freq_all"
     freq_high = "freq_high"
@@ -16,15 +19,16 @@ class FrameSignal(enum.Enum):
     dampen = "dampen"
 
 
+@beartype
 class Frame:
     def __init__(
         self,
         values: dict[FrameSignal, float],
-        timeseries: dict[FrameSignal, list[float]] = {},
+        timeseries: dict[str, Union[list[float], np.ndarray]] = {},
     ):
         self.time = time.perf_counter()
         self.values = values
-        self.timeseries: dict[FrameSignal, list[float]] = timeseries
+        self.timeseries: dict[str, Union[list[float], np.ndarray]] = timeseries
 
     def extend(self, additional_signals: dict[FrameSignal, float]):
         self.values.update(additional_signals)

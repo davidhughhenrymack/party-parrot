@@ -1,7 +1,8 @@
 import math
 import random
 import scipy
-from typing import List, TypeVar
+from typing import TypeVar
+from beartype import beartype
 from parrot.director.frame import FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
@@ -11,18 +12,21 @@ from parrot.utils.math import clamp
 T = TypeVar("T", bound=FixtureBase)
 
 
+@beartype
 class Dimmer255(InterpreterBase):
     def step(self, frame, scheme):
         for i in self.group:
             i.set_dimmer(255)
 
 
+@beartype
 class Dimmer30(InterpreterBase):
     def step(self, frame, scheme):
         for i in self.group:
             i.set_dimmer(30)
 
 
+@beartype
 class Dimmer0(InterpreterBase):
     def step(self, frame, scheme):
         for i in self.group:
@@ -30,8 +34,9 @@ class Dimmer0(InterpreterBase):
             i.set_strobe(0)
 
 
+@beartype
 class DimmerFadeIn(InterpreterBase):
-    def __init__(self, group: List[T], args: InterpreterArgs, fade_time=3):
+    def __init__(self, group: list[T], args: InterpreterArgs, fade_time=3):
         super().__init__(group, args)
         self.fade_time = fade_time
         self.memory = 0
@@ -42,10 +47,11 @@ class DimmerFadeIn(InterpreterBase):
             i.set_dimmer(self.memory)
 
 
+@beartype
 class SequenceDimmers(InterpreterBase[T]):
     hype = 30
 
-    def __init__(self, group: List[T], args: InterpreterArgs, dimmer=255, wait_time=1):
+    def __init__(self, group: list[T], args: InterpreterArgs, dimmer=255, wait_time=1):
         super().__init__(group, args)
         self.dimmer = dimmer
         self.wait_time = wait_time
@@ -59,10 +65,11 @@ class SequenceDimmers(InterpreterBase[T]):
             )
 
 
+@beartype
 class SequenceFadeDimmers(InterpreterBase[T]):
     hype = 20
 
-    def __init__(self, group: List[T], args: InterpreterArgs, wait_time=3):
+    def __init__(self, group: list[T], args: InterpreterArgs, wait_time=3):
         super().__init__(group, args)
         self.wait_time = wait_time
 
@@ -78,10 +85,11 @@ class SequenceFadeDimmers(InterpreterBase[T]):
             fixture.set_dimmer(normalized * 255)
 
 
+@beartype
 class DimmersBeatChase(InterpreterBase[T]):
     hype = 75
 
-    def __init__(self, group: List[T], args: InterpreterArgs):
+    def __init__(self, group: list[T], args: InterpreterArgs):
         super().__init__(group, args)
         self.signal = random.choice([FrameSignal.freq_high, FrameSignal.freq_low])
         self.on = False
@@ -105,12 +113,13 @@ class DimmersBeatChase(InterpreterBase[T]):
             self.on = False
 
 
+@beartype
 class GentlePulse(InterpreterBase[T]):
     hype = 10
 
     def __init__(
         self,
-        group: List[T],
+        group: list[T],
         args: InterpreterArgs,
         signal=FrameSignal.freq_all,
         trigger_level=0.2,
@@ -137,10 +146,11 @@ class GentlePulse(InterpreterBase[T]):
             self.memory[idx] *= 0.95
 
 
+@beartype
 class Twinkle(InterpreterBase[T]):
     hype = 5
 
-    def __init__(self, group: List[T], args: InterpreterArgs):
+    def __init__(self, group: list[T], args: InterpreterArgs):
         super().__init__(group, args)
         self.memory = [0] * len(self.group)
 

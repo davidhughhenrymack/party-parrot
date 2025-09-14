@@ -1,6 +1,8 @@
+from beartype import beartype
 from colorama import Fore, Style
 
 
+@beartype
 def rgb_to_ansi_color(r, g, b):
     """Convert RGB values to approximate ANSI color."""
     if r > 200 and g > 200 and b > 200:
@@ -20,6 +22,7 @@ def rgb_to_ansi_color(r, g, b):
     return ""
 
 
+@beartype
 def format_color_scheme(scheme):
     """Format a color scheme with ANSI colors."""
     colors = scheme.to_list()
