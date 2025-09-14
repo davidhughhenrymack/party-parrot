@@ -1,13 +1,14 @@
 import math
 import random
-from typing import List
+from beartype import beartype
 from parrot.interpreters.base import InterpreterBase, InterpreterArgs
 from parrot.fixtures.base import FixtureBase
 from colorama import Fore, Style
 
 
+@beartype
 class MoveCircles(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=None):
+    def __init__(self, group: list[FixtureBase], args, multiplier=1, phase=None):
         super().__init__(group, args)
         self.multiplier = multiplier
 
@@ -29,8 +30,9 @@ class MoveCircles(InterpreterBase):
             )
 
 
+@beartype
 class MoveNod(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=math.pi / 3):
+    def __init__(self, group: list[FixtureBase], args, multiplier=1, phase=math.pi / 3):
         super().__init__(group, args)
         self.multiplier = multiplier
         self.phase = phase
@@ -46,8 +48,9 @@ class MoveNod(InterpreterBase):
             )
 
 
+@beartype
 class MoveFigureEight(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], args, multiplier=1, phase=None):
+    def __init__(self, group: list[FixtureBase], args, multiplier=1, phase=None):
         super().__init__(group, args)
         self.multiplier = multiplier
 
@@ -70,8 +73,9 @@ class MoveFigureEight(InterpreterBase):
             fixture.set_tilt(tilt)
 
 
+@beartype
 class MoveFan(InterpreterBase):
-    def __init__(self, group: List[FixtureBase], args, multiplier=1, spread=1.0):
+    def __init__(self, group: list[FixtureBase], args, multiplier=1, spread=1.0):
         super().__init__(group, args)
         self.multiplier = multiplier
         self.spread = spread

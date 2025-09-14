@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Callable
 from tkinter import (
     Tk,
     Frame,
@@ -253,7 +254,7 @@ class Window(Tk):
     def __init__(
         self,
         state: State,
-        quit: callable,
+        quit: Callable[[], None],
         director: Director,
         signal_states: SignalStates,
     ):

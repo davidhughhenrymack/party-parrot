@@ -1,9 +1,11 @@
+from beartype import beartype
 from parrot.director.color_scheme import ColorScheme
 from parrot.interpreters.base import InterpreterBase
 from parrot.director.frame import Frame
 from parrot.fixtures.moving_head import MovingHead
 
 
+@beartype
 class StrobeHighSustained(InterpreterBase[MovingHead]):
     hype = 90
 

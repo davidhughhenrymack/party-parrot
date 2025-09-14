@@ -1,6 +1,6 @@
 import parrot.fixtures
 import scipy
-from typing import List
+from beartype import beartype
 from parrot.director.frame import Frame, FrameSignal
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
 
@@ -11,6 +11,7 @@ import time
 from parrot.fixtures.base import FixtureBase
 
 
+@beartype
 class SlowDecay(InterpreterBase[FixtureBase]):
     hype = 20
 

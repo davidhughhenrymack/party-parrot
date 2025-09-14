@@ -6,13 +6,20 @@ alwaysApply: true
 
 Party Parrot is a system that listens to the microphone in realtime, and processes it to make DMX lighting and visuals that respond to dance music.
 
+## Project structure
+Use poetry to manage dependencies and to launch commands with `poetry run ...`
+
 Launch tests with `just test`
 Launch main app with `just launch`
+Add major new features to the `Justfile`
 
+## Typing
 We use beartype to enforce types.
 Decorate classes and lone methods with @beartype. Use unit tests to provide simple testing of this typing.
 
+## Testing
 Write tests in pytest. Tests should be succint and maintainable. Avoid test sprawl.
+New code should have at least some simple useful tests
 
-Use poetry to manage dependencies and to launch commands with `poetry run ...`
+
 

@@ -48,6 +48,7 @@ class Director:
         self.generate_color_scheme()
 
         self.warmup_complete = False
+        self.vj_director = None  # Optional VJ director
 
         # Register event handlers
         self.state.events.on_mode_change += self.on_mode_change
@@ -200,6 +201,10 @@ class Director:
         self.shift_interpreter()
         self.ensure_each_signal_is_enabled()
 
+        # Shift VJ director if available
+        if self.vj_director:
+            self.vj_director.shift(self.state.mode, shift_percentage=1.0)
+
         self.last_shift_time = time.time()
         self.shift_count += 1
 
@@ -217,6 +222,10 @@ class Director:
 
         for i in self.interpreters:
             i.step(frame, scheme)
+
+        # Step VJ director if available
+        if self.vj_director:
+            self.vj_director.step(frame, scheme)
 
         if (
             time.time() - self.last_shift_time > SHIFT_AFTER
@@ -241,8 +250,16 @@ class Director:
     def deploy_hype(self):
         self.mode_machine.deploy_hype(self.last_frame)
 
+    def set_vj_director(self, vj_director):
+        """Set the VJ director for coordination"""
+        self.vj_director = vj_director
+
     def on_mode_change(self, mode):
         """Handle mode changes, including those from the web interface."""
         print(f"mode changed to: {mode.name}")
         # Regenerate interpreters if needed
         self.generate_interpreters()
+
+        # Notify VJ director of mode change
+        if self.vj_director:
+            self.vj_director.shift(mode, shift_percentage=0.5)

@@ -10,6 +10,7 @@ import matplotlib
 import time
 
 import math
+from beartype import beartype
 
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
@@ -36,10 +37,12 @@ SIGNAL_STAT_BUFFER_SIZE = round((60) / SIGNAL_STAT_PERIOD_SECONDS)
 PROFILE_MEMORY_INTERVAL_SECONDS = 30
 
 
+@beartype
 def get_rms(block):
     return np.sqrt(np.mean(np.square(block)))
 
 
+@beartype
 class MicToDmx(object):
     def __init__(self, args):
         self.args = args
@@ -85,6 +88,16 @@ class MicToDmx(object):
 
         self.director = Director(self.state)
 
+        # Initialize VJ system if requested
+        self.vj_director = None
+        self.vj_window_manager = None
+        if getattr(self.args, "vj", False):
+            from parrot.vj.vj_director import VJDirector
+
+            self.vj_director = VJDirector()
+            # Pass VJ director to main director
+            self.director.set_vj_director(self.vj_director)
+
         if not self.args.no_gui:
             self.window = Window(
                 self.state, lambda: self.quit(), self.director, self.signal_states
@@ -98,6 +111,13 @@ class MicToDmx(object):
                 port=getattr(self.args, "web_port", 4040),
             )
 
+        # Start VJ window if requested and no GUI
+        if getattr(self.args, "vj", False) and self.args.no_gui:
+            print("🎬 VJ system enabled")
+            self.should_start_vj_window = True
+        else:
+            self.should_start_vj_window = False
+
         self.frame_count = 0
 
     def quit(self):
@@ -106,6 +126,15 @@ class MicToDmx(object):
         self.should_stop = True
 
     def run(self):
+        if self.should_start_vj_window:
+            # Run VJ window in main thread, audio processing in background
+            self._run_with_vj_window()
+        else:
+            # Run audio processing in main thread (original behavior)
+            self._run_audio_loop()
+
+    def _run_audio_loop(self):
+        """Run the main audio processing loop"""
         last_profiled_at = time.time()
 
         while not self.should_stop:
@@ -120,6 +149,70 @@ class MicToDmx(object):
 
             except (KeyboardInterrupt, SystemExit) as e:
                 break
+
+    def _run_with_vj_window(self):
+        """Run with VJ window in main thread and audio in background thread"""
+        import threading
+        import moderngl_window as mglw
+        from parrot.vj.vj_window import VJWindowManager
+        import sys
+
+        # Start audio processing in background thread
+        audio_thread = threading.Thread(target=self._run_audio_loop, daemon=True)
+        audio_thread.start()
+
+        try:
+            # Clear sys.argv to prevent ModernGL from parsing our arguments
+            original_argv = sys.argv.copy()
+            sys.argv = [sys.argv[0]]  # Keep only the script name
+
+            # Suppress verbose ModernGL logging
+            import logging
+
+            logging.getLogger("moderngl_window").setLevel(logging.WARNING)
+
+            # Create VJ window manager in main thread
+            self.vj_window_manager = VJWindowManager(vj_director=self.vj_director)
+            fullscreen = getattr(self.args, "vj_fullscreen", False)
+            self.vj_window_manager.create_window(fullscreen=fullscreen)
+
+            # Get the configured window class
+            window_cls = self.vj_window_manager.get_window_class()
+
+            # Store reference to self for the window to access
+            mic_to_dmx_ref = self
+
+            # Create a custom window class that gets frame data from our system
+            class IntegratedVJWindow(window_cls):
+                def __init__(self, **kwargs):
+                    self.mic_to_dmx = mic_to_dmx_ref
+                    super().__init__(**kwargs)
+
+                def render(self, time: float, frame_time: float):
+                    # Get the latest frame data from the audio system
+                    if (
+                        hasattr(self.mic_to_dmx, "last_frame")
+                        and self.mic_to_dmx.last_frame
+                    ):
+                        if hasattr(self.mic_to_dmx.director, "scheme"):
+                            scheme = self.mic_to_dmx.director.scheme.render()
+                            self.step(self.mic_to_dmx.last_frame, scheme)
+
+                    # Call the original render method
+                    super().render(time, frame_time)
+
+            # Run the integrated VJ window
+            mglw.run_window_config(IntegratedVJWindow)
+
+            # Restore original argv
+            sys.argv = original_argv
+
+        except Exception as e:
+            print(f"Error running VJ window: {e}")
+            # Fall back to audio-only mode
+            self._run_audio_loop()
+        finally:
+            self.should_stop = True
 
     def find_input_device(self):
         device_index = None
@@ -285,6 +378,9 @@ class MicToDmx(object):
                 FrameSignal.sustained_high
             ],
         }
+
+        # Store the frame for VJ system access
+        self.last_frame = frame
 
         self.director.step(frame)
         self.director.render(self.dmx)

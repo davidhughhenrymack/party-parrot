@@ -1,12 +1,15 @@
+from beartype import beartype
 from parrot.utils.color_extra import color_to_rgbw, render_color_components
 from parrot.utils.colour import Color
 from .base import FixtureBase
 
 
+@beartype
 class Par(FixtureBase):
     pass
 
 
+@beartype
 class ParRGB(Par):
     "David's Par RGB fixture"
 
@@ -31,6 +34,7 @@ class ParRGB(Par):
         pass
 
 
+@beartype
 class ParRGBAWU(Par):
     "Mountain Lotus Par fixture"
 

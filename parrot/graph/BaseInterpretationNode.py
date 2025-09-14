@@ -78,6 +78,7 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         """
         This node should configure itself based on the vibe.
         This generally triggers a randomization of the node's parameters.
+        Always called at least once after enter() and before any render()
         """
         pass
 
