@@ -37,7 +37,7 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         return self.children
 
     @abstractmethod
-    def enter(self):
+    def enter(self, context: C):
         """
         Called when the node is being entered (e.g. when it will start to be rendered)
         In enter resources should be allocated. A call to enter will always be followed
@@ -55,14 +55,14 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         """
         pass
 
-    def enter_recursive(self):
+    def enter_recursive(self, context: C):
         """
         Recursively enters this node and all its input nodes.
         Calls enter() on this node, then enter_recursive() on all nodes in all_inputs.
         """
-        self.enter()
+        self.enter(context)
         for input_node in self.all_inputs:
-            input_node.enter_recursive()
+            input_node.enter_recursive(context)
 
     def exit_recursive(self):
         """
@@ -118,21 +118,24 @@ class Random(BaseInterpretationNode[C, RR, RR]):
     ):
         super().__init__(children)
         self.realized_operations = [operation(children) for operation in operations]
-
         self.current_operation = random.choice(self.realized_operations)
+        self._context = None
 
-    def enter(self):
-        self.current_operation.enter()
+    def enter(self, context: C):
+        self._context = context
+        self.current_operation.enter(context)
 
     def exit(self):
         self.current_operation.exit()
+        self._context = None
 
     def generate(self, vibe: Vibe):
         new_operation = random.choice(self.realized_operations)
         if new_operation != self.current_operation:
             self.current_operation.exit()
             self.current_operation = new_operation
-            self.current_operation.enter()
+            if self._context is not None:
+                self.current_operation.enter(self._context)
 
     def generate_recursive(self, vibe: Vibe):
         self.generate(vibe)

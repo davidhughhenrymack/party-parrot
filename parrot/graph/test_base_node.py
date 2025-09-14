@@ -23,7 +23,7 @@ class ConstantNode(BaseInterpretationNode[SimpleContext, None, float]):
         self.value = value
         self.entered = False
 
-    def enter(self):
+    def enter(self, context: SimpleContext):
         self.entered = True
 
     def exit(self):
@@ -48,7 +48,7 @@ class AddNode(BaseInterpretationNode[SimpleContext, float, float]):
         super().__init__(children)
         self.entered = False
 
-    def enter(self):
+    def enter(self, context: SimpleContext):
         self.entered = True
 
     def exit(self):
@@ -75,7 +75,7 @@ class MultiplyNode(BaseInterpretationNode[SimpleContext, float, float]):
         super().__init__(children)
         self.entered = False
 
-    def enter(self):
+    def enter(self, context: SimpleContext):
         self.entered = True
 
     def exit(self):
@@ -100,7 +100,7 @@ class ContextValueNode(BaseInterpretationNode[SimpleContext, None, float]):
         super().__init__([])
         self.entered = False
 
-    def enter(self):
+    def enter(self, context: SimpleContext):
         self.entered = True
 
     def exit(self):
@@ -130,7 +130,7 @@ class TestBaseInterpretationNode:
         """Test that constant nodes return their constant value."""
         node = ConstantNode(42.0)
 
-        node.enter_recursive()
+        node.enter_recursive(SimpleContext())
         assert node.entered
 
         result = node.render(self.mock_frame, self.mock_scheme, self.context)
@@ -145,7 +145,7 @@ class TestBaseInterpretationNode:
         child2 = ConstantNode(20.0)
         add_node = AddNode([child1, child2])
 
-        add_node.enter_recursive()
+        add_node.enter_recursive(SimpleContext())
         assert add_node.entered
         assert child1.entered
         assert child2.entered
@@ -164,7 +164,7 @@ class TestBaseInterpretationNode:
         child2 = ConstantNode(4.0)
         multiply_node = MultiplyNode([child1, child2])
 
-        multiply_node.enter_recursive()
+        multiply_node.enter_recursive(SimpleContext())
         result = multiply_node.render(self.mock_frame, self.mock_scheme, self.context)
         assert result == 12.0
         multiply_node.exit_recursive()
@@ -173,7 +173,7 @@ class TestBaseInterpretationNode:
         """Test that context value node reads from context."""
         node = ContextValueNode()
 
-        node.enter_recursive()
+        node.enter_recursive(SimpleContext())
         result = node.render(self.mock_frame, self.mock_scheme, self.context)
         assert result == 10.0
 
@@ -200,12 +200,12 @@ class TestBaseInterpretationNode:
         # Note: This requires a different type structure since we're mixing operations
         # For now, let's test the components separately
 
-        left_add.enter_recursive()
+        left_add.enter_recursive(SimpleContext())
         left_result = left_add.render(self.mock_frame, self.mock_scheme, self.context)
         assert left_result == 30.0
         left_add.exit_recursive()
 
-        right_multiply.enter_recursive()
+        right_multiply.enter_recursive(SimpleContext())
         right_result = right_multiply.render(
             self.mock_frame, self.mock_scheme, self.context
         )
@@ -234,7 +234,7 @@ class TestBaseInterpretationNode:
         """Test add node with no children."""
         add_node = AddNode([])
 
-        add_node.enter_recursive()
+        add_node.enter_recursive(SimpleContext())
         result = add_node.render(self.mock_frame, self.mock_scheme, self.context)
         assert result == 0.0
         add_node.exit_recursive()
@@ -243,7 +243,7 @@ class TestBaseInterpretationNode:
         """Test multiply node with no children."""
         multiply_node = MultiplyNode([])
 
-        multiply_node.enter_recursive()
+        multiply_node.enter_recursive(SimpleContext())
         result = multiply_node.render(self.mock_frame, self.mock_scheme, self.context)
         assert result == 1.0
         multiply_node.exit_recursive()
@@ -253,12 +253,12 @@ class TestBaseInterpretationNode:
         child = ConstantNode(42.0)
 
         add_node = AddNode([child])
-        add_node.enter_recursive()
+        add_node.enter_recursive(SimpleContext())
         assert add_node.render(self.mock_frame, self.mock_scheme, self.context) == 42.0
         add_node.exit_recursive()
 
         multiply_node = MultiplyNode([child])
-        multiply_node.enter_recursive()
+        multiply_node.enter_recursive(SimpleContext())
         assert (
             multiply_node.render(self.mock_frame, self.mock_scheme, self.context)
             == 42.0
@@ -288,7 +288,7 @@ class TestBaseInterpretationNode:
         child2.enter = Mock()
         add_node.enter = Mock()
 
-        add_node.enter_recursive()
+        add_node.enter_recursive(SimpleContext())
 
         # Verify that enter was called on the parent and all children
         add_node.enter.assert_called_once()
@@ -320,7 +320,7 @@ class TestBaseInterpretationNode:
         add_node = AddNode([child1, child2])
 
         # Test full lifecycle with recursive methods
-        add_node.enter_recursive()
+        add_node.enter_recursive(SimpleContext())
 
         # Verify all nodes are entered
         assert add_node.entered
@@ -377,7 +377,7 @@ class TestRandomNode:
         random_node.current_operation.enter = Mock()
         random_node.current_operation.exit = Mock()
 
-        random_node.enter_recursive()
+        random_node.enter_recursive(SimpleContext())
         random_node.current_operation.enter.assert_called_once()
 
         random_node.exit_recursive()

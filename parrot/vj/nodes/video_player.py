@@ -35,11 +35,13 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.shader_program: Optional[mgl.Program] = None
         self.last_frame_time = 0
         self.fps = 30  # Default FPS, will be updated from video
+        self._context: Optional[mgl.Context] = None
 
-    def enter(self):
+    def enter(self, context: mgl.Context):
         """Initialize video resources"""
+        # Store context for later use in _setup_gl_resources
+        self._context = context
         # Don't select videos here - wait for generate() to be called
-        pass
 
     def exit(self):
         """Clean up video resources"""
@@ -52,6 +54,7 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         if self.framebuffer:
             self.framebuffer.release()
             self.framebuffer = None
+        self._context = None
 
     def generate(self, vibe: Vibe):
         """Select a new video group based on the vibe"""

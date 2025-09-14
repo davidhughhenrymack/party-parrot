@@ -102,7 +102,7 @@ class VJWindow(mglw.WindowConfig):
         """Set the video player node"""
         self.video_player = video_player
         if self.video_player:
-            self.video_player.enter()
+            self.video_player.enter(self.ctx)
             # Generate initial video selection
             from parrot.graph.BaseInterpretationNode import Vibe
             from parrot.director.mode import Mode

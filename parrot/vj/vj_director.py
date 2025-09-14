@@ -10,6 +10,8 @@ from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.vj.nodes.video_player import VideoPlayer
+from parrot.vj.nodes.black import Black
+from parrot.vj.nodes.layer_compose import LayerCompose
 
 
 @beartype
@@ -23,6 +25,7 @@ class VJDirector:
         self.canvas: Optional[BaseInterpretationNode] = None
         self.last_shift_time = time.time()
         self.shift_count = 0
+        self._canvas_entered = False
 
         # Initialize with a simple video player canvas
         self.setup_canvas()
@@ -32,14 +35,7 @@ class VJDirector:
         # For now, start with a simple video player
         # Later this can be expanded to LayerCompose with multiple effects
         self.canvas = VideoPlayer(fn_group="bg")
-
-        if self.canvas:
-            self.canvas.enter_recursive()
-            # Generate initial video selection
-            from parrot.director.mode import Mode
-
-            vibe = Vibe(Mode.gentle)
-            self.canvas.generate_recursive(vibe)
+        self._canvas_entered = False  # Reset enter flag when canvas changes
 
     def step(self, frame: Frame, scheme: ColorScheme):
         """
@@ -60,6 +56,20 @@ class VJDirector:
         """
         if not self.canvas:
             return None
+
+        # Enter canvas on first render when we have context
+        if not self._canvas_entered:
+            try:
+                self.canvas.enter_recursive(context)
+                # Generate initial video selection
+                from parrot.director.mode import Mode
+
+                vibe = Vibe(Mode.gentle)
+                self.canvas.generate_recursive(vibe)
+                self._canvas_entered = True
+            except Exception as e:
+                print(f"Error entering VJ canvas: {e}")
+                return None
 
         try:
             return self.canvas.render(frame, scheme, context)
@@ -131,87 +141,10 @@ class VJDirector:
             self.canvas.exit_recursive()
 
         self.canvas = canvas
-
-        if self.canvas:
-            self.canvas.enter_recursive()
+        self._canvas_entered = False  # Reset enter flag for new canvas
 
     def cleanup(self):
         """Clean up resources"""
         if self.canvas:
             self.canvas.exit_recursive()
             self.canvas = None
-
-
-@beartype
-class LayerCompose(BaseInterpretationNode):
-    """
-    A composition node that layers multiple effects and video sources.
-    This is a placeholder for future implementation of complex layering.
-    """
-
-    def __init__(self, *layers: BaseInterpretationNode):
-        super().__init__(list(layers))
-        self.layers = list(layers)
-
-    def enter(self):
-        """Enter all layers"""
-        for layer in self.layers:
-            layer.enter()
-
-    def exit(self):
-        """Exit all layers"""
-        for layer in self.layers:
-            layer.exit()
-
-    def generate(self, vibe: Vibe):
-        """Generate all layers"""
-        for layer in self.layers:
-            layer.generate(vibe)
-
-    def render(self, frame: Frame, scheme: ColorScheme, context):
-        """
-        Render all layers and composite them.
-        For now, just render the last layer (top layer).
-        TODO: Implement proper layer compositing with blending modes.
-        """
-        if not self.layers:
-            return None
-
-        # For now, just render the top layer
-        # TODO: Implement proper compositing
-        return self.layers[-1].render(frame, scheme, context)
-
-
-@beartype
-class Black(BaseInterpretationNode):
-    """
-    A simple black background node.
-    """
-
-    def __init__(self):
-        super().__init__([])
-        self.framebuffer = None
-
-    def enter(self):
-        """Initialize black background"""
-        pass
-
-    def exit(self):
-        """Clean up resources"""
-        if self.framebuffer:
-            self.framebuffer.release()
-            self.framebuffer = None
-
-    def generate(self, vibe: Vibe):
-        """Nothing to generate for black background"""
-        pass
-
-    def render(self, frame: Frame, scheme: ColorScheme, context):
-        """Render black background"""
-        if not self.framebuffer:
-            # Create a black texture
-            texture = context.texture((1920, 1080), 3)
-            texture.write(b"\x00" * (1920 * 1080 * 3))  # Black pixels
-            self.framebuffer = context.framebuffer(color_attachments=[texture])
-
-        return self.framebuffer
