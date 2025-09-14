@@ -149,6 +149,14 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             # Only one layer, return it directly
             return base_framebuffer
 
+        # If we have multiple layers, we need to determine the output size
+        # Use the largest dimensions from all layers
+        max_width = 1920
+        max_height = 1080
+        if base_framebuffer:
+            max_width = max(max_width, base_framebuffer.width)
+            max_height = max(max_height, base_framebuffer.height)
+
         # Start with the base layer
         current_result = base_framebuffer
 
@@ -160,7 +168,8 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 continue
 
             # Create a temporary framebuffer for the composite result
-            temp_texture = context.texture((1920, 1080), 4)
+            # Use the maximum dimensions to ensure we don't lose content
+            temp_texture = context.texture((max_width, max_height), 4)
             temp_framebuffer = context.framebuffer(color_attachments=[temp_texture])
 
             # Composite overlay onto current result

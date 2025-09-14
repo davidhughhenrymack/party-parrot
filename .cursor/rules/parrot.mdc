@@ -13,7 +13,7 @@ Launch tests with `just test`
 Launch main app with `just launch`
 Add major new features to the `Justfile`
 
-Don't add readme files unless asked to.
+Don't add readme/md files unless asked to.
 
 ## Typing
 We use beartype to enforce types.

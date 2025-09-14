@@ -24,9 +24,10 @@ class VJDirector:
         # Create a pulsing video canvas by default
         video_player = VideoPlayer(fn_group="bg")
         pulsing_video = BrightnessPulse(
-            video_player, intensity=0.8, base_brightness=0.3
+            video_player, intensity=0.7, base_brightness=0.6
         )
-        self.canvas: BaseInterpretationNode = LayerCompose(Black(), pulsing_video)
+
+        self.canvas: BaseInterpretationNode = pulsing_video
 
         self.last_shift_time = time.time()
         self.shift_count = 0
@@ -77,21 +78,22 @@ class VJDirector:
         self.window = window
 
     def create_pulsing_canvas(
-        self, intensity: float = 0.8, base_brightness: float = 0.3
+        self, intensity: float = 0.7, base_brightness: float = 0.6
     ):
         """Create a new pulsing video canvas with specified parameters"""
         video_player = VideoPlayer(fn_group="bg")
         pulsing_video = BrightnessPulse(
             video_player, intensity=intensity, base_brightness=base_brightness
         )
-        return LayerCompose(Black(), pulsing_video)
+        # TODO: Fix LayerCompose size mismatch, for now return just pulsing video
+        return pulsing_video
 
     def set_pulse_intensity(
         self, intensity: float, base_brightness: float = None, context=None
     ):
         """Update the pulse effect parameters by creating a new canvas"""
         if base_brightness is None:
-            base_brightness = 0.3
+            base_brightness = 0.6
 
         new_canvas = self.create_pulsing_canvas(intensity, base_brightness)
 
@@ -110,9 +112,15 @@ class VJDirector:
         """Switch to dramatic pulsing effect"""
         self.set_pulse_intensity(intensity=1.2, base_brightness=0.2, context=context)
 
+    def set_aggressive_pulse(self, context=None):
+        """Switch to very aggressive pulsing (may be dark during silence)"""
+        self.set_pulse_intensity(intensity=0.8, base_brightness=0.3, context=context)
+
     def set_static_video(self, context=None):
         """Switch to static video without pulsing"""
-        static_canvas = LayerCompose(Black(), VideoPlayer(fn_group="bg"))
+        static_canvas = VideoPlayer(
+            fn_group="bg"
+        )  # TODO: Add Black background when LayerCompose is fixed
         if context:
             self.set_canvas(static_canvas, context)
         else:

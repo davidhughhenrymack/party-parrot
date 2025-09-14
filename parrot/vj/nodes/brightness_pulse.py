@@ -164,9 +164,26 @@ class BrightnessPulse(
         # Clamp to reasonable range
         brightness_multiplier = max(0.0, min(2.0, brightness_multiplier))
 
-        # Setup framebuffer and render
-        if not self.framebuffer:
-            self._setup_gl_resources(context)
+        # Setup framebuffer to match input size
+        input_width = input_framebuffer.width
+        input_height = input_framebuffer.height
+
+        # Check if we need to recreate framebuffer for different input size
+        if (
+            not self.framebuffer
+            or self.framebuffer.width != input_width
+            or self.framebuffer.height != input_height
+        ):
+            # Clean up old resources
+            if self.framebuffer:
+                self.framebuffer.release()
+            if self.texture:
+                self.texture.release()
+            self.framebuffer = None
+            self.texture = None
+
+            # Setup with input dimensions
+            self._setup_gl_resources(context, input_width, input_height)
 
         self.framebuffer.use()
         context.clear(0.0, 0.0, 0.0)
