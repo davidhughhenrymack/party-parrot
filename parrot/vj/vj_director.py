@@ -10,6 +10,7 @@ from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.layer_compose import LayerCompose
+from parrot.vj.nodes.brightness_pulse import BrightnessPulse
 
 
 @beartype
@@ -20,7 +21,13 @@ class VJDirector:
     """
 
     def __init__(self):
-        self.canvas: BaseInterpretationNode = VideoPlayer(fn_group="bg")
+        # Create a pulsing video canvas by default
+        video_player = VideoPlayer(fn_group="bg")
+        pulsing_video = BrightnessPulse(
+            video_player, intensity=0.8, base_brightness=0.3
+        )
+        self.canvas: BaseInterpretationNode = LayerCompose(Black(), pulsing_video)
+
         self.last_shift_time = time.time()
         self.shift_count = 0
         self.window = None  # Will be set by the window manager
@@ -68,6 +75,49 @@ class VJDirector:
     def set_window(self, window):
         """Set the window for rendering"""
         self.window = window
+
+    def create_pulsing_canvas(
+        self, intensity: float = 0.8, base_brightness: float = 0.3
+    ):
+        """Create a new pulsing video canvas with specified parameters"""
+        video_player = VideoPlayer(fn_group="bg")
+        pulsing_video = BrightnessPulse(
+            video_player, intensity=intensity, base_brightness=base_brightness
+        )
+        return LayerCompose(Black(), pulsing_video)
+
+    def set_pulse_intensity(
+        self, intensity: float, base_brightness: float = None, context=None
+    ):
+        """Update the pulse effect parameters by creating a new canvas"""
+        if base_brightness is None:
+            base_brightness = 0.3
+
+        new_canvas = self.create_pulsing_canvas(intensity, base_brightness)
+
+        if context:
+            self.set_canvas(new_canvas, context)
+        else:
+            # Just update the canvas without GL setup (will need setup later)
+            self.canvas.exit_recursive()
+            self.canvas = new_canvas
+
+    def set_subtle_pulse(self, context=None):
+        """Switch to subtle pulsing effect"""
+        self.set_pulse_intensity(intensity=0.4, base_brightness=0.6, context=context)
+
+    def set_dramatic_pulse(self, context=None):
+        """Switch to dramatic pulsing effect"""
+        self.set_pulse_intensity(intensity=1.2, base_brightness=0.2, context=context)
+
+    def set_static_video(self, context=None):
+        """Switch to static video without pulsing"""
+        static_canvas = LayerCompose(Black(), VideoPlayer(fn_group="bg"))
+        if context:
+            self.set_canvas(static_canvas, context)
+        else:
+            self.canvas.exit_recursive()
+            self.canvas = static_canvas
 
     def cleanup(self):
         """Clean up resources"""

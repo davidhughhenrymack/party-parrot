@@ -13,6 +13,8 @@ Launch tests with `just test`
 Launch main app with `just launch`
 Add major new features to the `Justfile`
 
+Don't add readme files unless asked to.
+
 ## Typing
 We use beartype to enforce types.
 Decorate classes and lone methods with @beartype. Use unit tests to provide simple testing of this typing.
