@@ -174,26 +174,27 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             )
 
         if not self.quad_vao:
-            # Create fullscreen quad
+            # Create fullscreen quad with corrected texture coordinates
+            # Flip V coordinates to match video frame orientation (0,0 at top-left)
             vertices = np.array(
                 [
                     # Position  # TexCoord
                     -1.0,
                     -1.0,
                     0.0,
-                    1.0,  # Bottom-left
+                    0.0,  # Bottom-left -> (0,0) in texture
                     1.0,
                     -1.0,
                     1.0,
-                    1.0,  # Bottom-right
+                    0.0,  # Bottom-right -> (1,0) in texture
                     -1.0,
                     1.0,
                     0.0,
-                    0.0,  # Top-left
+                    1.0,  # Top-left -> (0,1) in texture
                     1.0,
                     1.0,
                     1.0,
-                    0.0,  # Top-right
+                    1.0,  # Top-right -> (1,1) in texture
                 ],
                 dtype=np.float32,
             )
