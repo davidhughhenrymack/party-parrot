@@ -15,6 +15,7 @@ from parrot.vj.nodes.layer_compose import LayerCompose
 from parrot.vj.nodes.brightness_pulse import BrightnessPulse
 from parrot.vj.nodes.text_renderer import TextRenderer
 from parrot.vj.nodes.camera_zoom import CameraZoom
+from parrot.vj.nodes.multiply_compose import MultiplyCompose
 
 
 @beartype
@@ -27,18 +28,23 @@ class VJDirector:
     def __init__(self):
         # Create a pulsing video canvas by default
         video_player = VideoPlayer(fn_group="bg")
-        pulsing_video = BrightnessPulse(video_player)
-        red = StaticColor(color=(1.0, 0.0, 0.0))
-        red_pulse = BrightnessPulse(red, signal=FrameSignal.freq_high)
-        red_pulse = SaturationPulse(red_pulse, signal=FrameSignal.freq_low)
+        pulsing_video = BrightnessPulse(video_player, signal=FrameSignal.freq_low)
 
+        # Create text renderer with white text on black background (perfect for masking)
         text_renderer = TextRenderer(
-            text="DEAD\nSEXY", font_name="The Sonnyfive", font_size=120
+            text="DEAD\nSEXY",
+            font_name="The Sonnyfive",
+            font_size=140,
+            text_color=(255, 255, 255),  # White text
+            bg_color=(0, 0, 0),  # Black background
         )
-        text_renderer = BrightnessPulse(text_renderer, signal=FrameSignal.freq_high)
-        text_renderer = CameraZoom(text_renderer, signal=FrameSignal.freq_low)
+        text_renderer = BrightnessPulse(text_renderer, signal=FrameSignal.freq_low)
+        text_renderer = CameraZoom(text_renderer, signal=FrameSignal.freq_high)
 
-        self.canvas: BaseInterpretationNode = CameraZoom(pulsing_video)
+        # Multiply video with text mask - white text shows video, black background hides it
+        text_masked_video = MultiplyCompose(pulsing_video, text_renderer)
+
+        self.canvas: BaseInterpretationNode = CameraZoom(text_masked_video)
 
         self.last_shift_time = time.time()
         self.shift_count = 0
