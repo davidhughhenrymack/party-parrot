@@ -1,215 +1,246 @@
 #!/usr/bin/env python3
 
-import numpy as np
+import struct
 import moderngl as mgl
-from typing import List
+from typing import List, Optional, Tuple
+from enum import Enum
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
+from parrot.vj.constants import DEFAULT_WIDTH, DEFAULT_HEIGHT
+
+
+class BlendMode(Enum):
+    """Blend modes for layer composition"""
+
+    NORMAL = "normal"  # Standard alpha blending
+    ADDITIVE = "additive"  # Additive blending (for bright effects like lasers)
+    MULTIPLY = "multiply"  # Multiplicative blending (for masks)
+    SCREEN = "screen"  # Screen blending (for overlays)
+
+
+@beartype
+class LayerSpec:
+    """Specification for a layer in the composition"""
+
+    def __init__(
+        self,
+        node: BaseInterpretationNode,
+        blend_mode: BlendMode = BlendMode.NORMAL,
+        opacity: float = 1.0,
+    ):
+        self.node = node
+        self.blend_mode = blend_mode
+        self.opacity = opacity
 
 
 @beartype
 class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     """
-    A composition node that layers multiple effects and video sources.
-    Composites layers using their alpha channels for proper blending.
+    A composition node that layers multiple effects and video sources with different blend modes.
+    Supports alpha, additive, multiply, and screen blending modes.
     """
 
-    def __init__(self, *layers: BaseInterpretationNode):
-        # Pass layers as children to super - this handles enter/exit/generate recursively
-        super().__init__(list(layers))
-        self.layers = list(layers)
-        self.framebuffer: mgl.Framebuffer = None
-        self.texture: mgl.Texture = None
-        self.shader_program: mgl.Program = None
-        self.quad_vao: mgl.VertexArray = None
+    def __init__(
+        self,
+        *layer_specs: LayerSpec,
+        width: int = DEFAULT_WIDTH,
+        height: int = DEFAULT_HEIGHT
+    ):
+        # Extract nodes for children management
+        nodes = [spec.node for spec in layer_specs]
+        super().__init__(nodes)
+
+        self.layer_specs = list(layer_specs)
+        self.width = width
+        self.height = height
+
+        # GL resources
+        self.final_framebuffer: Optional[mgl.Framebuffer] = None
+        self.final_texture: Optional[mgl.Texture] = None
+        self.quad_program: Optional[mgl.Program] = None
+        self.quad_vao: Optional[mgl.VertexArray] = None
+        self._context: Optional[mgl.Context] = None
 
     def enter(self, context: mgl.Context):
-        """Initialize compositing resources - children are handled by base class"""
-        self._setup_gl_resources(context)
+        """Initialize compositing resources"""
+        self._context = context
+        self._create_fullscreen_quad(context)
+
+        # Create final compositing framebuffer
+        self.final_texture = context.texture((self.width, self.height), 4)  # RGBA
+        self.final_framebuffer = context.framebuffer(
+            color_attachments=[self.final_texture]
+        )
 
     def exit(self):
-        """Clean up compositing resources - children are handled by base class"""
-        if self.framebuffer:
-            self.framebuffer.release()
-            self.framebuffer = None
-        if self.texture:
-            self.texture.release()
-            self.texture = None
-        if self.shader_program:
-            self.shader_program.release()
-            self.shader_program = None
+        """Clean up compositing resources"""
+        if self.final_framebuffer:
+            self.final_framebuffer.release()
+        if self.final_texture:
+            self.final_texture.release()
+        if self.quad_program:
+            self.quad_program.release()
         if self.quad_vao:
             self.quad_vao.release()
-            self.quad_vao = None
+        self._context = None
 
     def generate(self, vibe: Vibe):
         """Generate all layers - handled by base class recursive call"""
         pass
 
-    def _setup_gl_resources(
-        self, context: mgl.Context, width: int = 1920, height: int = 1080
+    def _create_fullscreen_quad(self, context: mgl.Context):
+        """Create a fullscreen quad for texture compositing"""
+        # Vertex shader for fullscreen quad
+        vertex_shader = """
+        #version 330 core
+        in vec2 position;
+        out vec2 uv;
+        
+        void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+            uv = position * 0.5 + 0.5;
+        }
+        """
+
+        # Fragment shader for texture compositing with blend modes
+        fragment_shader = """
+        #version 330 core
+        in vec2 uv;
+        uniform sampler2D texture0;
+        uniform float opacity;
+        uniform int blend_mode;  // 0=normal, 1=additive, 2=multiply, 3=screen
+        out vec4 color;
+        
+        void main() {
+            vec4 tex_color = texture(texture0, uv);
+            
+            // Apply opacity
+            tex_color.a *= opacity;
+            
+            // Set color based on blend mode (alpha handled by OpenGL blending)
+            if (blend_mode == 2) {
+                // Multiply: darken the image for masking
+                color = vec4(tex_color.rgb, tex_color.a);
+            } else {
+                // Normal, additive, screen: use texture as-is
+                color = tex_color;
+            }
+        }
+        """
+
+        # Create shader program
+        self.quad_program = context.program(
+            vertex_shader=vertex_shader, fragment_shader=fragment_shader
+        )
+
+        # Create fullscreen quad vertices
+        quad_vertices = [
+            -1.0,
+            -1.0,  # Bottom-left
+            1.0,
+            -1.0,  # Bottom-right
+            -1.0,
+            1.0,  # Top-left
+            1.0,
+            1.0,  # Top-right
+        ]
+
+        # Create vertex buffer and vertex array
+        quad_data = struct.pack("8f", *quad_vertices)
+        quad_buffer = context.buffer(quad_data)
+        self.quad_vao = context.vertex_array(
+            self.quad_program, [(quad_buffer, "2f", "position")]
+        )
+
+    def _get_blend_func(self, blend_mode: BlendMode) -> Tuple[int, int]:
+        """Get OpenGL blend function for blend mode"""
+        if blend_mode == BlendMode.NORMAL:
+            return mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+        elif blend_mode == BlendMode.ADDITIVE:
+            return mgl.SRC_ALPHA, mgl.ONE
+        elif blend_mode == BlendMode.MULTIPLY:
+            return mgl.DST_COLOR, mgl.ZERO
+        elif blend_mode == BlendMode.SCREEN:
+            return mgl.ONE_MINUS_DST_COLOR, mgl.ONE
+        else:
+            return mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+
+    def _get_blend_mode_int(self, blend_mode: BlendMode) -> int:
+        """Get integer value for blend mode uniform"""
+        if blend_mode == BlendMode.NORMAL:
+            return 0
+        elif blend_mode == BlendMode.ADDITIVE:
+            return 1
+        elif blend_mode == BlendMode.MULTIPLY:
+            return 2
+        elif blend_mode == BlendMode.SCREEN:
+            return 3
+        else:
+            return 0
+
+    def _composite_layer(
+        self,
+        context: mgl.Context,
+        texture: mgl.Texture,
+        blend_mode: BlendMode,
+        opacity: float,
     ):
-        """Setup OpenGL resources for layer compositing"""
-        if not self.texture:
-            self.texture = context.texture(
-                (width, height), 4
-            )  # RGBA texture for alpha blending
-            self.framebuffer = context.framebuffer(color_attachments=[self.texture])
+        """Composite a layer texture onto the final framebuffer"""
+        if not self.quad_program or not self.quad_vao:
+            return
 
-        if not self.shader_program:
-            # Vertex shader for fullscreen quad
-            vertex_shader = """
-            #version 330 core
-            in vec2 in_position;
-            in vec2 in_texcoord;
-            out vec2 uv;
-            
-            void main() {
-                gl_Position = vec4(in_position, 0.0, 1.0);
-                uv = in_texcoord;
-            }
-            """
+        # Get blend function
+        blend_src, blend_dst = self._get_blend_func(blend_mode)
 
-            # Fragment shader for alpha blending
-            fragment_shader = """
-            #version 330 core
-            in vec2 uv;
-            out vec4 color;
-            uniform sampler2D base_texture;
-            uniform sampler2D overlay_texture;
-            uniform float overlay_alpha;
-            
-            void main() {
-                vec4 base = texture(base_texture, uv);
-                vec4 overlay = texture(overlay_texture, uv);
-                
-                // Alpha blending: result = overlay * overlay.a + base * (1 - overlay.a)
-                float alpha = overlay.a * overlay_alpha;
-                color = vec4(
-                    overlay.rgb * alpha + base.rgb * (1.0 - alpha),
-                    max(base.a, alpha)
-                );
-            }
-            """
+        # Set up blending
+        context.enable(mgl.BLEND)
+        context.blend_func = blend_src, blend_dst
 
-            self.shader_program = context.program(
-                vertex_shader=vertex_shader, fragment_shader=fragment_shader
-            )
+        # Bind texture and set uniforms
+        texture.use(location=0)
+        self.quad_program["texture0"] = 0
+        self.quad_program["opacity"] = opacity
+        self.quad_program["blend_mode"] = self._get_blend_mode_int(blend_mode)
 
-        if not self.quad_vao:
-            # Create fullscreen quad
-            vertices = np.array(
-                [
-                    # Position  # TexCoord
-                    -1.0,
-                    -1.0,
-                    0.0,
-                    0.0,  # Bottom-left
-                    1.0,
-                    -1.0,
-                    1.0,
-                    0.0,  # Bottom-right
-                    -1.0,
-                    1.0,
-                    0.0,
-                    1.0,  # Top-left
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,  # Top-right
-                ],
-                dtype=np.float32,
-            )
+        # Render to final framebuffer
+        self.final_framebuffer.use()
+        self.quad_vao.render(mgl.TRIANGLE_STRIP)
 
-            vbo = context.buffer(vertices.tobytes())
-            self.quad_vao = context.vertex_array(
-                self.shader_program, [(vbo, "2f 2f", "in_position", "in_texcoord")]
-            )
+        # Disable blending
+        context.disable(mgl.BLEND)
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
-    ) -> mgl.Framebuffer:
-        """
-        Render all layers and composite them using alpha blending.
-        Layers are composited from bottom to top (first layer is background).
-        """
-        if not self.layers:
-            # Return empty black framebuffer
-            self.framebuffer.use()
-            context.clear(0.0, 0.0, 0.0, 1.0)
-            return self.framebuffer
+    ) -> Optional[mgl.Framebuffer]:
+        """Render all layers and composite them with their specified blend modes"""
+        if not self.final_framebuffer or not self.layer_specs:
+            return None
 
-        # Render first layer as base
-        base_framebuffer = self.layers[0].render(frame, scheme, context)
+        # Clear final framebuffer to transparent black
+        self.final_framebuffer.use()
+        context.clear(0.0, 0.0, 0.0, 0.0)
 
-        if len(self.layers) == 1:
-            # Only one layer, return it directly
-            return base_framebuffer
+        # Render and composite each layer
+        for i, layer_spec in enumerate(self.layer_specs):
+            # Render the layer
+            layer_result = layer_spec.node.render(frame, scheme, context)
 
-        # Determine the output size from the first layer
-        output_width = 1920
-        output_height = 1080
-        if base_framebuffer:
-            output_width = base_framebuffer.width
-            output_height = base_framebuffer.height
-
-        # Ensure our output framebuffer matches the base layer size
-        if (
-            not self.framebuffer
-            or self.framebuffer.width != output_width
-            or self.framebuffer.height != output_height
-        ):
-            # Clean up old resources
-            if self.framebuffer:
-                self.framebuffer.release()
-            if self.texture:
-                self.texture.release()
-            self.framebuffer = None
-            self.texture = None
-
-            # Setup with output dimensions
-            self._setup_gl_resources(context, output_width, output_height)
-
-        # Start with the base layer
-        current_result = base_framebuffer
-
-        # Composite each additional layer on top
-        for i in range(1, len(self.layers)):
-            overlay_framebuffer = self.layers[i].render(frame, scheme, context)
-
-            if overlay_framebuffer is None:
+            if not layer_result or not layer_result.color_attachments:
                 continue
 
-            # Use our main framebuffer for compositing
-            temp_framebuffer = self.framebuffer
+            if i == 0:
+                # First layer: copy directly (base layer)
+                context.copy_framebuffer(self.final_framebuffer, layer_result)
+            else:
+                # Subsequent layers: composite with blend mode
+                self._composite_layer(
+                    context,
+                    layer_result.color_attachments[0],
+                    layer_spec.blend_mode,
+                    layer_spec.opacity,
+                )
 
-            # Composite overlay onto current result
-            temp_framebuffer.use()
-            context.clear(0.0, 0.0, 0.0, 0.0)
-
-            # Enable blending
-            context.enable(mgl.BLEND)
-            context.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
-
-            # Bind textures
-            if current_result and current_result.color_attachments:
-                current_result.color_attachments[0].use(0)
-            if overlay_framebuffer.color_attachments:
-                overlay_framebuffer.color_attachments[0].use(1)
-
-            # Set uniforms and render
-            self.shader_program["base_texture"] = 0
-            self.shader_program["overlay_texture"] = 1
-            self.shader_program["overlay_alpha"] = 1.0
-
-            self.quad_vao.render(mgl.TRIANGLE_STRIP)
-
-            context.disable(mgl.BLEND)
-
-            # Update current result
-            current_result = temp_framebuffer
-
-        return current_result
+        return self.final_framebuffer

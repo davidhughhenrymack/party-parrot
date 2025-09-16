@@ -1,144 +1,253 @@
 #!/usr/bin/env python3
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
-from beartype import beartype
+import moderngl as mgl
+import numpy as np
+from unittest.mock import Mock
 
-from parrot.vj.nodes.layer_compose import LayerCompose
-from parrot.graph.BaseInterpretationNode import BaseInterpretationNode
-from parrot.director.frame import Frame
+from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
+from parrot.vj.nodes.black import Black
+from parrot.vj.nodes.video_player import VideoPlayer
+from parrot.vj.nodes.text_renderer import TextRenderer
+from parrot.vj.nodes.volumetric_beam import VolumetricBeam
+from parrot.vj.nodes.laser_array import LaserArray
+from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
-from parrot.director.mode import Mode
 from parrot.graph.BaseInterpretationNode import Vibe
+from parrot.director.mode import Mode
 
 
-@beartype
-class MockLayer(BaseInterpretationNode):
-    """Mock layer for testing"""
-
-    def __init__(self, name: str):
-        super().__init__([])
-        self.name = name
-        self.entered = False
-        self.exited = False
-        self.generated = False
-
-    def enter(self, context):
-        self.entered = True
-
-    def exit(self):
-        self.exited = True
-
-    def generate(self, vibe: Vibe):
-        self.generated = True
-
-    def render(self, frame: Frame, scheme: ColorScheme, context):
-        mock_framebuffer = Mock()
-        mock_framebuffer.color_attachments = [Mock()]
-        return mock_framebuffer
-
-
-@beartype
 class TestLayerCompose:
-    """Test cases for LayerCompose node"""
+    """Test LayerCompose functionality"""
 
-    def test_init(self):
+    def test_initialization(self):
         """Test LayerCompose initialization"""
-        layer1 = MockLayer("layer1")
-        layer2 = MockLayer("layer2")
+        black = Black()
+        video = VideoPlayer(fn_group="bg")
 
-        compose = LayerCompose(layer1, layer2)
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),
+            LayerSpec(video, BlendMode.NORMAL),
+        )
 
-        assert compose.children == [layer1, layer2]
-        assert compose.layers == [layer1, layer2]
-        assert compose.framebuffer is None
-        assert compose.texture is None
+        assert len(layer_compose.layer_specs) == 2
+        assert layer_compose.layer_specs[0].blend_mode == BlendMode.NORMAL
+        assert layer_compose.layer_specs[1].blend_mode == BlendMode.NORMAL
+        assert layer_compose.width == 1280  # DEFAULT_WIDTH
+        assert layer_compose.height == 720  # DEFAULT_HEIGHT
 
-    def test_init_empty(self):
-        """Test LayerCompose with no layers"""
-        compose = LayerCompose()
+    def test_blend_modes(self):
+        """Test different blend modes"""
+        black = Black()
+        video = VideoPlayer(fn_group="bg")
 
-        assert compose.children == []
-        assert compose.layers == []
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),
+            LayerSpec(video, BlendMode.ADDITIVE, opacity=0.8),
+        )
 
-    def test_enter_exit_lifecycle(self):
-        """Test enter and exit clean up resources"""
-        compose = LayerCompose()
+        assert layer_compose.layer_specs[1].blend_mode == BlendMode.ADDITIVE
+        assert layer_compose.layer_specs[1].opacity == 0.8
 
-        # Test that resources start as None
-        assert compose.framebuffer is None
-        assert compose.texture is None
-        assert compose.shader_program is None
-        assert compose.quad_vao is None
+    def test_blend_func_mapping(self):
+        """Test OpenGL blend function mapping"""
+        layer_compose = LayerCompose()
 
-        # Test exit with no resources (should not crash)
-        compose.exit()
+        # Test normal blending
+        src, dst = layer_compose._get_blend_func(BlendMode.NORMAL)
+        assert src == mgl.SRC_ALPHA
+        assert dst == mgl.ONE_MINUS_SRC_ALPHA
 
-        # Test exit with mock resources
-        mock_framebuffer = Mock()
-        mock_texture = Mock()
-        mock_shader_program = Mock()
-        mock_quad_vao = Mock()
+        # Test additive blending
+        src, dst = layer_compose._get_blend_func(BlendMode.ADDITIVE)
+        assert src == mgl.SRC_ALPHA
+        assert dst == mgl.ONE
 
-        compose.framebuffer = mock_framebuffer
-        compose.texture = mock_texture
-        compose.shader_program = mock_shader_program
-        compose.quad_vao = mock_quad_vao
+        # Test multiply blending
+        src, dst = layer_compose._get_blend_func(BlendMode.MULTIPLY)
+        assert src == mgl.DST_COLOR
+        assert dst == mgl.ZERO
 
-        # Exit should clean up resources
-        compose.exit()
+    def test_blend_mode_int_mapping(self):
+        """Test blend mode integer mapping for shaders"""
+        layer_compose = LayerCompose()
 
-        mock_framebuffer.release.assert_called_once()
-        mock_texture.release.assert_called_once()
-        mock_shader_program.release.assert_called_once()
-        mock_quad_vao.release.assert_called_once()
+        assert layer_compose._get_blend_mode_int(BlendMode.NORMAL) == 0
+        assert layer_compose._get_blend_mode_int(BlendMode.ADDITIVE) == 1
+        assert layer_compose._get_blend_mode_int(BlendMode.MULTIPLY) == 2
+        assert layer_compose._get_blend_mode_int(BlendMode.SCREEN) == 3
 
-        assert compose.framebuffer is None
-        assert compose.texture is None
-        assert compose.shader_program is None
-        assert compose.quad_vao is None
+    def test_render_without_gl_context(self):
+        """Test render without GL context returns None"""
+        black = Black()
+        layer_compose = LayerCompose(LayerSpec(black, BlendMode.NORMAL))
 
-    def test_generate(self):
-        """Test generate method"""
-        compose = LayerCompose()
-        vibe = Vibe(Mode.gentle)
+        frame = Mock(spec=Frame)
+        scheme = Mock(spec=ColorScheme)
+        context = Mock(spec=mgl.Context)
 
-        # Generate should not raise errors
-        compose.generate(vibe)
+        result = layer_compose.render(frame, scheme, context)
+        assert result is None  # No GL setup
 
-    def test_render_logic(self):
-        """Test render method logic without mocking GL context"""
-        compose = LayerCompose()
+    @pytest.mark.skipif(True, reason="Requires OpenGL context")
+    def test_layer_composition_with_gl(self):
+        """Test actual layer composition with OpenGL context"""
+        # This test would require a real OpenGL context
+        # Skip for now as it's complex to set up in CI
+        pass
 
-        # Test that GL resources are initially None
-        assert compose.framebuffer is None
-        assert compose.texture is None
-        assert compose.shader_program is None
-        assert compose.quad_vao is None
 
-        # Test that setting resources works
-        mock_framebuffer = Mock()
-        compose.framebuffer = mock_framebuffer
-        assert compose.framebuffer == mock_framebuffer
+class TestSceneElementComposition:
+    """Test each major scene element compositing on Black base layer"""
 
-    def test_layer_count_logic(self):
-        """Test layer counting and access logic"""
-        layer1 = MockLayer("layer1")
-        layer2 = MockLayer("layer2")
-        compose = LayerCompose(layer1, layer2)
+    def test_black_base_layer(self):
+        """Test Black node as base layer"""
+        black = Black(width=100, height=100)
 
-        # Test layer count
-        assert len(compose.layers) == 2
-        assert compose.layers[0] == layer1
-        assert compose.layers[1] == layer2
+        # Test initialization
+        assert black.width == 100
+        assert black.height == 100
+        assert black.framebuffer is None
+        assert black.texture is None
 
-    def test_children_handled_by_base_class(self):
-        """Test that children are properly passed to base class for recursive handling"""
-        layer1 = MockLayer("layer1")
-        layer2 = MockLayer("layer2")
+    def test_video_on_black_composition(self):
+        """Test video compositing on black background"""
+        black = Black()
+        video = VideoPlayer(fn_group="bg")
 
-        compose = LayerCompose(layer1, layer2)
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),  # Black base
+            LayerSpec(video, BlendMode.NORMAL),  # Video on top
+        )
 
-        # Verify children are set correctly for base class recursive methods
-        assert compose.all_inputs == [layer1, layer2]
-        assert compose.children == [layer1, layer2]
+        # Verify layer setup
+        assert len(layer_compose.layer_specs) == 2
+        assert isinstance(layer_compose.layer_specs[0].node, Black)
+        assert isinstance(layer_compose.layer_specs[1].node, VideoPlayer)
+        assert layer_compose.layer_specs[0].blend_mode == BlendMode.NORMAL
+        assert layer_compose.layer_specs[1].blend_mode == BlendMode.NORMAL
+
+    def test_text_on_black_composition(self):
+        """Test text compositing on black background"""
+        black = Black()
+        text = TextRenderer(
+            text="TEST",
+            font_name="Arial",
+            font_size=48,
+            text_color=(255, 255, 255),
+            bg_color=(0, 0, 0),
+        )
+
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),  # Black base
+            LayerSpec(text, BlendMode.NORMAL),  # Text on top
+        )
+
+        # Verify layer setup
+        assert len(layer_compose.layer_specs) == 2
+        assert isinstance(layer_compose.layer_specs[0].node, Black)
+        assert isinstance(layer_compose.layer_specs[1].node, TextRenderer)
+
+    def test_volumetric_beams_on_black_composition(self):
+        """Test volumetric beams compositing on black background"""
+        black = Black()
+        beams = VolumetricBeam(
+            beam_count=3,
+            beam_length=10.0,
+            beam_width=0.3,
+            beam_intensity=2.0,
+            haze_density=0.8,
+            movement_speed=1.5,
+            color=(1.0, 0.8, 0.6),
+            signal=FrameSignal.freq_low,
+        )
+
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),  # Black base
+            LayerSpec(beams, BlendMode.NORMAL),  # Beams with alpha blending
+        )
+
+        # Verify layer setup
+        assert len(layer_compose.layer_specs) == 2
+        assert isinstance(layer_compose.layer_specs[0].node, Black)
+        assert isinstance(layer_compose.layer_specs[1].node, VolumetricBeam)
+        assert layer_compose.layer_specs[1].blend_mode == BlendMode.NORMAL
+
+    def test_laser_array_on_black_composition(self):
+        """Test laser array compositing on black background with additive blending"""
+        black = Black()
+        lasers = LaserArray(
+            laser_count=4,
+            array_radius=2.0,
+            laser_length=15.0,
+            laser_width=0.02,
+            fan_angle=1.57,  # 90 degrees
+            scan_speed=2.0,
+            strobe_frequency=0.0,
+            laser_intensity=1.5,
+            color=(0.0, 1.0, 0.0),
+            signal=FrameSignal.freq_high,
+        )
+
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),  # Black base
+            LayerSpec(lasers, BlendMode.ADDITIVE),  # Lasers with additive blending
+        )
+
+        # Verify layer setup
+        assert len(layer_compose.layer_specs) == 2
+        assert isinstance(layer_compose.layer_specs[0].node, Black)
+        assert isinstance(layer_compose.layer_specs[1].node, LaserArray)
+        assert layer_compose.layer_specs[1].blend_mode == BlendMode.ADDITIVE
+
+    def test_full_concert_stage_composition(self):
+        """Test full concert stage composition with all elements"""
+        black = Black()
+        video = VideoPlayer(fn_group="bg")
+        text = TextRenderer(text="CONCERT", font_size=64)
+        beams = VolumetricBeam(beam_count=4, signal=FrameSignal.freq_low)
+        lasers = LaserArray(laser_count=6, signal=FrameSignal.freq_high)
+
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),  # Black base
+            LayerSpec(video, BlendMode.NORMAL),  # Video background
+            LayerSpec(text, BlendMode.MULTIPLY),  # Text mask
+            LayerSpec(beams, BlendMode.NORMAL),  # Atmospheric beams
+            LayerSpec(lasers, BlendMode.ADDITIVE),  # Sharp laser effects
+        )
+
+        # Verify complete composition
+        assert len(layer_compose.layer_specs) == 5
+        assert layer_compose.layer_specs[0].blend_mode == BlendMode.NORMAL  # Black
+        assert layer_compose.layer_specs[1].blend_mode == BlendMode.NORMAL  # Video
+        assert layer_compose.layer_specs[2].blend_mode == BlendMode.MULTIPLY  # Text
+        assert layer_compose.layer_specs[3].blend_mode == BlendMode.NORMAL  # Beams
+        assert layer_compose.layer_specs[4].blend_mode == BlendMode.ADDITIVE  # Lasers
+
+    def test_layer_opacity_control(self):
+        """Test layer opacity control"""
+        black = Black()
+        video = VideoPlayer(fn_group="bg")
+
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL, opacity=1.0),
+            LayerSpec(video, BlendMode.NORMAL, opacity=0.7),  # 70% opacity
+        )
+
+        assert layer_compose.layer_specs[0].opacity == 1.0
+        assert layer_compose.layer_specs[1].opacity == 0.7
+
+    def test_children_management(self):
+        """Test that LayerCompose properly manages children nodes"""
+        black = Black()
+        video = VideoPlayer(fn_group="bg")
+
+        layer_compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),
+            LayerSpec(video, BlendMode.NORMAL),
+        )
+
+        # Children should be extracted from layer specs
+        assert len(layer_compose.children) == 2
+        assert layer_compose.children[0] is black
+        assert layer_compose.children[1] is video

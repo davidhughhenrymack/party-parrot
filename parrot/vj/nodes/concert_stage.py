@@ -15,6 +15,8 @@ from parrot.vj.nodes.camera_zoom import CameraZoom
 from parrot.vj.nodes.multiply_compose import MultiplyCompose
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
 from parrot.vj.nodes.laser_array import LaserArray
+from parrot.vj.nodes.black import Black
+from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 
 
 @beartype
@@ -25,24 +27,17 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     """
 
     def __init__(self):
-        # Create all stage components
-        canvas_2d, volumetric_beams, laser_array = self._create_stage_components()
+        # Create stage components and layer composition
+        self.layer_compose = self._create_layer_composition()
 
-        # Initialize with children - they will be managed recursively
-        super().__init__([canvas_2d, volumetric_beams, laser_array])
+        # Initialize with layer compose as single child
+        super().__init__([self.layer_compose])
 
-        # Store references for convenience
-        self.canvas_2d = canvas_2d
-        self.volumetric_beams = volumetric_beams
-        self.laser_array = laser_array
+    def _create_layer_composition(self):
+        """Create a LayerCompose with all stage components and proper blend modes"""
+        # Create black background as base layer
+        black_background = Black()
 
-        # Compositing framebuffer
-        self.final_framebuffer: Optional[mgl.Framebuffer] = None
-        self.final_texture: Optional[mgl.Texture] = None
-        self._context: Optional[mgl.Context] = None
-
-    def _create_stage_components(self):
-        """Create all stage components: 2D canvas, volumetric beams, and laser array"""
         # Create 2D canvas with video, text, and effects
         video_player = VideoPlayer(fn_group="bg")
         pulsing_video = BrightnessPulse(video_player, signal=FrameSignal.freq_low)
@@ -61,19 +56,20 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Multiply video with text mask - white text shows video, black background hides it
         text_masked_video = MultiplyCompose(pulsing_video, text_renderer)
         canvas_2d = CameraZoom(text_masked_video)
+        self.canvas_2d = canvas_2d
 
         # Create 3D volumetric beams for atmospheric lighting
         volumetric_beams = VolumetricBeam(
             beam_count=6,
             beam_length=12.0,
             beam_width=0.4,
-            beam_intensity=1.2,
-            haze_density=0.8,
+            beam_intensity=2.5,  # Increased from 1.2 to make more visible
+            haze_density=0.9,  # Increased from 0.8 to make more visible
             movement_speed=1.8,
             color=(1.0, 0.8, 0.6),  # Warm concert lighting
             signal=FrameSignal.freq_low,  # React to bass
         )
-
+        self.volumetric_beams = volumetric_beams
         # Create 3D laser array for sharp laser effects
         laser_array = LaserArray(
             laser_count=8,
@@ -87,86 +83,30 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             color=(0.0, 1.0, 0.0),  # Classic green lasers
             signal=FrameSignal.freq_high,  # React to treble
         )
+        self.laser_array = laser_array
 
-        return canvas_2d, volumetric_beams, laser_array
-
-    def enter(self, context: mgl.Context):
-        """Initialize this node with GL context"""
-        self._context = context
-
-        # Create final compositing framebuffer
-        self.final_texture = context.texture((1280, 720), 4)  # RGBA
-        self.final_framebuffer = context.framebuffer(
-            color_attachments=[self.final_texture]
+        # Create layer composition with proper blend modes
+        return LayerCompose(
+            LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
+            LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
+            LayerSpec(volumetric_beams, BlendMode.NORMAL),  # Beams: alpha blending
+            LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
         )
 
-    def exit(self):
-        """Clean up this node's resources"""
-        # Clean up compositing resources
-        if self.final_framebuffer:
-            self.final_framebuffer.release()
-        if self.final_texture:
-            self.final_texture.release()
+    def enter(self, context: mgl.Context):
+        """Initialize this node with GL context - children handled by base class"""
+        pass
 
-        self._context = None
+    def exit(self):
+        """Clean up this node's resources - children handled by base class"""
+        pass
 
     def generate(self, vibe: Vibe):
-        """Generate new configurations for this node based on vibe"""
-        # Mode-specific adjustments are now handled by each fixture's generate method
+        """Generate new configurations - children handled by base class"""
         pass
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> Optional[mgl.Framebuffer]:
-        """Render the complete concert stage with 2D and 3D elements"""
-        if not self.final_framebuffer:
-            return None
-
-        # Render to final compositing framebuffer
-        self.final_framebuffer.use()
-        context.clear(0.0, 0.0, 0.0, 1.0)  # Clear to black
-
-        # First render the 2D canvas content
-        canvas_result = self.canvas_2d.render(frame, scheme, context)
-
-        # Blit 2D canvas to final framebuffer as base layer
-        if canvas_result and canvas_result.color_attachments:
-            context.copy_framebuffer(self.final_framebuffer, canvas_result)
-
-        # Render 3D volumetric beams (atmospheric lighting)
-        beams_result = self.volumetric_beams.render(frame, scheme, context)
-
-        # Composite volumetric beams over 2D canvas with alpha blending
-        if beams_result and beams_result.color_attachments:
-            context.enable(mgl.BLEND)
-            context.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
-
-            # Use texture to render a fullscreen quad with blending
-            beams_texture = beams_result.color_attachments[0]
-            beams_texture.use(location=0)
-
-            # TODO: Implement proper fullscreen quad rendering with blending
-            # For now, copy the framebuffer content
-            context.copy_framebuffer(self.final_framebuffer, beams_result)
-
-            context.disable(mgl.BLEND)
-
-        # Render laser array (sharp laser effects)
-        laser_result = self.laser_array.render(frame, scheme, context)
-
-        # Composite laser array over everything with additive blending for bright laser effects
-        if laser_result and laser_result.color_attachments:
-            context.enable(mgl.BLEND)
-            context.blend_func = mgl.SRC_ALPHA, mgl.ONE  # Additive blending for lasers
-
-            # Use texture to render a fullscreen quad with additive blending
-            laser_texture = laser_result.color_attachments[0]
-            laser_texture.use(location=0)
-
-            # TODO: Implement proper fullscreen quad rendering with additive blending
-            # For now, copy the framebuffer content
-            context.copy_framebuffer(self.final_framebuffer, laser_result)
-
-            context.disable(mgl.BLEND)
-
-        return self.final_framebuffer
+        """Render the complete concert stage using LayerCompose"""
+        return self.layer_compose.render(frame, scheme, context)

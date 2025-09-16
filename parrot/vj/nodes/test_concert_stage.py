@@ -60,14 +60,14 @@ class TestConcertStage:
         stage.laser_array.generate(rave_vibe)
         stage.volumetric_beams.generate(rave_vibe)
         assert stage.laser_array.strobe_frequency == 8.0
-        assert stage.volumetric_beams.beam_intensity == 1.5
+        assert stage.volumetric_beams.beam_intensity == 3.5  # Updated for visibility
 
         # Test gentle mode
         gentle_vibe = Vibe(Mode.gentle)
         stage.laser_array.generate(gentle_vibe)
         stage.volumetric_beams.generate(gentle_vibe)
         assert stage.laser_array.strobe_frequency == 0.0
-        assert stage.volumetric_beams.beam_intensity == 0.8
+        assert stage.volumetric_beams.beam_intensity == 2.0  # Updated for visibility
 
         # Test blackout mode
         blackout_vibe = Vibe(Mode.blackout)
@@ -91,7 +91,7 @@ class TestConcertStage:
         stage.generate_recursive(gentle_vibe)
         # Should have adjusted lighting for gentle mode via children's generate methods
         assert stage.laser_array.strobe_frequency == 0.0
-        assert stage.volumetric_beams.beam_intensity == 0.8
+        assert stage.volumetric_beams.beam_intensity == 2.0  # Updated for visibility
 
     def test_direct_component_control(self):
         """Test direct control of lighting components"""
@@ -145,22 +145,16 @@ class TestConcertStage:
         # Test just this node's enter method (not recursive)
         stage.enter(context)
 
-        # Should have created GL resources for this node
-        assert stage.final_texture is not None
-        assert stage.final_framebuffer is not None
-        assert stage._context is not None
-
-        # Mock release methods
-        mock_texture.release = Mock()
-        mock_framebuffer.release = Mock()
+        # ConcertStage no longer has its own GL resources - they're in LayerCompose
+        # The enter method should do nothing for ConcertStage itself
+        assert not hasattr(stage, "final_texture")
+        assert not hasattr(stage, "_context")
 
         # Test just this node's exit method (not recursive)
         stage.exit()
 
-        # Should have released GL resources
-        mock_texture.release.assert_called_once()
-        mock_framebuffer.release.assert_called_once()
-        assert stage._context is None
+        # ConcertStage exit should do nothing - resources managed by LayerCompose
+        # No assertions needed as there are no resources to clean up
 
     def test_signal_configuration(self):
         """Test that components use appropriate audio signals"""
@@ -181,8 +175,8 @@ class TestConcertStage:
         assert beams.beam_count == 6
         assert beams.beam_length == 12.0
         assert beams.beam_width == 0.4
-        assert beams.beam_intensity == 1.2
-        assert beams.haze_density == 0.8
+        assert beams.beam_intensity == 2.5  # Updated for visibility
+        assert beams.haze_density == 0.9  # Updated for visibility
         assert beams.movement_speed == 1.8
 
         # Laser array defaults

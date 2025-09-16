@@ -57,11 +57,11 @@ class TestVJIntegration:
         # This should not be wrapped in try/catch - let GL errors fail hard
         director.setup(ctx)
 
-        # Verify GL resources were created
+        # Verify GL resources were created - now managed by LayerCompose
         concert_stage = director.get_concert_stage()
-        assert concert_stage._context is not None
-        assert concert_stage.final_framebuffer is not None
-        assert concert_stage.final_texture is not None
+        assert concert_stage.layer_compose._context is not None
+        assert concert_stage.layer_compose.final_framebuffer is not None
+        assert concert_stage.layer_compose.final_texture is not None
 
         # Verify 3D components have GL resources
         assert concert_stage.volumetric_beams._context is not None
@@ -180,15 +180,15 @@ class TestVJIntegration:
 
         director.setup(ctx)
 
-        # Verify resources exist
+        # Verify resources exist - now managed by LayerCompose
         concert_stage = director.get_concert_stage()
-        assert concert_stage._context is not None
+        assert concert_stage.layer_compose._context is not None
 
         # This should not be wrapped in try/catch - let cleanup errors fail hard
         director.cleanup()
 
-        # Verify resources were cleaned up
-        assert concert_stage._context is None
+        # Verify resources were cleaned up - now managed by LayerCompose
+        assert concert_stage.layer_compose._context is None
 
     def test_concurrent_access_hard_fail(self):
         """Test concurrent access patterns - should hard fail on race conditions"""
@@ -316,9 +316,9 @@ class TestVJErrorConditions:
         # This should hard fail if framebuffers can't be created
         director.setup(ctx)
 
-        # Verify framebuffers exist
+        # Verify framebuffers exist - now managed by LayerCompose
         concert_stage = director.get_concert_stage()
-        assert concert_stage.final_framebuffer is not None
+        assert concert_stage.layer_compose.final_framebuffer is not None
         assert concert_stage.volumetric_beams.framebuffer is not None
         assert concert_stage.laser_array.framebuffer is not None
 

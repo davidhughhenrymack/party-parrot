@@ -172,11 +172,11 @@ class VolumetricBeam(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer])
         """Generate new beam configurations based on vibe"""
         # Adjust beam intensity based on mode
         if vibe.mode == Mode.rave:
-            self.beam_intensity = 1.5
-            self.haze_density = 0.9
+            self.beam_intensity = 3.5  # High energy, very visible
+            self.haze_density = 1.0
         elif vibe.mode == Mode.gentle:
-            self.beam_intensity = 0.8
-            self.haze_density = 0.6
+            self.beam_intensity = 2.0  # Increased from 0.8 to be visible
+            self.haze_density = 0.8  # Increased from 0.6 to be visible
         elif vibe.mode == Mode.blackout:
             self.beam_intensity = 0.0
             self.haze_density = 0.0
