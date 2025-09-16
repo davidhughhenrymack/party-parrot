@@ -85,14 +85,14 @@ class VolumetricBeam(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer])
 
     def __init__(
         self,
-        beam_count: int = 4,
-        beam_length: float = 10.0,
-        beam_width: float = 0.3,
-        beam_intensity: float = 1.0,
-        haze_density: float = 0.8,
-        movement_speed: float = 2.0,
-        color: Tuple[float, float, float] = (1.0, 0.8, 0.6),  # Warm white
-        signal: FrameSignal = FrameSignal.freq_all,
+        beam_count: int = 6,
+        beam_length: float = 12.0,
+        beam_width: float = 0.4,
+        beam_intensity: float = 2.5,
+        haze_density: float = 0.9,
+        movement_speed: float = 1.8,
+        color: Tuple[float, float, float] = (1.0, 0.8, 0.6),  # Warm concert lighting
+        signal: FrameSignal = FrameSignal.freq_low,
         width: int = DEFAULT_WIDTH,
         height: int = DEFAULT_HEIGHT,
     ):
@@ -523,19 +523,17 @@ class VolumetricBeam(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer])
                 beam_model.astype(np.float32).tobytes()
             )
 
-            # Only set uniforms that are actually used in the shader
-            if "beam_origin" in self.beam_program:
+            # Set shader uniforms
+            try:
                 self.beam_program["beam_origin"] = tuple(beam.position)
-            if "beam_length" in self.beam_program:
                 self.beam_program["beam_length"] = self.beam_length
-            if "beam_color" in self.beam_program:
                 self.beam_program["beam_color"] = self.color
-            if "beam_intensity" in self.beam_program:
                 self.beam_program["beam_intensity"] = dynamic_intensity
-            if "haze_density" in self.beam_program:
                 self.beam_program["haze_density"] = self.haze_density
-            if "camera_pos" in self.beam_program:
                 self.beam_program["camera_pos"] = tuple(camera_pos)
+            except KeyError as e:
+                # If a uniform doesn't exist, that's okay - just skip it
+                pass
 
             # Render beam geometry
             self.beam_vao.render()

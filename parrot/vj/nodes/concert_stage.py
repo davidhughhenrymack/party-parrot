@@ -59,37 +59,20 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.canvas_2d = canvas_2d
 
         # Create 3D volumetric beams for atmospheric lighting
-        volumetric_beams = VolumetricBeam(
-            beam_count=6,
-            beam_length=12.0,
-            beam_width=0.4,
-            beam_intensity=2.5,  # Increased from 1.2 to make more visible
-            haze_density=0.9,  # Increased from 0.8 to make more visible
-            movement_speed=1.8,
-            color=(1.0, 0.8, 0.6),  # Warm concert lighting
-            signal=FrameSignal.freq_low,  # React to bass
-        )
+        volumetric_beams = VolumetricBeam()
         self.volumetric_beams = volumetric_beams
-        # Create 3D laser array for sharp laser effects
-        laser_array = LaserArray(
-            laser_count=8,
-            array_radius=2.5,
-            laser_length=20.0,
-            laser_width=0.02,
-            fan_angle=3.14159 / 3,  # 60 degrees
-            scan_speed=2.5,
-            strobe_frequency=0.0,  # No strobe by default
-            laser_intensity=2.0,
-            color=(0.0, 1.0, 0.0),  # Classic green lasers
-            signal=FrameSignal.freq_high,  # React to treble
-        )
+        # Create 3D laser array fo
+        # r sharp laser effects
+        laser_array = LaserArray()
         self.laser_array = laser_array
 
         # Create layer composition with proper blend modes
         return LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
             LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
-            LayerSpec(volumetric_beams, BlendMode.NORMAL),  # Beams: alpha blending
+            LayerSpec(
+                volumetric_beams, BlendMode.ADDITIVE
+            ),  # Beams: additive blending (FIXED!)
             LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
         )
 

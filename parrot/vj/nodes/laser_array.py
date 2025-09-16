@@ -47,13 +47,20 @@ class LaserBeamState:
         self.direction += (self.target_direction - self.direction) * lerp_factor
         self.direction = self.direction / np.linalg.norm(self.direction)
 
-        # Laser scanning motion (side-to-side sweep)
-        scan_speed = 3.0 + signal * 2.0  # Faster scanning with higher signal
+        # Smooth laser scanning motion (side-to-side sweep)
+        # Use a smoother, more controlled scanning speed
+        base_scan_speed = 1.5  # Slower base speed for smoother motion
+        scan_speed = base_scan_speed + signal * 1.0  # Less aggressive signal response
         self.scan_phase += scan_speed * 0.016
 
-        # Create scanning motion by rotating around Y-axis
-        scan_amplitude = fan_angle * (0.5 + signal * 0.5)  # Signal affects fan width
-        scan_offset = math.sin(self.scan_phase + self.phase_offset) * scan_amplitude
+        # Create smooth scanning motion with sinusoidal movement
+        scan_amplitude = fan_angle * (0.4 + signal * 0.6)  # Signal affects fan width
+        # Use a combination of sin and cos for more complex, smooth motion
+        primary_scan = math.sin(self.scan_phase + self.phase_offset) * scan_amplitude
+        secondary_scan = (
+            math.cos(self.scan_phase * 0.7 + self.phase_offset) * scan_amplitude * 0.3
+        )
+        scan_offset = primary_scan + secondary_scan
 
         # Apply scanning rotation to direction
         scan_rotation = create_rotation_matrix(np.array([0.0, 1.0, 0.0]), scan_offset)
@@ -80,17 +87,29 @@ class LaserBeamState:
 
         self.target_position = array_center + offset
 
-        # Point generally forward and slightly downward
-        self.target_direction = np.array(
+        # Point toward screen center with some variation
+        screen_center = np.array([0.0, 6.0, 0.0])  # Center of screen in world space
+        base_direction = screen_center - self.target_position
+        base_direction = base_direction / np.linalg.norm(base_direction)
+
+        # Add variation around the base direction
+        variation = np.array(
             [
-                random.uniform(-0.3, 0.3),
-                random.uniform(-0.8, -0.2),
-                random.uniform(-1.0, -0.5),
+                random.uniform(-0.2, 0.2),
+                random.uniform(-0.1, 0.1),
+                random.uniform(-0.1, 0.1),
             ]
         )
+
+        self.target_direction = base_direction + variation
         self.target_direction = self.target_direction / np.linalg.norm(
             self.target_direction
         )
+        if self.target_direction[1] > 0.0:
+            self.target_direction[1] = -abs(self.target_direction[1])
+            self.target_direction = self.target_direction / np.linalg.norm(
+                self.target_direction
+            )
 
         # Randomize intensity
         self.target_intensity = random.uniform(0.7, 1.0)
@@ -106,15 +125,15 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     def __init__(
         self,
         laser_count: int = 8,
-        array_radius: float = 2.0,
+        array_radius: float = 2.5,
         laser_length: float = 20.0,
         laser_width: float = 0.02,  # Very thin for laser effect
         fan_angle: float = math.pi / 3,  # 60 degrees fan spread
-        scan_speed: float = 2.0,
+        scan_speed: float = 1.5,  # Slower, smoother scanning
         strobe_frequency: float = 0.0,  # 0 = no strobe, >0 = strobe Hz
         laser_intensity: float = 2.0,  # Very bright for laser effect
-        color: Tuple[float, float, float] = (0.0, 1.0, 0.0),  # Green laser
-        signal: FrameSignal = FrameSignal.freq_high,
+        color: Tuple[float, float, float] = (0.0, 1.0, 0.0),  # Classic green lasers
+        signal: FrameSignal = FrameSignal.sustained_high,
         width: int = DEFAULT_WIDTH,
         height: int = DEFAULT_HEIGHT,
     ):
@@ -149,7 +168,9 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # 3D rendering state
         self.lasers: List[LaserBeamState] = []
-        self.array_center = np.array([0.0, 5.0, 0.0])
+        self.array_center = np.array(
+            [0.0, 10.0, 4.0]
+        )  # Center of laser array at top edge
         self.start_time = time.time()
         self.last_strobe_time = 0.0
 
@@ -208,33 +229,70 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 laser.randomize_target(self.array_center, self.array_radius)
 
     def _setup_lasers(self):
-        """Initialize laser beam state objects in array formation"""
+        """Initialize laser beam state objects positioned horizontally across top of screen"""
         self.lasers = []
-        for i in range(self.laser_count):
-            # Arrange lasers in a circular array
-            angle = (2 * math.pi * i) / self.laser_count
-            radius = self.array_radius * (0.7 + random.uniform(0, 0.3))
 
-            position = self.array_center + np.array(
-                [
-                    math.cos(angle) * radius,
-                    random.uniform(-0.5, 0.5),  # Small height variation
-                    math.sin(angle) * radius,
-                ]
-            )
+        # Position 4 laser units horizontally across the top of the screen
+        # Each unit can have multiple beams for fuller coverage
+        beams_per_unit = max(1, self.laser_count // 4)
 
-            # Point lasers generally forward and slightly down
-            direction = np.array(
-                [
-                    random.uniform(-0.2, 0.2),
-                    random.uniform(-0.7, -0.3),
-                    random.uniform(-1.0, -0.6),
-                ]
-            )
-            direction = direction / np.linalg.norm(direction)
+        for unit_idx in range(4):
+            # Horizontal positions: spread across the width
+            # X positions: -6, -2, 2, 6 (spread across ~12 unit width)
+            x_pos = -6.0 + (unit_idx * 4.0)
 
-            laser = LaserBeamState(position, direction, i)
-            self.lasers.append(laser)
+            # Base position for this laser unit (at top edge of screen view)
+            unit_base_position = np.array(
+                [x_pos, 10.0, 4.0]
+            )  # High enough to be at top of screen, close enough to be visible
+
+            # Create beams for this unit
+            beams_for_this_unit = beams_per_unit
+            if unit_idx < (self.laser_count % 4):  # Distribute remainder
+                beams_for_this_unit += 1
+
+            for beam_idx in range(beams_for_this_unit):
+                laser_id = unit_idx * beams_per_unit + beam_idx
+                if laser_id >= self.laser_count:
+                    break
+
+                # Small offset within the unit for multiple beams
+                offset = np.array(
+                    [
+                        random.uniform(-0.3, 0.3),  # Small horizontal spread
+                        random.uniform(-0.2, 0.2),  # Small vertical spread
+                        random.uniform(-0.1, 0.1),  # Small depth spread
+                    ]
+                )
+
+                position = unit_base_position + offset
+
+                # Point lasers from top of screen toward center of screen
+                # Calculate direction from laser position to screen center
+                screen_center = np.array(
+                    [0.0, 6.0, 0.0]
+                )  # Center of screen in world space
+                base_direction = screen_center - position
+                base_direction = base_direction / np.linalg.norm(base_direction)
+
+                # Add some variation for scanning
+                direction_variation = np.array(
+                    [
+                        random.uniform(-0.2, 0.2),  # Side-to-side variation
+                        random.uniform(-0.1, 0.1),  # Slight up/down variation
+                        random.uniform(-0.1, 0.1),  # Slight forward/back variation
+                    ]
+                )
+
+                direction = base_direction + direction_variation
+                direction = direction / np.linalg.norm(direction)
+                # Enforce downward orientation (world Y decreasing)
+                if direction[1] > 0.0:
+                    direction[1] = -abs(direction[1])
+                    direction = direction / np.linalg.norm(direction)
+
+                laser = LaserBeamState(position, direction, laser_id)
+                self.lasers.append(laser)
 
     def _setup_gl_resources(self):
         """Setup OpenGL resources for 3D laser rendering"""
@@ -374,9 +432,11 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def _create_matrices(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Create view, projection, and model matrices"""
-        # Camera setup (looking at the laser array)
-        camera_pos = np.array([0.0, 8.0, 12.0])
-        target = self.array_center
+        # Camera setup (audience perspective looking straight ahead)
+        camera_pos = np.array(
+            [0.0, 6.0, -8.0]
+        )  # Audience position (mid-height, in front)
+        target = np.array([0.0, 6.0, 0.0])  # Looking straight ahead
         up = np.array([0.0, 1.0, 0.0])
 
         # View matrix
@@ -390,6 +450,71 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         model = np.eye(4, dtype=np.float32)
 
         return view, projection, model, camera_pos
+
+    def _rotation_from_to(self, source: np.ndarray, target: np.ndarray) -> np.ndarray:
+        """Create a rotation matrix that rotates vector `source` to align with `target`."""
+        source_norm = source / np.linalg.norm(source)
+        target_norm = target / np.linalg.norm(target)
+
+        dot = float(np.clip(np.dot(source_norm, target_norm), -1.0, 1.0))
+        if dot > 0.9999:
+            return np.eye(4, dtype=np.float32)
+        if dot < -0.9999:
+            # 180-degree rotation around any axis perpendicular to source
+            orth = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+            if abs(source_norm[0]) > 0.9:
+                orth = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+            axis = np.cross(source_norm, orth)
+            axis = axis / np.linalg.norm(axis)
+            return create_rotation_matrix(axis, math.pi)
+
+        axis = np.cross(source_norm, target_norm)
+        axis = axis / np.linalg.norm(axis)
+        angle = math.acos(dot)
+        return create_rotation_matrix(axis, angle)
+
+    def _world_to_screen(
+        self, world_pos: np.ndarray, mvp_matrix: np.ndarray
+    ) -> Tuple[float, float]:
+        """Convert world position to screen space coordinates for debugging"""
+        # Transform to clip space
+        world_pos_4d = np.append(world_pos, 1.0)
+        clip_pos = mvp_matrix @ world_pos_4d
+
+        # Perspective divide
+        if clip_pos[3] != 0:
+            ndc_pos = clip_pos[:3] / clip_pos[3]
+        else:
+            ndc_pos = clip_pos[:3]
+
+        # Convert to screen coordinates (0,0 at top-left)
+        screen_x = (ndc_pos[0] + 1.0) * 0.5 * self.width
+        screen_y = (
+            (1.0 - ndc_pos[1]) * 0.5 * self.height
+        )  # Flip Y for screen coordinates
+
+        return screen_x, screen_y
+
+    def _update_lasers(self, frame: Frame):
+        """Update laser positions and movements with smooth scanning and frequency-reactive fanning"""
+        current_time = time.time() - self.start_time
+
+        # Get signals for different effects
+        sustained_high_signal = frame[FrameSignal.sustained_high]  # For intensity
+        freq_high_signal = frame[FrameSignal.freq_high]  # For fanning
+
+        # Update each laser with smooth scanning motion
+        for laser in self.lasers:
+            # Use freq_high for dynamic fan angle (more reactive fanning)
+            dynamic_fan_angle = self.fan_angle * (0.3 + freq_high_signal * 0.7)
+
+            # Slower, smoother scanning motion
+            laser.update(
+                time=current_time,
+                speed=self.scan_speed * 0.7,  # Slower for smoother motion
+                signal=freq_high_signal,  # Use freq_high for scanning reactivity
+                fan_angle=dynamic_fan_angle,
+            )
 
     def _calculate_strobe_factor(self, current_time: float) -> float:
         """Calculate strobe intensity factor"""
@@ -435,19 +560,59 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         context.enable(mgl.BLEND)
         context.blend_func = mgl.SRC_ALPHA, mgl.ONE  # Additive blending for laser glow
 
-        # Get signal value and time for effects
-        signal_value = frame[self.signal]
+        # Get signal values and time for effects
+        sustained_high_signal = frame[FrameSignal.sustained_high]  # For intensity
+        freq_high_signal = frame[FrameSignal.freq_high]  # For fanning
         current_time = time.time() - self.start_time
         strobe_factor = self._calculate_strobe_factor(current_time)
 
-        # Dynamic intensity modulation
-        dynamic_intensity = self.laser_intensity * (0.7 + signal_value * 0.3)
+        # Dynamic intensity modulation based on sustained high frequencies
+        dynamic_intensity = self.laser_intensity * (0.5 + sustained_high_signal * 0.5)
 
         # Render each laser
-        for laser in self.lasers:
+        for i, laser in enumerate(self.lasers):
             # Create model matrix for this laser
             laser_model = self._create_laser_transform(laser)
             laser_mvp = projection @ view @ laser_model
+
+            # Test logging: Calculate beam start and end positions in screen space
+            if (
+                i == 0 and current_time % 2.0 < 0.1
+            ):  # Log first laser every 2 seconds briefly
+                # Use actual transformed endpoints from model space
+                start_model = np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
+                end_model = np.array(
+                    [0.0, -self.laser_length, 0.0, 1.0], dtype=np.float32
+                )
+
+                start_world_4 = laser_model @ start_model
+                end_world_4 = laser_model @ end_model
+                beam_start_world = start_world_4[:3]
+                beam_end_world = end_world_4[:3]
+
+                mvp_combined = projection @ view
+                start_screen_x, start_screen_y = self._world_to_screen(
+                    beam_start_world, mvp_combined
+                )
+                end_screen_x, end_screen_y = self._world_to_screen(
+                    beam_end_world, mvp_combined
+                )
+
+                print(
+                    f"Laser {i}: Start screen ({start_screen_x:.1f}, {start_screen_y:.1f}) -> End screen ({end_screen_x:.1f}, {end_screen_y:.1f})"
+                )
+                delta_y = end_screen_y - start_screen_y
+                down_dot = float(
+                    np.dot(
+                        laser.direction / np.linalg.norm(laser.direction),
+                        np.array([0.0, -1.0, 0.0]),
+                    )
+                )
+                print(f"  World: Start {beam_start_world} -> End {beam_end_world}")
+                print(
+                    f"  Dir world: {laser.direction}, dY_screen: {delta_y:.1f}, downDot: {down_dot:.2f}"
+                )
+                print(f"  Screen size: {self.width}x{self.height}")
 
             # Set uniforms (only set uniforms that exist in the shader)
             self.laser_program["mvp_matrix"].write(
@@ -497,8 +662,9 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def _create_laser_transform(self, laser: LaserBeamState) -> np.ndarray:
         """Create transformation matrix for a laser beam"""
-        # Create rotation matrix to align laser with direction
-        rotation = align_to_direction(laser.direction)
+        # Align local -Y axis with desired direction since geometry extends along -Y
+        source_axis = np.array([0.0, -1.0, 0.0], dtype=np.float32)
+        rotation = self._rotation_from_to(source_axis, laser.direction)
 
         # Create translation matrix
         translation = create_translation_matrix(laser.position)
@@ -519,12 +685,15 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.strobe_frequency = frequency
 
     def narrow_beams(self):
-        """Narrow all laser beams to point forward"""
+        """Narrow all laser beams to point toward screen center"""
+        screen_center = np.array([0.0, 6.0, 0.0])  # Center of screen in world space
         for laser in self.lasers:
-            laser.target_direction = np.array([0.0, -0.8, -0.6])
-            laser.target_direction = laser.target_direction / np.linalg.norm(
-                laser.target_direction
-            )
+            direction = screen_center - laser.position
+            direction = direction / np.linalg.norm(direction)
+            if direction[1] > 0.0:
+                direction[1] = -abs(direction[1])
+                direction = direction / np.linalg.norm(direction)
+            laser.target_direction = direction
 
     def fan_out_beams(self):
         """Fan out laser beams in different directions"""
@@ -533,11 +702,23 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             angle = (2 * math.pi * i) / len(self.lasers)
             spread = self.fan_angle * 0.5
 
-            direction = np.array(
+            # Fan out from screen center with spread
+            screen_center = np.array([0.0, 6.0, 0.0])
+            base_direction = screen_center - laser.position
+            base_direction = base_direction / np.linalg.norm(base_direction)
+
+            # Apply fan spread around the base direction
+            fan_offset = np.array(
                 [
                     math.sin(angle) * spread,
-                    -0.7,
-                    -0.7 + math.cos(angle) * spread,
+                    0.0,
+                    math.cos(angle) * spread * 0.5,  # Less Z spread
                 ]
             )
-            laser.target_direction = direction / np.linalg.norm(direction)
+
+            direction = base_direction + fan_offset
+            direction = direction / np.linalg.norm(direction)
+            if direction[1] > 0.0:
+                direction[1] = -abs(direction[1])
+                direction = direction / np.linalg.norm(direction)
+            laser.target_direction = direction

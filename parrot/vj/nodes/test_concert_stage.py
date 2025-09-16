@@ -163,29 +163,29 @@ class TestConcertStage:
         # Volumetric beams should react to bass
         assert stage.volumetric_beams.signal == FrameSignal.freq_low
 
-        # Laser array should react to treble
-        assert stage.laser_array.signal == FrameSignal.freq_high
+        # Laser array should react to sustained high frequencies
+        assert stage.laser_array.signal == FrameSignal.sustained_high
 
     def test_default_configuration(self):
         """Test default configuration values"""
         stage = ConcertStage()
 
-        # Volumetric beams defaults
+        # Volumetric beams defaults (now baked into VolumetricBeam)
         beams = stage.volumetric_beams
         assert beams.beam_count == 6
         assert beams.beam_length == 12.0
         assert beams.beam_width == 0.4
-        assert beams.beam_intensity == 2.5  # Updated for visibility
-        assert beams.haze_density == 0.9  # Updated for visibility
+        assert beams.beam_intensity == 2.5
+        assert beams.haze_density == 0.9
         assert beams.movement_speed == 1.8
 
-        # Laser array defaults
+        # Laser array defaults (now baked into LaserArray)
         lasers = stage.laser_array
         assert lasers.laser_count == 8
         assert lasers.array_radius == 2.5
         assert lasers.laser_length == 20.0
         assert lasers.laser_width == 0.02
-        assert lasers.scan_speed == 2.5
+        assert lasers.scan_speed == 1.5
         assert lasers.strobe_frequency == 0.0
         assert lasers.laser_intensity == 2.0
 

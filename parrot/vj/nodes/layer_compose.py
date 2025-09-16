@@ -160,7 +160,7 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         if blend_mode == BlendMode.NORMAL:
             return mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
         elif blend_mode == BlendMode.ADDITIVE:
-            return mgl.SRC_ALPHA, mgl.ONE
+            return mgl.ONE, mgl.ONE
         elif blend_mode == BlendMode.MULTIPLY:
             return mgl.DST_COLOR, mgl.ZERO
         elif blend_mode == BlendMode.SCREEN:
@@ -196,6 +196,7 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         blend_src, blend_dst = self._get_blend_func(blend_mode)
 
         # Set up blending
+        context.disable(mgl.DEPTH_TEST)
         context.enable(mgl.BLEND)
         context.blend_func = blend_src, blend_dst
 
@@ -207,6 +208,7 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Render to final framebuffer
         self.final_framebuffer.use()
+        context.viewport = (0, 0, self.width, self.height)
         self.quad_vao.render(mgl.TRIANGLE_STRIP)
 
         # Disable blending
