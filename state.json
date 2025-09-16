@@ -4,5 +4,5 @@
   "venue_name": "dmack",
   "manual_dimmer": 0,
   "hype_limiter": false,
-  "show_waveform": true
+  "show_waveform": false
 }

@@ -20,7 +20,7 @@ class BrightnessPulse(PostProcessEffectBase):
         input_node: BaseInterpretationNode,
         intensity: float = 0.8,
         base_brightness: float = 0.2,
-        signal: FrameSignal = FrameSignal.sustained_low,
+        signal: FrameSignal = FrameSignal.freq_all,
     ):
         """
         Args:

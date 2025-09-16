@@ -92,5 +92,14 @@ scheme_berlin = [
     for _ in range(10)
 ]
 
+scheme_halloween = [
+    ColorScheme(Color("orange"), Color("purple"), Color("green")),
+    ColorScheme(Color("white"), Color("orange"), Color("purple")),
+    ColorScheme(Color("green"), Color("orange"), Color("purple")),
+    ColorScheme(Color("purple"), Color("orange"), Color("green")),
+    ColorScheme(Color("orange"), Color("green"), Color("purple")),
+    ColorScheme(Color("white"), Color("purple"), Color("orange")),
+]
+
 
 color_schemes = scheme_standard

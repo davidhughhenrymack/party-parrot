@@ -24,7 +24,7 @@ class CameraZoom(PostProcessEffectBase):
         zoom_speed: float = 8.0,
         return_speed: float = 4.0,
         blur_intensity: float = 0.8,
-        signal: FrameSignal = FrameSignal.sustained_high,
+        signal: FrameSignal = FrameSignal.freq_low,
     ):
         """
         Args:
@@ -41,7 +41,7 @@ class CameraZoom(PostProcessEffectBase):
         self.return_speed = return_speed
         self.blur_intensity = blur_intensity
         self.signal = signal
-        
+
         # State variables
         self.current_zoom = 1.0
         self.zoom_velocity = 0.0
@@ -117,48 +117,48 @@ class CameraZoom(PostProcessEffectBase):
         current_time = time.time()
         dt = current_time - self.last_time
         self.last_time = current_time
-        
+
         # Clamp dt to prevent huge jumps
         dt = min(dt, 1.0 / 30.0)  # Max 30 FPS equivalent
-        
+
         # Get signal value (0.0 to 1.0)
         signal_value = frame[self.signal]
-        
+
         # Determine target zoom based on signal
         target_zoom = 1.0 + (self.max_zoom - 1.0) * signal_value
-        
+
         # Apply velocity-based zoom with different speeds for zoom in/out
         zoom_diff = target_zoom - self.current_zoom
-        
+
         if zoom_diff > 0:
             # Zooming in - use zoom_speed
             speed = self.zoom_speed
         else:
             # Zooming out - use return_speed
             speed = self.return_speed
-        
+
         # Apply velocity with some damping for jerky motion
         self.zoom_velocity += zoom_diff * speed * dt
         self.zoom_velocity *= 0.85  # Damping factor for jerky motion
-        
+
         # Update zoom
         self.current_zoom += self.zoom_velocity * dt
-        
+
         # Clamp zoom to reasonable bounds
         self.current_zoom = max(0.5, min(self.max_zoom * 1.2, self.current_zoom))
-        
+
         # Calculate blur amount based on zoom level and velocity
         zoom_blur = abs(self.current_zoom - 1.0) * self.blur_intensity
         velocity_blur = abs(self.zoom_velocity) * 0.1 * self.blur_intensity
         total_blur = min(zoom_blur + velocity_blur, 1.0)
-        
+
         # Set uniforms
         self.shader_program["zoom_factor"] = self.current_zoom
         self.shader_program["blur_amount"] = total_blur
-        
+
         # Set texture size for blur calculations
         if self.framebuffer:
             self.shader_program["texture_size"] = (
-                float(self.framebuffer.width), 
-                float(self.framebuffer.height)
+                float(self.framebuffer.width),
+                float(self.framebuffer.height),
             )

@@ -12,6 +12,7 @@ from beartype import beartype
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
+from parrot.vj.constants import DEFAULT_WIDTH, DEFAULT_HEIGHT
 
 
 @beartype
@@ -21,10 +22,18 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     Automatically cycles through videos in the selected video group.
     """
 
-    def __init__(self, fn_group: str = "bg", video_group: Optional[str] = None):
+    def __init__(
+        self,
+        fn_group: str = "bg",
+        video_group: Optional[str] = None,
+        width: int = DEFAULT_WIDTH,
+        height: int = DEFAULT_HEIGHT,
+    ):
         super().__init__([])
         self.fn_group = fn_group
         self.video_group = video_group
+        self.width = width
+        self.height = height
         self.current_video_path: Optional[str] = None
         self.video_capture: Optional[cv2.VideoCapture] = None
         self.video_files: List[str] = []
@@ -36,6 +45,12 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.last_frame_time = 0
         self.fps = 30  # Default FPS, will be updated from video
         self._context: Optional[mgl.Context] = None
+        # Video scaling properties
+        self.video_width = 0
+        self.video_height = 0
+        self.scale_factor = 1.0
+        self.offset_x = 0.0
+        self.offset_y = 0.0
 
     def enter(self, context: mgl.Context):
         """Initialize video resources"""
@@ -123,16 +138,50 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Get video properties
         self.fps = self.video_capture.get(cv2.CAP_PROP_FPS) or 30
-        width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.video_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.video_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        print(f"▶️  {os.path.basename(video_path)} ({width}x{height})")
+        # Calculate scaling to cover the target area while preserving aspect ratio
+        self._calculate_scaling()
+
+        print(
+            f"▶️  {os.path.basename(video_path)} ({self.video_width}x{self.video_height}) -> ({self.width}x{self.height})"
+        )
         self.current_video_path = video_path
 
-    def _setup_gl_resources(self, ctx: mgl.Context, width: int, height: int):
+    def _calculate_scaling(self):
+        """Calculate scaling and offset to cover target area while preserving aspect ratio"""
+        if self.video_width == 0 or self.video_height == 0:
+            self.scale_factor = 1.0
+            self.offset_x = 0.0
+            self.offset_y = 0.0
+            return
+
+        # Calculate aspect ratios
+        video_aspect = self.video_width / self.video_height
+        target_aspect = self.width / self.height
+
+        if video_aspect > target_aspect:
+            # Video is wider than target - scale by height and crop sides
+            self.scale_factor = self.height / self.video_height
+            scaled_width = self.video_width * self.scale_factor
+            self.offset_x = (scaled_width - self.width) / (
+                2 * scaled_width
+            )  # Normalize to texture coords
+            self.offset_y = 0.0
+        else:
+            # Video is taller than target - scale by width and crop top/bottom
+            self.scale_factor = self.width / self.video_width
+            scaled_height = self.video_height * self.scale_factor
+            self.offset_x = 0.0
+            self.offset_y = (scaled_height - self.height) / (
+                2 * scaled_height
+            )  # Normalize to texture coords
+
+    def _setup_gl_resources(self, ctx: mgl.Context):
         """Setup OpenGL resources for video rendering"""
         if self.texture and (
-            self.texture.width != width or self.texture.height != height
+            self.texture.width != self.width or self.texture.height != self.height
         ):
             # Release old resources if dimensions changed
             if self.texture:
@@ -143,7 +192,7 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             self.framebuffer = None
 
         if not self.texture:
-            self.texture = ctx.texture((width, height), 3)  # RGB texture
+            self.texture = ctx.texture((self.width, self.height), 3)  # RGB texture
             self.framebuffer = ctx.framebuffer(color_attachments=[self.texture])
 
         if not self.shader_program:
@@ -160,15 +209,25 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             }
             """
 
-            # Simple fragment shader
+            # Fragment shader with scaling and cropping
             fragment_shader = """
             #version 330 core
             in vec2 uv;
             out vec3 color;
             uniform sampler2D video_texture;
+            uniform float scale_factor;
+            uniform vec2 offset;
             
             void main() {
-                color = texture(video_texture, uv).rgb;
+                // Apply scaling and offset to center and crop the video
+                vec2 scaled_uv = (uv - 0.5) / scale_factor + 0.5 + offset;
+                
+                // Check if we're outside the video bounds
+                if (scaled_uv.x < 0.0 || scaled_uv.x > 1.0 || scaled_uv.y < 0.0 || scaled_uv.y > 1.0) {
+                    color = vec3(0.0, 0.0, 0.0);  // Black for areas outside video
+                } else {
+                    color = texture(video_texture, scaled_uv).rgb;
+                }
             }
             """
 
@@ -214,7 +273,7 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         if not self.video_capture or not self.video_files:
             # Return empty framebuffer or create a black one
             if not self.framebuffer:
-                self.texture = context.texture((1920, 1080), 3)
+                self.texture = context.texture((self.width, self.height), 3)
                 self.framebuffer = context.framebuffer(color_attachments=[self.texture])
             return self.framebuffer
 
@@ -237,22 +296,58 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             if ret:
                 # Convert BGR to RGB
                 cv_frame = cv2.cvtColor(cv_frame, cv2.COLOR_BGR2RGB)
-                height, width = cv_frame.shape[:2]
 
-                # Setup GL resources
-                self._setup_gl_resources(context, width, height)
+                # Setup GL resources (using target dimensions)
+                self._setup_gl_resources(context)
 
-                # Upload frame to texture
-                self.texture.write(cv_frame.tobytes())
+                # Create a temporary texture for the video frame
+                video_texture = context.texture(
+                    (self.video_width, self.video_height), 3
+                )
+                video_texture.write(cv_frame.tobytes())
+
+                # Render the scaled video to our framebuffer
+                self._render_scaled_video(context, video_texture)
+
+                # Clean up temporary texture
+                video_texture.release()
 
                 self.last_frame_time = current_time
 
-        # Render to framebuffer
-        if self.framebuffer and self.quad_vao and self.shader_program:
-            self.framebuffer.use()
-            context.clear(0.0, 0.0, 0.0)
-            self.texture.use(0)
-            self.shader_program["video_texture"] = 0
-            self.quad_vao.render(mgl.TRIANGLE_STRIP)
-
         return self.framebuffer
+
+    def _render_scaled_video(self, context: mgl.Context, video_texture: mgl.Texture):
+        """Render the video texture to the framebuffer with scaling and cropping"""
+        if not self.framebuffer or not self.quad_vao or not self.shader_program:
+            return
+
+        self.framebuffer.use()
+        context.clear(0.0, 0.0, 0.0)
+
+        # Bind video texture
+        video_texture.use(0)
+
+        # Set uniforms
+        self.shader_program["video_texture"] = 0
+
+        # Calculate shader uniforms for proper scaling
+        # We need to invert the scaling logic for the shader
+        video_aspect = self.video_width / self.video_height
+        target_aspect = self.width / self.height
+
+        if video_aspect > target_aspect:
+            # Video is wider - we'll crop the sides
+            shader_scale = target_aspect / video_aspect
+            shader_offset_x = 0.0
+            shader_offset_y = 0.0
+        else:
+            # Video is taller - we'll crop top/bottom
+            shader_scale = video_aspect / target_aspect
+            shader_offset_x = 0.0
+            shader_offset_y = 0.0
+
+        self.shader_program["scale_factor"] = shader_scale
+        self.shader_program["offset"] = (shader_offset_x, shader_offset_y)
+
+        # Render
+        self.quad_vao.render(mgl.TRIANGLE_STRIP)

@@ -8,6 +8,7 @@ from beartype import beartype
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
+from parrot.vj.constants import DEFAULT_WIDTH, DEFAULT_HEIGHT
 
 
 @beartype
@@ -17,8 +18,8 @@ class StaticColor(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     def __init__(
         self,
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
-        width: int = 256,
-        height: int = 256,
+        width: int = DEFAULT_WIDTH,
+        height: int = DEFAULT_HEIGHT,
     ):
         """
         Args:
@@ -129,27 +130,29 @@ class StaticColor(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
 
 # Convenience factory functions for common colors
-def White(width: int = 256, height: int = 256) -> StaticColor:
+def White(width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT) -> StaticColor:
     """Create a white StaticColor node"""
     return StaticColor(color=(1.0, 1.0, 1.0), width=width, height=height)
 
 
-def Red(width: int = 256, height: int = 256) -> StaticColor:
+def Red(width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT) -> StaticColor:
     """Create a red StaticColor node"""
     return StaticColor(color=(1.0, 0.0, 0.0), width=width, height=height)
 
 
-def Green(width: int = 256, height: int = 256) -> StaticColor:
+def Green(width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT) -> StaticColor:
     """Create a green StaticColor node"""
     return StaticColor(color=(0.0, 1.0, 0.0), width=width, height=height)
 
 
-def Blue(width: int = 256, height: int = 256) -> StaticColor:
+def Blue(width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT) -> StaticColor:
     """Create a blue StaticColor node"""
     return StaticColor(color=(0.0, 0.0, 1.0), width=width, height=height)
 
 
-def Gray(intensity: float = 0.5, width: int = 256, height: int = 256) -> StaticColor:
+def Gray(
+    intensity: float = 0.5, width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT
+) -> StaticColor:
     """Create a gray StaticColor node with specified intensity"""
     return StaticColor(
         color=(intensity, intensity, intensity), width=width, height=height

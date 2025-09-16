@@ -13,6 +13,8 @@ from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.layer_compose import LayerCompose
 from parrot.vj.nodes.brightness_pulse import BrightnessPulse
+from parrot.vj.nodes.text_renderer import TextRenderer
+from parrot.vj.nodes.camera_zoom import CameraZoom
 
 
 @beartype
@@ -30,7 +32,13 @@ class VJDirector:
         red_pulse = BrightnessPulse(red, signal=FrameSignal.freq_high)
         red_pulse = SaturationPulse(red_pulse, signal=FrameSignal.freq_low)
 
-        self.canvas: BaseInterpretationNode = red_pulse
+        text_renderer = TextRenderer(
+            text="DEAD\nSEXY", font_name="The Sonnyfive", font_size=120
+        )
+        text_renderer = BrightnessPulse(text_renderer, signal=FrameSignal.freq_high)
+        text_renderer = CameraZoom(text_renderer, signal=FrameSignal.freq_low)
+
+        self.canvas: BaseInterpretationNode = CameraZoom(pulsing_video)
 
         self.last_shift_time = time.time()
         self.shift_count = 0

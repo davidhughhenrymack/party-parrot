@@ -3,61 +3,21 @@
 import moderngl as mgl
 from beartype import beartype
 
-from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.vj.nodes.static_color import StaticColor
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
+from parrot.vj.constants import DEFAULT_WIDTH, DEFAULT_HEIGHT
 
 
 @beartype
-class Black(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
+class Black(StaticColor):
     """
-    A simple black background node that adapts to requested size.
+    A simple black background node - subclass of StaticColor with black color.
     """
 
-    def __init__(self, width: int = 1920, height: int = 1080):
-        super().__init__([])
-        self.width = width
-        self.height = height
-        self.framebuffer = None
-        self.texture = None
-
-    def enter(self, context: mgl.Context):
-        """Initialize black background resources"""
-        self._setup_resources(context, self.width, self.height)
-
-    def exit(self):
-        """Clean up resources"""
-        if self.framebuffer:
-            self.framebuffer.release()
-            self.framebuffer = None
-        if self.texture:
-            self.texture.release()
-            self.texture = None
-
-    def generate(self, vibe: Vibe):
-        """Nothing to generate for black background"""
-        pass
-
-    def _setup_resources(self, context: mgl.Context, width: int, height: int):
-        """Setup black framebuffer with specified dimensions"""
-        if self.framebuffer:
-            self.framebuffer.release()
-        if self.texture:
-            self.texture.release()
-
-        # Create a black texture and framebuffer
-        self.texture = context.texture((width, height), 3)
-        self.texture.write(b"\x00" * (width * height * 3))  # Black pixels
-        self.framebuffer = context.framebuffer(color_attachments=[self.texture])
-
-    def render(
-        self, frame: Frame, scheme: ColorScheme, context: mgl.Context
-    ) -> mgl.Framebuffer:
-        """Render black background"""
-        # Ensure resources are allocated
-        if not self.framebuffer:
-            self._setup_resources(context, self.width, self.height)
-        return self.framebuffer
+    def __init__(self, width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT):
+        # Initialize as StaticColor with black color (0.0, 0.0, 0.0)
+        super().__init__(color=(0.0, 0.0, 0.0), width=width, height=height)
 
     def render_with_size(
         self,
@@ -74,5 +34,23 @@ class Black(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             or self.framebuffer.width != width
             or self.framebuffer.height != height
         ):
-            self._setup_resources(context, width, height)
-        return self.framebuffer
+            # Clean up old resources
+            if self.framebuffer:
+                self.framebuffer.release()
+            if self.texture:
+                self.texture.release()
+
+            # Create new resources with the requested size
+            self.texture = context.texture((width, height), 3)
+            self.framebuffer = context.framebuffer(color_attachments=[self.texture])
+
+            # Update internal dimensions
+            self.width = width
+            self.height = height
+
+            # Re-setup GL resources if needed
+            if not self.shader_program or not self.quad_vao:
+                self._setup_gl_resources(context)
+
+        # Render using parent's render method
+        return self.render(frame, scheme, context)
