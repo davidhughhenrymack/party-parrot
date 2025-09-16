@@ -21,6 +21,7 @@ Decorate classes and lone methods with @beartype. Use unit tests to provide simp
 
 ## Testing
 Write tests in pytest. Tests should be succint and maintainable. Avoid test sprawl.
+Don't test trivial things, test the things that are complicated and need to work properly for the overal system to be good.
 New code should have at least some simple useful tests
 
 

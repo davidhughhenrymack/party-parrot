@@ -149,13 +149,29 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             # Only one layer, return it directly
             return base_framebuffer
 
-        # If we have multiple layers, we need to determine the output size
-        # Use the largest dimensions from all layers
-        max_width = 1920
-        max_height = 1080
+        # Determine the output size from the first layer
+        output_width = 1920
+        output_height = 1080
         if base_framebuffer:
-            max_width = max(max_width, base_framebuffer.width)
-            max_height = max(max_height, base_framebuffer.height)
+            output_width = base_framebuffer.width
+            output_height = base_framebuffer.height
+
+        # Ensure our output framebuffer matches the base layer size
+        if (
+            not self.framebuffer
+            or self.framebuffer.width != output_width
+            or self.framebuffer.height != output_height
+        ):
+            # Clean up old resources
+            if self.framebuffer:
+                self.framebuffer.release()
+            if self.texture:
+                self.texture.release()
+            self.framebuffer = None
+            self.texture = None
+
+            # Setup with output dimensions
+            self._setup_gl_resources(context, output_width, output_height)
 
         # Start with the base layer
         current_result = base_framebuffer
@@ -167,10 +183,8 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             if overlay_framebuffer is None:
                 continue
 
-            # Create a temporary framebuffer for the composite result
-            # Use the maximum dimensions to ensure we don't lose content
-            temp_texture = context.texture((max_width, max_height), 4)
-            temp_framebuffer = context.framebuffer(color_attachments=[temp_texture])
+            # Use our main framebuffer for compositing
+            temp_framebuffer = self.framebuffer
 
             # Composite overlay onto current result
             temp_framebuffer.use()

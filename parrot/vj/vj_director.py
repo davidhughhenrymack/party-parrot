@@ -3,10 +3,12 @@
 import time
 from beartype import beartype
 
-from parrot.director.frame import Frame
+from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.vj.nodes.saturation_pulse import SaturationPulse
+from parrot.vj.nodes.static_color import StaticColor
 from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.layer_compose import LayerCompose
@@ -23,11 +25,12 @@ class VJDirector:
     def __init__(self):
         # Create a pulsing video canvas by default
         video_player = VideoPlayer(fn_group="bg")
-        pulsing_video = BrightnessPulse(
-            video_player, intensity=0.7, base_brightness=0.6
-        )
+        pulsing_video = BrightnessPulse(video_player)
+        red = StaticColor(color=(1.0, 0.0, 0.0))
+        red_pulse = BrightnessPulse(red, signal=FrameSignal.freq_high)
+        red_pulse = SaturationPulse(red_pulse, signal=FrameSignal.freq_low)
 
-        self.canvas: BaseInterpretationNode = pulsing_video
+        self.canvas: BaseInterpretationNode = red_pulse
 
         self.last_shift_time = time.time()
         self.shift_count = 0

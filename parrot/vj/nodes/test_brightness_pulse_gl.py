@@ -98,7 +98,10 @@ class TestBrightnessPulseGL:
     ):
         """Test brightness pulse with medium audio input (freq_low = 0.5)"""
         pulse_node = BrightnessPulse(
-            white_rect_node, intensity=0.7, base_brightness=0.6
+            white_rect_node,
+            intensity=0.7,
+            base_brightness=0.6,
+            signal=FrameSignal.freq_low,
         )
 
         white_rect_node.enter(gl_context)
@@ -139,7 +142,10 @@ class TestBrightnessPulseGL:
     ):
         """Test brightness pulse with high audio input (freq_low = 1.0)"""
         pulse_node = BrightnessPulse(
-            white_rect_node, intensity=0.7, base_brightness=0.6
+            white_rect_node,
+            intensity=0.7,
+            base_brightness=0.6,
+            signal=FrameSignal.freq_low,
         )
 
         white_rect_node.enter(gl_context)
