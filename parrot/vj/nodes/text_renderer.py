@@ -222,7 +222,9 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     ) -> mgl.Framebuffer:
         """Render the text to framebuffer"""
         if not self.framebuffer or not self.quad_vao or not self.shader_program:
-            return self.framebuffer
+            raise RuntimeError(
+                "TextRenderer not properly initialized. Call enter() first."
+            )
 
         # Re-render text if needed
         if self._needs_update:

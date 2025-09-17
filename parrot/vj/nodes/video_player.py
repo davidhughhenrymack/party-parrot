@@ -141,6 +141,18 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.video_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.video_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+        # If the video is longer than one minute, jump to a random point that's at
+        # least one minute before the end to avoid always starting at the beginning.
+        total_frames = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
+        if self.fps and total_frames > 0:
+            duration_seconds = total_frames / self.fps
+            if duration_seconds > 60.0:
+                max_start_seconds = max(0.0, duration_seconds - 60.0)
+                start_seconds = random.uniform(0.0, max_start_seconds)
+                start_frame = int(start_seconds * self.fps)
+                # Seek by frame for better accuracy across codecs/containers
+                self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+
         # Calculate scaling to cover the target area while preserving aspect ratio
         self._calculate_scaling()
 

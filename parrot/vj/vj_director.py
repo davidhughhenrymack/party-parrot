@@ -36,6 +36,10 @@ class VJDirector:
         vibe = Vibe(Mode.gentle)
         self.concert_stage.generate_recursive(vibe)
 
+        # Print the tree structure after initialization
+        print("VJ Concert Stage Tree (after initialization):")
+        print(self.concert_stage.print_tree())
+
     def render(self, context, frame: Frame, scheme: ColorScheme):
         """Render the complete concert stage"""
         return self.concert_stage.render(frame, scheme, context)
@@ -56,6 +60,10 @@ class VJDirector:
 
         self.last_shift_time = time.time()
         self.shift_count += 1
+
+        # Print the tree structure after shift
+        print(f"VJ Concert Stage Tree (after shift #{self.shift_count} to {mode}):")
+        print(self.concert_stage.print_tree())
 
     def get_concert_stage(self) -> ConcertStage:
         """Get the complete concert stage"""

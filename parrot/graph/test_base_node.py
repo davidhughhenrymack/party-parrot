@@ -2,7 +2,12 @@ import pytest
 from typing import List
 from unittest.mock import Mock
 
-from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe, Random
+from parrot.graph.BaseInterpretationNode import (
+    BaseInterpretationNode,
+    Vibe,
+    RandomOperation,
+    RandomChild,
+)
 from parrot.director.frame import Frame
 from parrot.director.mode import Mode
 from parrot.director.color_scheme import ColorScheme
@@ -359,7 +364,7 @@ class TestRandomNode:
         children = [ConstantNode(10.0), ConstantNode(20.0)]
         operations = [AddNode, MultiplyNode]
 
-        random_node = Random(children, operations)
+        random_node = RandomOperation(children, operations)
 
         # Should have realized operations
         assert len(random_node.realized_operations) == 2
@@ -371,7 +376,7 @@ class TestRandomNode:
         children = [ConstantNode(10.0)]
         operations = [AddNode]
 
-        random_node = Random(children, operations)
+        random_node = RandomOperation(children, operations)
 
         # Mock the current operation
         random_node.current_operation.enter = Mock()
@@ -388,7 +393,7 @@ class TestRandomNode:
         children = [ConstantNode(15.0)]
         operations = [AddNode]
 
-        random_node = Random(children, operations)
+        random_node = RandomOperation(children, operations)
 
         # Mock the render method
         expected_result = 42.0
@@ -406,7 +411,7 @@ class TestRandomNode:
         children = [ConstantNode(10.0), ConstantNode(20.0)]
         operations = [AddNode]
 
-        random_node = Random(children, operations)
+        random_node = RandomOperation(children, operations)
 
         # Random node should return its children as all_inputs
         assert random_node.all_inputs == children
@@ -417,7 +422,7 @@ class TestRandomNode:
         children = [ConstantNode(10.0)]
         operations = [AddNode]
 
-        random_node = Random(children, operations)
+        random_node = RandomOperation(children, operations)
 
         # Mock the generate_recursive method on current operation
         random_node.current_operation.generate_recursive = Mock()
@@ -430,6 +435,109 @@ class TestRandomNode:
         random_node.current_operation.generate_recursive.assert_called_once_with(
             self.mock_vibe, 1.0
         )
+
+
+class TestRandomChild:
+    """Test cases for the RandomChild node."""
+
+    def setup_method(self):
+        self.mock_frame = Mock(spec=Frame)
+        self.mock_scheme = Mock(spec=ColorScheme)
+        self.mock_vibe = Mock(spec=Vibe)
+        self.mock_vibe.mode = Mock(spec=Mode)
+        self.context = SimpleContext(value=123)
+
+    def test_render_without_generate_raises(self):
+        child = ConstantNode(1.0)
+        node = RandomChild([child])
+        node.enter_recursive(SimpleContext())
+        with pytest.raises(RuntimeError):
+            node.render(self.mock_frame, self.mock_scheme, self.context)
+
+    def test_random_child_selection_and_render(self, monkeypatch):
+        child1 = ConstantNode(10.0)
+        child2 = ConstantNode(20.0)
+        node = RandomChild([child1, child2])
+
+        # Enter should NOT enter children automatically
+        node.enter_recursive(SimpleContext())
+        assert not child1.entered
+        assert not child2.entered
+
+        # Deterministic selection of child2
+        monkeypatch.setattr(
+            "parrot.graph.BaseInterpretationNode.random.choice", lambda seq: child2
+        )
+        node.generate(self.mock_vibe)
+
+        # Only selected child is entered
+        assert not child1.entered
+        assert child2.entered
+
+        # Render delegates to selected child
+        result = node.render(self.mock_frame, self.mock_scheme, self.context)
+        assert result == 20.0
+
+    def test_random_child_reselection_reenters(self, monkeypatch):
+        child1 = ConstantNode(3.0)
+        child2 = ConstantNode(4.0)
+        node = RandomChild([child1, child2])
+        node.enter_recursive(SimpleContext())
+
+        # First pick child1
+        monkeypatch.setattr(
+            "parrot.graph.BaseInterpretationNode.random.choice", lambda seq: child1
+        )
+        node.generate(self.mock_vibe)
+        assert child1.entered
+        assert not child2.entered
+
+        # Next pick child2 - should exit child1 and enter child2
+        monkeypatch.setattr(
+            "parrot.graph.BaseInterpretationNode.random.choice", lambda seq: child2
+        )
+        node.generate(self.mock_vibe)
+        assert not child1.entered
+        assert child2.entered
+
+    def test_random_child_exit_exits_selected(self, monkeypatch):
+        child1 = ConstantNode(7.0)
+        child2 = ConstantNode(8.0)
+        node = RandomChild([child1, child2])
+        node.enter_recursive(SimpleContext())
+
+        monkeypatch.setattr(
+            "parrot.graph.BaseInterpretationNode.random.choice", lambda seq: child1
+        )
+        node.generate(self.mock_vibe)
+        assert child1.entered
+
+        node.exit_recursive()
+        assert not child1.entered
+        assert not child2.entered
+
+    def test_random_child_generate_recursive_delegates(self, monkeypatch):
+        child1 = ConstantNode(1.0)
+        child2 = ConstantNode(2.0)
+        node = RandomChild([child1, child2])
+
+        node.enter_recursive(SimpleContext())
+
+        # Choose child2 deterministically
+        monkeypatch.setattr(
+            "parrot.graph.BaseInterpretationNode.random.choice", lambda seq: child2
+        )
+
+        # Track calls to child's generate_recursive
+        from unittest.mock import Mock as UMock
+
+        child2.generate_recursive = UMock()
+        node.generate = UMock(wraps=node.generate)
+
+        node.generate_recursive(self.mock_vibe)
+
+        node.generate.assert_called_once_with(self.mock_vibe)
+        child2.generate_recursive.assert_called_once_with(self.mock_vibe, 1.0)
 
 
 if __name__ == "__main__":

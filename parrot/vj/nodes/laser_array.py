@@ -575,45 +575,6 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             laser_model = self._create_laser_transform(laser)
             laser_mvp = projection @ view @ laser_model
 
-            # Test logging: Calculate beam start and end positions in screen space
-            if (
-                i == 0 and current_time % 2.0 < 0.1
-            ):  # Log first laser every 2 seconds briefly
-                # Use actual transformed endpoints from model space
-                start_model = np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
-                end_model = np.array(
-                    [0.0, -self.laser_length, 0.0, 1.0], dtype=np.float32
-                )
-
-                start_world_4 = laser_model @ start_model
-                end_world_4 = laser_model @ end_model
-                beam_start_world = start_world_4[:3]
-                beam_end_world = end_world_4[:3]
-
-                mvp_combined = projection @ view
-                start_screen_x, start_screen_y = self._world_to_screen(
-                    beam_start_world, mvp_combined
-                )
-                end_screen_x, end_screen_y = self._world_to_screen(
-                    beam_end_world, mvp_combined
-                )
-
-                print(
-                    f"Laser {i}: Start screen ({start_screen_x:.1f}, {start_screen_y:.1f}) -> End screen ({end_screen_x:.1f}, {end_screen_y:.1f})"
-                )
-                delta_y = end_screen_y - start_screen_y
-                down_dot = float(
-                    np.dot(
-                        laser.direction / np.linalg.norm(laser.direction),
-                        np.array([0.0, -1.0, 0.0]),
-                    )
-                )
-                print(f"  World: Start {beam_start_world} -> End {beam_end_world}")
-                print(
-                    f"  Dir world: {laser.direction}, dY_screen: {delta_y:.1f}, downDot: {down_dot:.2f}"
-                )
-                print(f"  Screen size: {self.width}x{self.height}")
-
             # Set uniforms (only set uniforms that exist in the shader)
             self.laser_program["mvp_matrix"].write(
                 laser_mvp.astype(np.float32).tobytes()

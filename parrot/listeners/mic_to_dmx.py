@@ -161,36 +161,28 @@ class MicToDmx(object):
         audio_thread = threading.Thread(target=self._run_audio_loop, daemon=True)
         audio_thread.start()
 
-        try:
-            # Clear sys.argv to prevent ModernGL from parsing our arguments
-            original_argv = sys.argv.copy()
-            sys.argv = [sys.argv[0]]  # Keep only the script name
+        # Clear sys.argv to prevent ModernGL from parsing our arguments
+        original_argv = sys.argv.copy()
+        sys.argv = [sys.argv[0]]  # Keep only the script name
 
-            # Suppress verbose ModernGL logging
-            import logging
+        # Suppress verbose ModernGL logging
+        import logging
 
-            logging.getLogger("moderngl_window").setLevel(logging.WARNING)
+        logging.getLogger("moderngl_window").setLevel(logging.WARNING)
 
-            # Create VJ window manager in main thread
-            self.vj_window_manager = VJWindowManager(vj_director=self.vj_director)
-            fullscreen = getattr(self.args, "vj_fullscreen", False)
-            self.vj_window_manager.create_window(fullscreen=fullscreen)
+        # Create VJ window manager in main thread
+        self.vj_window_manager = VJWindowManager(vj_director=self.vj_director)
+        fullscreen = getattr(self.args, "vj_fullscreen", False)
+        self.vj_window_manager.create_window(fullscreen=fullscreen)
 
-            # Get the configured window class
-            window_cls = self.vj_window_manager.get_window_class()
+        # Get the configured window class
+        window_cls = self.vj_window_manager.get_window_class()
 
-            # Run the VJ window (director will handle frame updates)
-            mglw.run_window_config(window_cls)
+        # Run the VJ window (director will handle frame updates)
+        mglw.run_window_config(window_cls)
 
-            # Restore original argv
-            sys.argv = original_argv
-
-        except Exception as e:
-            print(f"Error running VJ window: {e}")
-            # Fall back to audio-only mode
-            self._run_audio_loop()
-        finally:
-            self.should_stop = True
+        # Restore original argv
+        sys.argv = original_argv
 
     def find_input_device(self):
         device_index = None

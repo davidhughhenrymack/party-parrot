@@ -4,14 +4,26 @@ import moderngl as mgl
 from typing import Optional
 from beartype import beartype
 
-from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import (
+    BaseInterpretationNode,
+    RandomChild,
+    RandomOperation,
+    Vibe,
+)
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
 from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.brightness_pulse import BrightnessPulse
-from parrot.vj.nodes.text_renderer import TextRenderer
+from parrot.vj.nodes.saturation_pulse import SaturationPulse
 from parrot.vj.nodes.camera_zoom import CameraZoom
+from parrot.vj.nodes.beat_hue_shift import BeatHueShift
+from parrot.vj.nodes.datamosh_effect import DatamoshEffect
+from parrot.vj.nodes.rgb_shift_effect import RGBShiftEffect
+from parrot.vj.nodes.scanlines_effect import ScanlinesEffect
+from parrot.vj.nodes.pixelate_effect import PixelateEffect
+from parrot.vj.nodes.noise_effect import NoiseEffect
+from parrot.vj.nodes.text_renderer import TextRenderer
 from parrot.vj.nodes.multiply_compose import MultiplyCompose
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
 from parrot.vj.nodes.laser_array import LaserArray
@@ -40,7 +52,19 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Create 2D canvas with video, text, and effects
         video_player = VideoPlayer(fn_group="bg")
-        pulsing_video = BrightnessPulse(video_player, signal=FrameSignal.freq_low)
+        video_with_fx = RandomOperation(
+            video_player,
+            [
+                BrightnessPulse,
+                SaturationPulse,
+                BeatHueShift,
+                DatamoshEffect,
+                RGBShiftEffect,
+                ScanlinesEffect,
+                PixelateEffect,
+                NoiseEffect,
+            ],
+        )
 
         # Create text renderer with white text on black background (perfect for masking)
         text_renderer = TextRenderer(
@@ -50,12 +74,21 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             text_color=(255, 255, 255),  # White text
             bg_color=(0, 0, 0),  # Black background
         )
-        text_renderer = BrightnessPulse(text_renderer, signal=FrameSignal.freq_low)
-        text_renderer = CameraZoom(text_renderer, signal=FrameSignal.freq_high)
+        text_renderer = RandomOperation(
+            text_renderer,
+            [BrightnessPulse, NoiseEffect, PixelateEffect, ScanlinesEffect],
+        )
+        text_renderer_with_zoom = CameraZoom(
+            text_renderer, signal=FrameSignal.freq_high
+        )
+        text_renderer = RandomChild([text_renderer, text_renderer_with_zoom])
 
         # Multiply video with text mask - white text shows video, black background hides it
-        text_masked_video = MultiplyCompose(pulsing_video, text_renderer)
-        canvas_2d = CameraZoom(text_masked_video)
+        text_masked_video = MultiplyCompose(video_with_fx, text_renderer)
+
+        optional_masked_video = RandomChild([video_with_fx, text_masked_video])
+
+        canvas_2d = CameraZoom(optional_masked_video)
         self.canvas_2d = canvas_2d
 
         # Create 3D volumetric beams for atmospheric lighting
