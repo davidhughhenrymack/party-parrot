@@ -59,7 +59,6 @@ class PixelateEffect(PostProcessEffectBase):
         uniform bool dither;
         uniform float signal_strength;
         uniform vec2 texture_size;
-        uniform float time_offset;
         
         // Dithering pattern (Bayer matrix)
         float dither_pattern(vec2 pos) {
@@ -118,16 +117,11 @@ class PixelateEffect(PostProcessEffectBase):
         # Get signal value for dynamic pixelation
         signal_value = frame[self.signal]
 
-        # Calculate time offset for potential animation
-        current_time = time.time()
-        time_offset = current_time - self.start_time
-
         # Set uniforms
         self.shader_program["pixel_size"] = self.pixel_size
         self.shader_program["color_depth"] = float(self.color_depth)
         self.shader_program["dither"] = self.dither
         self.shader_program["signal_strength"] = signal_value
-        self.shader_program["time_offset"] = time_offset
 
         # Set texture size for pixel calculations
         if self.framebuffer:

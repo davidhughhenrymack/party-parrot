@@ -62,6 +62,7 @@ class ScanlinesEffect(PostProcessEffectBase):
         uniform float time_offset;
         uniform float signal_strength;
         uniform float curvature;
+        uniform float roll_speed;
         
         // Apply barrel distortion for CRT curvature
         vec2 barrel_distort(vec2 coord, float amount) {
@@ -139,3 +140,4 @@ class ScanlinesEffect(PostProcessEffectBase):
         self.shader_program["time_offset"] = time_offset
         self.shader_program["signal_strength"] = signal_value
         self.shader_program["curvature"] = self.curvature
+        self.shader_program["roll_speed"] = self.roll_speed
