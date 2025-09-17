@@ -14,15 +14,20 @@ Launch main app with `just launch`
 Add major new features to the `Justfile`
 
 Don't add readme/md files unless asked to.
+Don't add "example" code files unless asked to.
 
 ## Typing
 We use beartype to enforce types.
 Decorate classes and lone methods with @beartype. Use unit tests to provide simple testing of this typing.
+We want complete type enforcement.
 
 ## Testing
 Write tests in pytest. Tests should be succint and maintainable. Avoid test sprawl.
 Don't test trivial things, test the things that are complicated and need to work properly for the overal system to be good.
-New code should have at least some simple useful tests
-
+New code should have at least some simple useful tests.
+If you change code run the associated tests.
+If you work on open gl code make sure it passes a headless rendering test.
+If you make big changes, run the main program with a timeout to check it runs.
+If things break, add test coverage for future.
 
 

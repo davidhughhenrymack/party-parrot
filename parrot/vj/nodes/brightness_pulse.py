@@ -6,6 +6,7 @@ from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
+from parrot.vj.utils.signal_utils import get_random_frame_signal
 
 
 @beartype
@@ -36,9 +37,8 @@ class BrightnessPulse(PostProcessEffectBase):
 
     def generate(self, vibe: Vibe):
         """Configure brightness pulse parameters based on the vibe"""
-        # Could randomize intensity and base_brightness based on vibe.mode
-        # For now, keep the initialized values
-        pass
+        # Randomly pick a signal from available Frame signals
+        self.signal = get_random_frame_signal()
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for brightness modulation"""

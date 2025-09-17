@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import random
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
@@ -36,9 +37,20 @@ class SaturationPulse(PostProcessEffectBase):
 
     def generate(self, vibe: Vibe):
         """Configure saturation pulse parameters based on the vibe"""
-        # Could randomize intensity and base_saturation based on vibe.mode
-        # For now, keep the initialized values
-        pass
+        # Randomly pick a signal from available Frame signals
+        available_signals = [
+            FrameSignal.freq_all,
+            FrameSignal.freq_high,
+            FrameSignal.freq_low,
+            FrameSignal.sustained_low,
+            FrameSignal.sustained_high,
+            FrameSignal.strobe,
+            FrameSignal.big_blinder,
+            FrameSignal.small_blinder,
+            FrameSignal.pulse,
+            FrameSignal.dampen,
+        ]
+        self.signal = random.choice(available_signals)
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for saturation modulation"""
@@ -86,11 +98,11 @@ class SaturationPulse(PostProcessEffectBase):
         """Set saturation effect uniforms"""
         # Get signal value (0.0 to 1.0)
         signal_value = frame[self.signal]
-        
+
         # Map signal to saturation: base_saturation + (intensity * signal_value)
         saturation_multiplier = self.base_saturation + (self.intensity * signal_value)
-        
+
         # Clamp to reasonable range
         saturation_multiplier = max(0.0, min(2.0, saturation_multiplier))
-        
+
         self.shader_program["saturation_multiplier"] = saturation_multiplier

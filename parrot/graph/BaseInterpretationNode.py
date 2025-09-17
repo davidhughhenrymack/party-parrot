@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import random
-from typing import Any, Generic, List, Type, TypeVar
+from typing import Any, Generic, List, Optional, Type, TypeVar
 from dataclasses import dataclass
 
 from parrot.director.frame import Frame
@@ -198,11 +198,27 @@ class RandomChild(BaseInterpretationNode[C, RI, RR]):
     explicitly based on the current selection.
     """
 
-    def __init__(self, child_options: List[BaseInterpretationNode[C, Any, RR]]):
+    def __init__(
+        self,
+        child_options: List[BaseInterpretationNode[C, Any, RR]],
+        weights: Optional[List[float]] = None,
+    ):
         super().__init__([])
         self.child_options = child_options
+        self.weights = weights
         self._current_child: BaseInterpretationNode[C, Any, RR] = None
         self._context: C | None = None
+
+        # Validate weights if provided
+        if self.weights is not None:
+            if len(self.weights) != len(self.child_options):
+                raise ValueError(
+                    f"Number of weights ({len(self.weights)}) must match number of child options ({len(self.child_options)})"
+                )
+            if any(w < 0 for w in self.weights):
+                raise ValueError("All weights must be non-negative")
+            if sum(self.weights) == 0:
+                raise ValueError("At least one weight must be positive")
 
     @property
     def all_inputs(self) -> List[BaseInterpretationNode[C, Any, RI]]:
@@ -219,15 +235,23 @@ class RandomChild(BaseInterpretationNode[C, RI, RR]):
 
     def generate(self, vibe: Vibe):
         # Select a child at random (if any), and re-enter it fresh every time.
-        new_child = random.choice(self.child_options) if self.child_options else None
+        if not self.child_options:
+            new_child = None
+        elif self.weights is not None:
+            # Use weighted random selection
+            new_child = random.choices(self.child_options, weights=self.weights)[0]
+        else:
+            # Use uniform random selection (original behavior)
+            new_child = random.choice(self.child_options)
 
         # Exit the previous child regardless of whether the selection changes.
         if self._current_child is not None:
             self._current_child.exit_recursive()
 
         self._current_child = new_child
-        self._current_child.enter_recursive(self._context)
-        self._current_child.generate_recursive(vibe)
+        if self._current_child is not None:
+            self._current_child.enter_recursive(self._context)
+            self._current_child.generate_recursive(vibe)
 
     def render(self, frame: Frame, scheme: ColorScheme, context: C) -> RR:
         if self._current_child is None:

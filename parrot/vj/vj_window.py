@@ -7,6 +7,7 @@ from beartype import beartype
 
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
+from parrot.director.mode import Mode
 
 
 @beartype
@@ -95,6 +96,15 @@ class VJWindow(mglw.WindowConfig):
         self.blit_program["source_texture"] = 0
         self.quad_vao.render(mgl.TRIANGLE_STRIP)
 
+    def shift_scene(self):
+        """Shift scene using current system mode"""
+        if self.vj_director:
+            current_mode = self.vj_director.get_current_mode()
+            print(f"VJ Scene shift with current mode: {current_mode}")
+            self.vj_director.shift_current_mode()
+        else:
+            print("VJ Director not available for scene shift")
+
     def render(self, time: float, frame_time: float):
         """Render method - gets latest frame and renders VJ content"""
         self.ctx.clear(0.0, 0.0, 0.0)
@@ -112,6 +122,8 @@ class VJWindow(mglw.WindowConfig):
                 self.wnd.close()
             elif key == self.wnd.keys.F11:
                 self.wnd.fullscreen = not self.wnd.fullscreen
+            elif key == self.wnd.keys.SPACE:
+                self.shift_scene()
 
 
 @beartype

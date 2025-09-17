@@ -28,6 +28,7 @@ from parrot.vj.nodes.multiply_compose import MultiplyCompose
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
 from parrot.vj.nodes.laser_array import LaserArray
 from parrot.vj.nodes.black import Black
+from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 
 
@@ -61,7 +62,6 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 DatamoshEffect,
                 RGBShiftEffect,
                 ScanlinesEffect,
-                PixelateEffect,
                 NoiseEffect,
             ],
         )
@@ -93,16 +93,27 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Create 3D volumetric beams for atmospheric lighting
         volumetric_beams = VolumetricBeam()
+
         self.volumetric_beams = volumetric_beams
-        # Create 3D laser array fo
-        # r sharp laser effects
+        # Create 3D laser array for sharp laser effects
         laser_array = LaserArray()
         self.laser_array = laser_array
+
+        # Create oscilloscope effect for retro waveform visualization
+        oscilloscope = OscilloscopeEffect()
+        self.oscilloscope = oscilloscope
+
+        # Make oscilloscope optional - sometimes show it, sometimes show black (nothing)
+        # Use weights: oscilloscope appears 30% of the time, black 70% of the time
+        optional_oscilloscope = RandomChild([oscilloscope, Black()], weights=[0.1, 0.9])
 
         # Create layer composition with proper blend modes
         return LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
             LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
+            LayerSpec(
+                optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
+            ),  # Oscilloscope: additive blending for glow with 30% opacity
             LayerSpec(
                 volumetric_beams, BlendMode.ADDITIVE
             ),  # Beams: additive blending (FIXED!)

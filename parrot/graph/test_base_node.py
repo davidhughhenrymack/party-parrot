@@ -539,6 +539,82 @@ class TestRandomChild:
         node.generate.assert_called_once_with(self.mock_vibe)
         child2.generate_recursive.assert_called_once_with(self.mock_vibe, 1.0)
 
+    def test_random_child_with_weights(self, monkeypatch):
+        """Test RandomChild with weighted selection"""
+        child1 = ConstantNode(10.0)
+        child2 = ConstantNode(20.0)
+        child3 = ConstantNode(30.0)
+
+        # Create RandomChild with weights - child2 has much higher weight
+        weights = [0.1, 0.8, 0.1]  # child2 should be selected 80% of the time
+        node = RandomChild([child1, child2, child3], weights=weights)
+
+        node.enter_recursive(SimpleContext())
+
+        # Mock random.choices to return child2 deterministically
+        monkeypatch.setattr(
+            "parrot.graph.BaseInterpretationNode.random.choices",
+            lambda seq, weights: [child2],
+        )
+
+        node.generate(self.mock_vibe)
+
+        # Verify child2 was selected
+        assert node._current_child == child2
+        assert child2.entered
+        assert not child1.entered
+        assert not child3.entered
+
+        # Render should delegate to child2
+        result = node.render(self.mock_frame, self.mock_scheme, self.context)
+        assert result == 20.0
+
+    def test_random_child_weights_validation(self):
+        """Test RandomChild weight validation"""
+        child1 = ConstantNode(10.0)
+        child2 = ConstantNode(20.0)
+
+        # Test mismatched weights length
+        with pytest.raises(
+            ValueError, match="Number of weights .* must match number of child options"
+        ):
+            RandomChild([child1, child2], weights=[0.5])
+
+        # Test negative weights
+        with pytest.raises(ValueError, match="All weights must be non-negative"):
+            RandomChild([child1, child2], weights=[0.5, -0.3])
+
+        # Test all zero weights
+        with pytest.raises(ValueError, match="At least one weight must be positive"):
+            RandomChild([child1, child2], weights=[0.0, 0.0])
+
+        # Test valid weights
+        node = RandomChild([child1, child2], weights=[0.3, 0.7])
+        assert node.weights == [0.3, 0.7]
+
+    def test_random_child_without_weights_unchanged(self, monkeypatch):
+        """Test that RandomChild without weights behaves as before"""
+        child1 = ConstantNode(10.0)
+        child2 = ConstantNode(20.0)
+
+        # Create RandomChild without weights (original behavior)
+        node = RandomChild([child1, child2])
+        assert node.weights is None
+
+        node.enter_recursive(SimpleContext())
+
+        # Mock random.choice to return child1 deterministically
+        monkeypatch.setattr(
+            "parrot.graph.BaseInterpretationNode.random.choice", lambda seq: child1
+        )
+
+        node.generate(self.mock_vibe)
+
+        # Verify child1 was selected using uniform selection
+        assert node._current_child == child1
+        assert child1.entered
+        assert not child2.entered
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

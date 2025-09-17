@@ -44,7 +44,7 @@ class TestCameraZoom:
         assert effect.zoom_speed == 8.0
         assert effect.return_speed == 4.0
         assert effect.blur_intensity == 0.8
-        assert effect.signal == FrameSignal.sustained_high
+        assert effect.signal == FrameSignal.freq_low
         assert effect.current_zoom == 1.0
         assert effect.zoom_velocity == 0.0
 

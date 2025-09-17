@@ -183,8 +183,8 @@ class TestConcertStage:
         lasers = stage.laser_array
         assert lasers.laser_count == 8
         assert lasers.array_radius == 2.5
-        assert lasers.laser_length == 20.0
-        assert lasers.laser_width == 0.02
+        assert lasers.laser_length == 50.0
+        assert lasers.laser_width == 0.15
         assert lasers.scan_speed == 1.5
         assert lasers.strobe_frequency == 0.0
         assert lasers.laser_intensity == 2.0

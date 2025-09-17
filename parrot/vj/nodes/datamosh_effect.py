@@ -45,6 +45,21 @@ class DatamoshEffect(PostProcessEffectBase):
 
     def generate(self, vibe: Vibe):
         """Configure datamosh parameters based on the vibe"""
+        # Randomly pick a signal from available Frame signals
+        available_signals = [
+            FrameSignal.freq_all,
+            FrameSignal.freq_high,
+            FrameSignal.freq_low,
+            FrameSignal.sustained_low,
+            FrameSignal.sustained_high,
+            FrameSignal.strobe,
+            FrameSignal.big_blinder,
+            FrameSignal.small_blinder,
+            FrameSignal.pulse,
+            FrameSignal.dampen,
+        ]
+        self.signal = random.choice(available_signals)
+
         # Update glitch seed periodically for variation
         if random.random() < 0.1:  # 10% chance to change seed
             self.glitch_seed = random.random()

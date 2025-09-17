@@ -24,6 +24,7 @@ class VJDirector:
         self.last_shift_time = time.time()
         self.shift_count = 0
         self.window = None  # Will be set by the window manager
+        self.current_mode = Mode.gentle  # Track current system mode
 
         # Thread-safe frame data storage
         self._latest_frame = None
@@ -55,6 +56,7 @@ class VJDirector:
 
     def shift(self, mode: Mode, threshold: float = 1.0):
         """Shift the visual mode and update the concert stage"""
+        self.current_mode = mode  # Track the current mode
         vibe = Vibe(mode)
         self.concert_stage.generate_recursive(vibe, threshold)
 
@@ -68,6 +70,14 @@ class VJDirector:
     def get_concert_stage(self) -> ConcertStage:
         """Get the complete concert stage"""
         return self.concert_stage
+
+    def get_current_mode(self) -> Mode:
+        """Get the current mode"""
+        return self.current_mode
+
+    def shift_current_mode(self, threshold: float = 1.0):
+        """Shift using the current mode (regenerate with same mode)"""
+        self.shift(self.current_mode, threshold)
 
     def set_window(self, window):
         """Set the window for rendering"""

@@ -2,6 +2,7 @@
 
 import time
 import math
+import random
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
@@ -47,8 +48,20 @@ class ScanlinesEffect(PostProcessEffectBase):
 
     def generate(self, vibe: Vibe):
         """Configure scanlines parameters based on the vibe"""
-        # Could adjust scanline parameters based on vibe
-        pass
+        # Randomly pick a signal from available Frame signals
+        available_signals = [
+            FrameSignal.freq_all,
+            FrameSignal.freq_high,
+            FrameSignal.freq_low,
+            FrameSignal.sustained_low,
+            FrameSignal.sustained_high,
+            FrameSignal.strobe,
+            FrameSignal.big_blinder,
+            FrameSignal.small_blinder,
+            FrameSignal.pulse,
+            FrameSignal.dampen,
+        ]
+        self.signal = random.choice(available_signals)
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for scanlines effect"""

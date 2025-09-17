@@ -166,7 +166,7 @@ class TestVJIntegration:
 
         # Verify components use correct signals
         assert volumetric_beams.signal == FrameSignal.freq_low
-        assert laser_array.signal == FrameSignal.freq_high
+        assert laser_array.signal == FrameSignal.sustained_high
 
     def test_resource_cleanup_hard_fail(self):
         """Test resource cleanup - should hard fail if cleanup fails"""
