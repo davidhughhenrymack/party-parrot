@@ -5,7 +5,7 @@ import math
 import random
 import numpy as np
 import moderngl as mgl
-from typing import List, Tuple, Optional
+from typing import List, Optional
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
@@ -16,164 +16,84 @@ from parrot.vj.constants import DEFAULT_WIDTH, DEFAULT_HEIGHT
 from parrot.vj.utils.math_3d import (
     look_at_matrix,
     perspective_matrix,
-    align_to_direction,
     create_translation_matrix,
     create_rotation_matrix,
-    spherical_to_cartesian,
 )
+from parrot.vj.utils.signal_utils import get_random_frame_signal
 
 
 @beartype
-class LaserBeamState:
-    """State for a single laser beam in the array"""
+class LaserBeam:
+    """Individual laser beam state"""
 
-    def __init__(self, position: np.ndarray, direction: np.ndarray, beam_id: int):
-        self.position = position.copy()
-        self.direction = direction.copy()
-        self.target_position = position.copy()
-        self.target_direction = direction.copy()
+    def __init__(self, beam_id: int, fan_angle: float):
         self.beam_id = beam_id
-        self.phase_offset = random.uniform(0, 2 * math.pi)
-        self.scan_phase = random.uniform(0, 2 * math.pi)
+        self.fan_angle = fan_angle  # Angle within the fan for this beam
         self.intensity = 1.0
-        self.target_intensity = 1.0
-
-    def update(self, time: float, speed: float, signal: float, fan_angle: float):
-        """Update laser beam position and direction with scanning motion"""
-        # Smooth interpolation towards targets
-        lerp_factor = min(1.0, speed * 0.016)  # Assume ~60fps
-
-        self.position += (self.target_position - self.position) * lerp_factor
-        self.direction += (self.target_direction - self.direction) * lerp_factor
-        self.direction = self.direction / np.linalg.norm(self.direction)
-
-        # Smooth laser scanning motion (side-to-side sweep)
-        # Use a smoother, more controlled scanning speed
-        base_scan_speed = 1.5  # Slower base speed for smoother motion
-        scan_speed = base_scan_speed + signal * 1.0  # Less aggressive signal response
-        self.scan_phase += scan_speed * 0.016
-
-        # Create smooth scanning motion with sinusoidal movement
-        scan_amplitude = fan_angle * (0.4 + signal * 0.6)  # Signal affects fan width
-        # Use a combination of sin and cos for more complex, smooth motion
-        primary_scan = math.sin(self.scan_phase + self.phase_offset) * scan_amplitude
-        secondary_scan = (
-            math.cos(self.scan_phase * 0.7 + self.phase_offset) * scan_amplitude * 0.3
-        )
-        scan_offset = primary_scan + secondary_scan
-
-        # Apply scanning rotation to direction
-        scan_rotation = create_rotation_matrix(np.array([0.0, 1.0, 0.0]), scan_offset)
-        base_direction = self.target_direction.copy()
-        rotated_direction = (scan_rotation @ np.append(base_direction, 1.0))[:3]
-        self.direction = rotated_direction / np.linalg.norm(rotated_direction)
-
-        # Intensity modulation
-        self.intensity += (self.target_intensity - self.intensity) * lerp_factor * 2.0
-
-    def randomize_target(self, array_center: np.ndarray, spread_radius: float):
-        """Set new random target position (but keep at same origin point)"""
-        # Keep position at the same origin point (no spread for single point source)
-        self.target_position = array_center.copy()
-
-        # Create new random upward direction with fan spread
-        angle = random.uniform(0, 2 * math.pi)
-        elevation_angle = random.uniform(0.2, math.pi / 3)  # Upward cone
-
-        # Convert to Cartesian coordinates (pointing upward)
-        base_direction = np.array(
-            [
-                math.sin(elevation_angle) * math.cos(angle),  # X component
-                math.cos(elevation_angle),  # Y component (positive = upward)
-                math.sin(elevation_angle) * math.sin(angle),  # Z component
-            ]
-        )
-
-        # Add variation around the base direction
-        variation = np.array(
-            [
-                random.uniform(-0.2, 0.2),
-                random.uniform(-0.1, 0.1),
-                random.uniform(-0.2, 0.2),
-            ]
-        )
-
-        self.target_direction = base_direction + variation
-        self.target_direction = self.target_direction / np.linalg.norm(
-            self.target_direction
-        )
-
-        # Ensure upward orientation (positive Y)
-        if self.target_direction[1] < 0.1:
-            self.target_direction[1] = 0.1 + random.uniform(0.0, 0.3)
-            self.target_direction = self.target_direction / np.linalg.norm(
-                self.target_direction
-            )
-
-        # Randomize intensity
-        self.target_intensity = random.uniform(0.7, 1.0)
 
 
 @beartype
 class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     """
-    3D laser array that creates multiple thin laser beams that fan out and narrow.
-    Creates concert/club-style laser shows with scanning patterns and strobing effects.
+    Simplified 3D laser array that projects N lasers from a single point.
+    Lasers fan out in a 2D plane based on quaternion rotation and Frame signals.
     """
 
     def __init__(
         self,
-        laser_count: int = 8,
-        array_radius: float = 2.5,
-        laser_length: float = 50.0,  # Even longer beams
-        laser_width: float = 0.15,  # Much thicker beams for better visibility
-        fan_angle: float = math.pi / 3,  # 60 degrees fan spread
-        scan_speed: float = 1.5,  # Slower, smoother scanning
-        strobe_frequency: float = 0.0,  # 0 = no strobe, >0 = strobe Hz
-        laser_intensity: float = 2.0,  # Very bright for laser effect
-        color: Tuple[float, float, float] = (0.0, 1.0, 0.0),  # Classic green lasers
-        signal: FrameSignal = FrameSignal.sustained_high,
+        camera_eye: np.ndarray,
+        camera_target: np.ndarray,
+        camera_up: np.ndarray,
+        laser_position: np.ndarray,
+        laser_point_vector: np.ndarray,
+        laser_count: int = 30,
+        laser_length: float = 40.0,  # Longer lasers for better visibility
+        laser_thickness: float = 0.1,  # Thicker for better visibility
         width: int = DEFAULT_WIDTH,
         height: int = DEFAULT_HEIGHT,
     ):
         """
         Args:
-            laser_count: Number of laser beams in the array
-            array_radius: Radius of the laser array formation
+            camera_eye: Camera position (from ConcertStage)
+            camera_target: Camera target (from ConcertStage)
+            camera_up: Camera up vector (from ConcertStage)
+            laser_position: 3D position of laser source
+            laser_point_vector: Primary direction vector the laser unit points at
+            laser_count: Number of laser beams (default 30)
             laser_length: Length of each laser beam
-            laser_width: Width/thickness of laser beams (very thin)
-            fan_angle: Maximum angle for laser fan spread (radians)
-            scan_speed: Speed of laser scanning motion
-            strobe_frequency: Strobe frequency in Hz (0 = no strobe)
-            laser_intensity: Brightness multiplier for lasers
-            color: RGB color of the lasers
-            signal: Audio signal controlling laser movement
+            laser_thickness: Base thickness of laser beams
             width: Render target width
             height: Render target height
         """
         super().__init__([])
+
+        # Camera system (never moves)
+        self.camera_eye = camera_eye.copy()
+        self.camera_target = camera_target.copy()
+        self.camera_up = camera_up.copy()
+
+        # Laser system
+        self.laser_position = laser_position.copy()
+        self.laser_point_vector = laser_point_vector.copy()
         self.laser_count = laser_count
-        self.array_radius = array_radius
         self.laser_length = laser_length
-        self.laser_width = laser_width
-        self.fan_angle = fan_angle
-        self.scan_speed = scan_speed
-        self.strobe_frequency = strobe_frequency
-        self.laser_intensity = laser_intensity
-        self.color = color
-        self.signal = signal
+        self.laser_thickness = laser_thickness
         self.width = width
         self.height = height
 
-        # 3D rendering state
-        self.lasers: List[LaserBeamState] = []
-        self.array_center = np.array(
-            [0.0, 2.0, 0.0]
-        )  # Center of laser array at bottom center
-        self.start_time = time.time()
-        self.last_strobe_time = 0.0
+        # Internal quaternion rotation (set on init, for now just identity)
+        self.fan_rotation_axis = np.array([0.0, 1.0, 0.0])  # Rotate around Y axis
+        self.fan_rotation_angle = 0.0  # No initial rotation
+
+        # Frame signal for fanning (picked randomly on generate)
+        self.fan_signal = FrameSignal.freq_high
+
+        # Create laser beams
+        self.lasers: List[LaserBeam] = []
+        self._setup_lasers()
 
         # OpenGL resources
+        self._context: Optional[mgl.Context] = None
         self.framebuffer: Optional[mgl.Framebuffer] = None
         self.color_texture: Optional[mgl.Texture] = None
         self.depth_texture: Optional[mgl.Texture] = None
@@ -193,16 +113,29 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.composite_program: Optional[mgl.Program] = None
         self.quad_vao: Optional[mgl.VertexArray] = None
 
-        self._context: Optional[mgl.Context] = None
+    def _setup_lasers(self):
+        """Create laser beam objects distributed in a fan pattern"""
+        self.lasers = []
+
+        for i in range(self.laser_count):
+            # Distribute beams evenly across fan angle
+            if self.laser_count == 1:
+                fan_angle = 0.0
+            else:
+                # Spread from -45° to +45° (90° total fan)
+                fan_range = math.pi / 2  # 90 degrees
+                fan_angle = -fan_range / 2 + (fan_range * i / (self.laser_count - 1))
+
+            beam = LaserBeam(i, fan_angle)
+            self.lasers.append(beam)
 
     def enter(self, context: mgl.Context):
-        """Initialize 3D laser array resources"""
+        """Initialize OpenGL resources"""
         self._context = context
-        self._setup_lasers()
         self._setup_gl_resources()
 
     def exit(self):
-        """Clean up 3D laser resources"""
+        """Clean up OpenGL resources"""
         resources = [
             self.framebuffer,
             self.color_texture,
@@ -227,96 +160,34 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self._context = None
 
     def generate(self, vibe: Vibe):
-        """Generate new laser configurations based on vibe"""
-        # Randomly pick a signal from available Frame signals
-        available_signals = [
-            FrameSignal.freq_all,
-            FrameSignal.freq_high,
-            FrameSignal.freq_low,
-            FrameSignal.sustained_low,
-            FrameSignal.sustained_high,
-            FrameSignal.strobe,
-            FrameSignal.big_blinder,
-            FrameSignal.small_blinder,
-            FrameSignal.pulse,
-            FrameSignal.dampen,
-        ]
-        self.signal = random.choice(available_signals)
+        """Generate new laser configuration based on vibe"""
+        # Randomly pick a Frame signal for fanning animation
+        self.fan_signal = get_random_frame_signal()
 
-        # Adjust laser behavior based on mode
+        # Adjust behavior based on mode
         if vibe.mode == Mode.rave:
-            # High energy: fan out lasers and add strobe
-            self.fan_out_beams()
-            self.set_strobe_frequency(8.0)
+            # High energy: wider fan, more dynamic
+            self.fan_rotation_angle = random.uniform(0, 2 * math.pi)
         elif vibe.mode == Mode.gentle:
-            # Calm: narrow beams and no strobe
-            self.narrow_beams()
-            self.set_strobe_frequency(0.0)
+            # Calm: narrower fan, less movement
+            self.fan_rotation_angle = random.uniform(-math.pi / 4, math.pi / 4)
         elif vibe.mode == Mode.blackout:
-            # Blackout: minimal lighting
-            self.set_strobe_frequency(0.0)
-            self.narrow_beams()
-
-        # Randomize laser positions and orientations
-        for laser in self.lasers:
-            if random.random() < 0.15:  # 15% chance to randomize each laser
-                laser.randomize_target(self.array_center, self.array_radius)
-
-    def _setup_lasers(self):
-        """Initialize laser beam state objects from a single point"""
-        self.lasers = []
-
-        # Single point origin at bottom center of screen
-        laser_origin = np.array([0.0, 2.0, 0.0])  # Bottom center position
-
-        for laser_id in range(self.laser_count):
-            # All lasers start from the exact same point
-            position = laser_origin.copy()
-
-            # Create fan pattern of directions pointing upward
-            # Distribute lasers in a cone pattern
-            angle = (2.0 * math.pi * laser_id) / self.laser_count
-
-            # Create upward-pointing directions with fan spread
-            fan_spread = self.fan_angle * 0.5  # Half angle for spread
-            elevation_angle = random.uniform(0.2, fan_spread)  # Upward angle
-            azimuth_angle = angle + random.uniform(
-                -0.3, 0.3
-            )  # Horizontal spread with variation
-
-            # Convert to Cartesian coordinates (pointing upward)
-            direction = np.array(
-                [
-                    math.sin(elevation_angle) * math.cos(azimuth_angle),  # X component
-                    math.cos(elevation_angle),  # Y component (positive = upward)
-                    math.sin(elevation_angle) * math.sin(azimuth_angle),  # Z component
-                ]
-            )
-
-            # Normalize direction
-            direction = direction / np.linalg.norm(direction)
-
-            # Ensure upward orientation (positive Y)
-            if direction[1] < 0.1:  # Minimum upward component
-                direction[1] = 0.1 + random.uniform(0.0, 0.3)
-                direction = direction / np.linalg.norm(direction)
-
-            laser = LaserBeamState(position, direction, laser_id)
-            self.lasers.append(laser)
+            # Minimal activity
+            self.fan_rotation_angle = 0.0
 
     def _setup_gl_resources(self):
-        """Setup OpenGL resources for 3D laser rendering"""
+        """Setup OpenGL resources for laser rendering"""
         if not self._context:
             return
 
-        # Create framebuffers for 3D rendering
+        # Create main framebuffer
         self.color_texture = self._context.texture((self.width, self.height), 4)
         self.depth_texture = self._context.depth_texture((self.width, self.height))
         self.framebuffer = self._context.framebuffer(
             color_attachments=[self.color_texture], depth_attachment=self.depth_texture
         )
 
-        # Create bloom effect framebuffers
+        # Create bloom framebuffers
         self.bloom_texture = self._context.texture((self.width, self.height), 4)
         self.bloom_framebuffer = self._context.framebuffer(
             color_attachments=[self.bloom_texture]
@@ -333,71 +204,79 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             color_attachments=[self.blur_texture2]
         )
 
-        # Create shader programs
+        # Create shaders and geometry
         self._create_shaders()
-
-        # Create geometry
-        self._create_laser_geometry()
-        self._create_quad_geometry()
+        self._create_geometry()
 
     def _create_shaders(self):
         """Create shader programs for laser rendering"""
-        # Laser vertex shader
+        # Laser vertex shader (billboarded quad per beam)
         laser_vertex = """
         #version 330 core
-        in vec3 in_position;
-        in float in_distance;
-        
-        uniform mat4 mvp_matrix;
-        uniform mat4 model_matrix;
-        uniform vec3 laser_origin;
-        uniform float laser_length;
-        
+        in float in_distance;   // 0.0 (start) to 1.0 (end)
+        in float in_side;       // -1.0 or +1.0 (left/right)
+
+        uniform mat4 view;
+        uniform mat4 projection;
+        uniform vec3 camera_position;
+        uniform vec3 view_direction;   // normalized camera forward
+        uniform vec3 beam_origin;
+        uniform vec3 beam_direction;   // normalized
+        uniform float beam_length;
+        uniform float beam_half_width;
+
         out vec3 world_pos;
-        out float distance_along_laser;
-        out float distance_from_origin;
-        
+        out float width_from_center;    // 0 at center, 1 at edge
+        out float distance_to_camera;
+
         void main() {
-            vec4 world_position = model_matrix * vec4(in_position, 1.0);
-            world_pos = world_position.xyz;
-            distance_along_laser = in_distance;
-            distance_from_origin = length(world_pos - laser_origin);
-            
-            gl_Position = mvp_matrix * world_position;
+            // Compute a width vector perpendicular to the beam and camera
+            vec3 side_vec = normalize(cross(beam_direction, view_direction));
+            // Fallback in case beam is parallel to camera direction
+            if (length(side_vec) < 1e-4) {
+                side_vec = normalize(cross(beam_direction, vec3(0.0,1.0,0.0)));
+            }
+
+            vec3 p = beam_origin
+                   + beam_direction * (in_distance * beam_length)
+                   + side_vec * (in_side * beam_half_width);
+
+            world_pos = p;
+            width_from_center = abs(in_side);
+            distance_to_camera = length(camera_position - p);
+
+            gl_Position = projection * view * vec4(p, 1.0);
         }
         """
 
-        # Laser fragment shader
+        # Laser fragment shader with 3D thickness and bloom
         laser_fragment = """
         #version 330 core
         in vec3 world_pos;
-        in float distance_along_laser;
-        in float distance_from_origin;
-        
+        in float width_from_center;
+        in float distance_to_camera;
+
         uniform vec3 laser_color;
         uniform float laser_intensity;
-        uniform float strobe_factor;
-        uniform vec3 camera_pos;
         uniform float time;
-        
+
         out vec4 color;
-        
+
         void main() {
-            // Distance-based attenuation (less than volumetric beams)
-            float distance_falloff = 1.0 / (1.0 + distance_from_origin * 0.05);
-            
-            // Laser beam core intensity (very bright in center)
-            float core_intensity = 1.0 - smoothstep(0.0, 0.1, distance_along_laser);
-            
-            // Add laser sparkle/shimmer effect
-            float shimmer = 0.8 + 0.2 * sin(time * 20.0 + world_pos.x * 10.0 + world_pos.z * 10.0);
-            
-            // Combine effects
-            float intensity = laser_intensity * distance_falloff * core_intensity * 
-                            shimmer * strobe_factor;
-            
-            // Laser beams are very saturated and bright
-            color = vec4(laser_color * intensity, intensity);
+            // Radial falloff from beam center (crisp core + soft glow)
+            float core = 1.0 - smoothstep(0.0, 0.15, width_from_center);
+            float glow = 1.0 - smoothstep(0.15, 1.0, width_from_center);
+            float beam = core * 1.2 + glow * 0.4;
+
+            // Distance-based attenuation
+            float dist = max(0.001, distance_to_camera);
+            float distance_falloff = 1.0 / (1.0 + 0.02 * dist);
+
+            // Slight shimmer
+            float shimmer = 0.9 + 0.1 * sin(time * 8.0 + world_pos.x * 4.0 + world_pos.z * 4.0);
+
+            float intensity = laser_intensity * beam * distance_falloff * shimmer;
+            color = vec4(laser_color * intensity * 2.0, intensity);
         }
         """
 
@@ -478,63 +357,38 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             vertex_shader=blur_vertex, fragment_shader=composite_fragment
         )
 
-    def _create_laser_geometry(self):
-        """Create 3D geometry for thin laser beams"""
-        # Create a very thin cylinder/line for each laser
-        vertices = []
-        indices = []
+    def _create_geometry(self):
+        """Create geometry for laser beams and fullscreen quad"""
+        # Create a unit quad with attributes: in_distance (0/1) and in_side (-1/+1)
+        # Vertex order: (start,-1), (start,+1), (end,+1), (end,-1)
+        vertices = np.array(
+            [
+                # in_distance, in_side
+                0.0,
+                -1.0,
+                0.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                -1.0,
+            ],
+            dtype=np.float32,
+        )
 
-        # Simple line geometry for laser beam
-        segments = 4  # Minimal geometry for thin laser
+        indices = np.array([0, 1, 2, 0, 2, 3], dtype=np.uint32)
 
-        # Start point (laser origin)
-        vertices.extend([0.0, 0.0, 0.0, 0.0])  # pos, distance
-
-        # End point (laser terminus) - now pointing upward
-        vertices.extend([0.0, self.laser_length, 0.0, 1.0])  # pos, distance
-
-        # Create additional points for slight width
-        for i in range(segments):
-            angle = 2.0 * math.pi * i / segments
-            x = math.cos(angle) * self.laser_width
-            z = math.sin(angle) * self.laser_width
-
-            # Points along the laser beam - now extending upward
-            vertices.extend([x, 0.0, z, 0.0])  # Start
-            vertices.extend([x, self.laser_length, z, 1.0])  # End
-
-        # Create line indices for laser beam
-        # Main beam line
-        indices.extend([0, 1])
-
-        # Side lines for minimal width
-        for i in range(segments):
-            start_idx = 2 + i * 2
-            end_idx = start_idx + 1
-            indices.extend([start_idx, end_idx])
-
-            # Connect to main beam
-            indices.extend([0, start_idx])
-            indices.extend([1, end_idx])
-
-        # Convert to numpy arrays
-        vertices_array = np.array(vertices, dtype=np.float32)
-        indices_array = np.array(indices, dtype=np.uint32)
-
-        # Create VAO
-        vbo = self._context.buffer(vertices_array.tobytes())
-        ibo = self._context.buffer(indices_array.tobytes())
+        vbo = self._context.buffer(vertices.tobytes())
+        ibo = self._context.buffer(indices.tobytes())
 
         self.laser_vao = self._context.vertex_array(
             self.laser_program,
-            [(vbo, "3f 1f", "in_position", "in_distance")],
+            [(vbo, "1f 1f", "in_distance", "in_side")],
             ibo,
         )
 
-    def _create_quad_geometry(self):
-        """Create fullscreen quad for post-processing"""
-        # Fullscreen quad vertices
-        self._quad_vertices = np.array(
+        # Create fullscreen quad for post-processing
+        quad_vertices = np.array(
             [
                 # Position  # TexCoord
                 -1.0,
@@ -557,10 +411,10 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             dtype=np.float32,
         )
 
-        self._quad_indices = np.array([0, 1, 2, 0, 2, 3], dtype=np.uint32)
+        quad_indices = np.array([0, 1, 2, 0, 2, 3], dtype=np.uint32)
 
-        quad_vbo = self._context.buffer(self._quad_vertices.tobytes())
-        quad_ibo = self._context.buffer(self._quad_indices.tobytes())
+        quad_vbo = self._context.buffer(quad_vertices.tobytes())
+        quad_ibo = self._context.buffer(quad_indices.tobytes())
 
         self.quad_vao = self._context.vertex_array(
             self.blur_program,
@@ -568,186 +422,114 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             quad_ibo,
         )
 
-    def _create_matrices(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Create view, projection, and model matrices"""
-        # Camera setup (audience perspective looking straight ahead)
-        camera_pos = np.array(
-            [0.0, 6.0, -8.0]
-        )  # Audience position (mid-height, in front)
-        target = np.array([0.0, 6.0, 0.0])  # Looking straight ahead
-        up = np.array([0.0, 1.0, 0.0])
-
-        # View matrix
-        view = look_at_matrix(camera_pos, target, up)
+    def _create_matrices(self):
+        """Create view and projection matrices using camera system"""
+        # Use camera system from ConcertStage (never moves)
+        view = look_at_matrix(self.camera_eye, self.camera_target, self.camera_up)
 
         # Projection matrix
         aspect = self.width / self.height
         projection = perspective_matrix(45.0, aspect, 0.1, 100.0)
 
-        # Model matrix (identity for now)
-        model = np.eye(4, dtype=np.float32)
+        return view, projection
 
-        return view, projection, model, camera_pos
+    def _get_laser_direction(self, beam: LaserBeam, signal_value: float) -> np.ndarray:
+        """Calculate the direction for a specific laser beam based on fan angle and signal"""
+        # Base direction is the laser point vector
+        base_direction = self.laser_point_vector.copy()
 
-    def _rotation_from_to(self, source: np.ndarray, target: np.ndarray) -> np.ndarray:
-        """Create a rotation matrix that rotates vector `source` to align with `target`."""
-        source_norm = source / np.linalg.norm(source)
-        target_norm = target / np.linalg.norm(target)
+        # Create rotation around the fan axis based on beam's fan angle and signal
+        # Signal affects the spread - higher signal = wider fan
+        dynamic_fan_angle = beam.fan_angle * (0.5 + signal_value * 0.5)
 
-        dot = float(np.clip(np.dot(source_norm, target_norm), -1.0, 1.0))
-        if dot > 0.9999:
-            return np.eye(4, dtype=np.float32)
-        if dot < -0.9999:
-            # 180-degree rotation around any axis perpendicular to source
-            orth = np.array([1.0, 0.0, 0.0], dtype=np.float32)
-            if abs(source_norm[0]) > 0.9:
-                orth = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-            axis = np.cross(source_norm, orth)
-            axis = axis / np.linalg.norm(axis)
-            return create_rotation_matrix(axis, math.pi)
+        # Apply quaternion rotation (using rotation matrix for now)
+        rotation_matrix = create_rotation_matrix(
+            self.fan_rotation_axis, dynamic_fan_angle
+        )
 
-        axis = np.cross(source_norm, target_norm)
-        axis = axis / np.linalg.norm(axis)
-        angle = math.acos(dot)
-        return create_rotation_matrix(axis, angle)
+        # Transform the direction
+        direction_4d = np.append(
+            base_direction, 0.0
+        )  # Make it 4D for matrix multiplication
+        rotated_direction = (rotation_matrix @ direction_4d)[:3]
 
-    def _world_to_screen(
-        self, world_pos: np.ndarray, mvp_matrix: np.ndarray
-    ) -> Tuple[float, float]:
-        """Convert world position to screen space coordinates for debugging"""
-        # Transform to clip space
-        world_pos_4d = np.append(world_pos, 1.0)
-        clip_pos = mvp_matrix @ world_pos_4d
-
-        # Perspective divide
-        if clip_pos[3] != 0:
-            ndc_pos = clip_pos[:3] / clip_pos[3]
-        else:
-            ndc_pos = clip_pos[:3]
-
-        # Convert to screen coordinates (0,0 at top-left)
-        screen_x = (ndc_pos[0] + 1.0) * 0.5 * self.width
-        screen_y = (
-            (1.0 - ndc_pos[1]) * 0.5 * self.height
-        )  # Flip Y for screen coordinates
-
-        return screen_x, screen_y
-
-    def _update_lasers(self, frame: Frame):
-        """Update laser positions and movements with smooth scanning and frequency-reactive fanning"""
-        current_time = time.time() - self.start_time
-
-        # Get signals for different effects
-        sustained_high_signal = frame[FrameSignal.sustained_high]  # For intensity
-        freq_high_signal = frame[FrameSignal.freq_high]  # For fanning
-
-        # Update each laser with smooth scanning motion
-        for laser in self.lasers:
-            # Use freq_high for dynamic fan angle (more reactive fanning)
-            dynamic_fan_angle = self.fan_angle * (0.3 + freq_high_signal * 0.7)
-
-            # Slower, smoother scanning motion
-            laser.update(
-                time=current_time,
-                speed=self.scan_speed * 0.7,  # Slower for smoother motion
-                signal=freq_high_signal,  # Use freq_high for scanning reactivity
-                fan_angle=dynamic_fan_angle,
-            )
-
-    def _calculate_strobe_factor(self, current_time: float) -> float:
-        """Calculate strobe intensity factor"""
-        if self.strobe_frequency <= 0:
-            return 1.0
-
-        # Strobe on/off pattern
-        strobe_period = 1.0 / self.strobe_frequency
-        phase = (current_time % strobe_period) / strobe_period
-
-        # Sharp on/off strobe
-        return 1.0 if phase < 0.5 else 0.0
+        # Normalize
+        return rotated_direction / np.linalg.norm(rotated_direction)
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> Optional[mgl.Framebuffer]:
-        """Render 3D laser array with bloom effect"""
-        if not self.framebuffer or not self.laser_vao or not self.bloom_framebuffer:
-            # Create a minimal framebuffer if not set up
-            if not self.framebuffer:
-                try:
-                    color_texture = context.texture((self.width, self.height), 4)
-                    self.framebuffer = context.framebuffer(
-                        color_attachments=[color_texture]
-                    )
-                    self.framebuffer.use()
-                    context.clear(0.0, 0.0, 0.0, 0.0)
-                except:
-                    # If GL setup fails, create a mock framebuffer for testing
-                    pass
-            return self.framebuffer
+        """Render the laser array with bloom effect"""
+        if not self.framebuffer or not self.laser_vao:
+            return None
 
-        # Update laser animations
-        self._update_lasers(frame)
+        # Get signal value for fanning
+        signal_value = frame[self.fan_signal]
+        current_time = time.time()
 
         # Create matrices
-        view, projection, model, camera_pos = self._create_matrices()
+        view, projection = self._create_matrices()
 
-        # Step 1: Render lasers to main framebuffer
+        # Render lasers to main framebuffer
         self.framebuffer.use()
         context.clear(0.0, 0.0, 0.0, 0.0)  # Transparent background
-        context.enable(mgl.DEPTH_TEST)
+        # Depth testing off so thin beams are not lost due to precision
+        context.disable(mgl.DEPTH_TEST)
         context.enable(mgl.BLEND)
-        context.blend_func = mgl.SRC_ALPHA, mgl.ONE  # Additive blending for laser glow
+        context.blend_func = mgl.SRC_ALPHA, mgl.ONE  # Additive blending
 
-        # Get signal values and time for effects
-        sustained_high_signal = frame[FrameSignal.sustained_high]  # For intensity
-        freq_high_signal = frame[FrameSignal.freq_high]  # For fanning
-        current_time = time.time() - self.start_time
-        strobe_factor = self._calculate_strobe_factor(current_time)
+        # Render each laser beam
+        for beam in self.lasers:
+            # Calculate laser direction
+            laser_direction = self._get_laser_direction(beam, signal_value)
 
-        # Dynamic intensity modulation based on sustained high frequencies
-        dynamic_intensity = self.laser_intensity * (0.5 + sustained_high_signal * 0.5)
-
-        # Render each laser
-        for i, laser in enumerate(self.lasers):
             # Create model matrix for this laser
-            laser_model = self._create_laser_transform(laser)
-            laser_mvp = projection @ view @ laser_model
+            # Translate to laser position and orient along laser direction
+            translation = create_translation_matrix(self.laser_position)
 
-            # Set uniforms (only set uniforms that exist in the shader)
-            self.laser_program["mvp_matrix"].write(
-                laser_mvp.astype(np.float32).tobytes()
+            # Create rotation to align Y-axis with laser direction
+            # (since our geometry extends along Y-axis)
+            up_axis = np.array([0.0, 1.0, 0.0])
+            if np.allclose(laser_direction, up_axis):
+                rotation = np.eye(4, dtype=np.float32)
+            elif np.allclose(laser_direction, -up_axis):
+                rotation = create_rotation_matrix(np.array([1.0, 0.0, 0.0]), math.pi)
+            else:
+                # Create rotation matrix to align up_axis with laser_direction
+                axis = np.cross(up_axis, laser_direction)
+                axis = axis / np.linalg.norm(axis)
+                angle = math.acos(np.clip(np.dot(up_axis, laser_direction), -1.0, 1.0))
+                rotation = create_rotation_matrix(axis, angle)
+
+            model = translation @ rotation
+
+            # Set shader uniforms (billboarded in vertex shader)
+            self.laser_program["view"].write(view.astype(np.float32).tobytes())
+            self.laser_program["projection"].write(
+                projection.astype(np.float32).tobytes()
             )
-            self.laser_program["model_matrix"].write(
-                laser_model.astype(np.float32).tobytes()
-            )
+            self.laser_program["camera_position"] = tuple(self.camera_eye)
+            self.laser_program["beam_origin"] = tuple(self.laser_position)
+            self.laser_program["beam_direction"] = tuple(laser_direction)
+            self.laser_program["beam_length"] = float(self.laser_length)
+            self.laser_program["beam_half_width"] = float(self.laser_thickness * 0.5)
+            # Approximate camera forward from view matrix (third row negative)
+            # view matrix has -forward as row 3 (0-based index 2)
+            view_arr = view
+            np_forward = -view_arr[2, :3]
+            np_forward = np_forward / (np.linalg.norm(np_forward) + 1e-6)
+            self.laser_program["view_direction"] = tuple(np_forward)
+            self.laser_program["laser_color"] = scheme.fg.rgb
+            self.laser_program["laser_intensity"] = 5.0 * beam.intensity
+            self.laser_program["time"] = current_time
 
-            # Only set uniforms that are actually used in the shader
-            if "laser_origin" in self.laser_program:
-                self.laser_program["laser_origin"] = tuple(laser.position)
-            if "laser_length" in self.laser_program:
-                self.laser_program["laser_length"] = self.laser_length
-            if "laser_color" in self.laser_program:
-                # Use color scheme colors instead of fixed color
-                primary_color = scheme.fg.rgb  # Use foreground color from scheme
-                self.laser_program["laser_color"] = primary_color
-            if "laser_intensity" in self.laser_program:
-                self.laser_program["laser_intensity"] = (
-                    dynamic_intensity * laser.intensity
-                )
-            if "strobe_factor" in self.laser_program:
-                self.laser_program["strobe_factor"] = strobe_factor
-            if "camera_pos" in self.laser_program:
-                self.laser_program["camera_pos"] = tuple(camera_pos)
-            if "time" in self.laser_program:
-                self.laser_program["time"] = current_time
-
-            # Render laser geometry as lines
-            self.laser_vao.render(mgl.LINES)
+            # Render laser geometry
+            self.laser_vao.render(mgl.TRIANGLES)
 
         context.disable(mgl.DEPTH_TEST)
         context.disable(mgl.BLEND)
 
-        # Step 2: Apply bloom effect
+        # Apply bloom effect
         self._apply_bloom_effect(context)
 
         return self.bloom_framebuffer
@@ -763,155 +545,80 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         ):
             return
 
-        # Step 1: Horizontal blur pass
+        # Horizontal blur pass
         self.blur_framebuffer1.use()
         context.clear(0.0, 0.0, 0.0, 0.0)
         context.disable(mgl.DEPTH_TEST)
         context.disable(mgl.BLEND)
 
-        # Step 1: Horizontal blur pass
-        context.disable(mgl.DEPTH_TEST)
-        context.disable(mgl.BLEND)
-
-        # Bind textures and set uniforms for horizontal blur
         self.color_texture.use(0)
-        if "input_texture" in self.blur_program:
-            self.blur_program["input_texture"] = 0
-        if "blur_direction" in self.blur_program:
-            self.blur_program["blur_direction"] = (1.0, 0.0)  # Horizontal
-        if "blur_radius" in self.blur_program:
-            self.blur_program["blur_radius"] = 3.0
+        self.blur_program["input_texture"] = 0
+        self.blur_program["blur_direction"] = (1.0, 0.0)  # Horizontal
+        self.blur_program["blur_radius"] = 2.0
 
         self.quad_vao.render()
 
-        # Step 2: Vertical blur pass
+        # Vertical blur pass
         self.blur_framebuffer2.use()
         context.clear(0.0, 0.0, 0.0, 0.0)
 
-        # Bind textures and set uniforms for vertical blur
         self.blur_texture1.use(0)
-        if "input_texture" in self.blur_program:
-            self.blur_program["input_texture"] = 0
-        if "blur_direction" in self.blur_program:
-            self.blur_program["blur_direction"] = (0.0, 1.0)  # Vertical
+        self.blur_program["input_texture"] = 0
+        self.blur_program["blur_direction"] = (0.0, 1.0)  # Vertical
 
         self.quad_vao.render()
 
-        # Step 3: Composite original + bloom
+        # Composite original + bloom
         self.bloom_framebuffer.use()
         context.clear(0.0, 0.0, 0.0, 0.0)
         context.enable(mgl.BLEND)
         context.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
 
-        # Bind textures and set uniforms for compositing
-        self.color_texture.use(0)
-        self.blur_texture2.use(1)
-        if "original_texture" in self.composite_program:
-            self.composite_program["original_texture"] = 0
-        if "bloom_texture" in self.composite_program:
-            self.composite_program["bloom_texture"] = 1
-        if "bloom_intensity" in self.composite_program:
-            self.composite_program["bloom_intensity"] = 1.5  # Bloom strength
+        # Create composite VAO
+        quad_vertices = np.array(
+            [
+                -1.0,
+                -1.0,
+                0.0,
+                0.0,
+                1.0,
+                -1.0,
+                1.0,
+                0.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                -1.0,
+                1.0,
+                0.0,
+                1.0,
+            ],
+            dtype=np.float32,
+        )
 
-        # Use the existing quad VAO but with composite program
-        # We need to create a separate VAO for the composite shader
-        quad_vbo = self._context.buffer(self._quad_vertices.tobytes())
-        quad_ibo = self._context.buffer(self._quad_indices.tobytes())
+        quad_indices = np.array([0, 1, 2, 0, 2, 3], dtype=np.uint32)
 
-        quad_vao_composite = context.vertex_array(
+        quad_vbo = context.buffer(quad_vertices.tobytes())
+        quad_ibo = context.buffer(quad_indices.tobytes())
+
+        composite_quad_vao = context.vertex_array(
             self.composite_program,
             [(quad_vbo, "2f 2f", "in_position", "in_texcoord")],
             quad_ibo,
         )
-        quad_vao_composite.render()
-        quad_vao_composite.release()
+
+        self.color_texture.use(0)
+        self.blur_texture2.use(1)
+        self.composite_program["original_texture"] = 0
+        self.composite_program["bloom_texture"] = 1
+        self.composite_program["bloom_intensity"] = 1.5
+
+        composite_quad_vao.render()
+
+        # Clean up temporary resources
+        composite_quad_vao.release()
         quad_vbo.release()
         quad_ibo.release()
 
         context.disable(mgl.BLEND)
-
-    def _update_lasers(self, frame: Frame):
-        """Update laser positions and orientations"""
-        current_time = time.time() - self.start_time
-        signal_value = frame[self.signal]
-
-        # Update fan angle based on signal
-        dynamic_fan_angle = self.fan_angle * (0.5 + signal_value * 0.5)
-
-        for laser in self.lasers:
-            # Smooth movement and scanning
-            laser.update(current_time, self.scan_speed, signal_value, dynamic_fan_angle)
-
-    def _create_laser_transform(self, laser: LaserBeamState) -> np.ndarray:
-        """Create transformation matrix for a laser beam"""
-        # Align local +Y axis with desired direction since geometry extends along +Y
-        source_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-        rotation = self._rotation_from_to(source_axis, laser.direction)
-
-        # Create translation matrix
-        translation = create_translation_matrix(laser.position)
-
-        # Combine translation and rotation
-        transform = translation @ rotation
-
-        return transform
-
-    def set_fan_angle(self, angle: float):
-        """Dynamically adjust the fan angle"""
-        self.fan_angle = max(0.0, min(math.pi, angle))
-
-    def set_strobe_frequency(self, frequency: float):
-        """Dynamically adjust the strobe frequency"""
-        if frequency < 0.0:
-            raise ValueError(f"Strobe frequency must be non-negative, got {frequency}")
-        self.strobe_frequency = frequency
-
-    def narrow_beams(self):
-        """Narrow all laser beams to point straight up"""
-        # All beams point straight up with minimal spread
-        for laser in self.lasers:
-            direction = np.array([0.0, 1.0, 0.0])  # Straight up
-            # Add tiny variation to avoid identical beams
-            variation = np.array(
-                [
-                    random.uniform(-0.05, 0.05),
-                    0.0,
-                    random.uniform(-0.05, 0.05),
-                ]
-            )
-            direction = direction + variation
-            direction = direction / np.linalg.norm(direction)
-            # Ensure upward orientation
-            if direction[1] < 0.8:
-                direction[1] = 0.8 + random.uniform(0.0, 0.2)
-                direction = direction / np.linalg.norm(direction)
-            laser.target_direction = direction
-
-    def fan_out_beams(self):
-        """Fan out laser beams in different upward directions"""
-        for i, laser in enumerate(self.lasers):
-            # Spread beams in a upward fan pattern
-            angle = (2 * math.pi * i) / len(self.lasers)
-            spread = self.fan_angle * 0.8  # Wider spread for fan effect
-
-            # Create upward fan directions
-            elevation_angle = random.uniform(0.3, spread)  # Upward angle
-            azimuth_angle = angle + random.uniform(-0.4, 0.4)  # Horizontal spread
-
-            # Convert to Cartesian coordinates (pointing upward)
-            direction = np.array(
-                [
-                    math.sin(elevation_angle) * math.cos(azimuth_angle),  # X component
-                    math.cos(elevation_angle),  # Y component (positive = upward)
-                    math.sin(elevation_angle) * math.sin(azimuth_angle),  # Z component
-                ]
-            )
-
-            direction = direction / np.linalg.norm(direction)
-
-            # Ensure upward orientation
-            if direction[1] < 0.1:
-                direction[1] = 0.1 + random.uniform(0.0, 0.3)
-                direction = direction / np.linalg.norm(direction)
-
-            laser.target_direction = direction

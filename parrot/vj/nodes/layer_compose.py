@@ -117,15 +117,23 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         void main() {
             vec4 tex_color = texture(texture0, uv);
             
-            // Apply opacity
-            tex_color.a *= opacity;
-            
-            // Set color based on blend mode (alpha handled by OpenGL blending)
-            if (blend_mode == 2) {
-                // Multiply: darken the image for masking
-                color = vec4(tex_color.rgb, tex_color.a);
+            // Apply opacity based on blend mode
+            if (blend_mode == 0) {
+                // Normal blending: apply opacity to alpha channel (for alpha blending)
+                tex_color.a *= opacity;
+                color = tex_color;
+            } else if (blend_mode == 1) {
+                // Additive blending: apply opacity to RGB channels (alpha ignored in additive)
+                color = vec4(tex_color.rgb * opacity, tex_color.a);
+            } else if (blend_mode == 2) {
+                // Multiply: apply opacity to RGB for masking effect
+                color = vec4(tex_color.rgb * opacity, tex_color.a);
+            } else if (blend_mode == 3) {
+                // Screen blending: apply opacity to RGB channels
+                color = vec4(tex_color.rgb * opacity, tex_color.a);
             } else {
-                // Normal, additive, screen: use texture as-is
+                // Fallback: apply to alpha
+                tex_color.a *= opacity;
                 color = tex_color;
             }
         }

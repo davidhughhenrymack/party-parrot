@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import moderngl as mgl
+import numpy as np
 from typing import Optional
 from beartype import beartype
 
@@ -37,9 +38,19 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     """
     A complete concert stage setup that combines 2D canvas with 3D lighting effects.
     Contains volumetric beams, laser arrays, and 2D video content in one cohesive unit.
+    Defines the camera system for the 3D space.
     """
 
     def __init__(self):
+        # Define camera system - audience perspective looking at stage
+        self.camera_eye = np.array(
+            [0.0, 6.0, -8.0]
+        )  # Audience position (mid-height, in front)
+        self.camera_target = np.array(
+            [0.0, 6.0, 0.0]
+        )  # Looking straight ahead at stage
+        self.camera_up = np.array([0.0, 1.0, 0.0])  # World up vector
+
         # Create stage components and layer composition
         self.layer_compose = self._create_layer_composition()
 
@@ -96,7 +107,20 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         self.volumetric_beams = volumetric_beams
         # Create 3D laser array for sharp laser effects
-        laser_array = LaserArray()
+        # Position at top left of stage pointing back at audience
+        laser_position = np.array([-4.0, 8.0, 2.0])  # Top left of stage
+        laser_point_vector = self.camera_eye - laser_position  # Point toward audience
+        laser_point_vector = laser_point_vector / np.linalg.norm(
+            laser_point_vector
+        )  # Normalize
+
+        laser_array = LaserArray(
+            camera_eye=self.camera_eye,
+            camera_target=self.camera_target,
+            camera_up=self.camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
+        )
         self.laser_array = laser_array
 
         # Create oscilloscope effect for retro waveform visualization
@@ -110,13 +134,10 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Create layer composition with proper blend modes
         return LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
-            LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
-            LayerSpec(
-                optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
-            ),  # Oscilloscope: additive blending for glow with 30% opacity
-            LayerSpec(
-                volumetric_beams, BlendMode.ADDITIVE
-            ),  # Beams: additive blending (FIXED!)
+            # LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
+            # LayerSpec(
+            #     optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
+            # ),  # Oscilloscope: additive blending for glow with 30% opacity
             LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
         )
 

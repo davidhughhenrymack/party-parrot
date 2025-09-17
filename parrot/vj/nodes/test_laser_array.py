@@ -5,7 +5,7 @@ import numpy as np
 import moderngl as mgl
 from unittest.mock import Mock, MagicMock
 
-from parrot.vj.nodes.laser_array import LaserArray, LaserBeamState
+from parrot.vj.nodes.laser_array import LaserArray, LaserBeam
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.utils.colour import Color
@@ -13,72 +13,19 @@ from parrot.graph.BaseInterpretationNode import Vibe
 from parrot.director.mode import Mode
 
 
-class TestLaserBeamState:
-    """Test the LaserBeamState class"""
+class TestLaserBeam:
+    """Test the LaserBeam class"""
 
     def test_init(self):
-        """Test laser beam state initialization"""
-        position = np.array([1.0, 2.0, 3.0])
-        direction = np.array([0.0, -1.0, 0.0])
+        """Test laser beam initialization"""
         beam_id = 5
+        fan_angle = np.pi / 4
 
-        laser = LaserBeamState(position, direction, beam_id)
+        laser = LaserBeam(beam_id, fan_angle)
 
-        assert np.allclose(laser.position, position)
-        assert np.allclose(laser.direction, direction)
-        assert np.allclose(laser.target_position, position)
-        assert np.allclose(laser.target_direction, direction)
         assert laser.beam_id == beam_id
-        assert 0 <= laser.phase_offset <= 2 * np.pi
-        assert 0 <= laser.scan_phase <= 2 * np.pi
+        assert laser.fan_angle == fan_angle
         assert laser.intensity == 1.0
-        assert laser.target_intensity == 1.0
-
-    def test_update(self):
-        """Test laser beam state update"""
-        position = np.array([0.0, 10.0, 4.0])
-        direction = np.array([0.0, -1.0, 0.0])
-        laser = LaserBeamState(position, direction, 0)
-
-        # Set different targets
-        laser.target_position = np.array([1.0, 10.0, 4.0])
-        laser.target_direction = np.array([0.1, -0.9, 0.0])
-        laser.target_direction = laser.target_direction / np.linalg.norm(
-            laser.target_direction
-        )
-        laser.target_intensity = 0.5
-
-        # Update
-        laser.update(time=1.0, speed=1.0, signal=0.5, fan_angle=np.pi / 4)
-
-        # Position should move toward target
-        assert not np.allclose(laser.position, position)
-        # Direction should be normalized
-        assert np.isclose(np.linalg.norm(laser.direction), 1.0)
-        # Intensity should move toward target
-        assert laser.intensity != 1.0
-
-    def test_randomize_target(self):
-        """Test target randomization"""
-        position = np.array([0.0, 10.0, 4.0])
-        direction = np.array([0.0, -1.0, 0.0])
-        laser = LaserBeamState(position, direction, 0)
-
-        array_center = np.array([0.0, 10.0, 4.0])
-        spread_radius = 2.0
-
-        original_target_pos = laser.target_position.copy()
-        original_target_dir = laser.target_direction.copy()
-
-        laser.randomize_target(array_center, spread_radius)
-
-        # Target should have changed
-        assert not np.allclose(laser.target_position, original_target_pos)
-        assert not np.allclose(laser.target_direction, original_target_dir)
-        # Direction should be normalized
-        assert np.isclose(np.linalg.norm(laser.target_direction), 1.0)
-        # Direction should point downward (negative Y)
-        assert laser.target_direction[1] <= 0.0
 
 
 class TestLaserArray:
@@ -86,153 +33,132 @@ class TestLaserArray:
 
     def test_init(self):
         """Test laser array initialization"""
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = np.array([1.0, 0.0, 0.0])
+
         laser_array = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
             laser_count=6,
-            array_radius=3.0,
             laser_length=40.0,
-            laser_width=0.1,
-            fan_angle=np.pi / 2,
-            scan_speed=2.0,
-            strobe_frequency=5.0,
-            laser_intensity=3.0,
-            color=(1.0, 0.0, 0.0),
-            signal=FrameSignal.freq_high,
+            laser_thickness=0.1,
             width=800,
             height=600,
         )
 
         assert laser_array.laser_count == 6
-        assert laser_array.array_radius == 3.0
         assert laser_array.laser_length == 40.0
-        assert laser_array.laser_width == 0.1
-        assert laser_array.fan_angle == np.pi / 2
-        assert laser_array.scan_speed == 2.0
-        assert laser_array.strobe_frequency == 5.0
-        assert laser_array.laser_intensity == 3.0
-        assert laser_array.color == (1.0, 0.0, 0.0)
-        assert laser_array.signal == FrameSignal.freq_high
+        assert laser_array.laser_thickness == 0.1
         assert laser_array.width == 800
         assert laser_array.height == 600
+        assert np.allclose(laser_array.camera_eye, camera_eye)
+        assert np.allclose(laser_array.laser_position, laser_position)
+        assert np.allclose(laser_array.laser_point_vector, laser_point_vector)
 
     def test_setup_lasers(self):
         """Test laser setup creates correct number of lasers"""
-        laser_array = LaserArray(laser_count=8)
-        laser_array._setup_lasers()
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = np.array([1.0, 0.0, 0.0])
+
+        laser_array = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
+            laser_count=8,
+        )
 
         assert len(laser_array.lasers) == 8
 
-        # All lasers should be positioned around the cluster center
-        cluster_center = np.array([0.0, 10.0, 4.0])
-        for laser in laser_array.lasers:
-            # Should be within reasonable distance of cluster center
-            distance = np.linalg.norm(laser.position - cluster_center)
-            assert distance <= laser_array.array_radius + 1.0  # Allow some variation
-
-            # Direction should be normalized and pointing downward
-            assert np.isclose(np.linalg.norm(laser.direction), 1.0)
-            assert laser.direction[1] <= 0.0
+        # All lasers should have different fan angles
+        fan_angles = [laser.fan_angle for laser in laser_array.lasers]
+        # Should have a range of angles
+        assert (
+            len(set(fan_angles)) > 1 or len(fan_angles) == 1
+        )  # Allow single laser case
 
     def test_generate_vibe_rave(self):
         """Test generate method with rave mode"""
-        laser_array = LaserArray(laser_count=4)
-        laser_array._setup_lasers()
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = np.array([1.0, 0.0, 0.0])
+
+        laser_array = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
+            laser_count=4,
+        )
 
         vibe = Vibe(mode=Mode.rave)
         laser_array.generate(vibe)
 
-        # Should have set strobe frequency
-        assert laser_array.strobe_frequency > 0.0
+        # Should have picked a random signal
+        assert isinstance(laser_array.fan_signal, FrameSignal)
 
     def test_generate_vibe_gentle(self):
         """Test generate method with gentle mode"""
-        laser_array = LaserArray(laser_count=4)
-        laser_array._setup_lasers()
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = np.array([1.0, 0.0, 0.0])
+
+        laser_array = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
+            laser_count=4,
+        )
 
         vibe = Vibe(mode=Mode.gentle)
         laser_array.generate(vibe)
 
-        # Should have no strobe
-        assert laser_array.strobe_frequency == 0.0
+        # Should have picked a random signal
+        assert isinstance(laser_array.fan_signal, FrameSignal)
 
-    def test_strobe_factor_calculation(self):
-        """Test strobe factor calculation"""
-        laser_array = LaserArray()
+    def test_laser_direction_calculation(self):
+        """Test laser direction calculation"""
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = np.array([1.0, 0.0, 0.0])
 
-        # No strobe
-        laser_array.strobe_frequency = 0.0
-        assert laser_array._calculate_strobe_factor(1.0) == 1.0
+        laser_array = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
+            laser_count=3,
+        )
 
-        # With strobe
-        laser_array.strobe_frequency = 2.0  # 2 Hz
-        factor1 = laser_array._calculate_strobe_factor(0.0)
-        factor2 = laser_array._calculate_strobe_factor(0.25)  # Quarter period
-        factor3 = laser_array._calculate_strobe_factor(0.5)  # Half period
+        beam = laser_array.lasers[0]
+        signal_value = 0.5
 
-        # Should alternate between 0 and 1
-        assert factor1 in [0.0, 1.0]
-        assert factor2 in [0.0, 1.0]
-        assert factor3 in [0.0, 1.0]
+        direction = laser_array._get_laser_direction(beam, signal_value)
 
-    def test_fan_angle_setting(self):
-        """Test fan angle setting with bounds"""
-        laser_array = LaserArray()
-
-        # Normal value
-        laser_array.set_fan_angle(np.pi / 4)
-        assert laser_array.fan_angle == np.pi / 4
-
-        # Clamp to bounds
-        laser_array.set_fan_angle(-0.5)
-        assert laser_array.fan_angle == 0.0
-
-        laser_array.set_fan_angle(4.0)
-        assert laser_array.fan_angle == np.pi
-
-    def test_strobe_frequency_setting(self):
-        """Test strobe frequency setting"""
-        laser_array = LaserArray()
-
-        # Normal value
-        laser_array.set_strobe_frequency(5.0)
-        assert laser_array.strobe_frequency == 5.0
-
-        # Zero is allowed
-        laser_array.set_strobe_frequency(0.0)
-        assert laser_array.strobe_frequency == 0.0
-
-        # Negative should raise error
-        with pytest.raises(ValueError):
-            laser_array.set_strobe_frequency(-1.0)
-
-    def test_beam_control_methods(self):
-        """Test narrow_beams and fan_out_beams methods"""
-        laser_array = LaserArray(laser_count=4)
-        laser_array._setup_lasers()
-
-        # Test narrow beams
-        laser_array.narrow_beams()
-        screen_center = np.array([0.0, 6.0, 0.0])
-
-        for laser in laser_array.lasers:
-            # All beams should point toward screen center
-            expected_dir = screen_center - laser.position
-            expected_dir = expected_dir / np.linalg.norm(expected_dir)
-            if expected_dir[1] > 0.0:
-                expected_dir[1] = -abs(expected_dir[1])
-                expected_dir = expected_dir / np.linalg.norm(expected_dir)
-
-            # Should be close to expected direction
-            dot_product = np.dot(laser.target_direction, expected_dir)
-            assert dot_product > 0.9  # Should be very similar
-
-        # Test fan out beams
-        laser_array.fan_out_beams()
-
-        # Directions should be more varied now
-        directions = [laser.target_direction for laser in laser_array.lasers]
-        # Check that not all directions are identical
-        first_dir = directions[0]
-        assert not all(np.allclose(d, first_dir, atol=0.1) for d in directions[1:])
+        # Direction should be normalized
+        assert abs(np.linalg.norm(direction) - 1.0) < 1e-6
+        assert isinstance(direction, np.ndarray)
+        assert direction.shape == (3,)
 
 
 class TestLaserArrayHeadlessRendering:
@@ -270,18 +196,32 @@ class TestLaserArrayHeadlessRendering:
         scheme.fg = fg_color
         return scheme
 
-    def test_headless_render_basic(
-        self, headless_context, mock_frame, mock_color_scheme
-    ):
-        """Test basic headless rendering without bloom"""
-        laser_array = LaserArray(
+    @pytest.fixture
+    def laser_array(self):
+        """Create a laser array for testing"""
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = np.array([1.0, 0.0, 0.0])
+
+        return LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
             laser_count=4,
             laser_length=25.0,
-            laser_width=0.05,
+            laser_thickness=0.05,
             width=512,
             height=512,
         )
 
+    def test_headless_render_basic(
+        self, headless_context, mock_frame, mock_color_scheme, laser_array
+    ):
+        """Test basic headless rendering without bloom"""
         # Initialize with headless context
         laser_array.enter(headless_context)
 
@@ -309,10 +249,21 @@ class TestLaserArrayHeadlessRendering:
         self, headless_context, mock_frame, mock_color_scheme
     ):
         """Test headless rendering with bloom effect"""
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = np.array([1.0, 0.0, 0.0])
+
         laser_array = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
             laser_count=6,
             laser_length=30.0,
-            laser_width=0.08,
+            laser_thickness=0.08,
             width=256,
             height=256,
         )
@@ -342,16 +293,9 @@ class TestLaserArrayHeadlessRendering:
             laser_array.exit()
 
     def test_headless_render_different_signals(
-        self, headless_context, mock_color_scheme
+        self, headless_context, mock_color_scheme, laser_array
     ):
         """Test rendering with different signal values"""
-        laser_array = LaserArray(
-            laser_count=4,
-            signal=FrameSignal.freq_high,
-            width=128,
-            height=128,
-        )
-
         laser_array.enter(headless_context)
 
         try:
@@ -387,15 +331,9 @@ class TestLaserArrayHeadlessRendering:
             laser_array.exit()
 
     def test_headless_render_color_scheme_integration(
-        self, headless_context, mock_frame
+        self, headless_context, mock_frame, laser_array
     ):
         """Test that color scheme colors are properly used"""
-        laser_array = LaserArray(
-            laser_count=2,
-            width=64,
-            height=64,
-        )
-
         laser_array.enter(headless_context)
 
         try:
@@ -420,34 +358,8 @@ class TestLaserArrayHeadlessRendering:
         finally:
             laser_array.exit()
 
-    def test_headless_render_strobe_effect(
-        self, headless_context, mock_frame, mock_color_scheme
-    ):
-        """Test rendering with strobe effect"""
-        laser_array = LaserArray(
-            laser_count=3,
-            strobe_frequency=10.0,  # 10 Hz strobe
-            width=64,
-            height=64,
-        )
-
-        laser_array.enter(headless_context)
-
-        try:
-            # Render multiple times to test strobe timing
-            for i in range(5):
-                result = laser_array.render(
-                    mock_frame, mock_color_scheme, headless_context
-                )
-                assert result is not None
-
-        finally:
-            laser_array.exit()
-
-    def test_resource_cleanup(self, headless_context):
+    def test_resource_cleanup(self, headless_context, laser_array):
         """Test that resources are properly cleaned up"""
-        laser_array = LaserArray(laser_count=2, width=32, height=32)
-
         # Initialize
         laser_array.enter(headless_context)
 

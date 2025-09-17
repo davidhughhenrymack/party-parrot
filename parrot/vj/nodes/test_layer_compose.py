@@ -60,7 +60,7 @@ class TestLayerCompose:
 
         # Test additive blending
         src, dst = layer_compose._get_blend_func(BlendMode.ADDITIVE)
-        assert src == mgl.SRC_ALPHA
+        assert src == mgl.ONE
         assert dst == mgl.ONE
 
         # Test multiply blending
@@ -176,17 +176,26 @@ class TestSceneElementComposition:
     def test_laser_array_on_black_composition(self):
         """Test laser array compositing on black background with additive blending"""
         black = Black()
+
+        # Create laser array with new interface
+        import numpy as np
+
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = camera_eye - laser_position
+        laser_point_vector = laser_point_vector / np.linalg.norm(laser_point_vector)
+
         lasers = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
             laser_count=4,
-            array_radius=2.0,
             laser_length=15.0,
-            laser_width=0.02,
-            fan_angle=1.57,  # 90 degrees
-            scan_speed=2.0,
-            strobe_frequency=0.0,
-            laser_intensity=1.5,
-            color=(0.0, 1.0, 0.0),
-            signal=FrameSignal.freq_high,
+            laser_thickness=0.02,
         )
 
         layer_compose = LayerCompose(
@@ -206,7 +215,25 @@ class TestSceneElementComposition:
         video = VideoPlayer(fn_group="bg")
         text = TextRenderer(text="CONCERT", font_size=64)
         beams = VolumetricBeam(beam_count=4, signal=FrameSignal.freq_low)
-        lasers = LaserArray(laser_count=6, signal=FrameSignal.freq_high)
+
+        # Create laser array with new interface
+        import numpy as np
+
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = camera_eye - laser_position
+        laser_point_vector = laser_point_vector / np.linalg.norm(laser_point_vector)
+
+        lasers = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
+            laser_count=6,
+        )
 
         layer_compose = LayerCompose(
             LayerSpec(black, BlendMode.NORMAL),  # Black base

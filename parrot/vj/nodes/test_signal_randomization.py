@@ -227,12 +227,28 @@ class TestSignalRandomization(unittest.TestCase):
 
     def test_laser_array_signal_randomization(self):
         """Test LaserArray specifically (no input node required)"""
-        laser = LaserArray()
-        original_signal = laser.signal
+        import numpy as np
+
+        # Create laser array with new interface
+        camera_eye = np.array([0.0, 6.0, -8.0])
+        camera_target = np.array([0.0, 6.0, 0.0])
+        camera_up = np.array([0.0, 1.0, 0.0])
+        laser_position = np.array([-4.0, 8.0, 2.0])
+        laser_point_vector = camera_eye - laser_position
+        laser_point_vector = laser_point_vector / np.linalg.norm(laser_point_vector)
+
+        laser = LaserArray(
+            camera_eye=camera_eye,
+            camera_target=camera_target,
+            camera_up=camera_up,
+            laser_position=laser_position,
+            laser_point_vector=laser_point_vector,
+        )
+        original_signal = laser.fan_signal  # New property name
 
         # Test randomization
         laser.generate(self.vibe)
-        new_signal = laser.signal
+        new_signal = laser.fan_signal  # New property name
 
         self.assertIsInstance(new_signal, FrameSignal)
 
