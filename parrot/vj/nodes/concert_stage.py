@@ -97,7 +97,34 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Multiply video with text mask - white text shows video, black background hides it
         text_masked_video = MultiplyCompose(video_with_fx, text_renderer)
 
-        optional_masked_video = RandomChild([video_with_fx, text_masked_video])
+        # Create black text overlay on video
+        black_text_renderer = TextRenderer(
+            text="DEAD\nSEXY",
+            font_name="The Sonnyfive",
+            font_size=140,
+            text_color=(0, 0, 0),  # Black text
+            bg_color=(255, 255, 255),  # White background (will be multiplied away)
+        )
+        black_text_renderer = RandomOperation(
+            black_text_renderer,
+            [BrightnessPulse, NoiseEffect, PixelateEffect, ScanlinesEffect],
+        )
+        black_text_renderer = CameraZoom(
+            black_text_renderer, signal=FrameSignal.freq_high
+        )
+
+        # Create video with black text overlay using LayerCompose
+        # MULTIPLY blend: white areas (1.0) don't affect video, black areas (0.0) darken video to black
+        video_with_black_text = LayerCompose(
+            LayerSpec(video_with_fx, BlendMode.NORMAL),  # Base video layer
+            LayerSpec(
+                black_text_renderer, BlendMode.MULTIPLY
+            ),  # Black text overlay with multiply blend
+        )
+
+        optional_masked_video = RandomChild(
+            [video_with_fx, text_masked_video, video_with_black_text]
+        )
 
         canvas_2d = CameraZoom(optional_masked_video)
         self.canvas_2d = canvas_2d
