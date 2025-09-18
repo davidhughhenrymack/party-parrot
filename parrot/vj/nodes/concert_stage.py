@@ -129,15 +129,17 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Make oscilloscope optional - sometimes show it, sometimes show black (nothing)
         # Use weights: oscilloscope appears 30% of the time, black 70% of the time
-        optional_oscilloscope = RandomChild([oscilloscope, Black()], weights=[0.1, 0.9])
+        optional_oscilloscope = RandomChild(
+            [oscilloscope, Black()], weights=[0.05, 0.95]
+        )
 
         # Create layer composition with proper blend modes
         return LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
-            # LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
-            # LayerSpec(
-            #     optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
-            # ),  # Oscilloscope: additive blending for glow with 30% opacity
+            LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
+            LayerSpec(
+                optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
+            ),  # Oscilloscope: additive blending for glow with 30% opacity
             LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
         )
 
