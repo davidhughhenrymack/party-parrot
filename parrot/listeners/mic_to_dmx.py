@@ -263,7 +263,7 @@ class FileBasedVJDirector(VJDirector):
         \"\"\"Process VJ commands from the main process\"\"\"
         if cmd['type'] == 'shift':
             # Regular shift with low threshold (subtle changes)
-            threshold = cmd.get('threshold', 0.3)
+            threshold = cmd.get('threshold', 0.6)
             vibe = Vibe(self.current_mode)
             self.concert_stage.generate_recursive(vibe, threshold)
             print("🎬 VJ Shift (threshold=" + str(threshold) + ")")

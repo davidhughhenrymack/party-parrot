@@ -48,7 +48,6 @@ def test_color_strobe_initialization():
     assert strobe.width == 1280  # DEFAULT_WIDTH
     assert strobe.height == 720  # DEFAULT_HEIGHT
     assert strobe.strobe_frequency == 8.0
-    assert strobe.pulse_intensity == 0.8
     assert strobe.signal == FrameSignal.strobe
     assert strobe.current_color == (0.0, 0.0, 0.0)
 
@@ -59,14 +58,12 @@ def test_color_strobe_custom_parameters():
         width=800,
         height=600,
         strobe_frequency=12.0,
-        pulse_intensity=0.5,
         signal=FrameSignal.pulse,
     )
 
     assert strobe.width == 800
     assert strobe.height == 600
     assert strobe.strobe_frequency == 12.0
-    assert strobe.pulse_intensity == 0.5
     assert strobe.signal == FrameSignal.pulse
 
 

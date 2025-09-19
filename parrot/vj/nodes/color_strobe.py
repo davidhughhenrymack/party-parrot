@@ -25,7 +25,6 @@ class ColorStrobe(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         width: int = DEFAULT_WIDTH,
         height: int = DEFAULT_HEIGHT,
         strobe_frequency: float = 8.0,  # Flashes per second during strobe
-        pulse_intensity: float = 0.8,  # How much to respond to pulse signals
         signal: FrameSignal = FrameSignal.strobe,
     ):
         """
@@ -33,14 +32,12 @@ class ColorStrobe(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             width: Width of the rendered rectangle
             height: Height of the rendered rectangle
             strobe_frequency: Number of color flashes per second during strobe
-            pulse_intensity: Intensity multiplier for pulse responses (0.0-1.0)
             signal: Primary signal to respond to (default: strobe)
         """
         super().__init__([])
         self.width = width
         self.height = height
         self.strobe_frequency = strobe_frequency
-        self.pulse_intensity = pulse_intensity
         self.signal = signal
 
         # State tracking

@@ -1234,7 +1234,7 @@ class Window(Tk):
         # Only call DMX shift, not VJ shift (VJ runs in separate process)
         director.shift_dmx_only()  # DMX shift without VJ
         if hasattr(director, "send_vj_shift"):
-            director.send_vj_shift(threshold=0.3)  # VJ shift with low threshold
+            director.send_vj_shift(threshold=0.8)  # VJ shift with low threshold
 
     def _shift_all_command(self, director):
         """Handle Shift All button - triggers both DMX and VJ shift all"""
