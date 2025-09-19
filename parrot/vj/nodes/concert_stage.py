@@ -26,10 +26,12 @@ from parrot.vj.nodes.scanlines_effect import ScanlinesEffect
 from parrot.vj.nodes.pixelate_effect import PixelateEffect
 from parrot.vj.nodes.noise_effect import NoiseEffect
 from parrot.vj.nodes.text_renderer import TextRenderer
+from parrot.vj.nodes.text_color_pulse import TextColorPulse
 from parrot.vj.nodes.multiply_compose import MultiplyCompose
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
 from parrot.vj.nodes.laser_array import LaserArray
 from parrot.vj.nodes.black import Black
+from parrot.vj.nodes.blackout_switch import BlackoutSwitch
 from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
 from parrot.vj.nodes.infinite_zoom_effect import InfiniteZoomEffect
 from parrot.vj.nodes.color_strobe import ColorStrobe
@@ -54,14 +56,19 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )  # Looking straight ahead at stage
         self.camera_up = np.array([0.0, 1.0, 0.0])  # World up vector
 
-        # Create stage components and layer composition
-        self.layer_compose = self._create_layer_composition()
+        # Create stage components and layer composition (now includes blackout switch)
+        self.blackout_switch = self._create_layer_composition()
 
-        # Initialize with layer compose as single child
-        super().__init__([self.layer_compose])
+        # Initialize with blackout switch as single child
+        super().__init__([self.blackout_switch])
+
+    @property
+    def layer_compose(self):
+        """Access to the underlying LayerCompose for compatibility"""
+        return self.blackout_switch.child
 
     def _create_layer_composition(self):
-        """Create a LayerCompose with all stage components and proper blend modes"""
+        """Create a LayerCompose with all stage components and proper blend modes, wrapped in BlackoutSwitch"""
         # Create black background as base layer
         black_background = Black()
 
@@ -119,6 +126,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             black_text_renderer,
             [
                 BrightnessPulse,
+                TextColorPulse,
                 CameraShake,
                 NoiseEffect,
                 PixelateEffect,
@@ -182,7 +190,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.color_strobe = color_strobe
 
         # Create layer composition with proper blend modes
-        return LayerCompose(
+        layer_compose = LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
             LayerSpec(
                 optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
@@ -193,6 +201,9 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 color_strobe, BlendMode.ADDITIVE
             ),  # Color strobe: additive for flash effects
         )
+
+        # Wrap the layer composition in a blackout switch
+        return BlackoutSwitch(layer_compose)
 
     def enter(self, context: mgl.Context):
         """Initialize this node with GL context - children handled by base class"""
@@ -209,5 +220,5 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> Optional[mgl.Framebuffer]:
-        """Render the complete concert stage using LayerCompose"""
-        return self.layer_compose.render(frame, scheme, context)
+        """Render the complete concert stage using BlackoutSwitch"""
+        return self.blackout_switch.render(frame, scheme, context)
