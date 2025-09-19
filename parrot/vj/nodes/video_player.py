@@ -126,14 +126,19 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         if self.video_capture:
             self.video_capture.release()
 
+        # Ensure current_video_index is within bounds
+        if self.current_video_index >= len(self.video_files):
+            self.current_video_index = 0
+
         video_path = self.video_files[self.current_video_index]
         self.video_capture = cv2.VideoCapture(video_path)
 
         if not self.video_capture.isOpened():
             print(f"Error: Could not open video {video_path}")
-            self.current_video_index = (self.current_video_index + 1) % len(
-                self.video_files
-            )
+            if self.video_files:  # Only advance if we have videos
+                self.current_video_index = (self.current_video_index + 1) % len(
+                    self.video_files
+                )
             return
 
         # Get video properties
@@ -287,6 +292,9 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             if not self.framebuffer:
                 self.texture = context.texture((self.width, self.height), 3)
                 self.framebuffer = context.framebuffer(color_attachments=[self.texture])
+                # Clear it to black
+                self.framebuffer.use()
+                context.clear(0.0, 0.0, 0.0)
             return self.framebuffer
 
         # Check if we need to advance to next frame based on FPS
@@ -298,12 +306,13 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
             if not ret:
                 # Video ended, load next video
-                self.current_video_index = (self.current_video_index + 1) % len(
-                    self.video_files
-                )
-                self._load_next_video()
-                if self.video_capture:
-                    ret, cv_frame = self.video_capture.read()
+                if self.video_files:  # Only advance if we have videos
+                    self.current_video_index = (self.current_video_index + 1) % len(
+                        self.video_files
+                    )
+                    self._load_next_video()
+                    if self.video_capture:
+                        ret, cv_frame = self.video_capture.read()
 
             if ret:
                 # Convert BGR to RGB
@@ -325,6 +334,14 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 video_texture.release()
 
                 self.last_frame_time = current_time
+
+        # Ensure we always have a framebuffer to return
+        if not self.framebuffer:
+            self.texture = context.texture((self.width, self.height), 3)
+            self.framebuffer = context.framebuffer(color_attachments=[self.texture])
+            # Clear it to black
+            self.framebuffer.use()
+            context.clear(0.0, 0.0, 0.0)
 
         return self.framebuffer
 

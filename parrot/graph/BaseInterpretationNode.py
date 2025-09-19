@@ -208,6 +208,8 @@ class RandomChild(BaseInterpretationNode[C, RI, RR]):
         self.weights = weights
         self._current_child: BaseInterpretationNode[C, Any, RR] = None
         self._context: C | None = None
+        self._child_entered: bool = False
+        self._current_threshold: float = 1.0
 
         # Validate weights if provided
         if self.weights is not None:
@@ -229,9 +231,14 @@ class RandomChild(BaseInterpretationNode[C, RI, RR]):
 
     def enter(self, context: C):
         self._context = context
+        # If we have a current child that wasn't entered yet, enter it now
+        if self._current_child is not None and not self._child_entered:
+            self._current_child.enter_recursive(self._context)
+            self._child_entered = True
 
     def exit(self):
         self._context = None
+        self._child_entered = False
 
     def generate(self, vibe: Vibe):
         # Select a child at random (if any), and re-enter it fresh every time.
@@ -249,9 +256,24 @@ class RandomChild(BaseInterpretationNode[C, RI, RR]):
             self._current_child.exit_recursive()
 
         self._current_child = new_child
+        self._child_entered = False
         if self._current_child is not None:
-            self._current_child.enter_recursive(self._context)
-            self._current_child.generate_recursive(vibe)
+            # Only enter the child if we have a context
+            if self._context is not None:
+                self._current_child.enter_recursive(self._context)
+                self._child_entered = True
+            self._current_child.generate_recursive(vibe, self._current_threshold)
+
+    def generate_recursive(self, vibe: Vibe, threshold: float = 1.0):
+        """
+        Override to prevent double generation of the current child.
+        The base class would call generate() then generate_recursive() on all_inputs,
+        but our generate() already calls generate_recursive() on the selected child.
+        """
+        if random.random() < threshold:
+            self._current_threshold = threshold
+            self.generate(vibe)
+            # Don't call generate_recursive on all_inputs since generate() already did it
 
     def render(self, frame: Frame, scheme: ColorScheme, context: C) -> RR:
         if self._current_child is None:

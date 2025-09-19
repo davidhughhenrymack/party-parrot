@@ -267,12 +267,16 @@ class FileBasedVJDirector(VJDirector):
             vibe = Vibe(self.current_mode)
             self.concert_stage.generate_recursive(vibe, threshold)
             print("🎬 VJ Shift (threshold=" + str(threshold) + ")")
+            print("VJ Node Tree (after shift):")
+            print(self.concert_stage.print_tree())
         elif cmd['type'] == 'shift_all':
             # Shift all with high threshold (major changes)  
             threshold = cmd.get('threshold', 1.0)
             vibe = Vibe(self.current_mode)
             self.concert_stage.generate_recursive(vibe, threshold)
             print("🎬 VJ Shift All (threshold=" + str(threshold) + ")")
+            print("VJ Node Tree (after shift all):")
+            print(self.concert_stage.print_tree())
 
 # Create VJ director and window
 vj_director = FileBasedVJDirector("{self.frame_data_file.name}")

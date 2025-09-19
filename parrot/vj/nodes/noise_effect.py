@@ -178,15 +178,48 @@ class NoiseEffect(PostProcessEffectBase):
         # Get signal value for noise intensity
         signal_value = frame[self.signal]
 
+        # Special responses to specific Frame signals
+        strobe_value = frame[FrameSignal.strobe]
+        big_blinder_value = frame[FrameSignal.big_blinder]
+        pulse_value = frame[FrameSignal.pulse]
+
         # Calculate time offset for animation
         current_time = time.time()
         time_offset = current_time - self.start_time
 
+        # Modify parameters based on special signals
+        noise_intensity = self.noise_intensity
+        noise_scale = self.noise_scale
+        effective_signal = signal_value
+
+        # STROBE: Rapid flickering noise
+        if strobe_value > 0.5:
+            noise_intensity = min(1.0, self.noise_intensity * 2.0)  # Double intensity
+            time_offset *= 20.0  # Very fast animation
+            effective_signal = 1.0
+            # Change noise seed rapidly during strobe
+            self.noise_seed = (current_time * 10.0) % 1.0
+
+        # BIG BLINDER: Heavy static interference
+        elif big_blinder_value > 0.5:
+            noise_intensity = min(1.0, self.noise_intensity * 3.0)  # Triple intensity
+            noise_scale = self.noise_scale * 0.5  # Coarser noise
+            effective_signal = big_blinder_value
+
+        # PULSE: Sharp noise bursts
+        elif pulse_value > 0.5:
+            # Create burst-like noise during pulse
+            noise_intensity = min(1.0, self.noise_intensity * 1.5)
+            effective_signal = pulse_value
+            # Discrete noise seed changes
+            pulse_seed = int(current_time * 5.0)
+            self.noise_seed = (pulse_seed * 0.1) % 1.0
+
         # Set uniforms
-        self.shader_program["noise_intensity"] = self.noise_intensity
-        self.shader_program["noise_scale"] = self.noise_scale
+        self.shader_program["noise_intensity"] = noise_intensity
+        self.shader_program["noise_scale"] = noise_scale
         self.shader_program["static_lines"] = self.static_lines
         self.shader_program["color_noise"] = self.color_noise
-        self.shader_program["signal_strength"] = signal_value
+        self.shader_program["signal_strength"] = effective_signal
         self.shader_program["time_offset"] = time_offset
         self.shader_program["noise_seed"] = self.noise_seed

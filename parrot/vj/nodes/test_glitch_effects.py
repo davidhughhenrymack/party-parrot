@@ -2,7 +2,7 @@
 
 import pytest
 import time
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 from parrot.vj.nodes.datamosh_effect import DatamoshEffect
 from parrot.vj.nodes.rgb_shift_effect import RGBShiftEffect
@@ -404,8 +404,14 @@ class TestGlitchEffectsIntegration:
         # Test uniform setting
         effect._set_effect_uniforms(frame, scheme)
 
-        # Verify frame signal was accessed
-        frame.__getitem__.assert_called_with(effect.signal)
+        # Verify frame signals were accessed (enhanced effects now access multiple signals)
+        expected_calls = [
+            call(effect.signal),  # Original signal
+            call(FrameSignal.strobe),  # Special signal responses
+            call(FrameSignal.big_blinder),
+            call(FrameSignal.pulse),
+        ]
+        frame.__getitem__.assert_has_calls(expected_calls, any_order=True)
 
 
 if __name__ == "__main__":

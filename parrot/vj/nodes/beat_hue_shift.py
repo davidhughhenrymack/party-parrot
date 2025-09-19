@@ -190,52 +190,94 @@ class BeatHueShift(PostProcessEffectBase):
         # Get signal value for beat detection
         signal_value = frame[self.signal]
 
-        # Detect beats
-        if self._detect_beat(signal_value):
-            self.beat_detected = True
-            # Get next hue in sequence
+        # Special responses to specific Frame signals
+        strobe_value = frame[FrameSignal.strobe]
+        big_blinder_value = frame[FrameSignal.big_blinder]
+        pulse_value = frame[FrameSignal.pulse]
+
+        # STROBE: Rapid hue cycling
+        if strobe_value > 0.5:
+            # Force rapid hue changes during strobe
+            current_time = time.time()
+            strobe_hue = (
+                current_time * 360.0 * 4.0
+            ) % 360.0  # 4 full cycles per second
+            self.current_target_hue = strobe_hue
+            self.current_hue = strobe_hue
+
+        # BIG BLINDER: Desaturate to white/bright
+        elif big_blinder_value > 0.5:
+            # Force to white/bright colors during big blinder
+            self.current_target_hue = 0.0  # Red base
+            self.current_hue = 0.0
+
+        # PULSE: Instant hue snap
+        elif pulse_value > 0.5:
+            # Instant hue change on strong pulse
             self.current_target_hue = self._get_next_hue()
+            self.current_hue = self.current_target_hue
 
-        # Smooth transition between hues
-        current_time = time.time()
-        dt = min(
-            current_time - getattr(self, "_last_update_time", current_time), 1.0 / 30.0
-        )
-        self._last_update_time = current_time
+        else:
+            # Normal beat detection behavior
+            if self._detect_beat(signal_value):
+                self.beat_detected = True
+                # Get next hue in sequence
+                self.current_target_hue = self._get_next_hue()
 
-        # Calculate transition progress
+        # Smooth transition between hues (except during special signals)
+        if strobe_value <= 0.5 and big_blinder_value <= 0.5 and pulse_value <= 0.5:
+            current_time = time.time()
+            dt = min(
+                current_time - getattr(self, "_last_update_time", current_time),
+                1.0 / 30.0,
+            )
+            self._last_update_time = current_time
+
+            # Calculate transition progress
+            hue_diff = abs(self.current_target_hue - self.current_hue)
+            if hue_diff > 180.0:  # Handle wraparound
+                hue_diff = 360.0 - hue_diff
+
+            # Smooth interpolation towards target hue
+            transition_rate = self.transition_speed * dt
+
+            if hue_diff > 1.0:  # Still transitioning
+                # Calculate shortest path between hues
+                diff = self.current_target_hue - self.current_hue
+                if diff > 180.0:
+                    diff -= 360.0
+                elif diff < -180.0:
+                    diff += 360.0
+
+                # Move towards target
+                self.current_hue += diff * transition_rate
+
+                # Normalize
+                if self.current_hue < 0.0:
+                    self.current_hue += 360.0
+                elif self.current_hue >= 360.0:
+                    self.current_hue -= 360.0
+            else:
+                self.current_hue = self.current_target_hue
+
+        # Calculate transition progress for smooth interpolation in shader
         hue_diff = abs(self.current_target_hue - self.current_hue)
         if hue_diff > 180.0:  # Handle wraparound
             hue_diff = 360.0 - hue_diff
-
-        # Smooth interpolation towards target hue
-        transition_rate = self.transition_speed * dt
-
-        if hue_diff > 1.0:  # Still transitioning
-            # Calculate shortest path between hues
-            diff = self.current_target_hue - self.current_hue
-            if diff > 180.0:
-                diff -= 360.0
-            elif diff < -180.0:
-                diff += 360.0
-
-            # Move towards target
-            self.current_hue += diff * transition_rate
-
-            # Normalize
-            if self.current_hue < 0.0:
-                self.current_hue += 360.0
-            elif self.current_hue >= 360.0:
-                self.current_hue -= 360.0
-        else:
-            self.current_hue = self.current_target_hue
-
-        # Calculate transition progress for smooth interpolation in shader
         transition_progress = 1.0 - (hue_diff / 180.0)  # 0 = far apart, 1 = same hue
         transition_progress = max(0.0, min(1.0, transition_progress))
+
+        # Modify saturation based on special signals
+        saturation_boost = self.saturation_boost
+        if big_blinder_value > 0.5:
+            # Reduce saturation during big blinder for white-out effect
+            saturation_boost = 0.1
+        elif strobe_value > 0.5:
+            # Boost saturation during strobe for intense colors
+            saturation_boost = min(2.0, self.saturation_boost * 1.5)
 
         # Set uniforms
         self.shader_program["target_hue"] = self.current_target_hue
         self.shader_program["current_hue"] = self.current_hue
-        self.shader_program["saturation_boost"] = self.saturation_boost
+        self.shader_program["saturation_boost"] = saturation_boost
         self.shader_program["transition_progress"] = transition_progress

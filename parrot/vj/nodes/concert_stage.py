@@ -18,6 +18,7 @@ from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.brightness_pulse import BrightnessPulse
 from parrot.vj.nodes.saturation_pulse import SaturationPulse
 from parrot.vj.nodes.camera_zoom import CameraZoom
+from parrot.vj.nodes.camera_shake import CameraShake
 from parrot.vj.nodes.beat_hue_shift import BeatHueShift
 from parrot.vj.nodes.datamosh_effect import DatamoshEffect
 from parrot.vj.nodes.rgb_shift_effect import RGBShiftEffect
@@ -30,6 +31,8 @@ from parrot.vj.nodes.volumetric_beam import VolumetricBeam
 from parrot.vj.nodes.laser_array import LaserArray
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
+from parrot.vj.nodes.infinite_zoom_effect import InfiniteZoomEffect
+from parrot.vj.nodes.color_strobe import ColorStrobe
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 
 
@@ -69,17 +72,20 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             [
                 BrightnessPulse,
                 SaturationPulse,
+                CameraShake,
                 BeatHueShift,
                 DatamoshEffect,
                 RGBShiftEffect,
                 ScanlinesEffect,
                 NoiseEffect,
+                InfiniteZoomEffect,
             ],
         )
 
         # Create text renderer with white text on black background (perfect for masking)
+        zombie_texts = ["DEAD\nSEXY", "ZOMBIE\nYES", "BRAINS", "U R SEXY"]
         text_renderer = TextRenderer(
-            text="DEAD\nSEXY",
+            text=zombie_texts,
             font_name="The Sonnyfive",
             font_size=140,
             text_color=(255, 255, 255),  # White text
@@ -87,7 +93,14 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )
         text_renderer = RandomOperation(
             text_renderer,
-            [BrightnessPulse, NoiseEffect, PixelateEffect, ScanlinesEffect],
+            [
+                BrightnessPulse,
+                CameraShake,
+                NoiseEffect,
+                PixelateEffect,
+                ScanlinesEffect,
+                InfiniteZoomEffect,
+            ],
         )
         text_renderer = CameraZoom(text_renderer, signal=FrameSignal.freq_high)
 
@@ -96,7 +109,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Create black text overlay on video
         black_text_renderer = TextRenderer(
-            text="DEAD\nSEXY",
+            text=zombie_texts,
             font_name="The Sonnyfive",
             font_size=180,
             text_color=(0, 0, 0),  # Black text
@@ -104,7 +117,14 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )
         black_text_renderer = RandomOperation(
             black_text_renderer,
-            [BrightnessPulse, NoiseEffect, PixelateEffect, ScanlinesEffect],
+            [
+                BrightnessPulse,
+                CameraShake,
+                NoiseEffect,
+                PixelateEffect,
+                ScanlinesEffect,
+                InfiniteZoomEffect,
+            ],
         )
         black_text_renderer = CameraZoom(
             black_text_renderer, signal=FrameSignal.freq_high
@@ -157,14 +177,21 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             [oscilloscope, Black()], weights=[0.05, 0.95]
         )
 
+        # Create color strobe effect that responds to strobe signals
+        color_strobe = ColorStrobe()
+        self.color_strobe = color_strobe
+
         # Create layer composition with proper blend modes
         return LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
-            LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
             LayerSpec(
                 optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
             ),  # Oscilloscope: additive blending for glow with 30% opacity
+            LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
             LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
+            LayerSpec(
+                color_strobe, BlendMode.ADDITIVE
+            ),  # Color strobe: additive for flash effects
         )
 
     def enter(self, context: mgl.Context):

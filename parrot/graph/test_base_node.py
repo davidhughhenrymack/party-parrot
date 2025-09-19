@@ -47,9 +47,10 @@ class ConstantNode(BaseInterpretationNode[SimpleContext, None, float]):
 class AddNode(BaseInterpretationNode[SimpleContext, float, float]):
     """A node that adds the results of its children."""
 
-    def __init__(
-        self, children: List[BaseInterpretationNode[SimpleContext, None, float]]
-    ):
+    def __init__(self, children):
+        # Handle both single child and list of children
+        if not isinstance(children, list):
+            children = [children]
         super().__init__(children)
         self.entered = False
 
@@ -74,9 +75,10 @@ class AddNode(BaseInterpretationNode[SimpleContext, float, float]):
 class MultiplyNode(BaseInterpretationNode[SimpleContext, float, float]):
     """A node that multiplies the results of its children."""
 
-    def __init__(
-        self, children: List[BaseInterpretationNode[SimpleContext, None, float]]
-    ):
+    def __init__(self, children):
+        # Handle both single child and list of children
+        if not isinstance(children, list):
+            children = [children]
         super().__init__(children)
         self.entered = False
 
@@ -361,10 +363,10 @@ class TestRandomNode:
 
     def test_random_node_initialization(self):
         """Test that Random node initializes with operations."""
-        children = [ConstantNode(10.0), ConstantNode(20.0)]
+        child = ConstantNode(10.0)
         operations = [AddNode, MultiplyNode]
 
-        random_node = RandomOperation(children, operations)
+        random_node = RandomOperation(child, operations)
 
         # Should have realized operations
         assert len(random_node.realized_operations) == 2
@@ -373,10 +375,10 @@ class TestRandomNode:
 
     def test_random_node_enter_exit(self):
         """Test that Random node properly manages enter/exit of current operation."""
-        children = [ConstantNode(10.0)]
+        child = ConstantNode(10.0)
         operations = [AddNode]
 
-        random_node = RandomOperation(children, operations)
+        random_node = RandomOperation(child, operations)
 
         # Mock the current operation
         random_node.current_operation.enter = Mock()
@@ -408,21 +410,21 @@ class TestRandomNode:
 
     def test_random_node_all_inputs(self):
         """Test that Random node's all_inputs returns children."""
-        children = [ConstantNode(10.0), ConstantNode(20.0)]
+        child = ConstantNode(10.0)
         operations = [AddNode]
 
-        random_node = RandomOperation(children, operations)
+        random_node = RandomOperation(child, operations)
 
-        # Random node should return its children as all_inputs
-        assert random_node.all_inputs == children
-        assert len(random_node.all_inputs) == 2
+        # Random node should return its current operation as all_inputs
+        assert random_node.all_inputs == [random_node.current_operation]
+        assert len(random_node.all_inputs) == 1
 
     def test_random_node_generate_recursive(self):
         """Test that Random node properly delegates generate_recursive."""
-        children = [ConstantNode(10.0)]
+        child = ConstantNode(10.0)
         operations = [AddNode]
 
-        random_node = RandomOperation(children, operations)
+        random_node = RandomOperation(child, operations)
 
         # Mock the generate_recursive method on current operation
         random_node.current_operation.generate_recursive = Mock()

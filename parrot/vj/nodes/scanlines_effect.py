@@ -140,17 +140,53 @@ class ScanlinesEffect(PostProcessEffectBase):
 
     def _set_effect_uniforms(self, frame: Frame, scheme: ColorScheme):
         """Set scanlines effect uniforms"""
-        # Get signal value for interference
+        # Get signal value for scanlines intensity
         signal_value = frame[self.signal]
 
-        # Calculate time offset for rolling animation
+        # Special responses to specific Frame signals
+        strobe_value = frame[FrameSignal.strobe]
+        big_blinder_value = frame[FrameSignal.big_blinder]
+        pulse_value = frame[FrameSignal.pulse]
+
+        # Calculate time offset for animation
         current_time = time.time()
         time_offset = current_time - self.start_time
 
+        # Modify parameters based on special signals
+        scanline_intensity = self.scanline_intensity
+        scanline_count = self.scanline_count
+        roll_speed = self.roll_speed
+        curvature = self.curvature
+        effective_signal = signal_value
+
+        # STROBE: Rapid scanline flickering
+        if strobe_value > 0.5:
+            scanline_intensity = min(
+                1.0, self.scanline_intensity * 2.0
+            )  # Double intensity
+            scanline_count = self.scanline_count * 1.5  # More scanlines
+            roll_speed = self.roll_speed * 8.0  # Much faster rolling
+            effective_signal = 1.0
+
+        # BIG BLINDER: Heavy scanline interference
+        elif big_blinder_value > 0.5:
+            scanline_intensity = min(1.0, self.scanline_intensity * 1.5)
+            scanline_count = self.scanline_count * 0.5  # Thicker scanlines
+            curvature = self.curvature * 2.0  # More distortion
+            effective_signal = big_blinder_value
+
+        # PULSE: Sharp scanline bursts
+        elif pulse_value > 0.5:
+            # Create burst-like scanline effects
+            scanline_intensity = min(1.0, self.scanline_intensity * 1.3)
+            # Discrete roll speed changes
+            roll_speed = self.roll_speed * (1.0 + pulse_value * 2.0)
+            effective_signal = pulse_value
+
         # Set uniforms
-        self.shader_program["scanline_intensity"] = self.scanline_intensity
-        self.shader_program["scanline_count"] = self.scanline_count
+        self.shader_program["scanline_intensity"] = scanline_intensity
+        self.shader_program["scanline_count"] = scanline_count
         self.shader_program["time_offset"] = time_offset
-        self.shader_program["signal_strength"] = signal_value
-        self.shader_program["curvature"] = self.curvature
-        self.shader_program["roll_speed"] = self.roll_speed
+        self.shader_program["signal_strength"] = effective_signal
+        self.shader_program["curvature"] = curvature
+        self.shader_program["roll_speed"] = roll_speed

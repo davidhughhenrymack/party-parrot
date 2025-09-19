@@ -99,8 +99,35 @@ class SaturationPulse(PostProcessEffectBase):
         # Get signal value (0.0 to 1.0)
         signal_value = frame[self.signal]
 
-        # Map signal to saturation: base_saturation + (intensity * signal_value)
+        # Special responses to specific Frame signals
+        strobe_value = frame[FrameSignal.strobe]
+        big_blinder_value = frame[FrameSignal.big_blinder]
+        pulse_value = frame[FrameSignal.pulse]
+
+        # Calculate base saturation multiplier
         saturation_multiplier = self.base_saturation + (self.intensity * signal_value)
+
+        # Modify based on special signals
+        # STROBE: Rapid saturation oscillation
+        if strobe_value > 0.5:
+            import time
+
+            current_time = time.time()
+            # Oscillate between high and low saturation rapidly
+            strobe_oscillation = abs(
+                (current_time * 8.0) % 2.0 - 1.0
+            )  # 0-1-0-1 pattern
+            saturation_multiplier = 0.1 + (1.8 * strobe_oscillation)  # 0.1 to 1.9 range
+
+        # BIG BLINDER: Desaturate to white
+        elif big_blinder_value > 0.5:
+            # Heavily desaturate during big blinder for white-out effect
+            saturation_multiplier = 0.05 + (0.1 * (1.0 - big_blinder_value))
+
+        # PULSE: Sharp saturation spikes
+        elif pulse_value > 0.5:
+            # Create sharp saturation boost during pulse
+            saturation_multiplier = self.base_saturation + (2.0 * pulse_value)
 
         # Clamp to reasonable range
         saturation_multiplier = max(0.0, min(2.0, saturation_multiplier))

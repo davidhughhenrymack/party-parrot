@@ -109,12 +109,40 @@ class RGBShiftEffect(PostProcessEffectBase):
         # Get signal value for shift intensity
         signal_value = frame[self.signal]
 
+        # Special responses to specific Frame signals
+        strobe_value = frame[FrameSignal.strobe]
+        big_blinder_value = frame[FrameSignal.big_blinder]
+        pulse_value = frame[FrameSignal.pulse]
+
         # Calculate time offset for animation
         current_time = time.time()
         time_offset = (current_time - self.start_time) * self.shift_speed
 
+        # Modify parameters based on special signals
+        shift_strength = self.shift_strength
+        effective_signal = signal_value
+
+        # STROBE: Extreme rapid shifting
+        if strobe_value > 0.5:
+            shift_strength = self.shift_strength * 3.0  # Triple the shift strength
+            time_offset *= 8.0  # Much faster animation
+            effective_signal = 1.0  # Maximum intensity
+
+        # BIG BLINDER: Massive displacement
+        elif big_blinder_value > 0.5:
+            shift_strength = self.shift_strength * 5.0  # Extreme shift
+            effective_signal = big_blinder_value
+
+        # PULSE: Sharp, instant shifts
+        elif pulse_value > 0.5:
+            # Create sharp, non-smooth shifts during pulse
+            pulse_time = int(current_time * 10.0)  # Discrete time steps
+            time_offset = float(pulse_time)
+            shift_strength = self.shift_strength * 2.0
+            effective_signal = pulse_value
+
         # Set uniforms
-        self.shader_program["shift_strength"] = self.shift_strength
+        self.shader_program["shift_strength"] = shift_strength
         self.shader_program["time_offset"] = time_offset
-        self.shader_program["signal_strength"] = signal_value
+        self.shader_program["signal_strength"] = effective_signal
         self.shader_program["vertical_shift"] = self.vertical_shift

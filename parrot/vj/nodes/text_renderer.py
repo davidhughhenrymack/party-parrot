@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Optional
+import random
+from typing import Optional, Union
 import numpy as np
 import moderngl as mgl
 from PIL import Image, ImageDraw, ImageFont
@@ -22,7 +23,7 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def __init__(
         self,
-        text: str = "Hello World",
+        text: Union[str, list[str]] = "Hello World",
         font_name: str = "Arial",
         font_size: int = 48,
         width: int = DEFAULT_WIDTH,
@@ -31,7 +32,12 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         bg_color: tuple[int, int, int] = (0, 0, 0),  # Black background
     ):
         super().__init__([])
-        self.text = text
+        # Handle both single text and list of texts
+        if isinstance(text, str):
+            self.text_options = [text]
+        else:
+            self.text_options = text
+        self.current_text = self.text_options[0]  # Start with first option
         self.font_name = font_name
         self.font_size = font_size
         self.width = width
@@ -75,8 +81,12 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self._context = None
 
     def generate(self, vibe: Vibe):
-        """Generate method - text is static, no generation needed"""
-        pass
+        """Generate method - randomly select from available text options"""
+        if len(self.text_options) > 1:
+            new_text = random.choice(self.text_options)
+            if new_text != self.current_text:
+                self.current_text = new_text
+                self._needs_update = True
 
     def _load_font(self):
         """Load the specified font"""
@@ -204,7 +214,7 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         center_y = self.height // 2
         draw.text(
             (center_x, center_y),
-            self.text,
+            self.current_text,
             fill=self.text_color,
             font=self.font,
             anchor="mm",
@@ -240,10 +250,16 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         return self.framebuffer
 
-    def set_text(self, text: str):
-        """Update the text content"""
-        if self.text != text:
-            self.text = text
+    def set_text(self, text: Union[str, list[str]]):
+        """Update the text content - can be single text or list of texts"""
+        if isinstance(text, str):
+            new_options = [text]
+        else:
+            new_options = text
+
+        if self.text_options != new_options:
+            self.text_options = new_options
+            self.current_text = self.text_options[0]
             self._needs_update = True
 
     def set_font_size(self, size: int):
@@ -265,7 +281,7 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
 # Convenience factory functions
 def Text(
-    text: str = "Hello World",
+    text: Union[str, list[str]] = "Hello World",
     font_size: int = 48,
     width: int = DEFAULT_WIDTH,
     height: int = DEFAULT_HEIGHT,
@@ -278,7 +294,7 @@ def Text(
 
 
 def WhiteText(
-    text: str = "Hello World",
+    text: Union[str, list[str]] = "Hello World",
     font_size: int = 48,
     width: int = DEFAULT_WIDTH,
     height: int = DEFAULT_HEIGHT,
@@ -297,7 +313,7 @@ def WhiteText(
 
 
 def BlackText(
-    text: str = "Hello World",
+    text: Union[str, list[str]] = "Hello World",
     font_size: int = 48,
     width: int = DEFAULT_WIDTH,
     height: int = DEFAULT_HEIGHT,
@@ -316,7 +332,7 @@ def BlackText(
 
 
 def ColorText(
-    text: str = "Hello World",
+    text: Union[str, list[str]] = "Hello World",
     text_color: tuple[int, int, int] = (255, 0, 0),  # Red
     bg_color: tuple[int, int, int] = (0, 0, 0),  # Black
     font_size: int = 48,
@@ -332,5 +348,24 @@ def ColorText(
         height=height,
         text_color=text_color,
         bg_color=bg_color,
+        **kwargs,
+    )
+
+
+def ZombieText(
+    font_size: int = 48,
+    width: int = DEFAULT_WIDTH,
+    height: int = DEFAULT_HEIGHT,
+    **kwargs,
+) -> TextRenderer:
+    """Create zombie-themed text that shifts between different phrases"""
+    zombie_texts = ["DEAD\nSEXY", "ZOMBIE\nYES", "BITE\nME"]
+    return TextRenderer(
+        text=zombie_texts,
+        font_size=font_size,
+        width=width,
+        height=height,
+        text_color=(255, 0, 0),  # Red text
+        bg_color=(0, 0, 0),  # Black background
         **kwargs,
     )

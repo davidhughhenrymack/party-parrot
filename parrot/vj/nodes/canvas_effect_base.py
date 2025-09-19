@@ -12,7 +12,9 @@ from parrot.director.color_scheme import ColorScheme
 
 
 @beartype
-class CanvasEffectBase(BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.Framebuffer]):
+class CanvasEffectBase(
+    BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.Framebuffer]
+):
     """
     Base class for canvas effects that work with framebuffers.
     Provides common OpenGL resource management and shader utilities.
@@ -25,7 +27,7 @@ class CanvasEffectBase(BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.
         """
         super().__init__([input_node] if input_node else [])
         self.input_node = input_node
-        
+
         # Common OpenGL resources
         self.framebuffer: Optional[mgl.Framebuffer] = None
         self.texture: Optional[mgl.Texture] = None
@@ -55,7 +57,9 @@ class CanvasEffectBase(BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.
             self.quad_vao.release()
             self.quad_vao = None
 
-    def _setup_gl_resources(self, context: mgl.Context, width: int = 1920, height: int = 1080):
+    def _setup_gl_resources(
+        self, context: mgl.Context, width: int = 1920, height: int = 1080
+    ):
         """Setup OpenGL resources for rendering"""
         if not self.texture:
             self.texture = context.texture((width, height), 3)  # RGB texture
@@ -92,13 +96,28 @@ class CanvasEffectBase(BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.
 
     def _create_fullscreen_quad(self, context: mgl.Context) -> mgl.VertexArray:
         """Create a fullscreen quad vertex array"""
-        vertices = np.array([
-            # Position  # TexCoord
-            -1.0, -1.0, 0.0, 0.0,  # Bottom-left
-             1.0, -1.0, 1.0, 0.0,  # Bottom-right
-            -1.0,  1.0, 0.0, 1.0,  # Top-left
-             1.0,  1.0, 1.0, 1.0,  # Top-right
-        ], dtype=np.float32)
+        vertices = np.array(
+            [
+                # Position  # TexCoord
+                -1.0,
+                -1.0,
+                0.0,
+                0.0,  # Bottom-left
+                1.0,
+                -1.0,
+                1.0,
+                0.0,  # Bottom-right
+                -1.0,
+                1.0,
+                0.0,
+                1.0,  # Top-left
+                1.0,
+                1.0,
+                1.0,
+                1.0,  # Top-right
+            ],
+            dtype=np.float32,
+        )
 
         vbo = context.buffer(vertices.tobytes())
         return context.vertex_array(
@@ -107,24 +126,31 @@ class CanvasEffectBase(BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.
 
     def _create_simple_quad(self, context: mgl.Context) -> mgl.VertexArray:
         """Create a simple quad without texture coordinates"""
-        vertices = np.array([
-            -1.0, -1.0,  # Bottom-left
-             1.0, -1.0,  # Bottom-right
-            -1.0,  1.0,  # Top-left
-             1.0,  1.0,  # Top-right
-        ], dtype=np.float32)
+        vertices = np.array(
+            [
+                -1.0,
+                -1.0,  # Bottom-left
+                1.0,
+                -1.0,  # Bottom-right
+                -1.0,
+                1.0,  # Top-left
+                1.0,
+                1.0,  # Top-right
+            ],
+            dtype=np.float32,
+        )
 
         vbo = context.buffer(vertices.tobytes())
-        return context.vertex_array(
-            self.shader_program, [(vbo, "2f", "in_position")]
-        )
+        return context.vertex_array(self.shader_program, [(vbo, "2f", "in_position")])
 
     def _ensure_framebuffer_size(self, context: mgl.Context, width: int, height: int):
         """Ensure framebuffer matches the specified size, recreating if necessary"""
-        if (not self.framebuffer or 
-            self.framebuffer.width != width or 
-            self.framebuffer.height != height):
-            
+        if (
+            not self.framebuffer
+            or self.framebuffer.width != width
+            or self.framebuffer.height != height
+        ):
+
             # Clean up old resources
             if self.framebuffer:
                 self.framebuffer.release()
@@ -132,11 +158,13 @@ class CanvasEffectBase(BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.
                 self.texture.release()
             self.framebuffer = None
             self.texture = None
-            
+
             # Setup with new dimensions
             self._setup_gl_resources(context, width, height)
 
-    def _get_input_framebuffer(self, frame: Frame, scheme: ColorScheme, context: mgl.Context) -> Optional[mgl.Framebuffer]:
+    def _get_input_framebuffer(
+        self, frame: Frame, scheme: ColorScheme, context: mgl.Context
+    ) -> Optional[mgl.Framebuffer]:
         """Get the input framebuffer from the input node, if any"""
         if self.input_node:
             return self.input_node.render(frame, scheme, context)
@@ -150,8 +178,32 @@ class CanvasEffectBase(BaseInterpretationNode[mgl.Context, mgl.Framebuffer, mgl.
         context.clear(0.0, 0.0, 0.0)
         return self.framebuffer
 
+    def _safe_set_uniform(self, uniform_name: str, value):
+        """
+        Safely set a shader uniform, only if it exists in the compiled program.
+        This prevents KeyError exceptions when uniforms are optimized away by the shader compiler.
 
-@beartype 
+        Args:
+            uniform_name: Name of the uniform to set
+            value: Value to set the uniform to
+
+        Returns:
+            bool: True if uniform was set, False if it doesn't exist
+        """
+        if not self.shader_program:
+            return False
+
+        try:
+            # Check if uniform exists by trying to access it
+            _ = self.shader_program[uniform_name]
+            self.shader_program[uniform_name] = value
+            return True
+        except KeyError:
+            # Uniform doesn't exist in compiled program (likely optimized away)
+            return False
+
+
+@beartype
 class PostProcessEffectBase(CanvasEffectBase):
     """
     Base class for post-processing effects that take an input framebuffer and apply an effect.
@@ -164,14 +216,16 @@ class PostProcessEffectBase(CanvasEffectBase):
         """
         super().__init__(input_node)
 
-    def render(self, frame: Frame, scheme: ColorScheme, context: mgl.Context) -> mgl.Framebuffer:
+    def render(
+        self, frame: Frame, scheme: ColorScheme, context: mgl.Context
+    ) -> mgl.Framebuffer:
         """
         Render the post-processing effect.
         Gets input from input_node, applies effect, returns result framebuffer.
         """
         # Get the input framebuffer
         input_framebuffer = self._get_input_framebuffer(frame, scheme, context)
-        
+
         if not input_framebuffer or not input_framebuffer.color_attachments:
             return self._render_black_framebuffer(context)
 
@@ -218,7 +272,9 @@ class GenerativeEffectBase(CanvasEffectBase):
         self.width = width
         self.height = height
 
-    def render(self, frame: Frame, scheme: ColorScheme, context: mgl.Context) -> mgl.Framebuffer:
+    def render(
+        self, frame: Frame, scheme: ColorScheme, context: mgl.Context
+    ) -> mgl.Framebuffer:
         """
         Render the generative effect.
         Creates content without input, returns result framebuffer.

@@ -16,6 +16,11 @@ Add major new features to the `Justfile`
 Don't add readme/md files unless asked to.
 Don't add "example" code files unless asked to.
 
+## Nodes
+
+If you're working on nodes that inherit from BaseInterpretationNode, read the base class to understand the calling patterns precisely
+so that you do not break the intended operation of these classes
+
 ## Typing
 We use beartype to enforce types.
 Decorate classes and lone methods with @beartype. Use unit tests to provide simple testing of this typing.

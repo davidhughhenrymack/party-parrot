@@ -145,14 +145,50 @@ class PixelateEffect(PostProcessEffectBase):
 
     def _set_effect_uniforms(self, frame: Frame, scheme: ColorScheme):
         """Set pixelate effect uniforms"""
-        # Get signal value for dynamic pixelation
+        # Get signal value for pixelation intensity
         signal_value = frame[self.signal]
 
+        # Special responses to specific Frame signals
+        strobe_value = frame[FrameSignal.strobe]
+        big_blinder_value = frame[FrameSignal.big_blinder]
+        pulse_value = frame[FrameSignal.pulse]
+
+        # Modify parameters based on special signals
+        pixel_size = self.pixel_size
+        color_depth = self.color_depth
+        effective_signal = signal_value
+
+        # STROBE: Rapid pixelation changes
+        if strobe_value > 0.5:
+            import time
+
+            current_time = time.time()
+            # Oscillate pixel size rapidly
+            strobe_factor = abs((current_time * 6.0) % 2.0 - 1.0)  # 0-1-0-1 pattern
+            pixel_size = self.pixel_size * (1.0 + strobe_factor * 2.0)  # 1x to 3x size
+            color_depth = max(
+                2.0, self.color_depth * (1.0 - strobe_factor * 0.8)
+            )  # Reduce color depth
+            effective_signal = 1.0
+
+        # BIG BLINDER: Extreme pixelation
+        elif big_blinder_value > 0.5:
+            pixel_size = self.pixel_size * 3.0  # Much larger pixels
+            color_depth = max(2.0, self.color_depth * 0.3)  # Very low color depth
+            effective_signal = big_blinder_value
+
+        # PULSE: Sharp pixel bursts
+        elif pulse_value > 0.5:
+            # Create sharp pixel size changes during pulse
+            pixel_size = self.pixel_size * (1.0 + pulse_value * 1.5)
+            color_depth = max(4.0, self.color_depth * (1.0 - pulse_value * 0.5))
+            effective_signal = pulse_value
+
         # Set uniforms
-        self.shader_program["pixel_size"] = self.pixel_size
-        self.shader_program["color_depth"] = float(self.color_depth)
+        self.shader_program["pixel_size"] = pixel_size
+        self.shader_program["color_depth"] = float(color_depth)
         self.shader_program["dither"] = self.dither
-        self.shader_program["signal_strength"] = signal_value
+        self.shader_program["signal_strength"] = effective_signal
 
         # Set texture size for pixel calculations
         if self.framebuffer:

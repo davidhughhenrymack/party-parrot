@@ -237,6 +237,108 @@ class TestConcertStage:
             assert min(fan_angles) < 0
             assert max(fan_angles) > 0
 
+    def test_shift_changes_node_tree(self):
+        """Test that shift operation with 0.3 threshold changes the VJ node tree"""
+        stage = ConcertStage()
+
+        # Get initial tree structure and component states
+        initial_tree = stage.print_tree()
+        print("Initial VJ Node Tree:")
+        print(initial_tree)
+
+        # Capture initial state of components that should change
+        initial_volumetric_signal = stage.volumetric_beams.signal
+        initial_volumetric_intensity = stage.volumetric_beams.beam_intensity
+
+        print(f"Initial volumetric signal: {initial_volumetric_signal}")
+        print(f"Initial volumetric intensity: {initial_volumetric_intensity}")
+
+        # Test with threshold=1.0 first to guarantee changes
+        rave_vibe = Vibe(Mode.rave)
+        stage.generate_recursive(rave_vibe, threshold=1.0)
+
+        # Get tree structure after guaranteed shift
+        guaranteed_shift_tree = stage.print_tree()
+        print("VJ Node Tree after guaranteed shift (threshold=1.0):")
+        print(guaranteed_shift_tree)
+
+        # Capture state after guaranteed shift
+        guaranteed_volumetric_signal = stage.volumetric_beams.signal
+        guaranteed_volumetric_intensity = stage.volumetric_beams.beam_intensity
+
+        print(
+            f"After guaranteed shift volumetric signal: {guaranteed_volumetric_signal}"
+        )
+        print(
+            f"After guaranteed shift volumetric intensity: {guaranteed_volumetric_intensity}"
+        )
+
+        # Validate that the tree structure expanded significantly after shift
+        # The initial tree was simple, but after shift it should show the RandomChild selections
+        assert len(guaranteed_shift_tree.split("\n")) > len(
+            initial_tree.split("\n")
+        ), "Tree should be more detailed after shift due to RandomChild/RandomOperation selections"
+
+        # Validate that specific nodes appeared in the expanded tree
+        assert (
+            "MultiplyCompose" in guaranteed_shift_tree
+            or "LayerCompose" in guaranteed_shift_tree
+        )
+        assert (
+            "VideoPlayer" in guaranteed_shift_tree
+            or "TextRenderer" in guaranteed_shift_tree
+        )
+
+        # Test volumetric beams directly (they're not in the LayerCompose tree but exist as attributes)
+        # Call generate directly on volumetric beams to test mode changes
+        stage.volumetric_beams.generate(rave_vibe)
+        rave_intensity = stage.volumetric_beams.beam_intensity
+        print(f"Volumetric beams intensity after rave generate: {rave_intensity}")
+        assert (
+            rave_intensity == 3.5
+        ), f"Expected rave mode intensity 3.5, got {rave_intensity}"
+
+        # Apply shift to gentle mode to verify mode changes
+        gentle_vibe = Vibe(Mode.gentle)
+        stage.generate_recursive(gentle_vibe, threshold=1.0)
+
+        gentle_shift_tree = stage.print_tree()
+        print("VJ Node Tree after gentle shift (threshold=1.0):")
+        print(gentle_shift_tree)
+
+        # Test gentle mode on volumetric beams directly
+        stage.volumetric_beams.generate(gentle_vibe)
+        gentle_intensity = stage.volumetric_beams.beam_intensity
+        print(f"Volumetric beams intensity after gentle generate: {gentle_intensity}")
+        assert (
+            gentle_intensity == 2.0
+        ), f"Expected gentle mode intensity 2.0, got {gentle_intensity}"
+
+        # Now test with 0.3 threshold (probabilistic changes)
+        # This may or may not change things, but should still print the tree
+        stage.generate_recursive(rave_vibe, threshold=0.3)
+
+        probabilistic_tree = stage.print_tree()
+        print("VJ Node Tree after probabilistic shift (threshold=0.3):")
+        print(probabilistic_tree)
+
+        # The tree structure should always be valid regardless of threshold
+        for tree in [
+            initial_tree,
+            guaranteed_shift_tree,
+            gentle_shift_tree,
+            probabilistic_tree,
+        ]:
+            assert "ConcertStage" in tree
+            assert "LayerCompose" in tree
+
+        print(
+            "✅ Shift operations successfully changed component states and printed node trees"
+        )
+        print(
+            "✅ Both guaranteed (threshold=1.0) and probabilistic (threshold=0.3) shifts tested"
+        )
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

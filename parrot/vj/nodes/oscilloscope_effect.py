@@ -19,7 +19,7 @@ class OscilloscopeEffect(GenerativeEffectBase):
     """
     Retro oscilloscope waveform effect that draws scrolling waveforms with bloom.
     Creates multiple parallel horizontal lines with sine-based variations based on audio signals.
-    Features a retro CRT-style appearance with green phosphor glow and bloom effects.
+    Features a retro CRT-style appearance with color scheme-based phosphor glow and bloom effects.
     """
 
     def __init__(
@@ -161,15 +161,18 @@ class OscilloscopeEffect(GenerativeEffectBase):
         vec2 getWaveformPoint(float x, float lineIndex) {
             // Calculate which sample to use based on x position and scrolling
             float scrollOffset = time * scroll_speed * 0.1;
-            float samplePos = mod(x * 0.5 + scrollOffset, 1.0);
-            int sampleIndex = int(samplePos * float(waveform_length - 1));
+            float samplePos = x * 0.5 + scrollOffset;
+            
+            // Use fractional part for smooth wrapping without discontinuities
+            float wrappedPos = fract(samplePos);
+            int sampleIndex = int(wrappedPos * float(waveform_length - 1));
             
             // Get audio amplitude from texture (using 2D texture with Y=0.5)
             float amplitude = texture(waveform_data, vec2(float(sampleIndex) / float(waveform_length - 1), 0.5)).r;
             
-            // Add sine wave variation based on line index and time
+            // Add sine wave variation based on line index and time for smooth continuity
             float phaseOffset = lineIndex * 0.5 + time * 0.3;
-            float sineVariation = sin(x * 8.0 + phaseOffset) * 0.1;
+            float sineVariation = sin(samplePos * 8.0 + phaseOffset) * 0.1;
             amplitude += sineVariation;
             
             // Calculate y position for this line
@@ -288,16 +291,16 @@ class OscilloscopeEffect(GenerativeEffectBase):
         bg_color = list(scheme.bg.rgb)
         secondary_color = list(scheme.bg_contrast.rgb)
 
-        # Use background color as base, tinted with green phosphor for retro look
+        # Use the actual color scheme colors instead of forcing green
         base_color = (
-            0.3 * bg_color[0] + 0.1 * primary_color[0] + 0.1,
-            0.3 * bg_color[1] + 0.3 * primary_color[1] + 0.6,
-            0.3 * bg_color[2] + 0.1 * primary_color[2] + 0.1,
+            0.4 * bg_color[0] + 0.6 * primary_color[0],
+            0.4 * bg_color[1] + 0.6 * primary_color[1],
+            0.4 * bg_color[2] + 0.6 * primary_color[2],
         )
         accent_color = (
-            0.2 * secondary_color[0] + 0.3,
-            0.5 * secondary_color[1] + 1.0,
-            0.2 * secondary_color[2] + 0.3,
+            0.3 * primary_color[0] + 0.7 * secondary_color[0],
+            0.3 * primary_color[1] + 0.7 * secondary_color[1],
+            0.3 * primary_color[2] + 0.7 * secondary_color[2],
         )
 
         self.shader_program["base_color"] = base_color

@@ -155,13 +155,54 @@ class DatamoshEffect(PostProcessEffectBase):
         # Get signal value for glitch intensity
         signal_value = frame[self.signal]
 
+        # Special responses to specific Frame signals
+        strobe_value = frame[FrameSignal.strobe]
+        big_blinder_value = frame[FrameSignal.big_blinder]
+        pulse_value = frame[FrameSignal.pulse]
+
         # Update time-based seed for animation
         current_time = time.time()
         time_factor = (current_time - self.last_glitch_time) * 0.5
 
+        # Modify parameters based on special signals
+        displacement_strength = self.displacement_strength
+        corruption_intensity = self.corruption_intensity
+        glitch_frequency = self.glitch_frequency
+        effective_signal = signal_value
+        time_seed = self.glitch_seed + time_factor
+
+        # STROBE: Rapid glitch bursts
+        if strobe_value > 0.5:
+            displacement_strength = self.displacement_strength * 2.0
+            corruption_intensity = min(1.0, self.corruption_intensity * 2.0)
+            glitch_frequency = min(
+                1.0, self.glitch_frequency * 3.0
+            )  # More frequent glitches
+            effective_signal = 1.0
+            # Rapid seed changes for chaotic effect
+            time_seed = current_time * 10.0
+
+        # BIG BLINDER: Massive corruption
+        elif big_blinder_value > 0.5:
+            displacement_strength = (
+                self.displacement_strength * 4.0
+            )  # Extreme displacement
+            corruption_intensity = min(1.0, self.corruption_intensity * 3.0)
+            glitch_frequency = 1.0  # Full screen corruption
+            effective_signal = big_blinder_value
+
+        # PULSE: Sharp glitch spikes
+        elif pulse_value > 0.5:
+            # Create sharp, discrete glitch patterns
+            displacement_strength = self.displacement_strength * 1.5
+            corruption_intensity = min(1.0, self.corruption_intensity * 1.8)
+            effective_signal = pulse_value
+            # Discrete time steps for sharp transitions
+            time_seed = float(int(current_time * 8.0))
+
         # Set uniforms
-        self.shader_program["displacement_strength"] = self.displacement_strength
-        self.shader_program["corruption_intensity"] = self.corruption_intensity
-        self.shader_program["glitch_frequency"] = self.glitch_frequency
-        self.shader_program["time_seed"] = self.glitch_seed + time_factor
-        self.shader_program["signal_strength"] = signal_value
+        self.shader_program["displacement_strength"] = displacement_strength
+        self.shader_program["corruption_intensity"] = corruption_intensity
+        self.shader_program["glitch_frequency"] = glitch_frequency
+        self.shader_program["time_seed"] = time_seed
+        self.shader_program["signal_strength"] = effective_signal
