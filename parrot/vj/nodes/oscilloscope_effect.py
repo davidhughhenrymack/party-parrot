@@ -202,13 +202,13 @@ class OscilloscopeEffect(GenerativeEffectBase):
                 }
             }
             
-            // Create phosphor-like glow effect
-            float glow = 1.0 / (1.0 + minDistance * 100.0);
-            float coreGlow = 1.0 / (1.0 + minDistance * 500.0);
+            // Create phosphor-like glow effect with lower alpha
+            float glow = 1.0 / (1.0 + minDistance * 100.0) * 0.6;  // Reduced glow intensity
+            float coreGlow = 1.0 / (1.0 + minDistance * 500.0) * 0.4;  // Reduced core glow
             
             // Combine base color and accent color
             vec3 finalColor = base_color * glow + accent_color * coreGlow;
-            finalColor += base_color * totalIntensity * 0.1;
+            finalColor += base_color * totalIntensity * 0.05;  // Reduced intensity contribution
             
             // Add scanline effect for retro CRT look
             float scanline = sin(fragCoord.y * 0.5) * 0.1 + 0.9;
@@ -283,17 +283,16 @@ class OscilloscopeEffect(GenerativeEffectBase):
         self.shader_program["waveform_scale"] = self.waveform_scale
         self.shader_program["resolution"] = (float(self.width), float(self.height))
 
-        # Set colors from color scheme
-        primary_color = [c / 255.0 for c in scheme.fg.rgb]  # Convert to 0-1 range
-        secondary_color = [
-            c / 255.0 for c in scheme.bg_contrast.rgb
-        ]  # Convert to 0-1 range
+        # Set colors from color scheme (already in 0-1 range)
+        primary_color = list(scheme.fg.rgb)
+        bg_color = list(scheme.bg.rgb)
+        secondary_color = list(scheme.bg_contrast.rgb)
 
-        # Use green phosphor colors for retro look, but tint with scheme colors
+        # Use background color as base, tinted with green phosphor for retro look
         base_color = (
-            0.1 * primary_color[0] + 0.2,
-            0.3 * primary_color[1] + 0.8,
-            0.1 * primary_color[2] + 0.2,
+            0.3 * bg_color[0] + 0.1 * primary_color[0] + 0.1,
+            0.3 * bg_color[1] + 0.3 * primary_color[1] + 0.6,
+            0.3 * bg_color[2] + 0.1 * primary_color[2] + 0.1,
         )
         accent_color = (
             0.2 * secondary_color[0] + 0.3,

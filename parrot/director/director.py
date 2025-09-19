@@ -208,6 +208,15 @@ class Director:
         self.last_shift_time = time.time()
         self.shift_count += 1
 
+    def shift_dmx_only(self):
+        """Shift only DMX lighting, not VJ (for when VJ runs in separate process)"""
+        self.shift_color_scheme()
+        self.shift_interpreter()
+        self.ensure_each_signal_is_enabled()
+
+        self.last_shift_time = time.time()
+        self.shift_count += 1
+
     def step(self, frame: Frame):
         self.last_frame = frame
         scheme = self.scheme.render()

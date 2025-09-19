@@ -507,7 +507,9 @@ class Window(Tk):
 
         # Add shift buttons to the right frame
         self.shift = RoundedButton(
-            self.right_btn_frame, text="Shift", command=lambda: director.shift()
+            self.right_btn_frame,
+            text="Shift",
+            command=lambda: self._shift_command(director),
         )
         self.shift.pack(side=RIGHT, padx=5, pady=5)
 
@@ -523,7 +525,7 @@ class Window(Tk):
         self.shift_all = RoundedButton(
             self.right_btn_frame,
             text="Shift All",
-            command=lambda: director.generate_interpreters(),
+            command=lambda: self._shift_all_command(director),
         )
         self.shift_all.pack(side=RIGHT, padx=5, pady=5)
 
@@ -1226,6 +1228,21 @@ class Window(Tk):
         # write to file
         with open(filename, "w") as f:
             json.dump(data, f, indent=4)
+
+    def _shift_command(self, director):
+        """Handle Shift button - triggers both DMX and VJ shifts"""
+        # Only call DMX shift, not VJ shift (VJ runs in separate process)
+        director.shift_dmx_only()  # DMX shift without VJ
+        if hasattr(director, "send_vj_shift"):
+            director.send_vj_shift(threshold=0.3)  # VJ shift with low threshold
+
+    def _shift_all_command(self, director):
+        """Handle Shift All button - triggers both DMX and VJ shift all"""
+        director.generate_interpreters()  # Original DMX shift all
+        if hasattr(director, "send_vj_shift_all"):
+            director.send_vj_shift_all(
+                threshold=1.0
+            )  # VJ shift all with high threshold
 
     def load(self):
         filename = f"{self.state.venue.name}_gui.json"

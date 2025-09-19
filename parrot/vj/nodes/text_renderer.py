@@ -198,17 +198,17 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         image = Image.new("RGB", (self.width, self.height), self.bg_color)
         draw = ImageDraw.Draw(image)
 
-        # Get text bounding box for centering
-        bbox = draw.textbbox((0, 0), self.text, font=self.font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-
-        # Calculate centered position
-        x = (self.width - text_width) // 2
-        y = (self.height - text_height) // 2
-
-        # Draw text
-        draw.text((x, y), self.text, fill=self.text_color, font=self.font)
+        # Draw text centered using anchor parameter
+        # anchor='mm' means middle-middle (center both horizontally and vertically)
+        center_x = self.width // 2
+        center_y = self.height // 2
+        draw.text(
+            (center_x, center_y),
+            self.text,
+            fill=self.text_color,
+            font=self.font,
+            anchor="mm",
+        )
 
         # Convert to numpy array and upload to texture
         # PIL uses RGB, OpenGL expects RGB - texture coordinates handle orientation

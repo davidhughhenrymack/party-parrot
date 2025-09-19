@@ -131,6 +131,11 @@ def test_shader_generation():
         or "waveform" in fragment_shader.lower()
     )
 
+    # Check that glow has reduced alpha values
+    assert "* 0.6" in fragment_shader  # Reduced glow intensity
+    assert "* 0.4" in fragment_shader  # Reduced core glow
+    assert "* 0.05" in fragment_shader  # Reduced intensity contribution
+
     # Test blur fragment shader
     blur_shader = effect._get_blur_fragment_shader()
     assert isinstance(blur_shader, str)
@@ -142,6 +147,65 @@ def test_shader_generation():
     assert isinstance(composite_shader, str)
     assert "#version 330 core" in composite_shader
     assert "bloom" in composite_shader.lower()
+
+
+def test_color_scheme_integration():
+    """Test that the effect properly uses background color from color scheme"""
+    effect = OscilloscopeEffect()
+
+    # Create a test color scheme with distinct colors
+    scheme = ColorScheme(
+        fg=Color("red"),  # RGB: (255, 0, 0)
+        bg=Color("blue"),  # RGB: (0, 0, 255)
+        bg_contrast=Color("green"),  # RGB: (0, 255, 0)
+    )
+
+    # Create a mock frame
+    frame = Frame(values={FrameSignal.freq_all: 0.5})
+
+    # Mock the shader program to capture uniform values
+    mock_shader = Mock()
+    uniform_values = {}
+
+    def mock_setitem(self, key, value):
+        uniform_values[key] = value
+
+    mock_shader.__setitem__ = mock_setitem
+    effect.shader_program = mock_shader
+    effect.waveform_history = [0.0, 0.1, 0.2]  # Some test data
+
+    # Mock the _bind_waveform_texture method since we don't have OpenGL context
+    effect._bind_waveform_texture = Mock()
+
+    # Call the method that sets uniforms
+    effect._set_effect_uniforms(frame, scheme)
+
+    # Verify that base_color was set and incorporates background color
+    base_color_call = uniform_values.get("base_color")
+
+    assert base_color_call is not None, "base_color uniform should be set"
+
+    # The base color should incorporate the blue background (0, 0, 1.0 in RGB)
+    # Based on the formula: 0.3 * bg_color + 0.1 * primary_color + base_values
+    # For blue bg (0,0,1) and red fg (0.00392...,0,0):
+    # R: 0.3*0 + 0.1*0.00392... + 0.1 ≈ 0.1
+    # G: 0.3*0 + 0.3*0 + 0.6 = 0.6
+    # B: 0.3*1 + 0.1*0 + 0.1 = 0.4
+    red_rgb = list(scheme.fg.rgb)
+    blue_rgb = list(scheme.bg.rgb)
+    expected_r = 0.3 * blue_rgb[0] + 0.1 * red_rgb[0] + 0.1
+    expected_g = 0.3 * blue_rgb[1] + 0.3 * red_rgb[1] + 0.6
+    expected_b = 0.3 * blue_rgb[2] + 0.1 * red_rgb[2] + 0.1
+
+    assert (
+        abs(base_color_call[0] - expected_r) < 0.01
+    ), f"Red component should be ~{expected_r}, got {base_color_call[0]}"
+    assert (
+        abs(base_color_call[1] - expected_g) < 0.01
+    ), f"Green component should be ~{expected_g}, got {base_color_call[1]}"
+    assert (
+        abs(base_color_call[2] - expected_b) < 0.01
+    ), f"Blue component should be ~{expected_b}, got {base_color_call[2]}"
 
 
 if __name__ == "__main__":

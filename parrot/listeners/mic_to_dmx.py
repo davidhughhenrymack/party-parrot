@@ -93,6 +93,9 @@ class MicToDmx(object):
         # Queue for thread-safe GUI updates
         self.gui_update_queue = queue.Queue()
 
+        # Queue for VJ commands (shift, shift_all, etc.)
+        self.vj_command_queue = queue.Queue()
+
         self.dmx = get_controller()
 
         self.director = Director(self.state)
@@ -104,6 +107,10 @@ class MicToDmx(object):
         self.vj_window_manager = None
         # Pass VJ director to main director
         self.director.set_vj_director(self.vj_director)
+
+        # Add VJ command methods to director for GUI access
+        self.director.send_vj_shift = self.send_vj_shift
+        self.director.send_vj_shift_all = self.send_vj_shift_all
 
         # Initialize GUI (always enabled now)
         self.window = Window(
@@ -129,6 +136,24 @@ class MicToDmx(object):
         # Save state before quitting
         self.state.save_state()
         self.should_stop = True
+
+    def send_vj_shift(self, threshold: float = 0.3):
+        """Send shift command to VJ process"""
+        try:
+            self.vj_command_queue.put_nowait(
+                {"type": "shift", "threshold": threshold, "timestamp": time.time()}
+            )
+        except queue.Full:
+            pass  # Skip if queue is full
+
+    def send_vj_shift_all(self, threshold: float = 1.0):
+        """Send shift all command to VJ process"""
+        try:
+            self.vj_command_queue.put_nowait(
+                {"type": "shift_all", "threshold": threshold, "timestamp": time.time()}
+            )
+        except queue.Full:
+            pass  # Skip if queue is full
 
     def run(self):
         # Always run with both GUI and VJ windows
@@ -183,7 +208,9 @@ from parrot.vj.vj_window import VJWindowManager
 from parrot.vj.vj_director import VJDirector
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
+from parrot.director.mode import Mode
 from parrot.utils.colour import Color
+from parrot.graph.BaseInterpretationNode import Vibe
 
 # Create a simple VJ director that reads frame data from file
 class FileBasedVJDirector(VJDirector):
@@ -207,6 +234,11 @@ class FileBasedVJDirector(VJDirector):
                 if data.get('time', 0) > self.last_frame_time:
                     self.last_frame_time = data['time']
                     
+                    # Process any VJ commands
+                    vj_commands = data.get('vj_commands', [])
+                    for cmd in vj_commands:
+                        self._process_vj_command(cmd)
+                    
                     # Create complete frame with all signals
                     frame_values = {{
                         FrameSignal.freq_low: data.get('freq_low', 0.0),
@@ -222,19 +254,25 @@ class FileBasedVJDirector(VJDirector):
                     }}
                     
                     frame = Frame(frame_values)
-                    # Debug: Print frame data occasionally
-                    if int(data['time']) % 5 == 0:  # Every 5 seconds
-                        print(f"🎵 VJ received frame: freq_low={{frame_values[FrameSignal.freq_low]:.2f}}, freq_high={{frame_values[FrameSignal.freq_high]:.2f}}")
                     return frame, self.default_scheme
-        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            # Debug: Print errors occasionally
-            if hasattr(self, '_last_error_time'):
-                if time.time() - self._last_error_time > 5:
-                    print(f"🚨 VJ frame read error: {{e}}")
-                    self._last_error_time = time.time()
-            else:
-                self._last_error_time = time.time()
+        except (FileNotFoundError, json.JSONDecodeError, KeyError):
+            pass
         return None, None
+        
+    def _process_vj_command(self, cmd):
+        \"\"\"Process VJ commands from the main process\"\"\"
+        if cmd['type'] == 'shift':
+            # Regular shift with low threshold (subtle changes)
+            threshold = cmd.get('threshold', 0.3)
+            vibe = Vibe(self.current_mode)
+            self.concert_stage.generate_recursive(vibe, threshold)
+            print("🎬 VJ Shift (threshold=" + str(threshold) + ")")
+        elif cmd['type'] == 'shift_all':
+            # Shift all with high threshold (major changes)  
+            threshold = cmd.get('threshold', 1.0)
+            vibe = Vibe(self.current_mode)
+            self.concert_stage.generate_recursive(vibe, threshold)
+            print("🎬 VJ Shift All (threshold=" + str(threshold) + ")")
 
 # Create VJ director and window
 vj_director = FileBasedVJDirector("{self.frame_data_file.name}")
@@ -520,6 +558,19 @@ except KeyboardInterrupt:
                     "small_blinder": frame[FrameSignal.small_blinder],
                     "dampen": frame[FrameSignal.dampen],
                 }
+
+                # Add any pending VJ commands
+                vj_commands = []
+                while not self.vj_command_queue.empty():
+                    try:
+                        cmd = self.vj_command_queue.get_nowait()
+                        vj_commands.append(cmd)
+                    except queue.Empty:
+                        break
+
+                if vj_commands:
+                    frame_data["vj_commands"] = vj_commands
+
                 with open(self.frame_data_file.name, "w") as f:
                     json.dump(frame_data, f)
             except Exception:

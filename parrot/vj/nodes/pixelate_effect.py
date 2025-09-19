@@ -14,8 +14,10 @@ from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
 @beartype
 class PixelateEffect(PostProcessEffectBase):
     """
-    Pixelation effect that reduces resolution for retro 8-bit/16-bit aesthetics.
+    Signal-driven pixelation effect that reduces resolution for retro 8-bit/16-bit aesthetics.
     Creates chunky pixel blocks with optional color quantization.
+    When signal strength is 0, passes through the original image unchanged.
+    Pixelation intensity is directly proportional to signal strength.
     """
 
     def __init__(
@@ -90,8 +92,21 @@ class PixelateEffect(PostProcessEffectBase):
         }
         
         void main() {
-            // Calculate dynamic pixel size based on signal
-            float dynamic_pixel_size = pixel_size * (1.0 + signal_strength * 2.0);
+            // If no signal, just pass through the original texture
+            if (signal_strength <= 0.0) {
+                color = texture(input_texture, uv).rgb;
+                return;
+            }
+            
+            // Calculate dynamic pixel size based on signal strength
+            // Signal strength directly controls pixelation intensity
+            float dynamic_pixel_size = pixel_size * signal_strength;
+            
+            // If pixel size is too small, just use original texture
+            if (dynamic_pixel_size < 1.0) {
+                color = texture(input_texture, uv).rgb;
+                return;
+            }
             
             // Calculate pixel grid coordinates
             vec2 pixel_coords = floor(uv * texture_size / dynamic_pixel_size) * dynamic_pixel_size;
@@ -100,8 +115,8 @@ class PixelateEffect(PostProcessEffectBase):
             // Sample the texture at the pixel center
             vec3 pixel_color = texture(input_texture, pixel_uv + vec2(dynamic_pixel_size * 0.5) / texture_size).rgb;
             
-            // Apply color quantization
-            if (color_depth < 256.0) {
+            // Apply color quantization based on signal strength
+            if (color_depth < 256.0 && signal_strength > 0.3) {
                 vec3 quantized = pixel_color;
                 
                 if (dither) {
@@ -111,15 +126,18 @@ class PixelateEffect(PostProcessEffectBase):
                     quantized += vec3(dither_value);
                 }
                 
-                // Quantize colors
-                quantized = floor(quantized * color_depth) / color_depth;
+                // Quantize colors with intensity based on signal
+                float quantize_strength = signal_strength;
+                quantized = floor(quantized * (color_depth * quantize_strength)) / (color_depth * quantize_strength);
                 pixel_color = clamp(quantized, 0.0, 1.0);
             }
             
-            // Add slight retro color shift for authenticity
-            pixel_color.r *= 1.05;
-            pixel_color.g *= 0.98;
-            pixel_color.b *= 1.02;
+            // Add slight retro color shift for authenticity, but only when pixelating
+            if (signal_strength > 0.1) {
+                pixel_color.r *= 1.05;
+                pixel_color.g *= 0.98;
+                pixel_color.b *= 1.02;
+            }
             
             color = clamp(pixel_color, 0.0, 1.0);
         }
