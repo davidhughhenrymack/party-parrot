@@ -98,7 +98,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         black_text_renderer = TextRenderer(
             text="DEAD\nSEXY",
             font_name="The Sonnyfive",
-            font_size=140,
+            font_size=180,
             text_color=(0, 0, 0),  # Black text
             bg_color=(255, 255, 255),  # White background (will be multiplied away)
         )

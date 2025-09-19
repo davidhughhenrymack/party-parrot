@@ -157,21 +157,87 @@ class MicToDmx(object):
         import subprocess
         import sys
         import os
+        import tempfile
+        import json
+
+        # Create a temporary file for sharing frame data with VJ process
+        self.frame_data_file = tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".json", delete=False
+        )
+        self.frame_data_file.close()
 
         # Start audio processing in background thread
         audio_thread = threading.Thread(target=self._run_audio_loop, daemon=True)
         audio_thread.start()
 
-        # Start VJ window in separate process to avoid threading conflicts
+        # Launch VJ in separate process with frame data sharing
         vj_script = f"""
 import sys
+import os
+import json
+import time
 sys.path.insert(0, "{os.getcwd()}")
+
 import moderngl_window as mglw
 from parrot.vj.vj_window import VJWindowManager
 from parrot.vj.vj_director import VJDirector
+from parrot.director.frame import Frame, FrameSignal
+from parrot.director.color_scheme import ColorScheme
+from parrot.utils.colour import Color
+
+# Create a simple VJ director that reads frame data from file
+class FileBasedVJDirector(VJDirector):
+    def __init__(self, frame_file):
+        super().__init__()
+        self.frame_file = frame_file
+        self.last_frame_time = 0
+        
+        # Create a default color scheme
+        self.default_scheme = ColorScheme(
+            fg=Color("white"),  # White foreground
+            bg=Color("blue"),   # Blue background
+            bg_contrast=Color("purple")  # Purple contrast
+        )
+        
+    def get_latest_frame_data(self):
+        try:
+            # Read frame data from shared file
+            with open(self.frame_file, 'r') as f:
+                data = json.load(f)
+                if data.get('time', 0) > self.last_frame_time:
+                    self.last_frame_time = data['time']
+                    
+                    # Create complete frame with all signals
+                    frame_values = {{
+                        FrameSignal.freq_low: data.get('freq_low', 0.0),
+                        FrameSignal.freq_high: data.get('freq_high', 0.0),
+                        FrameSignal.freq_all: data.get('freq_all', 0.0),
+                        FrameSignal.sustained_low: data.get('sustained_low', 0.0),
+                        FrameSignal.sustained_high: data.get('sustained_high', 0.0),
+                        FrameSignal.pulse: data.get('pulse', 0.0),
+                        FrameSignal.strobe: data.get('strobe', 0.0),
+                        FrameSignal.big_blinder: data.get('big_blinder', 0.0),
+                        FrameSignal.small_blinder: data.get('small_blinder', 0.0),
+                        FrameSignal.dampen: data.get('dampen', 0.0),
+                    }}
+                    
+                    frame = Frame(frame_values)
+                    # Debug: Print frame data occasionally
+                    if int(data['time']) % 5 == 0:  # Every 5 seconds
+                        print(f"🎵 VJ received frame: freq_low={{frame_values[FrameSignal.freq_low]:.2f}}, freq_high={{frame_values[FrameSignal.freq_high]:.2f}}")
+                    return frame, self.default_scheme
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+            # Debug: Print errors occasionally
+            if hasattr(self, '_last_error_time'):
+                if time.time() - self._last_error_time > 5:
+                    print(f"🚨 VJ frame read error: {{e}}")
+                    self._last_error_time = time.time()
+            else:
+                self._last_error_time = time.time()
+        return None, None
 
 # Create VJ director and window
-vj_director = VJDirector()
+vj_director = FileBasedVJDirector("{self.frame_data_file.name}")
 vj_window_manager = VJWindowManager(vj_director=vj_director)
 vj_window_manager.create_window(fullscreen={getattr(self.args, 'vj_fullscreen', False)})
 window_cls = vj_window_manager.get_window_class()
@@ -184,23 +250,27 @@ except KeyboardInterrupt:
 """
 
         # Launch VJ process
-        vj_process = subprocess.Popen(
-            [sys.executable, "-c", vj_script],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        self.vj_process = subprocess.Popen([sys.executable, "-c", vj_script])
+
+        print("🎵 Running GUI in main thread, VJ in separate process")
+        print("🖥️ Both windows should now be visible!")
 
         try:
-            print("🎵 Running GUI in main thread, VJ in separate process")
             # Run GUI in main thread
             self._run_gui_loop()
         finally:
-            # Clean up VJ process when GUI closes
-            vj_process.terminate()
+            # Clean up VJ process and temp file
+            self.vj_process.terminate()
             try:
-                vj_process.wait(timeout=5)
+                self.vj_process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                vj_process.kill()
+                self.vj_process.kill()
+
+            # Clean up temp file
+            try:
+                os.unlink(self.frame_data_file.name)
+            except:
+                pass
 
     def _run_vj_window(self):
         """Run VJ window in main thread"""
@@ -243,7 +313,8 @@ except KeyboardInterrupt:
             except queue.Empty:
                 pass
             # Schedule next check
-            self.window.after(10, process_audio_frames)
+            if not self.should_stop:
+                self.window.after(10, process_audio_frames)
 
         # Start processing audio frames
         process_audio_frames()
@@ -430,6 +501,30 @@ except KeyboardInterrupt:
         except queue.Full:
             # Skip update if queue is full (prevents blocking)
             pass
+
+        # Write frame data to shared file for VJ process
+        if hasattr(self, "frame_data_file"):
+            try:
+                import json
+
+                frame_data = {
+                    "time": frame.time,
+                    "freq_low": frame[FrameSignal.freq_low],
+                    "freq_high": frame[FrameSignal.freq_high],
+                    "freq_all": frame[FrameSignal.freq_all],
+                    "sustained_low": frame[FrameSignal.sustained_low],
+                    "sustained_high": frame[FrameSignal.sustained_high],
+                    "pulse": frame[FrameSignal.pulse],
+                    "strobe": frame[FrameSignal.strobe],
+                    "big_blinder": frame[FrameSignal.big_blinder],
+                    "small_blinder": frame[FrameSignal.small_blinder],
+                    "dampen": frame[FrameSignal.dampen],
+                }
+                with open(self.frame_data_file.name, "w") as f:
+                    json.dump(frame_data, f)
+            except Exception:
+                # Don't let file I/O errors break audio processing
+                pass
 
     def calc_bpm_spec(self, raw_timeseries):
 
