@@ -12,7 +12,7 @@ from parrot.director.mode import Mode
 
 @beartype
 class VJWindow(mglw.WindowConfig):
-    """Simple VJ window for displaying rendered content"""
+    """VJ window for displaying rendered content"""
 
     gl_version = (3, 3)
     title = "Party Parrot VJ"
@@ -130,7 +130,7 @@ class VJWindow(mglw.WindowConfig):
 class VJWindowManager:
     """Manager for VJ window integration"""
 
-    def __init__(self, vj_director=None):
+    def __init__(self, vj_director):
         self.vj_director = vj_director
 
     def create_window(self, fullscreen: bool = False):
@@ -138,15 +138,14 @@ class VJWindowManager:
         VJWindow.fullscreen = fullscreen
 
     def get_window_class(self) -> type:
-        """Get configured window class"""
+        """Get configured window class with VJ director"""
         vj_director = self.vj_director
 
         class ConfiguredVJWindow(VJWindow):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
-                if vj_director:
-                    self.vj_director = vj_director
-                    vj_director.setup(self.ctx)
-                    vj_director.set_window(self)
+                self.vj_director = vj_director
+                vj_director.setup(self.ctx)
+                vj_director.set_window(self)
 
         return ConfiguredVJWindow

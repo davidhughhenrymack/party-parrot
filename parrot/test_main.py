@@ -12,7 +12,6 @@ class TestMain(unittest.TestCase):
             args = parse_arguments()
             self.assertFalse(args.profile)
             self.assertEqual(args.profile_interval, 10)
-            self.assertFalse(args.no_gui)
             self.assertFalse(args.plot)
             self.assertEqual(args.web_port, 4040)
             self.assertFalse(args.no_web)
@@ -24,7 +23,6 @@ class TestMain(unittest.TestCase):
             "--profile",
             "--profile-interval",
             "20",
-            "--no-gui",
             "--plot",
             "--web-port",
             "8080",
@@ -34,7 +32,6 @@ class TestMain(unittest.TestCase):
             args = parse_arguments()
             self.assertTrue(args.profile)
             self.assertEqual(args.profile_interval, 20)
-            self.assertTrue(args.no_gui)
             self.assertTrue(args.plot)
             self.assertEqual(args.web_port, 8080)
             self.assertTrue(args.no_web)

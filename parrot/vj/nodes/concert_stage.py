@@ -89,10 +89,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             text_renderer,
             [BrightnessPulse, NoiseEffect, PixelateEffect, ScanlinesEffect],
         )
-        text_renderer_with_zoom = CameraZoom(
-            text_renderer, signal=FrameSignal.freq_high
-        )
-        text_renderer = RandomChild([text_renderer, text_renderer_with_zoom])
+        text_renderer = CameraZoom(text_renderer, signal=FrameSignal.freq_high)
 
         # Multiply video with text mask - white text shows video, black background hides it
         text_masked_video = MultiplyCompose(video_with_fx, text_renderer)

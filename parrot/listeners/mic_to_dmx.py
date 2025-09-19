@@ -8,6 +8,8 @@ import numpy as np
 from scipy import signal
 import matplotlib
 import time
+import queue
+import threading
 
 import math
 from beartype import beartype
@@ -47,11 +49,15 @@ class MicToDmx(object):
     def __init__(self, args):
         self.args = args
 
+        # Always enable both GUI and VJ
+        args.gui = True
+        args.vj = True
+
         if args.profile:
             tracemalloc.start()
 
-        if not args.no_gui:
-            from parrot.gui.gui import Window
+        # Always import GUI since we always run with GUI now
+        from parrot.gui.gui import Window
 
         self.pa = pyaudio.PyAudio()
         self.stream = self.open_mic_stream()
@@ -84,24 +90,25 @@ class MicToDmx(object):
 
         self.should_stop = False
 
+        # Queue for thread-safe GUI updates
+        self.gui_update_queue = queue.Queue()
+
         self.dmx = get_controller()
 
         self.director = Director(self.state)
 
-        # Initialize VJ system if requested
-        self.vj_director = None
+        # Initialize VJ system (always enabled now)
+        from parrot.vj.vj_director import VJDirector
+
+        self.vj_director = VJDirector()
         self.vj_window_manager = None
-        if getattr(self.args, "vj", False):
-            from parrot.vj.vj_director import VJDirector
+        # Pass VJ director to main director
+        self.director.set_vj_director(self.vj_director)
 
-            self.vj_director = VJDirector()
-            # Pass VJ director to main director
-            self.director.set_vj_director(self.vj_director)
-
-        if not self.args.no_gui:
-            self.window = Window(
-                self.state, lambda: self.quit(), self.director, self.signal_states
-            )
+        # Initialize GUI (always enabled now)
+        self.window = Window(
+            self.state, lambda: self.quit(), self.director, self.signal_states
+        )
 
         # Start the web server if not disabled
         if not getattr(self.args, "no_web", False):
@@ -111,12 +118,10 @@ class MicToDmx(object):
                 port=getattr(self.args, "web_port", 4040),
             )
 
-        # Start VJ window if requested and no GUI
-        if getattr(self.args, "vj", False) and self.args.no_gui:
-            print("🎬 VJ system enabled")
-            self.should_start_vj_window = True
-        else:
-            self.should_start_vj_window = False
+        # Always start both GUI and VJ windows
+        print("🎬 VJ system enabled")
+        print("🖥️ GUI system enabled")
+        self.should_start_vj_window = True
 
         self.frame_count = 0
 
@@ -126,12 +131,8 @@ class MicToDmx(object):
         self.should_stop = True
 
     def run(self):
-        if self.should_start_vj_window:
-            # Run VJ window in main thread, audio processing in background
-            self._run_with_vj_window()
-        else:
-            # Run audio processing in main thread (original behavior)
-            self._run_audio_loop()
+        # Always run with both GUI and VJ windows
+        self._run_with_gui_and_vj()
 
     def _run_audio_loop(self):
         """Run the main audio processing loop"""
@@ -150,27 +151,72 @@ class MicToDmx(object):
             except (KeyboardInterrupt, SystemExit) as e:
                 break
 
-    def _run_with_vj_window(self):
-        """Run with VJ window in main thread and audio in background thread"""
+    def _run_with_gui_and_vj(self):
+        """Run with GUI in main thread and VJ in separate process"""
         import threading
-        import moderngl_window as mglw
-        from parrot.vj.vj_window import VJWindowManager
+        import subprocess
         import sys
+        import os
 
         # Start audio processing in background thread
         audio_thread = threading.Thread(target=self._run_audio_loop, daemon=True)
         audio_thread.start()
+
+        # Start VJ window in separate process to avoid threading conflicts
+        vj_script = f"""
+import sys
+sys.path.insert(0, "{os.getcwd()}")
+import moderngl_window as mglw
+from parrot.vj.vj_window import VJWindowManager
+from parrot.vj.vj_director import VJDirector
+
+# Create VJ director and window
+vj_director = VJDirector()
+vj_window_manager = VJWindowManager(vj_director=vj_director)
+vj_window_manager.create_window(fullscreen={getattr(self.args, 'vj_fullscreen', False)})
+window_cls = vj_window_manager.get_window_class()
+
+# Run the VJ window
+try:
+    mglw.run_window_config(window_cls)
+except KeyboardInterrupt:
+    pass
+"""
+
+        # Launch VJ process
+        vj_process = subprocess.Popen(
+            [sys.executable, "-c", vj_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        try:
+            print("🎵 Running GUI in main thread, VJ in separate process")
+            # Run GUI in main thread
+            self._run_gui_loop()
+        finally:
+            # Clean up VJ process when GUI closes
+            vj_process.terminate()
+            try:
+                vj_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                vj_process.kill()
+
+    def _run_vj_window(self):
+        """Run VJ window in main thread"""
+        import moderngl_window as mglw
+        from parrot.vj.vj_window import VJWindowManager
+        import sys
+        import logging
 
         # Clear sys.argv to prevent ModernGL from parsing our arguments
         original_argv = sys.argv.copy()
         sys.argv = [sys.argv[0]]  # Keep only the script name
 
         # Suppress verbose ModernGL logging
-        import logging
-
         logging.getLogger("moderngl_window").setLevel(logging.WARNING)
 
-        # Create VJ window manager in main thread
+        # Create VJ window manager
         self.vj_window_manager = VJWindowManager(vj_director=self.vj_director)
         fullscreen = getattr(self.args, "vj_fullscreen", False)
         self.vj_window_manager.create_window(fullscreen=fullscreen)
@@ -183,6 +229,29 @@ class MicToDmx(object):
 
         # Restore original argv
         sys.argv = original_argv
+
+    def _run_gui_loop(self):
+        """Run GUI in main thread with frame updates from queue"""
+
+        def process_audio_frames():
+            """Process frames from audio thread"""
+            try:
+                while True:
+                    frame = self.gui_update_queue.get_nowait()
+                    self.window.step(frame)
+                    break  # Only process one frame per call
+            except queue.Empty:
+                pass
+            # Schedule next check
+            self.window.after(10, process_audio_frames)
+
+        # Start processing audio frames
+        process_audio_frames()
+
+        try:
+            self.window.mainloop()
+        except (KeyboardInterrupt, SystemExit):
+            self.quit()
 
     def find_input_device(self):
         device_index = None
@@ -355,9 +424,12 @@ class MicToDmx(object):
         self.director.step(frame)
         self.director.render(self.dmx)
 
-        if not self.args.no_gui:
-            self.window.step(frame)
-            self.window.update()
+        # Send frame to GUI via queue (thread-safe)
+        try:
+            self.gui_update_queue.put_nowait(frame)
+        except queue.Full:
+            # Skip update if queue is full (prevents blocking)
+            pass
 
     def calc_bpm_spec(self, raw_timeseries):
 
