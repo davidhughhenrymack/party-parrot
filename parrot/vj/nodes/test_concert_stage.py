@@ -340,7 +340,7 @@ class TestConcertStage:
         )
 
     def test_blackout_mode_returns_black_node(self):
-        """Test that ConcertStage uses BlackoutSwitch which returns black node when in blackout mode"""
+        """Test that ConcertStage uses ModeSwitch which returns black node when in blackout mode"""
         stage = ConcertStage()
 
         # Mock objects for render call
@@ -348,36 +348,38 @@ class TestConcertStage:
         scheme = Mock(spec=ColorScheme)
         context = Mock(spec=mgl.Context)
 
-        # Mock the blackout switch's black node and layer compose render methods
+        # Mock the mode switch's black node and layer compose render methods
         mock_black_framebuffer = Mock(spec=mgl.Framebuffer)
-        stage.blackout_switch.black_node.render = Mock(
+        stage.mode_switch.mode_nodes[Mode.blackout].render = Mock(
             return_value=mock_black_framebuffer
         )
 
         mock_layer_framebuffer = Mock(spec=mgl.Framebuffer)
-        stage.blackout_switch.child.render = Mock(return_value=mock_layer_framebuffer)
+        stage.mode_switch.mode_nodes[Mode.rave].render = Mock(
+            return_value=mock_layer_framebuffer
+        )
 
         # Test normal mode (should use layer compose)
-        stage.blackout_switch.generate(Vibe(Mode.rave))
-        result = stage.blackout_switch.render(frame, scheme, context)
+        stage.mode_switch.generate(Vibe(Mode.rave))
+        result = stage.mode_switch.render(frame, scheme, context)
         assert result == mock_layer_framebuffer
-        stage.blackout_switch.child.render.assert_called_once_with(
+        stage.mode_switch.mode_nodes[Mode.rave].render.assert_called_once_with(
             frame, scheme, context
         )
-        stage.blackout_switch.black_node.render.assert_not_called()
+        stage.mode_switch.mode_nodes[Mode.blackout].render.assert_not_called()
 
         # Reset mocks
-        stage.blackout_switch.child.render.reset_mock()
-        stage.blackout_switch.black_node.render.reset_mock()
+        stage.mode_switch.mode_nodes[Mode.rave].render.reset_mock()
+        stage.mode_switch.mode_nodes[Mode.blackout].render.reset_mock()
 
         # Test blackout mode (should use black node)
-        stage.blackout_switch.generate(Vibe(Mode.blackout))
-        result = stage.blackout_switch.render(frame, scheme, context)
+        stage.mode_switch.generate(Vibe(Mode.blackout))
+        result = stage.mode_switch.render(frame, scheme, context)
         assert result == mock_black_framebuffer
-        stage.blackout_switch.black_node.render.assert_called_once_with(
+        stage.mode_switch.mode_nodes[Mode.blackout].render.assert_called_once_with(
             frame, scheme, context
         )
-        stage.blackout_switch.child.render.assert_not_called()
+        stage.mode_switch.mode_nodes[Mode.rave].render.assert_not_called()
 
 
 if __name__ == "__main__":

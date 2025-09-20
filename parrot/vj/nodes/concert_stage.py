@@ -31,7 +31,7 @@ from parrot.vj.nodes.multiply_compose import MultiplyCompose
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
 from parrot.vj.nodes.laser_array import LaserArray
 from parrot.vj.nodes.black import Black
-from parrot.vj.nodes.blackout_switch import BlackoutSwitch
+from parrot.vj.nodes.mode_switch import ModeSwitch
 from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
 from parrot.vj.nodes.infinite_zoom_effect import InfiniteZoomEffect
 from parrot.vj.nodes.color_strobe import ColorStrobe
@@ -57,18 +57,13 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.camera_up = np.array([0.0, 1.0, 0.0])  # World up vector
 
         # Create stage components and layer composition (now includes blackout switch)
-        self.blackout_switch = self._create_layer_composition()
+        self.mode_switch = self._create_mode_switch()
 
-        # Initialize with blackout switch as single child
-        super().__init__([self.blackout_switch])
+        # Initialize with mode switch as single child
+        super().__init__([self.mode_switch])
 
-    @property
-    def layer_compose(self):
-        """Access to the underlying LayerCompose for compatibility"""
-        return self.blackout_switch.child
-
-    def _create_layer_composition(self):
-        """Create a LayerCompose with all stage components and proper blend modes, wrapped in BlackoutSwitch"""
+    def _create_mode_switch(self):
+        """Create a ModeSwitch with different nodes for each mode"""
         # Create black background as base layer
         black_background = Black()
 
@@ -98,7 +93,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             text_color=(255, 255, 255),  # White text
             bg_color=(0, 0, 0),  # Black background
         )
-        text_renderer = RandomOperation(
+        text_renderer_with_fx = RandomOperation(
             text_renderer,
             [
                 BrightnessPulse,
@@ -109,10 +104,16 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 InfiniteZoomEffect,
             ],
         )
-        text_renderer = CameraZoom(text_renderer, signal=FrameSignal.freq_high)
+        text_renderer_with_fxzoom = CameraZoom(
+            text_renderer_with_fx, signal=FrameSignal.freq_high
+        )
+
+        text_masked_video_no_fx = MultiplyCompose(video_player, text_renderer)
 
         # Multiply video with text mask - white text shows video, black background hides it
-        text_masked_video = MultiplyCompose(video_with_fx, text_renderer)
+        text_masked_video_with_fx = MultiplyCompose(
+            video_with_fx, text_renderer_with_fxzoom
+        )
 
         # Create black text overlay on video
         black_text_renderer = TextRenderer(
@@ -148,7 +149,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )
 
         optional_masked_video = RandomChild(
-            [video_with_fx, text_masked_video, video_with_black_text]
+            [video_with_fx, text_masked_video_with_fx, video_with_black_text]
         )
 
         canvas_2d = CameraZoom(optional_masked_video)
@@ -201,24 +202,18 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 color_strobe, BlendMode.ADDITIVE
             ),  # Color strobe: additive for flash effects
         )
+        self.layer_compose = layer_compose
 
-        # Wrap the layer composition in a blackout switch
-        return BlackoutSwitch(layer_compose)
+        # Create a black node for blackout mode
+        black_node = Black()
 
-    def enter(self, context: mgl.Context):
-        """Initialize this node with GL context - children handled by base class"""
-        pass
-
-    def exit(self):
-        """Clean up this node's resources - children handled by base class"""
-        pass
-
-    def generate(self, vibe: Vibe):
-        """Generate new configurations - children handled by base class"""
-        pass
+        # Create mode switch with layer composition for rave/gentle and black for blackout
+        return ModeSwitch(
+            rave=layer_compose, gentle=text_masked_video_no_fx, blackout=black_node
+        )
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> Optional[mgl.Framebuffer]:
-        """Render the complete concert stage using BlackoutSwitch"""
-        return self.blackout_switch.render(frame, scheme, context)
+        """Render the complete concert stage using ModeSwitch"""
+        return self.mode_switch.render(frame, scheme, context)
