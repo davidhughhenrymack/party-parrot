@@ -190,14 +190,29 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         color_strobe = ColorStrobe()
         self.color_strobe = color_strobe
 
-        # Create layer composition with proper blend modes
-        layer_compose = LayerCompose(
+        # Create base layer composition (everything below the strobe)
+        base_layers = LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
             LayerSpec(
                 optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
             ),  # Oscilloscope: additive blending for glow with 30% opacity
             LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
             LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
+        )
+
+        # Wrap base layers in brightness pulse effect for rave mode
+        brightness_pulsed_layers = BrightnessPulse(
+            base_layers,
+            intensity=1.0,
+            base_brightness=0.1,
+            signal=FrameSignal.freq_high,
+        )
+
+        # Create final layer composition with strobe on top
+        layer_compose = LayerCompose(
+            LayerSpec(
+                brightness_pulsed_layers, BlendMode.NORMAL
+            ),  # Brightness-pulsed base layers
             LayerSpec(
                 color_strobe, BlendMode.ADDITIVE
             ),  # Color strobe: additive for flash effects
