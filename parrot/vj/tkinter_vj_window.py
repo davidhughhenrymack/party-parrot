@@ -77,10 +77,7 @@ class VJRenderer:
         """Shift scene using current system mode"""
         if self.vj_director:
             current_mode = self.vj_director.get_current_mode()
-            print(f"VJ Scene shift with current mode: {current_mode}")
             self.vj_director.shift_current_mode()
-        else:
-            print("VJ Director not available for scene shift")
 
     def cleanup(self):
         """Clean up resources"""
@@ -130,7 +127,6 @@ class VJFrame(tk.Frame):
 
     def stop_animation(self):
         """Stop the animation"""
-        print("⏹️ Stopping VJ ModernGL animation")
         self.running = False
         self.vj_renderer.running = False
 
@@ -208,7 +204,6 @@ class VJFrame(tk.Frame):
                                     if w * h * 3 == total_pixels:
                                         image_array = image_array.reshape((h, w, 3))
                                         pil_image = Image.fromarray(image_array, "RGB")
-                                        print(f"VJ: Detected {w}x{h} RGB format")
                                         break
 
                         if pil_image is None:
@@ -307,8 +302,6 @@ class TkinterVJWindow(Toplevel):
         if self.vj_frame.vj_renderer.ctx is not None:
             # Start the animation
             self.vj_frame.start_animation()
-        else:
-            print("VJ: ModernGL Initialization Failed")
 
     def _on_key_press(self, event):
         """Handle keyboard events"""
@@ -321,9 +314,6 @@ class TkinterVJWindow(Toplevel):
         """Shift scene using current system mode"""
         if self.vj_frame:
             self.vj_frame.shift_scene()
-            print("VJ: Scene shifted")
-        else:
-            print("VJ Frame not available for scene shift")
 
     def _on_closing(self):
         """Handle window closing"""

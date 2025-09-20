@@ -114,7 +114,6 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         if self.video_files:
             self.video_files.sort()  # Consistent ordering
-            print(f"🎥 {selected_group}: {len(self.video_files)} videos")
         else:
             print(f"Warning: No video files found in {group_path}")
 
@@ -161,9 +160,7 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Calculate scaling to cover the target area while preserving aspect ratio
         self._calculate_scaling()
 
-        print(
-            f"▶️  {os.path.basename(video_path)} ({self.video_width}x{self.video_height}) -> ({self.width}x{self.height})"
-        )
+        print(f"▶️  {os.path.basename(video_path)}")
         self.current_video_path = video_path
 
     def _calculate_scaling(self):

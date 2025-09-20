@@ -114,9 +114,6 @@ class MicToDmx(object):
                 port=getattr(self.args, "web_port", 4040),
             )
 
-        print("🎬 VJ system enabled")
-        print("🖥️ GUI system enabled")
-
         self.frame_count = 0
 
     def quit(self):
@@ -160,9 +157,6 @@ class MicToDmx(object):
         # Start audio processing in background thread
         audio_thread = threading.Thread(target=self._run_audio_loop, daemon=True)
         audio_thread.start()
-
-        print("🎵 Running GUI in main thread with integrated VJ window")
-        print("🖥️ Both windows will open automatically!")
 
         # Run GUI in main thread (VJ window will be opened automatically by GUI)
         self._run_gui_loop()
