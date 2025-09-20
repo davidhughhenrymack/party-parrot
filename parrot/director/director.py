@@ -271,4 +271,8 @@ class Director:
 
         # Notify VJ director of mode change
         if self.vj_director:
+            # VJ director is in same process
             self.vj_director.shift(mode, threshold=0.5)
+        elif hasattr(self, "send_vj_mode_change"):
+            # VJ director is in separate process, send command via queue
+            self.send_vj_mode_change(mode, threshold=0.5)

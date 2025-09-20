@@ -105,12 +105,13 @@ class MicToDmx(object):
 
         self.vj_director = VJDirector()
         self.vj_window_manager = None
-        # Pass VJ director to main director
-        self.director.set_vj_director(self.vj_director)
+        # Don't pass VJ director to main director when running in separate process
+        # The VJ director will be None, so mode changes will use the command queue instead
 
         # Add VJ command methods to director for GUI access
         self.director.send_vj_shift = self.send_vj_shift
         self.director.send_vj_shift_all = self.send_vj_shift_all
+        self.director.send_vj_mode_change = self.send_vj_mode_change
 
         # Initialize GUI (always enabled now)
         self.window = Window(
@@ -151,6 +152,20 @@ class MicToDmx(object):
         try:
             self.vj_command_queue.put_nowait(
                 {"type": "shift_all", "threshold": threshold, "timestamp": time.time()}
+            )
+        except queue.Full:
+            pass  # Skip if queue is full
+
+    def send_vj_mode_change(self, mode, threshold: float = 0.5):
+        """Send mode change command to VJ process"""
+        try:
+            self.vj_command_queue.put_nowait(
+                {
+                    "type": "mode_change",
+                    "mode": mode.name,
+                    "threshold": threshold,
+                    "timestamp": time.time(),
+                }
             )
         except queue.Full:
             pass  # Skip if queue is full
@@ -254,7 +269,25 @@ class FileBasedVJDirector(VJDirector):
                     }}
                     
                     frame = Frame(frame_values)
-                    return frame, self.default_scheme
+                    
+                    # Create color scheme from data if available
+                    scheme = self.default_scheme
+                    if 'color_scheme' in data:
+                        cs_data = data['color_scheme']
+                        from parrot.utils.colour import Color
+                        fg_color = Color("white")
+                        fg_color.rgb = (cs_data['fg']['r'], cs_data['fg']['g'], cs_data['fg']['b'])
+                        bg_color = Color("white")
+                        bg_color.rgb = (cs_data['bg']['r'], cs_data['bg']['g'], cs_data['bg']['b'])
+                        bg_contrast_color = Color("white")
+                        bg_contrast_color.rgb = (cs_data['bg_contrast']['r'], cs_data['bg_contrast']['g'], cs_data['bg_contrast']['b'])
+                        scheme = ColorScheme(
+                            fg=fg_color,
+                            bg=bg_color,
+                            bg_contrast=bg_contrast_color
+                        )
+                    
+                    return frame, scheme
         except (FileNotFoundError, json.JSONDecodeError, KeyError):
             pass
         return None, None
@@ -277,6 +310,20 @@ class FileBasedVJDirector(VJDirector):
             print("🎬 VJ Shift All (threshold=" + str(threshold) + ")")
             print("VJ Node Tree (after shift all):")
             print(self.concert_stage.print_tree())
+        elif cmd['type'] == 'mode_change':
+            # Mode change - update current mode and regenerate with new mode
+            mode_name = cmd.get('mode', 'gentle')
+            threshold = cmd.get('threshold', 0.5)
+            try:
+                new_mode = Mode[mode_name]
+                self.current_mode = new_mode
+                vibe = Vibe(new_mode)
+                self.concert_stage.generate_recursive(vibe, threshold)
+                print("🎬 VJ Mode Change to " + mode_name + " (threshold=" + str(threshold) + ")")
+                print("VJ Node Tree (after mode change):")
+                print(self.concert_stage.print_tree())
+            except KeyError:
+                print("🚨 Unknown mode: " + mode_name)
 
 # Create VJ director and window
 vj_director = FileBasedVJDirector("{self.frame_data_file.name}")
@@ -535,6 +582,9 @@ except KeyboardInterrupt:
         self.last_frame = frame
 
         self.director.step(frame)
+
+        # Store the latest color scheme from director for VJ process
+        self.last_scheme = self.director.scheme.render()
         self.director.render(self.dmx)
 
         # Send frame to GUI via queue (thread-safe)
@@ -561,6 +611,24 @@ except KeyboardInterrupt:
                     "big_blinder": frame[FrameSignal.big_blinder],
                     "small_blinder": frame[FrameSignal.small_blinder],
                     "dampen": frame[FrameSignal.dampen],
+                    # Add color scheme data
+                    "color_scheme": {
+                        "fg": {
+                            "r": self.last_scheme.fg.red,
+                            "g": self.last_scheme.fg.green,
+                            "b": self.last_scheme.fg.blue,
+                        },
+                        "bg": {
+                            "r": self.last_scheme.bg.red,
+                            "g": self.last_scheme.bg.green,
+                            "b": self.last_scheme.bg.blue,
+                        },
+                        "bg_contrast": {
+                            "r": self.last_scheme.bg_contrast.red,
+                            "g": self.last_scheme.bg_contrast.green,
+                            "b": self.last_scheme.bg_contrast.blue,
+                        },
+                    },
                 }
 
                 # Add any pending VJ commands
