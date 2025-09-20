@@ -113,9 +113,13 @@ class MicToDmx(object):
         self.director.send_vj_shift_all = self.send_vj_shift_all
         self.director.send_vj_mode_change = self.send_vj_mode_change
 
-        # Initialize GUI (always enabled now)
+        # Initialize GUI (always enabled now) with VJ director
         self.window = Window(
-            self.state, lambda: self.quit(), self.director, self.signal_states
+            self.state,
+            lambda: self.quit(),
+            self.director,
+            self.signal_states,
+            self.vj_director,
         )
 
         # Start the web server if not disabled
@@ -192,7 +196,7 @@ class MicToDmx(object):
                 break
 
     def _run_with_gui_and_vj(self):
-        """Run with GUI in main thread and VJ in separate process"""
+        """Run with GUI in main thread and integrated VJ window"""
         import threading
         import subprocess
         import sys
@@ -338,28 +342,16 @@ except KeyboardInterrupt:
     pass
 """
 
-        # Launch VJ process
-        self.vj_process = subprocess.Popen([sys.executable, "-c", vj_script])
-
-        print("🎵 Running GUI in main thread, VJ in separate process")
-        print("🖥️ Both windows should now be visible!")
+        print("🎵 Running GUI in main thread with integrated VJ window")
+        print("🖥️ Both windows will open automatically!")
 
         try:
-            # Run GUI in main thread
+            # Run GUI in main thread (VJ window will be opened automatically by GUI)
             self._run_gui_loop()
         finally:
-            # Clean up VJ process and temp file
-            self.vj_process.terminate()
-            try:
-                self.vj_process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.vj_process.kill()
-
-            # Clean up temp file
-            try:
-                os.unlink(self.frame_data_file.name)
-            except:
-                pass
+            # Clean up VJ resources
+            if self.window:
+                self.window.cleanup_vj()
 
     def _run_vj_window(self):
         """Run VJ window in main thread"""
@@ -398,6 +390,13 @@ except KeyboardInterrupt:
                 while True:
                     frame = self.gui_update_queue.get_nowait()
                     self.window.step(frame)
+
+                    # Also update VJ window with frame data
+                    if hasattr(self.window, "update_vj_frame_data"):
+                        # Get current color scheme from director
+                        color_scheme = self.director.scheme.render()
+                        self.window.update_vj_frame_data(frame, color_scheme)
+
                     break  # Only process one frame per call
             except queue.Empty:
                 pass

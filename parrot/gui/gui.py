@@ -257,13 +257,22 @@ class Window(Tk):
         quit: Callable[[], None],
         director: Director,
         signal_states: SignalStates,
+        vj_director=None,
     ):
         super().__init__()
 
         self.state = state
         self.director = director
         self.signal_states = signal_states
+        self.vj_director = vj_director
         state.events.on_mode_change += self.on_mode_change
+
+        # Initialize VJ window manager
+        self.vj_manager = None
+        if vj_director:
+            from parrot.vj.tkinter_vj_window import TkinterVJManager
+
+            self.vj_manager = TkinterVJManager(vj_director)
 
         self.title("Party Parrot")
         self.configure(bg=BG)
@@ -573,6 +582,10 @@ class Window(Tk):
 
         # Set up periodic check for GUI updates (every 100ms)
         self.after(100, self.check_gui_updates)
+
+        # Auto-open VJ window if VJ director is available
+        if self.vj_manager:
+            self.after(500, self.open_vj_window)  # Delay to let GUI fully initialize
 
         # Add keyboard bindings
         self.bind(
@@ -1231,15 +1244,27 @@ class Window(Tk):
 
     def _shift_command(self, director):
         """Handle Shift button - triggers both DMX and VJ shifts"""
-        # Only call DMX shift, not VJ shift (VJ runs in separate process)
+        # Call DMX shift
         director.shift_dmx_only()  # DMX shift without VJ
-        if hasattr(director, "send_vj_shift"):
+
+        # Handle VJ shift - either through integrated window or separate process
+        if self.vj_manager and self.vj_manager.is_window_open():
+            # Use integrated VJ window
+            self.shift_vj_scene()
+        elif hasattr(director, "send_vj_shift"):
+            # Use separate process (fallback)
             director.send_vj_shift(threshold=0.8)  # VJ shift with low threshold
 
     def _shift_all_command(self, director):
         """Handle Shift All button - triggers both DMX and VJ shift all"""
         director.generate_interpreters()  # Original DMX shift all
-        if hasattr(director, "send_vj_shift_all"):
+
+        # Handle VJ shift all - either through integrated window or separate process
+        if self.vj_manager and self.vj_manager.is_window_open():
+            # Use integrated VJ window - shift with high threshold
+            self.shift_vj_scene()
+        elif hasattr(director, "send_vj_shift_all"):
+            # Use separate process (fallback)
             director.send_vj_shift_all(
                 threshold=1.0
             )  # VJ shift all with high threshold
@@ -1470,3 +1495,32 @@ class Window(Tk):
 
         # Update the button state
         button.update_idletasks()
+
+    def open_vj_window(self):
+        """Open the VJ window automatically"""
+        if self.vj_manager and not self.vj_manager.is_window_open():
+            try:
+                vj_window = self.vj_manager.create_window(
+                    parent=self, width=1920, height=1080, fullscreen=False
+                )
+                print("🎬 VJ window opened successfully")
+                return vj_window
+            except Exception as e:
+                print(f"Error opening VJ window: {e}")
+                return None
+        return None
+
+    def update_vj_frame_data(self, frame, scheme):
+        """Update VJ window with new frame data"""
+        if self.vj_manager:
+            self.vj_manager.update_frame_data(frame, scheme)
+
+    def shift_vj_scene(self):
+        """Shift VJ scene"""
+        if self.vj_manager:
+            self.vj_manager.shift_scene()
+
+    def cleanup_vj(self):
+        """Clean up VJ resources"""
+        if self.vj_manager:
+            self.vj_manager.cleanup()
