@@ -197,6 +197,7 @@ class Director:
                 random.choice(signal_switches).set_enabled(signal, True)
 
     def shift(self):
+        """Shift DMX lighting and VJ together"""
         self.shift_color_scheme()
         self.shift_interpreter()
         self.ensure_each_signal_is_enabled()
@@ -204,15 +205,6 @@ class Director:
         # Shift VJ director if available
         if self.vj_director:
             self.vj_director.shift(self.state.mode, threshold=1.0)
-
-        self.last_shift_time = time.time()
-        self.shift_count += 1
-
-    def shift_dmx_only(self):
-        """Shift only DMX lighting, not VJ (VJ is handled separately by GUI)"""
-        self.shift_color_scheme()
-        self.shift_interpreter()
-        self.ensure_each_signal_is_enabled()
 
         self.last_shift_time = time.time()
         self.shift_count += 1
@@ -232,9 +224,9 @@ class Director:
         for i in self.interpreters:
             i.step(frame, scheme)
 
-        # Store latest frame for VJ system (thread-safe)
+        # Pass frame and scheme to VJ system for rendering
         if self.vj_director:
-            self.vj_director.update_frame_data(frame, scheme)
+            self.vj_director.step(frame, scheme)
 
         if (
             time.time() - self.last_shift_time > SHIFT_AFTER

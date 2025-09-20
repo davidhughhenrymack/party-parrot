@@ -35,4 +35,7 @@ If you work on open gl code make sure it passes a headless rendering test.
 If you make big changes, run the main program with a timeout to check it runs.
 If things break, add test coverage for future.
 
+## General
+Don't add print statements unless asked
+
 

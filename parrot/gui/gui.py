@@ -1244,20 +1244,11 @@ class Window(Tk):
 
     def _shift_command(self, director):
         """Handle Shift button - triggers both DMX and VJ shifts"""
-        # Call DMX shift
-        director.shift_dmx_only()  # DMX shift without VJ
-
-        # Handle VJ shift through integrated window
-        if self.vj_manager and self.vj_manager.is_window_open():
-            self.shift_vj_scene()
+        director.shift()  # Director handles both DMX and VJ
 
     def _shift_all_command(self, director):
         """Handle Shift All button - triggers both DMX and VJ shift all"""
-        director.generate_interpreters()  # Original DMX shift all
-
-        # Handle VJ shift all through integrated window
-        if self.vj_manager and self.vj_manager.is_window_open():
-            self.shift_vj_scene()
+        director.generate_interpreters()  # Director handles both DMX and VJ
 
     def load(self):
         filename = f"{self.state.venue.name}_gui.json"
@@ -1498,16 +1489,6 @@ class Window(Tk):
                 print(f"Error opening VJ window: {e}")
                 return None
         return None
-
-    def update_vj_frame_data(self, frame, scheme):
-        """Update VJ window with new frame data"""
-        if self.vj_manager:
-            self.vj_manager.update_frame_data(frame, scheme)
-
-    def shift_vj_scene(self):
-        """Shift VJ scene"""
-        if self.vj_manager:
-            self.vj_manager.shift_scene()
 
     def cleanup_vj(self):
         """Clean up VJ resources"""

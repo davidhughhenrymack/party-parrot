@@ -26,6 +26,10 @@ class VJDirector:
         self.window = None  # Will be set by the window manager
         self.current_mode = Mode.gentle  # Track current system mode
 
+        # Latest frame data from director
+        self._latest_frame = None
+        self._latest_scheme = None
+
     def setup(self, context):
         """Setup the concert stage with GL context and generate initial state"""
         self.concert_stage.enter_recursive(context)
@@ -36,6 +40,15 @@ class VJDirector:
         # Print the tree structure after initialization
         print("VJ Concert Stage Tree (after initialization):")
         print(self.concert_stage.print_tree())
+
+    def step(self, frame: Frame, scheme: ColorScheme):
+        """Step method called by director - stores latest frame data for rendering"""
+        self._latest_frame = frame
+        self._latest_scheme = scheme
+
+    def get_latest_frame_data(self):
+        """Get latest frame data for rendering"""
+        return self._latest_frame, self._latest_scheme
 
     def render(self, context, frame: Frame, scheme: ColorScheme):
         """Render the complete concert stage"""

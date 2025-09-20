@@ -26,10 +26,6 @@ class VJRenderer:
         self.fbo = None
         self.running = False
 
-        # Frame data for rendering
-        self._latest_frame: Optional[DirectorFrame] = None
-        self._latest_scheme: Optional[ColorScheme] = None
-
         # Initialize ModernGL
         self._init_moderngl()
 
@@ -57,14 +53,14 @@ class VJRenderer:
         if not self.ctx or not self.vj_director:
             return None
 
-        if not self._latest_frame or not self._latest_scheme:
+        # Get latest frame data from VJ director
+        frame, scheme = self.vj_director.get_latest_frame_data()
+        if not frame or not scheme:
             return None
 
         try:
             # Get rendered framebuffer from VJ director
-            rendered_fbo = self.vj_director.render(
-                self.ctx, self._latest_frame, self._latest_scheme
-            )
+            rendered_fbo = self.vj_director.render(self.ctx, frame, scheme)
 
             if rendered_fbo and rendered_fbo.color_attachments:
                 # Read the framebuffer data
@@ -76,11 +72,6 @@ class VJRenderer:
             print(f"VJ render error: {e}")
 
         return None
-
-    def update_frame_data(self, frame: DirectorFrame, scheme: ColorScheme):
-        """Update frame data for rendering (thread-safe)"""
-        self._latest_frame = frame
-        self._latest_scheme = scheme
 
     def shift_scene(self):
         """Shift scene using current system mode"""
@@ -269,11 +260,6 @@ class VJFrame(tk.Frame):
             traceback.print_exc()
             self.stop_animation()
 
-    def update_frame_data(self, frame: DirectorFrame, scheme: ColorScheme):
-        """Update frame data for rendering"""
-        if self.vj_renderer:
-            self.vj_renderer.update_frame_data(frame, scheme)
-
     def shift_scene(self):
         """Shift scene"""
         if self.vj_renderer:
@@ -331,11 +317,6 @@ class TkinterVJWindow(Toplevel):
         elif event.keysym == "Escape":
             self._on_closing()
 
-    def update_frame_data(self, frame: DirectorFrame, scheme: ColorScheme):
-        """Update frame data for rendering (thread-safe)"""
-        if self.vj_frame:
-            self.vj_frame.update_frame_data(frame, scheme)
-
     def shift_scene(self):
         """Shift scene using current system mode"""
         if self.vj_frame:
@@ -377,11 +358,6 @@ class TkinterVJManager:
             self.window.attributes("-fullscreen", True)
 
         return self.window
-
-    def update_frame_data(self, frame: DirectorFrame, scheme: ColorScheme):
-        """Update frame data if window exists"""
-        if self.window:
-            self.window.update_frame_data(frame, scheme)
 
     def shift_scene(self):
         """Shift scene if window exists"""

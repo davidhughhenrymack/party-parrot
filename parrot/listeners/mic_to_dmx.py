@@ -124,6 +124,15 @@ class MicToDmx(object):
         self.state.save_state()
         self.should_stop = True
 
+        # Clean up VJ resources
+        if hasattr(self, "window") and self.window:
+            self.window.cleanup_vj()
+
+        # Quit the GUI main loop
+        if hasattr(self, "window") and self.window:
+            self.window.quit()  # This will exit the mainloop
+            self.window.destroy()  # This will destroy the window
+
     def run(self):
         self._run_with_gui_and_vj()
 
@@ -155,13 +164,8 @@ class MicToDmx(object):
         print("🎵 Running GUI in main thread with integrated VJ window")
         print("🖥️ Both windows will open automatically!")
 
-        try:
-            # Run GUI in main thread (VJ window will be opened automatically by GUI)
-            self._run_gui_loop()
-        finally:
-            # Clean up VJ resources
-            if self.window:
-                self.window.cleanup_vj()
+        # Run GUI in main thread (VJ window will be opened automatically by GUI)
+        self._run_gui_loop()
 
     def _run_gui_loop(self):
         """Run GUI in main thread with frame updates from queue"""
@@ -172,12 +176,6 @@ class MicToDmx(object):
                 while True:
                     frame = self.gui_update_queue.get_nowait()
                     self.window.step(frame)
-
-                    # Also update VJ window with frame data
-                    if hasattr(self.window, "update_vj_frame_data"):
-                        # Get current color scheme from director
-                        color_scheme = self.director.scheme.render()
-                        self.window.update_vj_frame_data(frame, color_scheme)
 
                     break  # Only process one frame per call
             except queue.Empty:
