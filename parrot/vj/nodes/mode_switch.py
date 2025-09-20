@@ -51,13 +51,13 @@ class ModeSwitch(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         logger.debug("Entering ModeSwitch")
         self._context = context
         if self.current_child is not None:
-            self.current_child.enter(context)
+            self.current_child.enter_recursive(context)
 
     def exit(self):
         """Clean up the current child only"""
         self._context = None
         if self.current_child is not None:
-            self.current_child.exit()
+            self.current_child.exit_recursive()
 
     def generate(self, vibe: Vibe):
         """Switch current child based on mode and handle enter/exit lifecycle"""
@@ -69,16 +69,18 @@ class ModeSwitch(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # If switching children, handle enter/exit lifecycle
         if new_child != self.current_child:
-            # Exit the old child
+            # Exit the old child recursively
             if self.current_child is not None:
-                self.current_child.exit()
+                self.current_child.exit_recursive()
             # Switch to new child
             self.current_child = new_child
-            # Enter the new child
-            self.current_child.enter(self._context)
+            # Enter the new child recursively
+            if self.current_child is not None and self._context is not None:
+                self.current_child.enter_recursive(self._context)
 
         # Generate for the current child
-        self.current_child.generate(vibe)
+        if self.current_child is not None:
+            self.current_child.generate(vibe)
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
