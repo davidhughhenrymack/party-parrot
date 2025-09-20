@@ -78,9 +78,9 @@ class ModeSwitch(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             if self.current_child is not None and self._context is not None:
                 self.current_child.enter_recursive(self._context)
 
-        # Generate for the current child
+        # Generate for the current child recursively
         if self.current_child is not None:
-            self.current_child.generate(vibe)
+            self.current_child.generate_recursive(vibe)
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context

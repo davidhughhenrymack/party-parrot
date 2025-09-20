@@ -16,6 +16,7 @@ from beartype import beartype
 
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
+from parrot.director.mode import Mode
 from parrot.utils.dmx_utils import get_controller
 
 from parrot.state import State
@@ -93,7 +94,7 @@ class MicToDmx(object):
 
         # Initialize VJ system
 
-        self.vj_director = VJDirector()
+        self.vj_director = VJDirector(self.state.mode or Mode.gentle)
 
         # Initialize director with VJ director
         self.director = Director(self.state, self.vj_director)

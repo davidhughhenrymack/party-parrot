@@ -17,14 +17,14 @@ class VJDirector:
     Handles the visual composition and effects that respond to audio and lighting.
     """
 
-    def __init__(self):
+    def __init__(self, mode: Mode):
         # Create the complete concert stage with 2D canvas and 3D lighting
         self.concert_stage = ConcertStage()
 
         self.last_shift_time = time.time()
         self.shift_count = 0
         self.window = None  # Will be set by the window manager
-        self.current_mode = Mode.gentle  # Track current system mode
+        self.current_mode = mode
 
         # Latest frame data from director
         self._latest_frame = None
@@ -34,7 +34,7 @@ class VJDirector:
         """Setup the concert stage with GL context and generate initial state"""
         self.concert_stage.enter_recursive(context)
 
-        vibe = Vibe(Mode.gentle)
+        vibe = Vibe(self.current_mode)
         self.concert_stage.generate_recursive(vibe)
 
         # Print the tree structure after initialization
