@@ -36,7 +36,6 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         """
         return self.children
 
-    @abstractmethod
     def enter(self, context: C):
         """
         Called when the node is being entered (e.g. when it will start to be rendered)
@@ -46,7 +45,6 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         """
         pass
 
-    @abstractmethod
     def exit(self):
         """
         Called when the node is being exited (e.g. when it will stop being rendered)
@@ -73,7 +71,6 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         for input_node in self.all_inputs:
             input_node.exit_recursive()
 
-    @abstractmethod
     def generate(self, vibe: Vibe):
         """
         This node should configure itself based on the vibe.
