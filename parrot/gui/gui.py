@@ -1247,27 +1247,17 @@ class Window(Tk):
         # Call DMX shift
         director.shift_dmx_only()  # DMX shift without VJ
 
-        # Handle VJ shift - either through integrated window or separate process
+        # Handle VJ shift through integrated window
         if self.vj_manager and self.vj_manager.is_window_open():
-            # Use integrated VJ window
             self.shift_vj_scene()
-        elif hasattr(director, "send_vj_shift"):
-            # Use separate process (fallback)
-            director.send_vj_shift(threshold=0.8)  # VJ shift with low threshold
 
     def _shift_all_command(self, director):
         """Handle Shift All button - triggers both DMX and VJ shift all"""
         director.generate_interpreters()  # Original DMX shift all
 
-        # Handle VJ shift all - either through integrated window or separate process
+        # Handle VJ shift all through integrated window
         if self.vj_manager and self.vj_manager.is_window_open():
-            # Use integrated VJ window - shift with high threshold
             self.shift_vj_scene()
-        elif hasattr(director, "send_vj_shift_all"):
-            # Use separate process (fallback)
-            director.send_vj_shift_all(
-                threshold=1.0
-            )  # VJ shift all with high threshold
 
     def load(self):
         filename = f"{self.state.venue.name}_gui.json"
@@ -1503,7 +1493,6 @@ class Window(Tk):
                 vj_window = self.vj_manager.create_window(
                     parent=self, width=1920, height=1080, fullscreen=False
                 )
-                print("🎬 VJ window opened successfully")
                 return vj_window
             except Exception as e:
                 print(f"Error opening VJ window: {e}")

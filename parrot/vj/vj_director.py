@@ -26,10 +26,6 @@ class VJDirector:
         self.window = None  # Will be set by the window manager
         self.current_mode = Mode.gentle  # Track current system mode
 
-        # Thread-safe frame data storage
-        self._latest_frame = None
-        self._latest_scheme = None
-
     def setup(self, context):
         """Setup the concert stage with GL context and generate initial state"""
         self.concert_stage.enter_recursive(context)
@@ -44,15 +40,6 @@ class VJDirector:
     def render(self, context, frame: Frame, scheme: ColorScheme):
         """Render the complete concert stage"""
         return self.concert_stage.render(frame, scheme, context)
-
-    def update_frame_data(self, frame: Frame, scheme: ColorScheme):
-        """Update frame data (thread-safe, called from director thread)"""
-        self._latest_frame = frame
-        self._latest_scheme = scheme
-
-    def get_latest_frame_data(self):
-        """Get latest frame data (called from main thread)"""
-        return self._latest_frame, self._latest_scheme
 
     def shift(self, mode: Mode, threshold: float = 1.0):
         """Shift the visual mode and update the concert stage"""

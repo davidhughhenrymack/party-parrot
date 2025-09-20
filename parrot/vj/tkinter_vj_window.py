@@ -36,20 +36,13 @@ class VJRenderer:
     def _init_moderngl(self) -> bool:
         """Initialize ModernGL with offscreen rendering"""
         try:
-            print("🚀 Creating VJ ModernGL context...")
-
             # Create standalone ModernGL context (like cube demo)
             self.ctx = mgl.create_context(standalone=True)
-
-            print(f"✅ VJ ModernGL context created successfully!")
-            print(f"📊 OpenGL Version: {self.ctx.info['GL_VERSION']}")
-            print(f"🎮 OpenGL Renderer: {self.ctx.info['GL_RENDERER']}")
 
             # Setup VJ director with ModernGL context
             if self.vj_director:
                 self.vj_director.setup(self.ctx)
 
-            print("🎨 VJ ModernGL resources initialized successfully!")
             return True
 
         except Exception as e:
@@ -140,7 +133,6 @@ class VJFrame(tk.Frame):
             print("❌ Cannot start VJ animation - ModernGL not initialized")
             return
 
-        print("🚀 Starting REAL VJ ModernGL animation in Tkinter!")
         self.running = True
         self.vj_renderer.running = True
         self._animate()
@@ -327,7 +319,6 @@ class TkinterVJWindow(Toplevel):
 
         # Check if VJ frame initialized successfully and start animation
         if self.vj_frame.vj_renderer.ctx is not None:
-            print("VJ: ModernGL Ready - Rendering Concert Stage")
             # Start the animation
             self.vj_frame.start_animation()
         else:

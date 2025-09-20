@@ -209,7 +209,7 @@ class Director:
         self.shift_count += 1
 
     def shift_dmx_only(self):
-        """Shift only DMX lighting, not VJ (for when VJ runs in separate process)"""
+        """Shift only DMX lighting, not VJ (VJ is handled separately by GUI)"""
         self.shift_color_scheme()
         self.shift_interpreter()
         self.ensure_each_signal_is_enabled()
@@ -271,8 +271,4 @@ class Director:
 
         # Notify VJ director of mode change
         if self.vj_director:
-            # VJ director is in same process
             self.vj_director.shift(mode, threshold=0.5)
-        elif hasattr(self, "send_vj_mode_change"):
-            # VJ director is in separate process, send command via queue
-            self.send_vj_mode_change(mode, threshold=0.5)

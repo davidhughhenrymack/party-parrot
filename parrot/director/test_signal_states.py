@@ -15,7 +15,6 @@ class TestSignalStates(unittest.TestCase):
         class MockArgs:
             def __init__(self):
                 self.profile = False
-                self.no_gui = True
                 self.no_web = True
                 self.web_port = 4040
                 self.profile_interval = 30

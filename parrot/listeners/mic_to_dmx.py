@@ -49,14 +49,9 @@ class MicToDmx(object):
     def __init__(self, args):
         self.args = args
 
-        # Always enable both GUI and VJ
-        args.gui = True
-        args.vj = True
-
         if args.profile:
             tracemalloc.start()
 
-        # Always import GUI since we always run with GUI now
         from parrot.gui.gui import Window
 
         self.pa = pyaudio.PyAudio()
@@ -93,27 +88,16 @@ class MicToDmx(object):
         # Queue for thread-safe GUI updates
         self.gui_update_queue = queue.Queue()
 
-        # Queue for VJ commands (shift, shift_all, etc.)
-        self.vj_command_queue = queue.Queue()
-
         self.dmx = get_controller()
 
         self.director = Director(self.state)
 
-        # Initialize VJ system (always enabled now)
+        # Initialize VJ system
         from parrot.vj.vj_director import VJDirector
 
         self.vj_director = VJDirector()
-        self.vj_window_manager = None
-        # Don't pass VJ director to main director when running in separate process
-        # The VJ director will be None, so mode changes will use the command queue instead
 
-        # Add VJ command methods to director for GUI access
-        self.director.send_vj_shift = self.send_vj_shift
-        self.director.send_vj_shift_all = self.send_vj_shift_all
-        self.director.send_vj_mode_change = self.send_vj_mode_change
-
-        # Initialize GUI (always enabled now) with VJ director
+        # Initialize GUI with VJ director
         self.window = Window(
             self.state,
             lambda: self.quit(),
@@ -130,10 +114,8 @@ class MicToDmx(object):
                 port=getattr(self.args, "web_port", 4040),
             )
 
-        # Always start both GUI and VJ windows
         print("🎬 VJ system enabled")
         print("🖥️ GUI system enabled")
-        self.should_start_vj_window = True
 
         self.frame_count = 0
 
@@ -142,40 +124,7 @@ class MicToDmx(object):
         self.state.save_state()
         self.should_stop = True
 
-    def send_vj_shift(self, threshold: float = 0.3):
-        """Send shift command to VJ process"""
-        try:
-            self.vj_command_queue.put_nowait(
-                {"type": "shift", "threshold": threshold, "timestamp": time.time()}
-            )
-        except queue.Full:
-            pass  # Skip if queue is full
-
-    def send_vj_shift_all(self, threshold: float = 1.0):
-        """Send shift all command to VJ process"""
-        try:
-            self.vj_command_queue.put_nowait(
-                {"type": "shift_all", "threshold": threshold, "timestamp": time.time()}
-            )
-        except queue.Full:
-            pass  # Skip if queue is full
-
-    def send_vj_mode_change(self, mode, threshold: float = 0.5):
-        """Send mode change command to VJ process"""
-        try:
-            self.vj_command_queue.put_nowait(
-                {
-                    "type": "mode_change",
-                    "mode": mode.name,
-                    "threshold": threshold,
-                    "timestamp": time.time(),
-                }
-            )
-        except queue.Full:
-            pass  # Skip if queue is full
-
     def run(self):
-        # Always run with both GUI and VJ windows
         self._run_with_gui_and_vj()
 
     def _run_audio_loop(self):
@@ -198,149 +147,10 @@ class MicToDmx(object):
     def _run_with_gui_and_vj(self):
         """Run with GUI in main thread and integrated VJ window"""
         import threading
-        import subprocess
-        import sys
-        import os
-        import tempfile
-        import json
-
-        # Create a temporary file for sharing frame data with VJ process
-        self.frame_data_file = tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".json", delete=False
-        )
-        self.frame_data_file.close()
 
         # Start audio processing in background thread
         audio_thread = threading.Thread(target=self._run_audio_loop, daemon=True)
         audio_thread.start()
-
-        # Launch VJ in separate process with frame data sharing
-        vj_script = f"""
-import sys
-import os
-import json
-import time
-sys.path.insert(0, "{os.getcwd()}")
-
-import moderngl_window as mglw
-from parrot.vj.vj_window import VJWindowManager
-from parrot.vj.vj_director import VJDirector
-from parrot.director.frame import Frame, FrameSignal
-from parrot.director.color_scheme import ColorScheme
-from parrot.director.mode import Mode
-from parrot.utils.colour import Color
-from parrot.graph.BaseInterpretationNode import Vibe
-
-# Create a simple VJ director that reads frame data from file
-class FileBasedVJDirector(VJDirector):
-    def __init__(self, frame_file):
-        super().__init__()
-        self.frame_file = frame_file
-        self.last_frame_time = 0
-        
-        # Create a default color scheme
-        self.default_scheme = ColorScheme(
-            fg=Color("white"),  # White foreground
-            bg=Color("blue"),   # Blue background
-            bg_contrast=Color("purple")  # Purple contrast
-        )
-        
-    def get_latest_frame_data(self):
-        try:
-            # Read frame data from shared file
-            with open(self.frame_file, 'r') as f:
-                data = json.load(f)
-                if data.get('time', 0) > self.last_frame_time:
-                    self.last_frame_time = data['time']
-                    
-                    # Process any VJ commands
-                    vj_commands = data.get('vj_commands', [])
-                    for cmd in vj_commands:
-                        self._process_vj_command(cmd)
-                    
-                    # Create complete frame with all signals
-                    frame_values = {{
-                        FrameSignal.freq_low: data.get('freq_low', 0.0),
-                        FrameSignal.freq_high: data.get('freq_high', 0.0),
-                        FrameSignal.freq_all: data.get('freq_all', 0.0),
-                        FrameSignal.sustained_low: data.get('sustained_low', 0.0),
-                        FrameSignal.sustained_high: data.get('sustained_high', 0.0),
-                        FrameSignal.pulse: data.get('pulse', 0.0),
-                        FrameSignal.strobe: data.get('strobe', 0.0),
-                        FrameSignal.big_blinder: data.get('big_blinder', 0.0),
-                        FrameSignal.small_blinder: data.get('small_blinder', 0.0),
-                        FrameSignal.dampen: data.get('dampen', 0.0),
-                    }}
-                    
-                    frame = Frame(frame_values)
-                    
-                    # Create color scheme from data if available
-                    scheme = self.default_scheme
-                    if 'color_scheme' in data:
-                        cs_data = data['color_scheme']
-                        from parrot.utils.colour import Color
-                        fg_color = Color("white")
-                        fg_color.rgb = (cs_data['fg']['r'], cs_data['fg']['g'], cs_data['fg']['b'])
-                        bg_color = Color("white")
-                        bg_color.rgb = (cs_data['bg']['r'], cs_data['bg']['g'], cs_data['bg']['b'])
-                        bg_contrast_color = Color("white")
-                        bg_contrast_color.rgb = (cs_data['bg_contrast']['r'], cs_data['bg_contrast']['g'], cs_data['bg_contrast']['b'])
-                        scheme = ColorScheme(
-                            fg=fg_color,
-                            bg=bg_color,
-                            bg_contrast=bg_contrast_color
-                        )
-                    
-                    return frame, scheme
-        except (FileNotFoundError, json.JSONDecodeError, KeyError):
-            pass
-        return None, None
-        
-    def _process_vj_command(self, cmd):
-        \"\"\"Process VJ commands from the main process\"\"\"
-        if cmd['type'] == 'shift':
-            # Regular shift with low threshold (subtle changes)
-            threshold = cmd.get('threshold', 0.6)
-            vibe = Vibe(self.current_mode)
-            self.concert_stage.generate_recursive(vibe, threshold)
-            print("🎬 VJ Shift (threshold=" + str(threshold) + ")")
-            print("VJ Node Tree (after shift):")
-            print(self.concert_stage.print_tree())
-        elif cmd['type'] == 'shift_all':
-            # Shift all with high threshold (major changes)  
-            threshold = cmd.get('threshold', 1.0)
-            vibe = Vibe(self.current_mode)
-            self.concert_stage.generate_recursive(vibe, threshold)
-            print("🎬 VJ Shift All (threshold=" + str(threshold) + ")")
-            print("VJ Node Tree (after shift all):")
-            print(self.concert_stage.print_tree())
-        elif cmd['type'] == 'mode_change':
-            # Mode change - update current mode and regenerate with new mode
-            mode_name = cmd.get('mode', 'gentle')
-            threshold = cmd.get('threshold', 0.5)
-            try:
-                new_mode = Mode[mode_name]
-                self.current_mode = new_mode
-                vibe = Vibe(new_mode)
-                self.concert_stage.generate_recursive(vibe, threshold)
-                print("🎬 VJ Mode Change to " + mode_name + " (threshold=" + str(threshold) + ")")
-                print("VJ Node Tree (after mode change):")
-                print(self.concert_stage.print_tree())
-            except KeyError:
-                print("🚨 Unknown mode: " + mode_name)
-
-# Create VJ director and window
-vj_director = FileBasedVJDirector("{self.frame_data_file.name}")
-vj_window_manager = VJWindowManager(vj_director=vj_director)
-vj_window_manager.create_window(fullscreen={getattr(self.args, 'vj_fullscreen', False)})
-window_cls = vj_window_manager.get_window_class()
-
-# Run the VJ window
-try:
-    mglw.run_window_config(window_cls)
-except KeyboardInterrupt:
-    pass
-"""
 
         print("🎵 Running GUI in main thread with integrated VJ window")
         print("🖥️ Both windows will open automatically!")
@@ -352,34 +162,6 @@ except KeyboardInterrupt:
             # Clean up VJ resources
             if self.window:
                 self.window.cleanup_vj()
-
-    def _run_vj_window(self):
-        """Run VJ window in main thread"""
-        import moderngl_window as mglw
-        from parrot.vj.vj_window import VJWindowManager
-        import sys
-        import logging
-
-        # Clear sys.argv to prevent ModernGL from parsing our arguments
-        original_argv = sys.argv.copy()
-        sys.argv = [sys.argv[0]]  # Keep only the script name
-
-        # Suppress verbose ModernGL logging
-        logging.getLogger("moderngl_window").setLevel(logging.WARNING)
-
-        # Create VJ window manager
-        self.vj_window_manager = VJWindowManager(vj_director=self.vj_director)
-        fullscreen = getattr(self.args, "vj_fullscreen", False)
-        self.vj_window_manager.create_window(fullscreen=fullscreen)
-
-        # Get the configured window class
-        window_cls = self.vj_window_manager.get_window_class()
-
-        # Run the VJ window (director will handle frame updates)
-        mglw.run_window_config(window_cls)
-
-        # Restore original argv
-        sys.argv = original_argv
 
     def _run_gui_loop(self):
         """Run GUI in main thread with frame updates from queue"""
@@ -577,13 +359,8 @@ except KeyboardInterrupt:
             ],
         }
 
-        # Store the frame for VJ system access
-        self.last_frame = frame
-
         self.director.step(frame)
 
-        # Store the latest color scheme from director for VJ process
-        self.last_scheme = self.director.scheme.render()
         self.director.render(self.dmx)
 
         # Send frame to GUI via queue (thread-safe)
@@ -592,61 +369,6 @@ except KeyboardInterrupt:
         except queue.Full:
             # Skip update if queue is full (prevents blocking)
             pass
-
-        # Write frame data to shared file for VJ process
-        if hasattr(self, "frame_data_file"):
-            try:
-                import json
-
-                frame_data = {
-                    "time": frame.time,
-                    "freq_low": frame[FrameSignal.freq_low],
-                    "freq_high": frame[FrameSignal.freq_high],
-                    "freq_all": frame[FrameSignal.freq_all],
-                    "sustained_low": frame[FrameSignal.sustained_low],
-                    "sustained_high": frame[FrameSignal.sustained_high],
-                    "pulse": frame[FrameSignal.pulse],
-                    "strobe": frame[FrameSignal.strobe],
-                    "big_blinder": frame[FrameSignal.big_blinder],
-                    "small_blinder": frame[FrameSignal.small_blinder],
-                    "dampen": frame[FrameSignal.dampen],
-                    # Add color scheme data
-                    "color_scheme": {
-                        "fg": {
-                            "r": self.last_scheme.fg.red,
-                            "g": self.last_scheme.fg.green,
-                            "b": self.last_scheme.fg.blue,
-                        },
-                        "bg": {
-                            "r": self.last_scheme.bg.red,
-                            "g": self.last_scheme.bg.green,
-                            "b": self.last_scheme.bg.blue,
-                        },
-                        "bg_contrast": {
-                            "r": self.last_scheme.bg_contrast.red,
-                            "g": self.last_scheme.bg_contrast.green,
-                            "b": self.last_scheme.bg_contrast.blue,
-                        },
-                    },
-                }
-
-                # Add any pending VJ commands
-                vj_commands = []
-                while not self.vj_command_queue.empty():
-                    try:
-                        cmd = self.vj_command_queue.get_nowait()
-                        vj_commands.append(cmd)
-                    except queue.Empty:
-                        break
-
-                if vj_commands:
-                    frame_data["vj_commands"] = vj_commands
-
-                with open(self.frame_data_file.name, "w") as f:
-                    json.dump(frame_data, f)
-            except Exception:
-                # Don't let file I/O errors break audio processing
-                pass
 
     def calc_bpm_spec(self, raw_timeseries):
 
