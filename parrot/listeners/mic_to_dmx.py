@@ -23,6 +23,7 @@ from parrot.utils.colour import Color
 from parrot.utils.tracemalloc import display_top
 from parrot.api import start_web_server
 from parrot.director.signal_states import SignalStates
+from parrot.vj.vj_director import VJDirector
 
 THRESHOLD = 0  # dB
 RATE = 44100
@@ -90,12 +91,12 @@ class MicToDmx(object):
 
         self.dmx = get_controller()
 
-        self.director = Director(self.state)
-
         # Initialize VJ system
-        from parrot.vj.vj_director import VJDirector
 
         self.vj_director = VJDirector()
+
+        # Initialize director with VJ director
+        self.director = Director(self.state, self.vj_director)
 
         # Initialize GUI with VJ director
         self.window = Window(

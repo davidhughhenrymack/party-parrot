@@ -36,19 +36,19 @@ def filter_nones(l):
 
 
 class Director:
-    def __init__(self, state: State):
+    def __init__(self, state: State, vj_director=None):
         self.scheme = LerpAnimator(random.choice(color_schemes), 4)
         self.last_shift_time = time.time()
         self.shift_count = 0
         self.start_time = time.time()
         self.state = state
+        self.vj_director = vj_director
 
         self.state.set_mode(Mode.gentle)
         self.setup_patch()
         self.generate_color_scheme()
 
         self.warmup_complete = False
-        self.vj_director = None  # Optional VJ director
 
         # Register event handlers
         self.state.events.on_mode_change += self.on_mode_change
@@ -250,10 +250,6 @@ class Director:
 
     def deploy_hype(self):
         self.mode_machine.deploy_hype(self.last_frame)
-
-    def set_vj_director(self, vj_director):
-        """Set the VJ director for coordination"""
-        self.vj_director = vj_director
 
     def on_mode_change(self, mode):
         """Handle mode changes, including those from the web interface."""
