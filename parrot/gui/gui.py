@@ -782,11 +782,8 @@ class Window(Tk):
         # Set flag to indicate this is a local change
         self.local_mode_change = True
 
-        # Update the state
+        # Update the state (this will trigger director's on_mode_change handler)
         self.state.set_mode(mode)
-
-        # Generate new interpreters for the selected mode
-        self.director.generate_interpreters()
 
         # Update button appearances
         self._update_mode_buttons(mode)
@@ -800,9 +797,6 @@ class Window(Tk):
     def on_mode_change(self, mode):
         """Update the mode selection when the state changes."""
         if mode:
-            # Generate new interpreters for the changed mode
-            self.director.generate_interpreters()
-
             # Update the mode variable to match the current mode
             if hasattr(self, "mode_var"):
                 self.mode_var.set(mode.name)

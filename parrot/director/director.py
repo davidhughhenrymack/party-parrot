@@ -139,6 +139,10 @@ class Director:
 
         print()
 
+        # Also shift VJ director with high threshold for "shift all" (complete regeneration)
+        if self.vj_director:
+            self.vj_director.shift(self.state.mode, threshold=1.0)
+
     def generate_color_scheme(self):
         s = random.choice(self.state.theme.color_scheme)
         self.scheme.push(s)
@@ -202,9 +206,9 @@ class Director:
         self.shift_interpreter()
         self.ensure_each_signal_is_enabled()
 
-        # Shift VJ director if available
+        # Shift VJ director if available (with moderate threshold for subtle changes)
         if self.vj_director:
-            self.vj_director.shift(self.state.mode, threshold=1.0)
+            self.vj_director.shift(self.state.mode, threshold=0.3)
 
         self.last_shift_time = time.time()
         self.shift_count += 1
@@ -254,9 +258,5 @@ class Director:
     def on_mode_change(self, mode):
         """Handle mode changes, including those from the web interface."""
         print(f"mode changed to: {mode.name}")
-        # Regenerate interpreters if needed
+        # Regenerate interpreters if needed (this also handles VJ shifts)
         self.generate_interpreters()
-
-        # Notify VJ director of mode change
-        if self.vj_director:
-            self.vj_director.shift(mode, threshold=0.5)
