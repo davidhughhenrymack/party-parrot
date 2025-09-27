@@ -6,6 +6,7 @@ from beartype import beartype
 from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
@@ -66,7 +67,13 @@ class TextColorPulse(PostProcessEffectBase):
 
     def print_self(self) -> str:
         """Return class name with current signal and pulse parameters"""
-        return f"🎨 {Fore.MAGENTA}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.YELLOW}{self.signal.name}{Style.RESET_ALL}, intensity:{Fore.WHITE}{self.intensity:.2f}{Style.RESET_ALL}, decay:{Fore.WHITE}{self.decay_rate:.2f}{Style.RESET_ALL}]"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="🎨",
+            signal=self.signal,
+            intensity=self.intensity,
+            decay=(self.decay_rate, 2),
+        )
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for text color modulation"""

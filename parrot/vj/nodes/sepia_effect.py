@@ -4,6 +4,7 @@ import random
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
@@ -58,7 +59,13 @@ class SepiaEffect(PostProcessEffectBase):
 
     def print_self(self) -> str:
         """Return class name with current signal and intensity parameters"""
-        return f"{self.__class__.__name__} [{self.signal.name}, base:{self.base_intensity:.2f}, max:{self.max_intensity:.2f}]"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="📷",
+            signal=self.signal,
+            base=self.base_intensity,
+            max=self.max_intensity,
+        )
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for sepia effect"""

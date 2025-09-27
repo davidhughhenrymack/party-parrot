@@ -4,6 +4,7 @@ import random
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
@@ -51,7 +52,12 @@ class CircularMask(PostProcessEffectBase):
 
     def print_self(self) -> str:
         """Return class name with current parameters"""
-        return f"{self.__class__.__name__} [radius:{self.radius:.2f}, softness:{self.softness:.2f}]"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="⚪️",
+            radius=self.radius,
+            softness=self.softness,
+        )
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for circular mask effect"""

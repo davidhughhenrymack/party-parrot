@@ -5,6 +5,9 @@ from typing import Any, Generic, List, Optional, Type, TypeVar
 from dataclasses import dataclass
 
 from parrot.director.frame import Frame
+from parrot.director.frame import FrameSignal
+from beartype import beartype
+from colorama import Fore, Style
 from parrot.director.mode import Mode
 from parrot.director.color_scheme import ColorScheme
 
@@ -145,6 +148,81 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
             result += input_node.print_tree(child_indent, is_last_child, visited.copy())
 
         return result
+
+    # Intentionally no base print_self formatting wrapper to avoid implicit emoji registry.
+
+
+# No global emoji registry: each node supplies its own emoji in print_self.
+
+
+@beartype
+def format_node_status(
+    node_name: str,
+    *,
+    emoji: str | None = None,
+    signal: FrameSignal | str | None = None,
+    **numeric_props: float | int | tuple[float | int, int | str] | None,
+) -> str:
+    """
+    Build a consistent, colored status string for nodes.
+
+    Example output:
+      "✨ GlowEffect [freq_low, intensity:0.75, radius:4.0]"
+
+    Args:
+        node_name: Class or display name of the node
+        emoji: Optional emoji to prefix
+        signal: Optional FrameSignal or string to display
+        numeric_props: Numeric key=value pairs to include (floats formatted to 2 decimals)
+
+    Returns:
+        Formatted string suitable for print_self()
+    """
+
+    # Label with emoji + colored node name
+    emoji_part = f"{emoji} " if emoji else ""
+    label = f"{emoji_part}{Fore.CYAN}{node_name}{Style.RESET_ALL}"
+
+    # Components inside brackets
+    parts: list[str] = []
+
+    if signal is not None:
+        sig_str = signal.name if hasattr(signal, "name") else str(signal)
+        parts.append(f"{Fore.YELLOW}{sig_str}{Style.RESET_ALL}")
+
+    for key, value in numeric_props.items():
+        if value is None:
+            continue
+        # Support explicit formatting via tuples: (number, precision|format_spec)
+        val_str: str
+        if isinstance(value, tuple) and len(value) == 2:
+            num, fmt = value
+            try:
+                if isinstance(fmt, int):
+                    # Decimal places
+                    val_str = f"{float(num):.{fmt}f}"
+                elif isinstance(fmt, str):
+                    # Either format spec or full format template
+                    if "{" in fmt and "}" in fmt:
+                        val_str = fmt.format(num)
+                    else:
+                        val_str = format(num, fmt)
+                else:
+                    val_str = f"{num}"
+            except Exception:
+                val_str = f"{num}"
+        else:
+            if isinstance(value, float):
+                val_str = f"{value:.2f}"
+            else:
+                val_str = f"{value}"
+        parts.append(f"{key}:{Fore.WHITE}{val_str}{Style.RESET_ALL}")
+
+    inner = ", ".join(parts)
+    return f"{label} [{inner}]" if inner else label
+
+
+# No mixin; nodes call format_node_status(...) directly inside their own print_self.
 
 
 def pipeline(

@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
@@ -82,7 +83,13 @@ class RoundedRectMask(PostProcessEffectBase):
 
     def print_self(self) -> str:
         """Return class name with current parameters"""
-        return f"{self.__class__.__name__} [size:{self.width:.2f}x{self.height:.2f}, radius:{self.corner_radius:.2f}]"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="🧿",
+            width=self.width,
+            height=self.height,
+            radius=self.corner_radius,
+        )
 
     def _generate_mask(self) -> np.ndarray:
         """Generate the confetti mask as a numpy array"""

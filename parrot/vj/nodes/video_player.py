@@ -9,6 +9,7 @@ import numpy as np
 import moderngl as mgl
 from beartype import beartype
 from colorama import Fore, Style
+from parrot.graph.BaseInterpretationNode import format_node_status
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
@@ -79,16 +80,19 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def print_self(self) -> str:
         """Return class name with current video folder information"""
+        group_label = self.fn_group
         if self.current_video_path:
-            # Extract the video group folder from the current video path
-            # Path structure: media/videos/{fn_group}/{video_group}/video_file.mp4
             path_parts = self.current_video_path.split(os.sep)
             if len(path_parts) >= 4 and path_parts[-4] == "videos":
-                video_group = path_parts[-2]  # The folder containing the video
-                return f"🎬 {Fore.BLUE}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.CYAN}{self.fn_group}/{video_group}{Style.RESET_ALL}]"
+                group_label = f"{self.fn_group}/{path_parts[-2]}"
 
-        # Fallback if no video is loaded yet
-        return f"🎬 {Fore.BLUE}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.CYAN}{self.fn_group}{Style.RESET_ALL}]"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="🎬",
+            signal=group_label,
+            width=self.width,
+            height=self.height,
+        )
 
     def _select_video_group(self):
         """Select a video group directory"""

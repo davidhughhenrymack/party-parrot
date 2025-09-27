@@ -3,7 +3,7 @@
 import time
 import os
 from collections import defaultdict, deque
-from typing import Dict, List, Optional, Any
+from beartype.typing import Dict, List, Optional, Any
 from contextlib import contextmanager
 from beartype import beartype
 
@@ -155,18 +155,48 @@ class VJProfiler:
 
         print("-" * 80)
 
-        # Calculate total rendering time and theoretical max FPS
+        # Holistic FPS metrics
+        # Achieved FPS: measured from top-level animation loop timings
+        animate_stats = next(
+            (s for s in stats if s["operation"] == "vj_animate_loop"), None
+        )
+        if animate_stats:
+            avg_frame_time_ms = animate_stats["avg_ms"]
+            achieved_fps = 1000.0 / avg_frame_time_ms if avg_frame_time_ms > 0 else 0.0
+            print(f"Achieved FPS (end-to-end): {achieved_fps:.1f}")
+
+        # Achievable FPS: based on critical path within the animate loop.
+        # Consider sum of major per-frame costs that generally serialize: render, GPU scale, FBO read, blit, image processing.
+        # Use avg times to approximate a steady-state per-frame budget.
+        op_to_avg_ms = {s["operation"]: s["avg_ms"] for s in stats}
+        critical_ops = [
+            "vj_director_render",
+            "concert_stage_render",
+            "vj_render_to_fbo",
+            "vj_gpu_scale",
+            "vj_fbo_read",
+            "vj_image_processing",
+            "vj_blit_to_screen",
+        ]
+        critical_total_ms = sum(op_to_avg_ms.get(name, 0.0) for name in critical_ops)
+        if critical_total_ms > 0:
+            achievable_fps = 1000.0 / critical_total_ms
+            print(f"Achievable FPS (critical path est.): {achievable_fps:.1f}")
+
+        # Legacy totals for visibility: total time of *render* stages only
         total_render_time = sum(
             stat["total_ms"] for stat in stats if "render" in stat["operation"].lower()
         )
-        if total_render_time > 0:
-            avg_frame_time = (
-                total_render_time / max(1, stats[0]["count"]) if stats else 0
+        if total_render_time > 0 and stats:
+            avg_render_only_frame_time = total_render_time / max(1, stats[0]["count"])
+            theoretical_fps = (
+                1000.0 / avg_render_only_frame_time
+                if avg_render_only_frame_time > 0
+                else 0
             )
-            theoretical_fps = 1000.0 / avg_frame_time if avg_frame_time > 0 else 0
             print(f"Total render time: {total_render_time:.2f}ms")
-            print(f"Avg frame time: {avg_frame_time:.2f}ms")
-            print(f"Theoretical max FPS: {theoretical_fps:.1f}")
+            print(f"Avg render-only frame time: {avg_render_only_frame_time:.2f}ms")
+            print(f"Theoretical max FPS (render-only): {theoretical_fps:.1f}")
 
         print("=" * 80)
 

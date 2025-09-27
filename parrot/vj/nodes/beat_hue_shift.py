@@ -6,6 +6,7 @@ import math
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
@@ -80,7 +81,11 @@ class BeatHueShift(PostProcessEffectBase):
 
     def print_self(self) -> str:
         """Return class name with current signal in brackets"""
-        return f"{self.__class__.__name__} [{self.signal.name}]"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="🌈",
+            signal=self.signal,
+        )
 
     def _detect_beat(self, signal_value: float) -> bool:
         """Simple beat detection based on signal threshold crossing"""

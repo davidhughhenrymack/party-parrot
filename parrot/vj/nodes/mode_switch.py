@@ -7,7 +7,8 @@ from beartype import beartype
 from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
-from parrot.director.frame import Frame
+from parrot.graph.BaseInterpretationNode import format_node_status
+from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
 
@@ -88,14 +89,18 @@ class ModeSwitch(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def print_self(self) -> str:
         """Return class name with current mode"""
+        mode_name = None
         if self.current_child is not None:
-            # Find which mode corresponds to the current child
             for mode, node in self.mode_nodes.items():
                 if node == self.current_child:
-                    return f"🔀 {Fore.YELLOW}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.MAGENTA}{mode.name}{Style.RESET_ALL}]"
-
-        # Fallback if no current child or mode not found
-        return f"🔀 {Fore.YELLOW}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.RED}unknown{Style.RESET_ALL}]"
+                    mode_name = mode.name
+                    break
+        mode_name = mode_name or "unknown"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="🔀",
+            signal=mode_name,
+        )
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context

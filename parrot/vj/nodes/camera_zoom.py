@@ -6,6 +6,7 @@ from beartype import beartype
 from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
@@ -74,7 +75,13 @@ class CameraZoom(PostProcessEffectBase):
 
     def print_self(self) -> str:
         """Return class name with current signal and zoom parameters"""
-        return f"📹 {Fore.CYAN}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.YELLOW}{self.signal.name}{Style.RESET_ALL}, zoom:{Fore.WHITE}{self.max_zoom:.1f}{Style.RESET_ALL}, speed:{Fore.WHITE}{self.zoom_speed:.1f}{Style.RESET_ALL}]"
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="📹",
+            signal=self.signal,
+            zoom=(self.max_zoom, 1),
+            speed=(self.zoom_speed, 1),
+        )
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for zoom and blur effect"""
@@ -162,6 +169,9 @@ class CameraZoom(PostProcessEffectBase):
 
         # Apply velocity with some damping for jerky motion
         self.zoom_velocity += zoom_diff * speed * dt
+        # Ensure minimal buildup under strong signal to avoid borderline stalling
+        if signal_value > 0.9 and zoom_diff > 0:
+            self.zoom_velocity += 0.005
         self.zoom_velocity *= 0.85  # Damping factor for jerky motion
 
         # Update zoom

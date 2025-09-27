@@ -110,9 +110,32 @@ class VJRenderer:
         in vec2 uv;
         out vec3 color;
         uniform sampler2D source_texture;
+        uniform vec2 source_size;   // (w,h) of source texture
+        uniform vec2 target_size;   // (w,h) of target framebuffer
         
         void main() {
-            color = texture(source_texture, uv).rgb;
+            // Compute cover scale so the output fully covers target with possible crop
+            float src_aspect = source_size.x / source_size.y;
+            float dst_aspect = target_size.x / target_size.y;
+
+            // scale > 1 means zoom in; pick the larger axis scale to cover
+            float scale_x = 1.0;
+            float scale_y = 1.0;
+            if (src_aspect > dst_aspect) {
+                // source is wider than target: scale by height, crop width
+                scale_x = src_aspect / dst_aspect;
+            } else {
+                // source is taller than target: scale by width, crop height
+                scale_y = dst_aspect / src_aspect;
+            }
+
+            // Map quad uv (0..1) to covered uv, centered crop
+            vec2 centered = (uv - 0.5);
+            centered.x /= scale_x;
+            centered.y /= scale_y;
+            vec2 cover_uv = centered + 0.5;
+
+            color = texture(source_texture, cover_uv).rgb;
         }
         """
 
@@ -151,7 +174,10 @@ class VJRenderer:
 
     def update_display_size(self, width: int, height: int):
         """Update display framebuffer size for GPU-accelerated scaling"""
-        if (width, height) != self.current_display_size:
+        if (
+            width,
+            height,
+        ) != self.current_display_size or self.display_framebuffer is None:
             self.current_display_size = (width, height)
 
             # Release old framebuffer
@@ -161,6 +187,9 @@ class VJRenderer:
             # Create new display framebuffer at target size
             if self.ctx and width > 0 and height > 0:
                 display_texture = self.ctx.texture((width, height), 3)
+                # Avoid wrapping artifacts when sampling outside during cover crop
+                display_texture.repeat_x = False
+                display_texture.repeat_y = False
                 self.display_framebuffer = self.ctx.framebuffer(
                     color_attachments=[display_texture]
                 )
@@ -209,8 +238,19 @@ class VJRenderer:
                                 self.ctx.clear(0.0, 0.0, 0.0)
 
                                 # Bind source texture
+                                source_texture.repeat_x = False
+                                source_texture.repeat_y = False
                                 source_texture.use(0)
                                 self.display_shader["source_texture"] = 0
+                                # Provide source/target sizes for cover computation
+                                self.display_shader["source_size"].value = (
+                                    float(source_width),
+                                    float(source_height),
+                                )
+                                self.display_shader["target_size"].value = (
+                                    float(canvas_width),
+                                    float(canvas_height),
+                                )
 
                                 # Render scaled quad
                                 self.display_quad_vao.render(mgl.TRIANGLE_STRIP)
@@ -287,6 +327,8 @@ class VJFrame(tk.Frame):
         # Create VJ renderer
         self.vj_renderer = VJRenderer(vj_director, 800, 600)
         self.running = False
+        # Target frame rate (Hz)
+        self._target_fps = 30.0
 
         # Persistent Tkinter objects to avoid per-frame allocations
         self._canvas_image_id = None
@@ -328,6 +370,7 @@ class VJFrame(tk.Frame):
             return
 
         try:
+            frame_start = time.perf_counter()
             with vj_profiler.profile("vj_animate_loop"):
                 # Get current canvas size for GPU-accelerated scaling
                 canvas_width = self.canvas.winfo_width()
@@ -377,24 +420,7 @@ class VJFrame(tk.Frame):
                                     )
                                     return
 
-                                # Optionally resize if GPU scaling wasn't used or mismatch
-                                with vj_profiler.profile("vj_image_resize"):
-                                    img_width, img_height = pil_image.size
-                                    if (
-                                        abs(img_width - canvas_width) > 10
-                                        or abs(img_height - canvas_height) > 10
-                                    ):
-                                        img_ratio = img_width / img_height
-                                        canvas_ratio = canvas_width / canvas_height
-                                        if img_ratio > canvas_ratio:
-                                            new_width = canvas_width
-                                            new_height = int(canvas_width / img_ratio)
-                                        else:
-                                            new_height = canvas_height
-                                            new_width = int(canvas_height * img_ratio)
-                                        pil_image = pil_image.resize(
-                                            (new_width, new_height), Image.NEAREST
-                                        )
+                                # No CPU fallback: the GPU path must output exact canvas size
 
                             except Exception as e:
                                 print(f"Error processing VJ image: {e}")
@@ -414,23 +440,29 @@ class VJFrame(tk.Frame):
                                     # Update existing PhotoImage to avoid reallocs
                                     self._photo.paste(pil_image)
 
+                                x = canvas_width // 2
+                                y = canvas_height // 2
                                 if self._canvas_image_id is None:
-                                    x = canvas_width // 2
-                                    y = canvas_height // 2
                                     self._canvas_image_id = self.canvas.create_image(
                                         x, y, image=self._photo, anchor=tk.CENTER
                                     )
                                 else:
-                                    # Update the canvas image reference only
+                                    # Update the canvas image reference and re-center
                                     self.canvas.itemconfig(
                                         self._canvas_image_id, image=self._photo
                                     )
+                                    self.canvas.coords(self._canvas_image_id, x, y)
 
                                 # Keep a reference to prevent garbage collection
                                 self.canvas.image = self._photo
 
-            # Schedule next frame (60 FPS target - we can handle it now)
-            self.after(16, self._animate)
+            # Schedule next frame using remaining budget to hit target FPS
+            target_frame_ms = 1000.0 / self._target_fps if self._target_fps > 0 else 0.0
+            elapsed_ms = (time.perf_counter() - frame_start) * 1000.0
+            delay_ms = (
+                0 if target_frame_ms <= 0 else max(0, int(target_frame_ms - elapsed_ms))
+            )
+            self.after(delay_ms, self._animate)
 
         except Exception as e:
             print(f"❌ VJ Animation error: {e}")
