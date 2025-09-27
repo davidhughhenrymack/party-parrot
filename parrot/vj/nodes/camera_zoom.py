@@ -3,6 +3,7 @@
 import time
 import random
 from beartype import beartype
+from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame, FrameSignal
@@ -72,8 +73,8 @@ class CameraZoom(PostProcessEffectBase):
         self.blur_intensity = random.uniform(0.2, 1.2)  # Vary blur intensity
 
     def print_self(self) -> str:
-        """Return class name with current signal in brackets"""
-        return f"{self.__class__.__name__} [{self.signal.name}]"
+        """Return class name with current signal and zoom parameters"""
+        return f"📹 {Fore.CYAN}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.YELLOW}{self.signal.name}{Style.RESET_ALL}, zoom:{Fore.WHITE}{self.max_zoom:.1f}{Style.RESET_ALL}, speed:{Fore.WHITE}{self.zoom_speed:.1f}{Style.RESET_ALL}]"
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for zoom and blur effect"""

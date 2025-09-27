@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from beartype import beartype
+from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame, FrameSignal
@@ -41,8 +42,8 @@ class BrightnessPulse(PostProcessEffectBase):
         self.signal = get_random_frame_signal()
 
     def print_self(self) -> str:
-        """Return class name with current signal in brackets"""
-        return f"{self.__class__.__name__} [{self.signal.name}]"
+        """Return class name with current signal and brightness parameters"""
+        return f"💡 {Fore.GREEN}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.YELLOW}{self.signal.name}{Style.RESET_ALL}, intensity:{Fore.WHITE}{self.intensity:.2f}{Style.RESET_ALL}, base:{Fore.WHITE}{self.base_brightness:.2f}{Style.RESET_ALL}]"
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for brightness modulation"""

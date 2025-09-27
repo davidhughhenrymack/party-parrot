@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import moderngl as mgl
 from beartype import beartype
+from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
@@ -84,10 +85,10 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             path_parts = self.current_video_path.split(os.sep)
             if len(path_parts) >= 4 and path_parts[-4] == "videos":
                 video_group = path_parts[-2]  # The folder containing the video
-                return f"{self.__class__.__name__} [{self.fn_group}/{video_group}]"
+                return f"🎬 {Fore.BLUE}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.CYAN}{self.fn_group}/{video_group}{Style.RESET_ALL}]"
 
         # Fallback if no video is loaded yet
-        return f"{self.__class__.__name__} [{self.fn_group}]"
+        return f"🎬 {Fore.BLUE}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.CYAN}{self.fn_group}{Style.RESET_ALL}]"
 
     def _select_video_group(self):
         """Select a video group directory"""

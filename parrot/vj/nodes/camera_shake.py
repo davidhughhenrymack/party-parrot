@@ -4,6 +4,7 @@ import time
 import math
 import random
 from beartype import beartype
+from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame, FrameSignal
@@ -74,8 +75,8 @@ class CameraShake(PostProcessEffectBase):
         self.phase_offset_y = random.uniform(0, 2 * math.pi)
 
     def print_self(self) -> str:
-        """Return class name with current signal in brackets"""
-        return f"{self.__class__.__name__} [{self.signal.name}]"
+        """Return class name with current signal and shake parameters"""
+        return f"🫨 {Fore.CYAN}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.YELLOW}{self.signal.name}{Style.RESET_ALL}, intensity:{Fore.WHITE}{self.shake_intensity:.1f}{Style.RESET_ALL}, freq:{Fore.WHITE}{self.shake_frequency:.1f}{Style.RESET_ALL}]"
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for camera shake and blur effect"""

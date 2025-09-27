@@ -36,6 +36,8 @@ from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
 from parrot.vj.nodes.infinite_zoom_effect import InfiniteZoomEffect
 from parrot.vj.nodes.color_strobe import ColorStrobe
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
+from parrot.vj.nodes.circular_mask import CircularMask
+from parrot.vj.nodes.sepia_effect import SepiaEffect
 
 
 @beartype
@@ -222,12 +224,62 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Create a black node for blackout mode
         black_node = Black()
 
+        # Create chill mode configuration with only film grain/vintage effects and gentle camera zoom
+        # Apply circular mask to video so it appears as a circle in the middle
+        # Use separate video player for chill mode with bg_chill folder
+        chill_video_player = VideoPlayer(fn_group="bg_chill")
+        # Create noise effect with half intensity for subtle film grain
+        gentle_noise_effect = NoiseEffect(
+            chill_video_player,
+            noise_intensity=0.15,  # Half of default 0.3 for subtle effect
+            noise_scale=100.0,  # Keep default scale
+            static_lines=True,  # Keep static lines for vintage feel
+            color_noise=True,  # Keep color noise for authenticity
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+        )
+
+        chill_video_with_vintage_fx = RandomOperation(
+            gentle_noise_effect,
+            [
+                ScanlinesEffect,  # Vintage CRT scanlines effect
+            ],
+        )
+
+        # Apply gentle camera zoom with mild parameters
+        chill_video_with_gentle_zoom = CameraZoom(
+            chill_video_with_vintage_fx,
+            max_zoom=1.3,  # Mild zoom (instead of default 2.5)
+            zoom_speed=2.0,  # Gentle zoom speed (instead of default 8.0)
+            return_speed=1.5,  # Gentle return speed (instead of default 4.0)
+            blur_intensity=0.2,  # Minimal blur (instead of default 0.8)
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+        )
+
+        # Apply circular mask to create circle in the middle
+        chill_video_circular = CircularMask(chill_video_with_gentle_zoom)
+
+        # Apply signal-responsive sepia effect for vintage warmth
+        chill_video_with_sepia = SepiaEffect(
+            chill_video_circular,
+            base_intensity=0.4,  # Moderate base sepia for vintage feel
+            max_intensity=0.8,  # Strong sepia when signal is high
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+        )
+
+        # Wrap in gentle brightness pulse for subtle breathing effect
+        chill_video_with_pulse = BrightnessPulse(
+            chill_video_with_sepia,
+            intensity=0.6,  # Gentle intensity (instead of default 0.8)
+            base_brightness=0.4,  # Higher base brightness (instead of default 0.2)
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+        )
+
         # Create mode switch with layer composition for rave/gentle and black for blackout
         return ModeSwitch(
             rave=layer_compose,
             gentle=text_masked_video_no_fx,
             blackout=black_node,
-            chill=text_masked_video_no_fx,
+            chill=chill_video_with_pulse,
         )
 
     def render(

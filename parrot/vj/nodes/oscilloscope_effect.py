@@ -7,6 +7,7 @@ import numpy as np
 import moderngl as mgl
 from typing import Optional
 from beartype import beartype
+from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame, FrameSignal
@@ -133,8 +134,8 @@ class OscilloscopeEffect(GenerativeEffectBase):
             self.bloom_intensity = random.uniform(1.0, 2.0)
 
     def print_self(self) -> str:
-        """Return class name with current signal in brackets"""
-        return f"{self.__class__.__name__} [{self.signal.name}]"
+        """Return class name with current signal and oscilloscope parameters"""
+        return f"📊 {Fore.GREEN}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.YELLOW}{self.signal.name}{Style.RESET_ALL}, lines:{Fore.WHITE}{self.line_count}{Style.RESET_ALL}, scale:{Fore.WHITE}{self.waveform_scale:.2f}{Style.RESET_ALL}]"
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for oscilloscope waveform rendering"""

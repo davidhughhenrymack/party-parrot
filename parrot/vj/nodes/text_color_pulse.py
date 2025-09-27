@@ -3,6 +3,7 @@
 import time
 import random
 from beartype import beartype
+from colorama import Fore, Style
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame, FrameSignal
@@ -64,8 +65,8 @@ class TextColorPulse(PostProcessEffectBase):
         self.color_change_threshold = random.uniform(0.5, 0.8)
 
     def print_self(self) -> str:
-        """Return class name with current signal in brackets"""
-        return f"{self.__class__.__name__} [{self.signal.name}]"
+        """Return class name with current signal and pulse parameters"""
+        return f"🎨 {Fore.MAGENTA}{self.__class__.__name__}{Style.RESET_ALL} [{Fore.YELLOW}{self.signal.name}{Style.RESET_ALL}, intensity:{Fore.WHITE}{self.intensity:.2f}{Style.RESET_ALL}, decay:{Fore.WHITE}{self.decay_rate:.2f}{Style.RESET_ALL}]"
 
     def _get_fragment_shader(self) -> str:
         """Fragment shader for text color modulation"""

@@ -20,7 +20,5 @@ def get_random_frame_signal() -> FrameSignal:
         FrameSignal.freq_all,
         FrameSignal.freq_high,
         FrameSignal.freq_low,
-        FrameSignal.sustained_low,
-        FrameSignal.sustained_high,
     ]
     return random.choice(available_signals)
