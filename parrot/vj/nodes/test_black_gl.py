@@ -97,36 +97,4 @@ class TestBlackGL:
             finally:
                 black_node.exit()
 
-    def test_black_render_with_size(self, gl_context, color_scheme):
-        """Test Black node's render_with_size method"""
-        black_node = Black()
-
-        black_node.enter(gl_context)
-
-        try:
-            frame = Frame({FrameSignal.freq_low: 0.0})
-
-            # Test different sizes using render_with_size
-            test_sizes = [(64, 64), (320, 240), (800, 600)]
-
-            for width, height in test_sizes:
-                result_framebuffer = black_node.render_with_size(
-                    frame, color_scheme, gl_context, width, height
-                )
-
-                # Check dimensions
-                assert result_framebuffer.width == width
-                assert result_framebuffer.height == height
-
-                # Verify pixels are black
-                fb_data = result_framebuffer.read()
-                pixels = np.frombuffer(fb_data, dtype=np.uint8).reshape(
-                    (height, width, 3)
-                )
-
-                assert np.all(
-                    pixels == 0
-                ), f"Size {width}x{height}: Expected all black pixels"
-
-        finally:
-            black_node.exit()
+    # Removed render_with_size test as the method is not part of the current API

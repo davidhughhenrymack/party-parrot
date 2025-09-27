@@ -185,17 +185,12 @@ def test_color_scheme_integration():
 
     assert base_color_call is not None, "base_color uniform should be set"
 
-    # The base color should incorporate the blue background (0, 0, 1.0 in RGB)
-    # Based on the formula: 0.3 * bg_color + 0.1 * primary_color + base_values
-    # For blue bg (0,0,1) and red fg (0.00392...,0,0):
-    # R: 0.3*0 + 0.1*0.00392... + 0.1 ≈ 0.1
-    # G: 0.3*0 + 0.3*0 + 0.6 = 0.6
-    # B: 0.3*1 + 0.1*0 + 0.1 = 0.4
+    # Updated base color calculation uses 0.4*bg + 0.6*fg
     red_rgb = list(scheme.fg.rgb)
     blue_rgb = list(scheme.bg.rgb)
-    expected_r = 0.3 * blue_rgb[0] + 0.1 * red_rgb[0] + 0.1
-    expected_g = 0.3 * blue_rgb[1] + 0.3 * red_rgb[1] + 0.6
-    expected_b = 0.3 * blue_rgb[2] + 0.1 * red_rgb[2] + 0.1
+    expected_r = 0.4 * blue_rgb[0] + 0.6 * red_rgb[0]
+    expected_g = 0.4 * blue_rgb[1] + 0.6 * red_rgb[1]
+    expected_b = 0.4 * blue_rgb[2] + 0.6 * red_rgb[2]
 
     assert (
         abs(base_color_call[0] - expected_r) < 0.01

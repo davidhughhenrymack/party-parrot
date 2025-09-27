@@ -139,3 +139,127 @@ SoftSpatialPulse = with_args(
     pulse_width=0.4,
     speed=0.5,
 )
+
+
+class SpatialCenterOutwardsPulse(InterpreterBase[T]):
+    hype = 60
+
+    def __init__(
+        self,
+        group: List[T],
+        args: InterpreterArgs,
+        signal=FrameSignal.freq_high,
+        trigger_level=0.3,
+        edge_hardness=2.0,
+        pulse_width=0.3,
+        speed=1.0,
+        min_valid_x_range=10,
+        cooldown_time=1.5,
+    ):
+        super().__init__(group, args)
+        self.signal = signal
+        self.trigger_level = trigger_level
+        self.edge_hardness = edge_hardness
+        self.pulse_width = pulse_width
+        self.speed = speed
+        self.min_valid_x_range = min_valid_x_range
+        self.cooldown_time = cooldown_time
+
+        # State
+        self.left_pulse_position = 0.0
+        self.right_pulse_position = 0.0
+        self.active = False
+        self.valid_fixtures = []
+        self.x_start = 0.0
+        self.x_end = 0.0
+        self.x_center = 0.0
+        self.x_range = 0.0
+        self.last_activation_time = 0.0
+
+    def _calculate_spatial_range(self):
+        # Filter fixtures with valid x positions
+        self.valid_fixtures = [
+            f for f in self.group if hasattr(f, "x") and f.x is not None
+        ]
+
+        if not self.valid_fixtures:
+            return False
+
+        # Calculate the spatial range with 30% margin
+        x_positions = [fixture.x for fixture in self.valid_fixtures]
+        min_x = min(x_positions)
+        max_x = max(x_positions)
+        x_span = max_x - min_x
+
+        self.x_start = min_x - (x_span * 0.3)
+        self.x_end = max_x + (x_span * 0.3)
+        self.x_center = (self.x_start + self.x_end) / 2.0
+        self.x_range = self.x_end - self.x_start
+
+        if self.x_range < self.min_valid_x_range:
+            return False
+
+        return True
+
+    def step(self, frame, scheme):
+        current_time = time.time()
+
+        # Start a new outward pulse if triggered
+        if (
+            frame[self.signal] > self.trigger_level
+            and not self.active
+            and current_time - self.last_activation_time >= self.cooldown_time
+        ):
+            if not self._calculate_spatial_range():
+                for fixture in self.group:
+                    fixture.set_dimmer(0)
+                return
+
+            self.active = True
+            self.left_pulse_position = self.x_center
+            self.right_pulse_position = self.x_center
+            self.last_activation_time = current_time
+
+        if self.active:
+            # Move pulses outward left/right
+            delta = self.speed * (self.x_range / 30)  # Assuming 30 FPS
+            self.left_pulse_position -= delta
+            self.right_pulse_position += delta
+
+            # End when both pulses leave the extended bounds
+            if (
+                self.left_pulse_position < self.x_start
+                and self.right_pulse_position > self.x_end
+            ):
+                self.active = False
+                return
+
+            # Set intensity based on horizontal distance to the nearest pulse
+            for fixture in self.valid_fixtures:
+                distance_left = abs(fixture.x - self.left_pulse_position)
+                distance_right = abs(fixture.x - self.right_pulse_position)
+                distance = min(distance_left, distance_right) / (self.x_range + 1e-6)
+
+                normalized_distance = distance / self.pulse_width
+                intensity = max(0, 1 - (normalized_distance**self.edge_hardness))
+
+                fixture.set_dimmer(int(intensity * 255))
+
+            # Turn off fixtures without valid x
+            for fixture in self.group:
+                if fixture not in self.valid_fixtures:
+                    fixture.set_dimmer(0)
+        else:
+            for fixture in self.group:
+                fixture.set_dimmer(0)
+
+
+# Fast, hard-edged horizontal center-out version
+HardSpatialCenterOutPulse = with_args(
+    "HardSpatialCenterOutPulse",
+    SpatialCenterOutwardsPulse,
+    new_hype=90,
+    edge_hardness=4.0,
+    pulse_width=0.2,
+    speed=2.0,
+)

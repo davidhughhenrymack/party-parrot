@@ -33,6 +33,10 @@ class VJRenderer:
         self.display_quad_vao = None
         self.current_display_size = (width, height)
 
+        # Preallocated read buffer for GPU -> CPU transfers (reused each frame)
+        self._read_buffer: Optional[bytearray] = None
+        self._read_buffer_size: int = 0
+
         # Initialize ModernGL
         self._init_moderngl()
 
@@ -211,19 +215,45 @@ class VJRenderer:
                                 # Render scaled quad
                                 self.display_quad_vao.render(mgl.TRIANGLE_STRIP)
 
-                                # Read from scaled framebuffer
+                                # Read from scaled framebuffer (into reusable buffer)
                                 with vj_profiler.profile("vj_fbo_read"):
                                     scaled_texture = (
                                         self.display_framebuffer.color_attachments[0]
                                     )
                                     width, height = scaled_texture.size
-                                    image_data = scaled_texture.read()
+
+                                    expected_size = width * height * 3
+                                    if (
+                                        self._read_buffer is None
+                                        or self._read_buffer_size != expected_size
+                                    ):
+                                        self._read_buffer = bytearray(expected_size)
+                                        self._read_buffer_size = expected_size
+
+                                    # Prefer read_into to avoid per-frame allocation
+                                    try:
+                                        scaled_texture.read_into(self._read_buffer)
+                                        image_data = bytes(self._read_buffer)
+                                    except Exception:
+                                        # Fallback to read() if read_into unsupported
+                                        image_data = scaled_texture.read()
                                 return image_data, width, height
 
-                    # Fallback: read original framebuffer data
+                    # Fallback: read original framebuffer data (into reusable buffer)
                     with vj_profiler.profile("vj_fbo_read"):
                         width, height = source_texture.size
-                        image_data = source_texture.read()
+                        expected_size = width * height * 3
+                        if (
+                            self._read_buffer is None
+                            or self._read_buffer_size != expected_size
+                        ):
+                            self._read_buffer = bytearray(expected_size)
+                            self._read_buffer_size = expected_size
+                        try:
+                            source_texture.read_into(self._read_buffer)
+                            image_data = bytes(self._read_buffer)
+                        except Exception:
+                            image_data = source_texture.read()
                     return image_data, width, height
 
             except Exception as e:
@@ -257,6 +287,10 @@ class VJFrame(tk.Frame):
         # Create VJ renderer
         self.vj_renderer = VJRenderer(vj_director, 800, 600)
         self.running = False
+
+        # Persistent Tkinter objects to avoid per-frame allocations
+        self._canvas_image_id = None
+        self._photo: Optional[ImageTk.PhotoImage] = None
 
         # Check if ModernGL initialized successfully
         if self.vj_renderer.ctx is None:
@@ -311,73 +345,89 @@ class VJFrame(tk.Frame):
                     image_data, render_width, render_height = image_result
 
                     if canvas_width > 1 and canvas_height > 1:
-                        # Convert to PIL Image - GPU-accelerated path
+                        # Convert raw bytes to PIL Image with minimal copying
                         with vj_profiler.profile("vj_image_processing"):
                             try:
-                                # Fast path: GPU has already scaled to correct size
                                 expected_rgb = render_width * render_height * 3
                                 expected_rgba = render_width * render_height * 4
 
                                 if len(image_data) == expected_rgb:
-                                    # RGB format - most common case
-                                    image_array = np.frombuffer(
-                                        image_data, dtype=np.uint8
-                                    ).reshape((render_height, render_width, 3))
-                                    pil_image = Image.fromarray(image_array, "RGB")
+                                    pil_image = Image.frombuffer(
+                                        "RGB",
+                                        (render_width, render_height),
+                                        image_data,
+                                        "raw",
+                                        "RGB",
+                                        0,
+                                        1,
+                                    )
                                 elif len(image_data) == expected_rgba:
-                                    # RGBA format
-                                    image_array = np.frombuffer(
-                                        image_data, dtype=np.uint8
-                                    ).reshape((render_height, render_width, 4))
-                                    pil_image = Image.fromarray(image_array, "RGBA")
+                                    pil_image = Image.frombuffer(
+                                        "RGBA",
+                                        (render_width, render_height),
+                                        image_data,
+                                        "raw",
+                                        "RGBA",
+                                        0,
+                                        1,
+                                    )
                                 else:
                                     print(
                                         f"Unexpected VJ image size: {len(image_data)} bytes for {render_width}x{render_height}"
                                     )
                                     return
 
-                                # GPU scaling means we can skip CPU resize in most cases
+                                # Optionally resize if GPU scaling wasn't used or mismatch
                                 with vj_profiler.profile("vj_image_resize"):
                                     img_width, img_height = pil_image.size
-
-                                    # Only resize if GPU scaling wasn't used or size mismatch is significant
                                     if (
                                         abs(img_width - canvas_width) > 10
                                         or abs(img_height - canvas_height) > 10
                                     ):
-                                        # Calculate aspect-preserving size
                                         img_ratio = img_width / img_height
                                         canvas_ratio = canvas_width / canvas_height
-
                                         if img_ratio > canvas_ratio:
                                             new_width = canvas_width
                                             new_height = int(canvas_width / img_ratio)
                                         else:
                                             new_height = canvas_height
                                             new_width = int(canvas_height * img_ratio)
-
-                                        # Use NEAREST for speed
                                         pil_image = pil_image.resize(
                                             (new_width, new_height), Image.NEAREST
                                         )
 
-                                # Convert to PhotoImage for Tkinter and blit to screen
-                                with vj_profiler.profile("vj_blit_to_screen"):
-                                    photo = ImageTk.PhotoImage(pil_image)
-
-                                    # Update canvas
-                                    self.canvas.delete("all")
-                                    x = canvas_width // 2
-                                    y = canvas_height // 2
-                                    self.canvas.create_image(
-                                        x, y, image=photo, anchor=tk.CENTER
-                                    )
-
-                                    # Keep a reference to prevent garbage collection
-                                    self.canvas.image = photo
-
                             except Exception as e:
                                 print(f"Error processing VJ image: {e}")
+                                pil_image = None
+
+                        if pil_image is not None:
+                            # Blit to canvas using persistent PhotoImage
+                            with vj_profiler.profile("vj_blit_to_screen"):
+                                if (
+                                    self._photo is None
+                                    or self._photo.width() != pil_image.width
+                                    or self._photo.height() != pil_image.height
+                                ):
+                                    # Create initial PhotoImage sized to first frame
+                                    self._photo = ImageTk.PhotoImage(pil_image)
+                                else:
+                                    # Update existing PhotoImage to avoid reallocs
+                                    self._photo.paste(pil_image)
+
+                                if self._canvas_image_id is None:
+                                    x = canvas_width // 2
+                                    y = canvas_height // 2
+                                    self._canvas_image_id = self.canvas.create_image(
+                                        x, y, image=self._photo, anchor=tk.CENTER
+                                    )
+                                else:
+                                    # Update the canvas image reference only
+                                    self.canvas.itemconfig(
+                                        self._canvas_image_id, image=self._photo
+                                    )
+
+                                # Keep a reference to prevent garbage collection
+                                self.canvas.image = self._photo
 
             # Schedule next frame (60 FPS target - we can handle it now)
             self.after(16, self._animate)

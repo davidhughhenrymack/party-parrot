@@ -37,8 +37,10 @@ class Black(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         """Clean up resources"""
         if self.framebuffer:
             self.framebuffer.release()
+            self.framebuffer = None
         if self.texture:
             self.texture.release()
+            self.texture = None
         self._context = None
 
     def generate(self, vibe: Vibe):

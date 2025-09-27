@@ -51,7 +51,11 @@ from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.interpreters.bulbs import AllBulbs255, for_bulbs
 from parrot.director.mode_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
-from parrot.interpreters.spatial import HardSpatialPulse, SoftSpatialPulse
+from parrot.interpreters.spatial import (
+    HardSpatialPulse,
+    SoftSpatialPulse,
+    HardSpatialCenterOutPulse,
+)
 from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.interpreters.signal import signal_switch
 from parrot.fixtures.led_par import Par
@@ -220,6 +224,7 @@ mode_interpretations: Dict[
                         DimmersBeatChase,
                         GentlePulse,
                         HardSpatialPulse,
+                        HardSpatialCenterOutPulse,
                     ),
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
@@ -230,6 +235,7 @@ mode_interpretations: Dict[
                 signal_switch(
                     randomize(
                         HardSpatialPulse,
+                        HardSpatialCenterOutPulse,
                         DimmersBeatChase,
                         SlowDecay,
                         GentlePulse,

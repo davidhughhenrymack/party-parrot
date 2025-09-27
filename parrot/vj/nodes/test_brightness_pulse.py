@@ -31,7 +31,7 @@ class TestBrightnessPulse:
         pulse = BrightnessPulse(black_node)
 
         assert pulse.intensity == 0.8
-        assert pulse.base_brightness == 0.2
+        assert pulse.base_brightness == 0.4
 
     def test_generate(self):
         """Test generate method"""

@@ -6,6 +6,8 @@ from parrot.interpreters.spatial import (
     SpatialDownwardsPulse,
     HardSpatialPulse,
     SoftSpatialPulse,
+    SpatialCenterOutwardsPulse,
+    HardSpatialCenterOutPulse,
 )
 from parrot.fixtures.base import FixtureBase
 
@@ -207,3 +209,56 @@ class TestSoftSpatialPulse:
         assert interpreter.interpreter.edge_hardness == 1.5
         assert interpreter.interpreter.pulse_width == 0.4
         assert interpreter.interpreter.speed == 0.5
+
+
+class TestSpatialCenterOutwardsPulse:
+    def setup_method(self):
+        self.fixtures = []
+        # Create fixtures with x positions across a span and constant y
+        for i in range(5):
+            f = MagicMock(spec=FixtureBase)
+            f.x = i * 2
+            f.y = 0
+            f.set_dimmer = MagicMock()
+            self.fixtures.append(f)
+        self.args = InterpreterArgs(50, True, 0, 100)
+        self.frame = MagicMock(spec=Frame)
+        self.frame.time = 0
+        self.frame.__getitem__.side_effect = lambda signal: {
+            FrameSignal.freq_high: 0.6,
+        }.get(signal, 0.0)
+        self.scheme = MagicMock()
+
+    def test_center_out_initialization(self):
+        interp = SpatialCenterOutwardsPulse(
+            self.fixtures,
+            self.args,
+            trigger_level=0.25,
+            edge_hardness=3.0,
+            pulse_width=0.25,
+            speed=1.5,
+            min_valid_x_range=5,
+            cooldown_time=1.0,
+        )
+        assert interp.trigger_level == 0.25
+        assert interp.edge_hardness == 3.0
+        assert interp.pulse_width == 0.25
+        assert interp.speed == 1.5
+        assert interp.min_valid_x_range == 5
+        assert interp.cooldown_time == 1.0
+
+    def test_center_out_triggers_and_moves(self):
+        interp = SpatialCenterOutwardsPulse(self.fixtures, self.args)
+        for _ in range(10):
+            interp.step(self.frame, self.scheme)
+            self.frame.time += 1 / 30
+        for f in self.fixtures:
+            assert f.set_dimmer.called
+
+    def test_hard_center_out_wrapper(self):
+        cls = HardSpatialCenterOutPulse
+        interp = cls(self.fixtures, self.args)
+        assert interp.get_hype() == 90
+        assert interp.interpreter.edge_hardness == 4.0
+        assert interp.interpreter.pulse_width == 0.2
+        assert interp.interpreter.speed == 2.0

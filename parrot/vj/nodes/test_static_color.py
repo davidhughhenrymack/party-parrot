@@ -6,6 +6,7 @@ import moderngl as mgl
 from unittest.mock import Mock
 
 from parrot.vj.nodes.static_color import StaticColor, White, Red, Green, Blue, Gray
+from parrot.vj.constants import DEFAULT_WIDTH, DEFAULT_HEIGHT
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
@@ -48,8 +49,8 @@ class TestStaticColor:
         node = StaticColor()
 
         assert node.color == (1.0, 1.0, 1.0)  # White
-        assert node.width == 256
-        assert node.height == 256
+        assert node.width == DEFAULT_WIDTH
+        assert node.height == DEFAULT_HEIGHT
         assert node.children == []
 
     def test_initialization_custom_color(self):
@@ -186,7 +187,7 @@ class TestStaticColor:
         # Test Red factory
         red_node = Red()
         assert red_node.color == (1.0, 0.0, 0.0)
-        assert red_node.width == 256  # Default
+        assert red_node.width == DEFAULT_WIDTH  # Default
 
         # Test Green factory
         green_node = Green()
@@ -219,9 +220,11 @@ class TestStaticColor:
             try:
                 result_framebuffer = node.render(frame, color_scheme, gl_context)
 
-                pixels = np.frombuffer(
-                    result_framebuffer.read(), dtype=np.uint8
-                ).reshape((256, 256, 3))
+                # Use actual framebuffer dimensions
+                data = result_framebuffer.read()
+                pixels = np.frombuffer(data, dtype=np.uint8).reshape(
+                    (result_framebuffer.height, result_framebuffer.width, 3)
+                )
 
                 # Check each color channel
                 for i, expected_val in enumerate(expected_rgb):
