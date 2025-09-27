@@ -90,7 +90,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )
 
         # Create text renderer with white text on black background (perfect for masking)
-        zombie_texts = ["DEAD\nSEXY", "ZOMBIE\nYES", "BRAINS", "U R SEXY"]
+        zombie_texts = ["DEAD\nSEXY", "RAVE", "BRAINS", "U R SEXY"]
         text_renderer = TextRenderer(
             text=zombie_texts,
             font_name="The Sonnyfive",
