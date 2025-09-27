@@ -56,6 +56,32 @@ class TestModes(unittest.TestCase):
         # Ensure consistent random behavior
         random.seed(42)
 
+    def test_chill_mode_interpreter(self):
+        """Test that chill mode returns valid interpreters"""
+        # Test with Par fixtures
+        interpreter = get_interpreter(Mode.chill, self.pars, self.args)
+        self.assertIsNotNone(interpreter)
+
+        # Should not crash when stepping
+        interpreter.step(self.frame, self.scheme)
+
+        # Test with Motionstrip fixtures
+        interpreter = get_interpreter(Mode.chill, self.strips, self.args)
+        self.assertIsNotNone(interpreter)
+
+        # Should not crash when stepping
+        interpreter.step(self.frame, self.scheme)
+
+    def test_all_modes_have_interpreters(self):
+        """Test that all modes return valid interpreters for common fixtures"""
+        for mode in [Mode.rave, Mode.gentle, Mode.chill, Mode.blackout]:
+            # Test with Par fixtures
+            interpreter = get_interpreter(mode, self.pars, self.args)
+            self.assertIsNotNone(interpreter)
+
+            # Should not crash when stepping
+            interpreter.step(self.frame, self.scheme)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -67,6 +67,10 @@ class NoiseEffect(PostProcessEffectBase):
         if random.random() < 0.2:  # 20% chance to change seed
             self.noise_seed = random.random()
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _get_fragment_shader(self) -> str:
         """Fragment shader for noise effect"""
         return """

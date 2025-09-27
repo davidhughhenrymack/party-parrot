@@ -27,6 +27,7 @@ class ModeSwitch(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         rave: BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer],
         blackout: BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer],
         gentle: BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer],
+        chill: BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer],
     ):
         # Store mode nodes in a dictionary
         self.mode_nodes: Dict[
@@ -35,10 +36,12 @@ class ModeSwitch(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             Mode.rave: rave,
             Mode.blackout: blackout,
             Mode.gentle: gentle,
+            Mode.chill: chill,
         }
 
         super().__init__([])
-        self.current_child = None
+        # Initialize with the first available mode node
+        self.current_child = next(iter(self.mode_nodes.values()))
         self._context = None
 
     @property
@@ -81,6 +84,17 @@ class ModeSwitch(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Generate for the current child recursively
         if self.current_child is not None:
             self.current_child.generate_recursive(vibe)
+
+    def print_self(self) -> str:
+        """Return class name with current mode"""
+        if self.current_child is not None:
+            # Find which mode corresponds to the current child
+            for mode, node in self.mode_nodes.items():
+                if node == self.current_child:
+                    return f"{self.__class__.__name__} [{mode.name}]"
+
+        # Fallback if no current child or mode not found
+        return f"{self.__class__.__name__} [unknown]"
 
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context

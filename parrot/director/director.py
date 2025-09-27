@@ -44,7 +44,7 @@ class Director:
         self.state = state
         self.vj_director = vj_director
 
-        self.state.set_mode(Mode.gentle)
+        self.state.set_mode(Mode.chill)
         self.setup_patch()
         self.generate_color_scheme()
 

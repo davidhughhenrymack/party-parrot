@@ -317,7 +317,7 @@ class Window(Tk):
         self.mode_buttons = {}
 
         # Create buttons for each mode in the desired order
-        mode_order = [Mode.blackout, Mode.gentle, Mode.rave]
+        mode_order = [Mode.blackout, Mode.chill, Mode.gentle, Mode.rave]
         for mode in mode_order:
             btn = RoundedButton(
                 self.mode_frame,

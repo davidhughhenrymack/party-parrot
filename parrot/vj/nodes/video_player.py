@@ -76,6 +76,19 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self._select_video_group()
         self._load_next_video()
 
+    def print_self(self) -> str:
+        """Return class name with current video folder information"""
+        if self.current_video_path:
+            # Extract the video group folder from the current video path
+            # Path structure: media/videos/{fn_group}/{video_group}/video_file.mp4
+            path_parts = self.current_video_path.split(os.sep)
+            if len(path_parts) >= 4 and path_parts[-4] == "videos":
+                video_group = path_parts[-2]  # The folder containing the video
+                return f"{self.__class__.__name__} [{self.fn_group}/{video_group}]"
+
+        # Fallback if no video is loaded yet
+        return f"{self.__class__.__name__} [{self.fn_group}]"
+
     def _select_video_group(self):
         """Select a video group directory"""
         media_path = os.path.join("media", "videos", self.fn_group)

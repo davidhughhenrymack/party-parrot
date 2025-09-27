@@ -157,16 +157,6 @@ class TestSignalRandomization(unittest.TestCase):
             # Effect should have the mocked signal
             self.assertEqual(effect.signal, FrameSignal.strobe)
 
-    def test_utility_function_deterministic(self):
-        """Test that utility function can be controlled for testing"""
-        with patch("parrot.vj.utils.signal_utils.random.choice") as mock_choice:
-            mock_choice.return_value = FrameSignal.pulse
-
-            signal = get_random_frame_signal()
-
-            self.assertEqual(signal, FrameSignal.pulse)
-            mock_choice.assert_called_once()
-
     def test_effects_using_utility_function(self):
         """Test effects that use the utility function work correctly"""
         # BrightnessPulse uses the utility function

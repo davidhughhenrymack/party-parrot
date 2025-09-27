@@ -75,6 +75,10 @@ class InfiniteZoomEffect(PostProcessEffectBase):
             -0.8, 0.8
         )  # Vary rotation (can be negative)
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _get_fragment_shader(self) -> str:
         """Fragment shader for infinite zoom effect"""
         return """

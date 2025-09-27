@@ -132,6 +132,10 @@ class OscilloscopeEffect(GenerativeEffectBase):
             self.waveform_scale = random.uniform(0.2, 0.5)
             self.bloom_intensity = random.uniform(1.0, 2.0)
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _get_fragment_shader(self) -> str:
         """Fragment shader for oscilloscope waveform rendering"""
         return """

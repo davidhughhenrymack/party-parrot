@@ -64,6 +64,57 @@ mode_interpretations: Dict[
     Dict[FixtureBase, List[InterpreterBase]],
 ] = {
     Mode.blackout: {},
+    Mode.chill: {
+        Par: [
+            combo(
+                signal_switch(Twinkle),
+                ColorBg,
+            )
+        ],
+        MovingHead: [
+            combo(
+                signal_switch(Twinkle),
+                ColorBg,
+                randomize(MoveCircles, MoveNod),
+            )
+        ],
+        Motionstrip: [
+            combo(
+                signal_switch(
+                    combo(
+                        Dimmer255,
+                        for_bulbs(Twinkle),
+                    ),
+                ),
+                ColorBg,
+                MoveCircles,
+            ),
+        ],
+        ChauvetColorBandPiX_36Ch: [
+            combo(
+                signal_switch(
+                    combo(
+                        Dimmer255,
+                        for_bulbs(Twinkle),
+                    )
+                ),
+                ColorBg,
+            )
+        ],
+        Laser: [signal_switch(Dimmer0)],
+        ChauvetRotosphere_28Ch: [
+            combo(
+                signal_switch(Twinkle),
+                ColorBg,
+            )
+        ],
+        ChauvetDerby: [
+            combo(
+                signal_switch(Twinkle),
+                ColorBg,
+            )
+        ],
+    },
     Mode.gentle: {
         Par: [
             combo(

@@ -224,7 +224,10 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Create mode switch with layer composition for rave/gentle and black for blackout
         return ModeSwitch(
-            rave=layer_compose, gentle=text_masked_video_no_fx, blackout=black_node
+            rave=layer_compose,
+            gentle=text_masked_video_no_fx,
+            blackout=black_node,
+            chill=text_masked_video_no_fx,
         )
 
     def render(

@@ -224,6 +224,10 @@ class VolumetricBeam(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer])
             beam.direction = beam.direction / np.linalg.norm(beam.direction)
             self.beams.append(beam)
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _setup_gl_resources(self):
         """Setup OpenGL resources for 3D beam rendering"""
         if not self._context:

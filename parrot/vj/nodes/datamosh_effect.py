@@ -64,6 +64,10 @@ class DatamoshEffect(PostProcessEffectBase):
         if random.random() < 0.1:  # 10% chance to change seed
             self.glitch_seed = random.random()
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _get_fragment_shader(self) -> str:
         """Fragment shader for datamosh effect"""
         return """

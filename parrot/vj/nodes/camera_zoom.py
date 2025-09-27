@@ -71,6 +71,10 @@ class CameraZoom(PostProcessEffectBase):
         self.return_speed = random.uniform(2.0, 8.0)  # Vary return speed
         self.blur_intensity = random.uniform(0.2, 1.2)  # Vary blur intensity
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _get_fragment_shader(self) -> str:
         """Fragment shader for zoom and blur effect"""
         return """

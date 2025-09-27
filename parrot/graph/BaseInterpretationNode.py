@@ -101,6 +101,14 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         """
         pass
 
+    def print_self(self) -> str:
+        """
+        Return a string representation of this node for tree printing.
+        Default implementation returns the class name.
+        Subclasses can override to provide more information.
+        """
+        return self.__class__.__name__
+
     def print_tree(
         self, indent: str = "", is_last: bool = True, visited: set = None
     ) -> str:
@@ -121,13 +129,13 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         # Prevent infinite loops in case of circular references
         node_id = id(self)
         if node_id in visited:
-            return f"{indent}{'└── ' if is_last else '├── '}{self.__class__.__name__} (circular reference)\n"
+            return f"{indent}{'└── ' if is_last else '├── '}{self.print_self()} (circular reference)\n"
 
         visited.add(node_id)
 
         # Current node
         connector = "└── " if is_last else "├── "
-        result = f"{indent}{connector}{self.__class__.__name__}\n"
+        result = f"{indent}{connector}{self.print_self()}\n"
 
         # Children
         inputs = self.all_inputs

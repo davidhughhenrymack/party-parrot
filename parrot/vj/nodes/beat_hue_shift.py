@@ -78,6 +78,10 @@ class BeatHueShift(PostProcessEffectBase):
         ]
         self.signal = random.choice(available_signals)
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _detect_beat(self, signal_value: float) -> bool:
         """Simple beat detection based on signal threshold crossing"""
         current_time = time.time()

@@ -73,6 +73,10 @@ class CameraShake(PostProcessEffectBase):
         self.phase_offset_x = random.uniform(0, 2 * math.pi)
         self.phase_offset_y = random.uniform(0, 2 * math.pi)
 
+    def print_self(self) -> str:
+        """Return class name with current signal in brackets"""
+        return f"{self.__class__.__name__} [{self.signal.name}]"
+
     def _get_fragment_shader(self) -> str:
         """Fragment shader for camera shake and blur effect"""
         return """
