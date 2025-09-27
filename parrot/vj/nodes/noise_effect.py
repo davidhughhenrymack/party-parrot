@@ -137,12 +137,42 @@ class NoiseEffect(PostProcessEffectBase):
             // Combine noise types
             float combined_noise = mix(white_noise, perlin_noise, 0.3);
             
-            // Add horizontal static lines
+            // Add non-straight, discontinuous static lines with blur
             if (static_lines) {
-                float line_noise = random(vec2(0.0, floor(uv.y * 200.0) + time_offset * 50.0));
-                if (line_noise > 0.98) {
-                    combined_noise = mix(combined_noise, 1.0, 0.8);
+                float line_contribution = 0.0;
+                
+                // Sample multiple points for blur effect
+                for (int blur_y = -2; blur_y <= 2; blur_y++) {
+                    for (int blur_x = -1; blur_x <= 1; blur_x++) {
+                        vec2 sample_uv = uv + vec2(float(blur_x) * 0.002, float(blur_y) * 0.005);
+                        float y_line = floor(sample_uv.y * 200.0);
+                        
+                        // Create wavy, non-straight lines
+                        float wave_offset = sin(y_line * 0.1 + time_offset * 3.0) * 0.02;
+                        float adjusted_x = sample_uv.x + wave_offset;
+                        
+                        // Make lines discontinuous - break them up into segments
+                        float x_segment = floor(adjusted_x * 15.0); // Divide screen into horizontal segments
+                        float segment_noise = random(vec2(x_segment, y_line + time_offset * 50.0));
+                        
+                        // Only show line segments randomly (not continuous across screen)
+                        if (segment_noise > 0.7) { // 30% chance per segment
+                            float line_noise = random(vec2(0.0, y_line + time_offset * 50.0));
+                            if (line_noise > 0.95) { // 5% chance per line
+                                // Vary the intensity of different line segments
+                                float segment_intensity = random(vec2(x_segment + 100.0, y_line)) * 0.6 + 0.4;
+                                
+                                // Apply gaussian-like weighting for blur
+                                float blur_weight = exp(-0.5 * (float(blur_x * blur_x) + float(blur_y * blur_y)));
+                                line_contribution += segment_intensity * blur_weight;
+                            }
+                        }
+                    }
                 }
+                
+                // Normalize and apply the blurred line contribution
+                line_contribution /= 15.0; // Normalize by number of samples
+                combined_noise = mix(combined_noise, 1.0, 0.8 * line_contribution);
             }
             
             // Apply noise to image

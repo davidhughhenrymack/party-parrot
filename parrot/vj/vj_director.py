@@ -8,6 +8,7 @@ from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
 from parrot.graph.BaseInterpretationNode import Vibe
 from parrot.vj.nodes.concert_stage import ConcertStage
+from parrot.vj.profiler import vj_profiler
 
 
 @beartype
@@ -32,14 +33,15 @@ class VJDirector:
 
     def setup(self, context):
         """Setup the concert stage with GL context and generate initial state"""
-        self.concert_stage.enter_recursive(context)
+        with vj_profiler.profile("vj_director_setup"):
+            self.concert_stage.enter_recursive(context)
 
-        vibe = Vibe(self.current_mode)
-        self.concert_stage.generate_recursive(vibe)
+            vibe = Vibe(self.current_mode)
+            self.concert_stage.generate_recursive(vibe)
 
-        # Print the tree structure after initialization
-        print("VJ Concert Stage Tree (after initialization):")
-        print(self.concert_stage.print_tree())
+            # Print the tree structure after initialization
+            print("VJ Concert Stage Tree (after initialization):")
+            print(self.concert_stage.print_tree())
 
     def step(self, frame: Frame, scheme: ColorScheme):
         """Step method called by director - stores latest frame data for rendering"""
@@ -52,20 +54,22 @@ class VJDirector:
 
     def render(self, context, frame: Frame, scheme: ColorScheme):
         """Render the complete concert stage"""
-        return self.concert_stage.render(frame, scheme, context)
+        with vj_profiler.profile("vj_director_render"):
+            return self.concert_stage.render(frame, scheme, context)
 
     def shift(self, mode: Mode, threshold: float = 1.0):
         """Shift the visual mode and update the concert stage"""
-        self.current_mode = mode  # Track the current mode
-        vibe = Vibe(mode)
-        self.concert_stage.generate_recursive(vibe, threshold)
+        with vj_profiler.profile("vj_director_shift"):
+            self.current_mode = mode  # Track the current mode
+            vibe = Vibe(mode)
+            self.concert_stage.generate_recursive(vibe, threshold)
 
-        self.last_shift_time = time.time()
-        self.shift_count += 1
+            self.last_shift_time = time.time()
+            self.shift_count += 1
 
-        # Print the tree structure after shift
-        print(f"VJ Concert Stage Tree (after shift #{self.shift_count} to {mode}):")
-        print(self.concert_stage.print_tree())
+            # Print the tree structure after shift
+            print(f"VJ Concert Stage Tree (after shift #{self.shift_count} to {mode}):")
+            print(self.concert_stage.print_tree())
 
     def get_concert_stage(self) -> ConcertStage:
         """Get the complete concert stage"""

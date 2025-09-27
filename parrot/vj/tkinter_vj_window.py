@@ -12,6 +12,7 @@ from PIL import Image, ImageTk
 from parrot.director.frame import Frame as DirectorFrame
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
+from parrot.vj.profiler import vj_profiler
 
 
 @beartype
@@ -53,25 +54,28 @@ class VJRenderer:
         if not self.ctx or not self.vj_director:
             return None
 
-        # Get latest frame data from VJ director
-        frame, scheme = self.vj_director.get_latest_frame_data()
-        if not frame or not scheme:
+        with vj_profiler.profile("vj_renderer_frame"):
+            # Get latest frame data from VJ director
+            frame, scheme = self.vj_director.get_latest_frame_data()
+            if not frame or not scheme:
+                return None
+
+            try:
+                # Get rendered framebuffer from VJ director
+                with vj_profiler.profile("vj_render_to_fbo"):
+                    rendered_fbo = self.vj_director.render(self.ctx, frame, scheme)
+
+                if rendered_fbo and rendered_fbo.color_attachments:
+                    # Read the framebuffer data
+                    with vj_profiler.profile("vj_fbo_read"):
+                        texture = rendered_fbo.color_attachments[0]
+                        image_data = texture.read()
+                    return image_data
+
+            except Exception as e:
+                print(f"VJ render error: {e}")
+
             return None
-
-        try:
-            # Get rendered framebuffer from VJ director
-            rendered_fbo = self.vj_director.render(self.ctx, frame, scheme)
-
-            if rendered_fbo and rendered_fbo.color_attachments:
-                # Read the framebuffer data
-                texture = rendered_fbo.color_attachments[0]
-                image_data = texture.read()
-                return image_data
-
-        except Exception as e:
-            print(f"VJ render error: {e}")
-
-        return None
 
     def shift_scene(self):
         """Shift scene using current system mode"""
@@ -136,114 +140,130 @@ class VJFrame(tk.Frame):
             return
 
         try:
-            # Render VJ frame
-            image_data = self.vj_renderer.render_frame()
+            with vj_profiler.profile("vj_animate_loop"):
+                # Render VJ frame
+                image_data = self.vj_renderer.render_frame()
 
-            if image_data:
-                # Get current canvas size
-                canvas_width = self.canvas.winfo_width()
-                canvas_height = self.canvas.winfo_height()
+                if image_data:
+                    # Get current canvas size
+                    canvas_width = self.canvas.winfo_width()
+                    canvas_height = self.canvas.winfo_height()
 
-                if canvas_width > 1 and canvas_height > 1:
-                    # Convert to PIL Image
-                    # VJ director returns RGB data, need to determine format and flip if needed
-                    try:
-                        # Try RGB first (most common for VJ content)
-                        image_array = np.frombuffer(image_data, dtype=np.uint8)
+                    if canvas_width > 1 and canvas_height > 1:
+                        # Convert to PIL Image
+                        # VJ director returns RGB data, need to determine format and flip if needed
+                        with vj_profiler.profile("vj_image_processing"):
+                            try:
+                                # Try RGB first (most common for VJ content)
+                                image_array = np.frombuffer(image_data, dtype=np.uint8)
 
-                        # Determine the format based on data size
-                        total_pixels = len(image_array)
+                                # Determine the format based on data size
+                                total_pixels = len(image_array)
 
-                        # Common VJ output sizes to try
-                        common_sizes = [
-                            (1920, 1080),  # Full HD
-                            (1280, 720),  # HD
-                            (800, 600),  # VJ renderer default
-                            (canvas_width, canvas_height),  # Canvas size
-                        ]
+                                # Common VJ output sizes to try
+                                common_sizes = [
+                                    (1920, 1080),  # Full HD
+                                    (1280, 720),  # HD
+                                    (800, 600),  # VJ renderer default
+                                    (canvas_width, canvas_height),  # Canvas size
+                                ]
 
-                        pil_image = None
-                        for width, height in common_sizes:
-                            expected_rgb = width * height * 3
-                            expected_rgba = width * height * 4
+                                pil_image = None
+                                for width, height in common_sizes:
+                                    expected_rgb = width * height * 3
+                                    expected_rgba = width * height * 4
 
-                            if total_pixels == expected_rgba:
-                                # RGBA format
-                                image_array = image_array.reshape((height, width, 4))
-                                pil_image = Image.fromarray(image_array, "RGBA")
-                                break
-                            elif total_pixels == expected_rgb:
-                                # RGB format
-                                image_array = image_array.reshape((height, width, 3))
-                                pil_image = Image.fromarray(image_array, "RGB")
-                                break
-
-                        if pil_image is None:
-                            # Try to guess the dimensions (assume RGB format)
-                            if total_pixels % 3 == 0:
-                                pixel_count = total_pixels // 3
-                                # Try to find reasonable dimensions
-                                import math
-
-                                sqrt_pixels = int(math.sqrt(pixel_count))
-                                for aspect_ratio in [(16, 9), (4, 3), (1, 1)]:
-                                    w = int(
-                                        sqrt_pixels
-                                        * aspect_ratio[0]
-                                        / math.sqrt(
-                                            aspect_ratio[0] ** 2 + aspect_ratio[1] ** 2
+                                    if total_pixels == expected_rgba:
+                                        # RGBA format
+                                        image_array = image_array.reshape(
+                                            (height, width, 4)
                                         )
-                                    )
-                                    h = int(
-                                        sqrt_pixels
-                                        * aspect_ratio[1]
-                                        / math.sqrt(
-                                            aspect_ratio[0] ** 2 + aspect_ratio[1] ** 2
+                                        pil_image = Image.fromarray(image_array, "RGBA")
+                                        break
+                                    elif total_pixels == expected_rgb:
+                                        # RGB format
+                                        image_array = image_array.reshape(
+                                            (height, width, 3)
                                         )
-                                    )
-                                    if w * h * 3 == total_pixels:
-                                        image_array = image_array.reshape((h, w, 3))
                                         pil_image = Image.fromarray(image_array, "RGB")
                                         break
 
-                        if pil_image is None:
-                            print(
-                                f"Could not determine VJ image format for {total_pixels} bytes"
-                            )
-                            return
+                                if pil_image is None:
+                                    # Try to guess the dimensions (assume RGB format)
+                                    if total_pixels % 3 == 0:
+                                        pixel_count = total_pixels // 3
+                                        # Try to find reasonable dimensions
+                                        import math
 
-                        # Scale to fit canvas while maintaining aspect ratio
-                        img_width, img_height = pil_image.size
-                        img_ratio = img_width / img_height
-                        canvas_ratio = canvas_width / canvas_height
+                                        sqrt_pixels = int(math.sqrt(pixel_count))
+                                        for aspect_ratio in [(16, 9), (4, 3), (1, 1)]:
+                                            w = int(
+                                                sqrt_pixels
+                                                * aspect_ratio[0]
+                                                / math.sqrt(
+                                                    aspect_ratio[0] ** 2
+                                                    + aspect_ratio[1] ** 2
+                                                )
+                                            )
+                                            h = int(
+                                                sqrt_pixels
+                                                * aspect_ratio[1]
+                                                / math.sqrt(
+                                                    aspect_ratio[0] ** 2
+                                                    + aspect_ratio[1] ** 2
+                                                )
+                                            )
+                                            if w * h * 3 == total_pixels:
+                                                image_array = image_array.reshape(
+                                                    (h, w, 3)
+                                                )
+                                                pil_image = Image.fromarray(
+                                                    image_array, "RGB"
+                                                )
+                                                break
 
-                        if img_ratio > canvas_ratio:
-                            # Image is wider, fit to width
-                            new_width = canvas_width
-                            new_height = int(canvas_width / img_ratio)
-                        else:
-                            # Image is taller, fit to height
-                            new_height = canvas_height
-                            new_width = int(canvas_height * img_ratio)
+                                if pil_image is None:
+                                    print(
+                                        f"Could not determine VJ image format for {total_pixels} bytes"
+                                    )
+                                    return
 
-                        pil_image = pil_image.resize(
-                            (new_width, new_height), Image.LANCZOS
-                        )
+                                # Scale to fit canvas while maintaining aspect ratio
+                                with vj_profiler.profile("vj_image_resize"):
+                                    img_width, img_height = pil_image.size
+                                    img_ratio = img_width / img_height
+                                    canvas_ratio = canvas_width / canvas_height
 
-                        # Convert to PhotoImage for Tkinter
-                        photo = ImageTk.PhotoImage(pil_image)
+                                    if img_ratio > canvas_ratio:
+                                        # Image is wider, fit to width
+                                        new_width = canvas_width
+                                        new_height = int(canvas_width / img_ratio)
+                                    else:
+                                        # Image is taller, fit to height
+                                        new_height = canvas_height
+                                        new_width = int(canvas_height * img_ratio)
 
-                        # Update canvas
-                        self.canvas.delete("all")
-                        x = canvas_width // 2
-                        y = canvas_height // 2
-                        self.canvas.create_image(x, y, image=photo, anchor=tk.CENTER)
+                                    pil_image = pil_image.resize(
+                                        (new_width, new_height), Image.LANCZOS
+                                    )
 
-                        # Keep a reference to prevent garbage collection
-                        self.canvas.image = photo
+                                # Convert to PhotoImage for Tkinter and blit to screen
+                                with vj_profiler.profile("vj_blit_to_screen"):
+                                    photo = ImageTk.PhotoImage(pil_image)
 
-                    except Exception as e:
-                        print(f"Error processing VJ image: {e}")
+                                    # Update canvas
+                                    self.canvas.delete("all")
+                                    x = canvas_width // 2
+                                    y = canvas_height // 2
+                                    self.canvas.create_image(
+                                        x, y, image=photo, anchor=tk.CENTER
+                                    )
+
+                                    # Keep a reference to prevent garbage collection
+                                    self.canvas.image = photo
+
+                            except Exception as e:
+                                print(f"Error processing VJ image: {e}")
 
             # Schedule next frame (60 FPS)
             self.after(16, self._animate)

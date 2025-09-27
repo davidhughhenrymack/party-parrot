@@ -37,7 +37,10 @@ from parrot.vj.nodes.infinite_zoom_effect import InfiniteZoomEffect
 from parrot.vj.nodes.color_strobe import ColorStrobe
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 from parrot.vj.nodes.circular_mask import CircularMask
+from parrot.vj.nodes.rounded_rect_mask import RoundedRectMask
 from parrot.vj.nodes.sepia_effect import SepiaEffect
+from parrot.vj.nodes.glow_effect import GlowEffect
+from parrot.vj.profiler import vj_profiler
 
 
 @beartype
@@ -238,16 +241,9 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
-        chill_video_with_vintage_fx = RandomOperation(
-            gentle_noise_effect,
-            [
-                ScanlinesEffect,  # Vintage CRT scanlines effect
-            ],
-        )
-
         # Apply gentle camera zoom with mild parameters
         chill_video_with_gentle_zoom = CameraZoom(
-            chill_video_with_vintage_fx,
+            gentle_noise_effect,
             max_zoom=1.3,  # Mild zoom (instead of default 2.5)
             zoom_speed=2.0,  # Gentle zoom speed (instead of default 8.0)
             return_speed=1.5,  # Gentle return speed (instead of default 4.0)
@@ -255,12 +251,12 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
-        # Apply circular mask to create circle in the middle
-        chill_video_circular = CircularMask(chill_video_with_gentle_zoom)
+        # Apply rounded rectangle mask with decayed film edges
+        chill_video_masked = RoundedRectMask(chill_video_with_gentle_zoom)
 
         # Apply signal-responsive sepia effect for vintage warmth
         chill_video_with_sepia = SepiaEffect(
-            chill_video_circular,
+            chill_video_masked,
             base_intensity=0.4,  # Moderate base sepia for vintage feel
             max_intensity=0.8,  # Strong sepia when signal is high
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
@@ -274,10 +270,40 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
+        # Create gentle mode with random effect choice between brightness pulse and glow
+        gentle_brightness_pulse = BrightnessPulse(
+            text_masked_video_no_fx,
+            intensity=0.5,  # Gentle intensity for subtle effect
+            base_brightness=0.6,  # Higher base brightness for gentle mode
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+        )
+
+        gentle_glow_effect = GlowEffect(
+            text_masked_video_no_fx,
+            base_intensity=0.3,  # Gentle glow base intensity
+            max_intensity=0.7,  # Gentle glow max intensity
+            glow_radius=6.0,  # Subtle glow radius
+            threshold=0.5,  # Lower threshold for more glow
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+        )
+
+        # Randomly choose between brightness pulse and glow effect
+        gentle_with_effect = RandomChild([gentle_brightness_pulse, gentle_glow_effect])
+
+        # Add gentle camera zoom to the whole composition
+        gentle_with_zoom = CameraZoom(
+            gentle_with_effect,
+            max_zoom=1.2,  # Very subtle zoom (instead of default 2.5)
+            zoom_speed=1.5,  # Gentle zoom speed (instead of default 8.0)
+            return_speed=1.0,  # Gentle return speed (instead of default 4.0)
+            blur_intensity=0.1,  # Minimal blur (instead of default 0.8)
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+        )
+
         # Create mode switch with layer composition for rave/gentle and black for blackout
         return ModeSwitch(
             rave=layer_compose,
-            gentle=text_masked_video_no_fx,
+            gentle=gentle_with_zoom,
             blackout=black_node,
             chill=chill_video_with_pulse,
         )
@@ -286,4 +312,5 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> Optional[mgl.Framebuffer]:
         """Render the complete concert stage using ModeSwitch"""
-        return self.mode_switch.render(frame, scheme, context)
+        with vj_profiler.profile("concert_stage_render"):
+            return self.mode_switch.render(frame, scheme, context)

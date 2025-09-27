@@ -128,6 +128,8 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         if self.video_files:
             self.video_files.sort()  # Consistent ordering
+            # Start with a random video instead of always starting at index 0
+            self.current_video_index = random.randint(0, len(self.video_files) - 1)
         else:
             print(f"Warning: No video files found in {group_path}")
 
