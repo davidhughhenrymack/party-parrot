@@ -120,6 +120,68 @@ class NoiseEffect(PostProcessEffectBase):
             return value;
         }
         
+        // Smooth distance function for elliptical rounded rectangle
+        float elliptical_rounded_rect(vec2 p, vec2 size, float radius) {
+            vec2 d = abs(p) - size + radius;
+            return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
+        }
+        
+        // 2D rotation matrix
+        mat2 rotate2d(float angle) {
+            float c = cos(angle);
+            float s = sin(angle);
+            return mat2(c, -s, s, c);
+        }
+        
+        // Generate dust specs at random positions
+        float dust_specs(vec2 uv, float time_offset, float noise_seed) {
+            float spec_contribution = 0.0;
+            
+            // Generate multiple dust specs
+            for (int i = 0; i < 8; i++) {
+                // Use different seeds for each spec
+                vec2 spec_seed = vec2(float(i) * 17.3 + noise_seed * 100.0, float(i) * 23.7 + time_offset * 0.1);
+                
+                // Random position (slowly drifting)
+                vec2 spec_pos = vec2(
+                    random(spec_seed) + sin(time_offset * 0.05 + float(i)) * 0.1,
+                    random(spec_seed + vec2(50.0, 0.0)) + cos(time_offset * 0.03 + float(i)) * 0.1
+                );
+                
+                // Random size (elliptical)
+                vec2 spec_size = vec2(
+                    0.02 + random(spec_seed + vec2(100.0, 0.0)) * 0.08,  // width: 0.02-0.10
+                    0.01 + random(spec_seed + vec2(150.0, 0.0)) * 0.04   // height: 0.01-0.05
+                );
+                
+                // Random rotation
+                float spec_rotation = random(spec_seed + vec2(200.0, 0.0)) * 6.28318; // 0 to 2π
+                
+                // Random color (white or black)
+                float spec_color = random(spec_seed + vec2(250.0, 0.0)) > 0.5 ? 1.0 : 0.0;
+                
+                // Random opacity
+                float spec_opacity = 0.1 + random(spec_seed + vec2(300.0, 0.0)) * 0.2; // 0.1-0.3
+                
+                // Transform UV to spec space
+                vec2 spec_uv = uv - spec_pos;
+                spec_uv = rotate2d(spec_rotation) * spec_uv;
+                
+                // Calculate distance to elliptical rounded rect
+                float dist = elliptical_rounded_rect(spec_uv, spec_size, spec_size.y * 0.3);
+                
+                // Smooth falloff
+                float spec_mask = 1.0 - smoothstep(0.0, spec_size.y * 0.2, dist);
+                
+                // Add to contribution
+                if (spec_mask > 0.0) {
+                    spec_contribution += spec_mask * spec_opacity * (spec_color * 2.0 - 1.0); // -1 to 1 range
+                }
+            }
+            
+            return spec_contribution;
+        }
+        
         void main() {
             // Sample base color
             vec3 base_color = texture(input_texture, uv).rgb;
@@ -192,6 +254,10 @@ class NoiseEffect(PostProcessEffectBase):
             // Add overall luminance noise
             float luma_noise = (combined_noise - 0.5) * dynamic_intensity;
             noisy_color += vec3(luma_noise);
+            
+            // Add dust specs
+            float dust_contribution = dust_specs(uv, time_offset, noise_seed);
+            noisy_color += vec3(dust_contribution * dynamic_intensity * 0.5);
             
             // Add signal dropout effect (random black bars)
             float dropout = random(vec2(uv.y * 50.0, time_offset * 5.0));

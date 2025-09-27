@@ -40,6 +40,7 @@ from parrot.vj.nodes.circular_mask import CircularMask
 from parrot.vj.nodes.rounded_rect_mask import RoundedRectMask
 from parrot.vj.nodes.sepia_effect import SepiaEffect
 from parrot.vj.nodes.glow_effect import GlowEffect
+from parrot.vj.nodes.bloom_filter import BloomFilter
 from parrot.vj.profiler import vj_profiler
 
 
@@ -202,7 +203,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 optional_oscilloscope, BlendMode.ADDITIVE, opacity=0.3
             ),  # Oscilloscope: additive blending for glow with 30% opacity
             LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
-            LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
+            # LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
         )
 
         # Wrap base layers in brightness pulse effect for rave mode
@@ -270,6 +271,17 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
+        # Add gentle bloom filter for dreamy chill atmosphere
+        chill_video_with_bloom = BloomFilter(
+            chill_video_with_pulse,
+            base_intensity=0.3,  # More visible bloom base intensity for chill
+            max_intensity=0.6,  # Subtle bloom max intensity
+            bloom_radius=3.0,  # Small bloom radius for chill mode
+            threshold=0.25,  # Lower threshold for more dreamy bloom
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+            blur_passes=2,  # Smooth bloom with 2 passes
+        )
+
         # Create gentle mode with random effect choice between brightness pulse and glow
         gentle_brightness_pulse = BrightnessPulse(
             text_masked_video_no_fx,
@@ -287,8 +299,20 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
-        # Randomly choose between brightness pulse and glow effect
-        gentle_with_effect = RandomChild([gentle_brightness_pulse, gentle_glow_effect])
+        gentle_bloom_effect = BloomFilter(
+            text_masked_video_no_fx,
+            base_intensity=0.4,  # More visible bloom base intensity
+            max_intensity=0.7,  # Gentle bloom max intensity
+            bloom_radius=4.0,  # Subtle bloom radius
+            threshold=0.3,  # Lower threshold for more bloom
+            signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
+            blur_passes=2,  # Smooth bloom with 2 passes
+        )
+
+        # Randomly choose between brightness pulse, glow effect, and bloom filter
+        gentle_with_effect = RandomChild(
+            [gentle_brightness_pulse, gentle_glow_effect, gentle_bloom_effect]
+        )
 
         # Add gentle camera zoom to the whole composition
         gentle_with_zoom = CameraZoom(
@@ -305,7 +329,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             rave=layer_compose,
             gentle=gentle_with_zoom,
             blackout=black_node,
-            chill=chill_video_with_pulse,
+            chill=chill_video_with_bloom,
         )
 
     def render(

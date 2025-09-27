@@ -127,7 +127,7 @@ class RoundedRectMask(PostProcessEffectBase):
     def _apply_confetti_scanlines(
         self, mask_array: np.ndarray, left: int, top: int, right: int, bottom: int
     ) -> np.ndarray:
-        """Apply exactly 100 confetti circles touching the edge of the rounded rectangle"""
+        """Apply exactly 100 confetti shapes (circles and rounded rectangles) touching the edge of the rounded rectangle"""
         height, width = mask_array.shape
         corner_radius_px = int(self.corner_radius * min(width, height))
 
@@ -154,7 +154,7 @@ class RoundedRectMask(PostProcessEffectBase):
         if len(edge_pixels) == 0:
             return mask_array
 
-        # Place exactly 100 confetti circles
+        # Place exactly 100 confetti shapes (mix of circles and rounded rectangles)
         num_confetti = 100
         for i in range(num_confetti):
             # Use deterministic random based on confetti index
@@ -169,22 +169,61 @@ class RoundedRectMask(PostProcessEffectBase):
                 edge_x, edge_y, left, top, right, bottom, corner_radius_px
             )
 
-            # Random circle size
-            size_rand = confetti_rng.random()
-            if size_rand > 0.8:
-                radius = confetti_rng.randint(8, 20)  # 20% large
-            elif size_rand > 0.5:
-                radius = confetti_rng.randint(4, 12)  # 30% medium
+            # Randomly choose between circle and rounded rectangle (50/50 split)
+            is_circle = confetti_rng.random() < 0.5
+
+            if is_circle:
+                # Random circle size
+                size_rand = confetti_rng.random()
+                if size_rand > 0.8:
+                    radius = confetti_rng.randint(8, 20)  # 20% large
+                elif size_rand > 0.5:
+                    radius = confetti_rng.randint(4, 12)  # 30% medium
+                else:
+                    radius = confetti_rng.randint(2, 8)  # 50% small
+
+                # Position circle to touch the edge from outside
+                # Place center at radius distance along the outward normal
+                circle_x = int(edge_x + normal_x * radius)
+                circle_y = int(edge_y + normal_y * radius)
+
+                # Draw the confetti circle (black = invisible)
+                self._draw_circle(mask_array, circle_x, circle_y, radius, 0)
             else:
-                radius = confetti_rng.randint(2, 8)  # 50% small
+                # Random rounded rectangle size
+                size_rand = confetti_rng.random()
+                if size_rand > 0.8:
+                    # 20% large rectangles
+                    rect_width = confetti_rng.randint(12, 24)
+                    rect_height = confetti_rng.randint(8, 16)
+                elif size_rand > 0.5:
+                    # 30% medium rectangles
+                    rect_width = confetti_rng.randint(8, 16)
+                    rect_height = confetti_rng.randint(6, 12)
+                else:
+                    # 50% small rectangles
+                    rect_width = confetti_rng.randint(4, 12)
+                    rect_height = confetti_rng.randint(3, 8)
 
-            # Position circle to touch the edge from outside
-            # Place center at radius distance along the outward normal
-            circle_x = int(edge_x + normal_x * radius)
-            circle_y = int(edge_y + normal_y * radius)
+                # Corner radius proportional to size (but smaller than circle radius)
+                corner_radius = min(rect_width, rect_height) // 4
 
-            # Draw the confetti circle (black = invisible)
-            self._draw_circle(mask_array, circle_x, circle_y, radius, 0)
+                # Position rectangle to touch the edge from outside
+                # Use the larger dimension as the "radius" for positioning
+                positioning_radius = max(rect_width, rect_height) // 2
+                rect_x = int(edge_x + normal_x * positioning_radius)
+                rect_y = int(edge_y + normal_y * positioning_radius)
+
+                # Draw the confetti rounded rectangle (black = invisible)
+                self._draw_rounded_rect(
+                    mask_array,
+                    rect_x,
+                    rect_y,
+                    rect_width,
+                    rect_height,
+                    corner_radius,
+                    0,
+                )
 
         return mask_array
 
@@ -314,6 +353,68 @@ class RoundedRectMask(PostProcessEffectBase):
             ):
                 distance_sq = (x - center_x) ** 2 + (y - center_y) ** 2
                 if distance_sq <= radius**2:
+                    mask_array[y, x] = value
+
+    def _draw_rounded_rect(
+        self,
+        mask_array: np.ndarray,
+        center_x: int,
+        center_y: int,
+        width: int,
+        height: int,
+        corner_radius: int,
+        value: int,
+    ):
+        """Draw a rounded rectangle on the mask array"""
+        array_height, array_width = mask_array.shape
+
+        # Calculate bounds
+        left = center_x - width // 2
+        right = center_x + width // 2
+        top = center_y - height // 2
+        bottom = center_y + height // 2
+
+        # Clamp corner radius to be reasonable
+        max_radius = min(width, height) // 2
+        corner_radius = min(corner_radius, max_radius)
+
+        # Draw the rounded rectangle
+        for y in range(max(0, top), min(array_height, bottom + 1)):
+            for x in range(max(0, left), min(array_width, right + 1)):
+                # Check if we're in a corner region
+                in_corner = False
+                corner_center_x = corner_center_y = 0
+
+                # Top-left corner
+                if x < left + corner_radius and y < top + corner_radius:
+                    corner_center_x = left + corner_radius
+                    corner_center_y = top + corner_radius
+                    in_corner = True
+                # Top-right corner
+                elif x > right - corner_radius and y < top + corner_radius:
+                    corner_center_x = right - corner_radius
+                    corner_center_y = top + corner_radius
+                    in_corner = True
+                # Bottom-left corner
+                elif x < left + corner_radius and y > bottom - corner_radius:
+                    corner_center_x = left + corner_radius
+                    corner_center_y = bottom - corner_radius
+                    in_corner = True
+                # Bottom-right corner
+                elif x > right - corner_radius and y > bottom - corner_radius:
+                    corner_center_x = right - corner_radius
+                    corner_center_y = bottom - corner_radius
+                    in_corner = True
+
+                if in_corner:
+                    # Check if we're inside the corner circle
+                    distance_sq = (x - corner_center_x) ** 2 + (
+                        y - corner_center_y
+                    ) ** 2
+                    if distance_sq <= corner_radius**2:
+                        mask_array[y, x] = value
+                else:
+                    # We're in the main rectangle area (not in corners)
                     mask_array[y, x] = value
 
     def _get_fragment_shader(self) -> str:

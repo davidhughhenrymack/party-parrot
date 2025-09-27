@@ -47,7 +47,7 @@ BUTTON_ACTIVE_BG = "#333"  # Slightly lighter than button bg
 BUTTON_ACTIVE_FG = "#8a2be2"  # Purple text on press
 HIGHLIGHT_COLOR = "#0078d7"
 CANVAS_WIDTH = 1200
-CANVAS_HEIGHT = 800
+CANVAS_HEIGHT = 1200
 SHOW_PLOT = os.environ.get("HIDE_PLOT", "false") != "true"
 
 # Selection box color
@@ -621,7 +621,7 @@ class Window(Tk):
             lambda e: self._handle_signal_button_release(FrameSignal.pulse),
         )
         self.bind("<KeyRelease-e>", lambda e: self._select_mode(Mode.gentle))
-        self.bind("<KeyRelease-f>", lambda e: self._select_mode(Mode.gentle))
+        self.bind("<KeyRelease-f>", lambda e: self._select_mode(Mode.chill))
 
         self.bind("<KeyRelease-c>", lambda e: self._select_mode(Mode.rave))
         self.bind("<KeyRelease-d>", lambda e: self._select_mode(Mode.blackout))

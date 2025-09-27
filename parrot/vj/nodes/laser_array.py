@@ -4,6 +4,7 @@ import numpy as np
 import moderngl as mgl
 from typing import List, Optional
 from beartype import beartype
+import math
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
@@ -124,9 +125,8 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Create main framebuffer
         self.color_texture = self._context.texture((self.width, self.height), 4)
-        self.depth_texture = self._context.depth_texture((self.width, self.height))
         self.framebuffer = self._context.framebuffer(
-            color_attachments=[self.color_texture], depth_attachment=self.depth_texture
+            color_attachments=[self.color_texture]
         )
 
         # Create shaders and geometry
@@ -134,44 +134,28 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self._create_geometry()
 
     def _create_shaders(self):
-        """Create simple shader for white laser line"""
-        # Simple laser vertex shader
+        """Create shader for tapered, soft-edged laser strip"""
+        # Vertex shader (debug): draw a strip in NDC to validate pipeline
         laser_vertex = """
         #version 330 core
         in float in_distance;   // 0.0 (start) to 1.0 (end)
         in float in_side;       // -1.0 or +1.0 (left/right)
 
-        uniform mat4 view;
-        uniform mat4 projection;
-        uniform vec3 view_direction;   // normalized camera forward
-        uniform vec3 beam_origin;
-        uniform vec3 beam_direction;   // normalized
-        uniform float beam_length;
-        uniform float beam_half_width;
-
         void main() {
-            // Compute a width vector perpendicular to the beam and camera
-            vec3 side_vec = normalize(cross(beam_direction, view_direction));
-            // Fallback in case beam is parallel to camera direction
-            if (length(side_vec) < 1e-4) {
-                side_vec = normalize(cross(beam_direction, vec3(0.0,1.0,0.0)));
-            }
-
-            vec3 p = beam_origin
-                   + beam_direction * (in_distance * beam_length)
-                   + side_vec * (in_side * beam_half_width);
-
-            gl_Position = projection * view * vec4(p, 1.0);
+            // Map attributes directly to NDC for visibility
+            float x = in_side * 0.3;              // width
+            float y = mix(-0.2, 0.6, in_distance); // height from -0.2 to 0.6
+            gl_Position = vec4(x, y, 0.0, 1.0);
         }
         """
 
-        # Simple white laser fragment shader
+        # Fragment shader: output solid color (debug). We'll refine to soft edges once visible.
         laser_fragment = """
         #version 330 core
         out vec4 color;
 
         void main() {
-            color = vec4(1.0, 1.0, 1.0, 1.0);  // Pure white
+            color = vec4(1.0, 1.0, 1.0, 1.0);
         }
         """
 
@@ -198,15 +182,12 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             dtype=np.float32,
         )
 
-        indices = np.array([0, 1, 2, 0, 2, 3], dtype=np.uint32)
-
         vbo = self._context.buffer(vertices.tobytes())
-        ibo = self._context.buffer(indices.tobytes())
 
+        # Use a triangle strip without an index buffer for simplicity
         self.laser_vao = self._context.vertex_array(
             self.laser_program,
             [(vbo, "1f 1f", "in_distance", "in_side")],
-            ibo,
         )
 
     def _create_matrices(self):
@@ -224,40 +205,98 @@ class LaserArray(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> Optional[mgl.Framebuffer]:
         """Render simple white laser beam"""
-        if not self.framebuffer or not self.laser_vao:
+        if not self.framebuffer or not self.color_texture:
             return None
 
         # Create matrices
         view, projection = self._create_matrices()
 
-        # Render laser to main framebuffer
+        # Clear framebuffer
         self.framebuffer.use()
-        context.clear(0.0, 0.0, 0.0, 0.0)  # Transparent background
-        context.disable(mgl.DEPTH_TEST)
-        context.enable(mgl.BLEND)
-        context.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+        context.viewport = (0, 0, self.width, self.height)
+        context.clear(0.0, 0.0, 0.0, 0.0)
 
-        # Render single laser beam straight along laser pointing direction
-        laser_direction = self.laser_point_vector / np.linalg.norm(
-            self.laser_point_vector
-        )
+        # CPU rasterization fallback: draw multiple straight lines (lasers)
+        buf = np.zeros((self.height, self.width, 4), dtype=np.uint8)
 
-        # Set shader uniforms
-        self.laser_program["view"].write(view.astype(np.float32).tobytes())
-        self.laser_program["projection"].write(projection.astype(np.float32).tobytes())
-        self.laser_program["beam_origin"] = tuple(self.laser_position)
-        self.laser_program["beam_direction"] = tuple(laser_direction)
-        self.laser_program["beam_length"] = float(self.laser_length)
-        self.laser_program["beam_half_width"] = float(self.laser_thickness * 0.5)
+        # Base direction toward audience
+        d = self.laser_point_vector
+        if np.linalg.norm(d) < 1e-6:
+            d = self.camera_eye - self.laser_position
+        base_dir = d / (np.linalg.norm(d) + 1e-6)
 
-        # Approximate camera forward from view matrix
-        view_arr = view
-        np_forward = -view_arr[2, :3]
-        np_forward = np_forward / (np.linalg.norm(np_forward) + 1e-6)
-        self.laser_program["view_direction"] = tuple(np_forward)
+        # Derived parameters
+        num_beams = max(1, self.laser_count)
+        half = (num_beams - 1) * 0.5
+        fan_angle = np.radians(50.0)
+        thickness_px = max(1, int(self.laser_thickness))
 
-        # Render laser geometry
-        self.laser_vao.render(mgl.TRIANGLES)
+        time_s = float(getattr(frame, "time", 0.0))
+        sweep = math.sin(time_s * 0.8) * (fan_angle * 0.3)
 
-        context.disable(mgl.BLEND)
+        def project(point3: np.ndarray):
+            p = np.append(point3.astype(np.float32), 1.0)
+            clip = projection @ (view @ p)
+            if abs(float(clip[3])) < 1e-6:
+                return None
+            ndc = clip[:3] / clip[3]
+            x = int((ndc[0] * 0.5 + 0.5) * (self.width - 1))
+            y = int((ndc[1] * 0.5 + 0.5) * (self.height - 1))
+            return x, y
+
+        origin = self.laser_position
+
+        for i in range(num_beams):
+            factor = (i - half) / max(1.0, half if half != 0 else 1.0)
+            angle = factor * fan_angle + sweep
+
+            # Rotate base_dir around Y axis
+            cos_a = math.cos(angle)
+            sin_a = math.sin(angle)
+            dir_x = base_dir[0] * cos_a + base_dir[2] * sin_a
+            dir_z = -base_dir[0] * sin_a + base_dir[2] * cos_a
+            dir_vec = np.array([dir_x, base_dir[1], dir_z], dtype=np.float32)
+            dir_vec = dir_vec / (np.linalg.norm(dir_vec) + 1e-6)
+
+            end = origin + dir_vec * self.laser_length
+
+            p0 = project(origin)
+            p1 = project(end)
+            if p0 is None or p1 is None:
+                continue
+
+            x0, y0 = p0
+            x1, y1 = p1
+
+            # Bresenham-like thick line
+            dx = abs(x1 - x0)
+            dy = -abs(y1 - y0)
+            sx = 1 if x0 < x1 else -1
+            sy = 1 if y0 < y1 else -1
+            err = dx + dy
+            x, y = x0, y0
+
+            while True:
+                for tx in range(-thickness_px // 2, thickness_px // 2 + 1):
+                    for ty in range(-thickness_px // 2, thickness_px // 2 + 1):
+                        xx = x + tx
+                        yy = y + ty
+                        if 0 <= xx < self.width and 0 <= yy < self.height:
+                            buf[yy, xx, 0] = min(255, buf[yy, xx, 0] + 255)
+                            buf[yy, xx, 1] = min(255, buf[yy, xx, 1] + 255)
+                            buf[yy, xx, 2] = min(255, buf[yy, xx, 2] + 255)
+                            buf[yy, xx, 3] = 255
+
+                if x == x1 and y == y1:
+                    break
+                e2 = 2 * err
+                if e2 >= dy:
+                    err += dy
+                    x += sx
+                if e2 <= dx:
+                    err += dx
+                    y += sy
+
+        # Upload to texture
+        self.color_texture.write(buf.tobytes())
         return self.framebuffer

@@ -49,6 +49,17 @@ class TestModes(unittest.TestCase):
         self.strip2 = MagicMock(spec=Motionstrip)
         self.strips = [self.strip1, self.strip2]
 
+        # Set up mock bulbs for Motionstrip fixtures
+        for strip in self.strips:
+            mock_bulbs = [
+                MagicMock(spec=Par),
+                MagicMock(spec=Par),
+                MagicMock(spec=Par),
+            ]  # 3 bulbs per strip
+            strip.get_bulbs.return_value = mock_bulbs
+            for bulb in mock_bulbs:
+                bulb.get_dimmer.return_value = 0.0
+
         # Set initial dimmer values to 0
         for fixture in self.pars + self.strips:
             fixture.get_dimmer.return_value = 0.0

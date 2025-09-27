@@ -56,8 +56,10 @@ venue_patches = {
         *[ParRGBAWU(i) for i in range(10, 90, 10)],
         Motionstrip38(80, 0, 256),
         Motionstrip38(108, 0, 256),
+        ParRGB(192),
+        ParRGB(199),
         # GigbarMove ILS 50 channel
-        *ChauvetGigBarMoveILS(100),
+        # *ChauvetGigBarMoveILS(100),
         TwoBeamLaser(150),
         ChauvetSpot120_12Ch(160),
         ChauvetSpot160_12Ch(172),

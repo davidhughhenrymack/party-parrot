@@ -67,34 +67,65 @@ mode_interpretations: Dict[
     Mode.chill: {
         Par: [
             combo(
-                signal_switch(Twinkle),
+                signal_switch(
+                    randomize(
+                        SequenceFadeDimmers,
+                        GentlePulse,
+                        VerySlowDecay,
+                        SlowSustained,
+                        SoftSpatialPulse,
+                    )
+                ),
                 ColorBg,
             )
         ],
         MovingHead: [
             combo(
-                signal_switch(Twinkle),
+                signal_switch(
+                    randomize(
+                        SequenceFadeDimmers,
+                        GentlePulse,
+                        VerySlowDecay,
+                        SlowSustained,
+                        SoftSpatialPulse,
+                    )
+                ),
                 ColorBg,
-                randomize(MoveCircles, MoveNod),
+                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
             )
         ],
         Motionstrip: [
             combo(
                 signal_switch(
-                    combo(
-                        Dimmer255,
-                        for_bulbs(Twinkle),
+                    randomize(
+                        combo(Dimmer255, for_bulbs(Twinkle)),
+                        combo(DimmersBeatChase, AllBulbs255),
+                        combo(SlowDecay, AllBulbs255),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "GentlePulseTrigger0.1",
+                                    GentlePulse,
+                                    trigger_level=0.1,
+                                )
+                            ),
+                        ),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                     ),
                 ),
-                ColorBg,
-                MoveCircles,
+                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                randomize(PanLatched, MoveCircles),
             ),
         ],
         ChauvetColorBandPiX_36Ch: [
             combo(
                 signal_switch(
-                    combo(
-                        Dimmer255,
+                    randomize(
+                        for_bulbs(SequenceFadeDimmers),
+                        for_bulbs(GentlePulse),
+                        VerySlowDecay,
+                        SlowSustained,
                         for_bulbs(Twinkle),
                     )
                 ),
@@ -103,17 +134,9 @@ mode_interpretations: Dict[
         ],
         Laser: [signal_switch(Dimmer0)],
         ChauvetRotosphere_28Ch: [
-            combo(
-                signal_switch(Twinkle),
-                ColorBg,
-            )
+            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
         ],
-        ChauvetDerby: [
-            combo(
-                signal_switch(Twinkle),
-                ColorBg,
-            )
-        ],
+        ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
     },
     Mode.gentle: {
         Par: [

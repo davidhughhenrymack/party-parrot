@@ -4,6 +4,7 @@ from parrot.director.color_schemes import (
     scheme_random,
     scheme_standard,
     scheme_tropical,
+    scheme_halloween,
 )
 
 
@@ -14,6 +15,7 @@ themes = [
     Theme("Pride", True, scheme_random),
     Theme("Berlin", False, scheme_berlin),
     Theme("Tropical", True, scheme_tropical),
+    Theme("Halloween", False, scheme_halloween),
 ]
 
 
