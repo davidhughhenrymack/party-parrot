@@ -24,7 +24,19 @@ class VJProfiler:
 
         # Reporting
         self.last_report_time = time.time()
-        self.report_interval = 60.0  # Report every minute
+        interval_env = os.getenv("PROFILE_VJ_INTERVAL", "60")
+        try:
+            self.report_interval = max(1.0, float(interval_env))
+        except ValueError:
+            print(
+                f"Warning: PROFILE_VJ_INTERVAL='{interval_env}' invalid, falling back to 60 seconds"
+            )
+            self.report_interval = 60.0
+
+        if self.enabled:
+            print(
+                f"🟢 VJ profiler enabled (reporting every {self.report_interval:.0f}s)"
+            )
 
         # Current operation stack for nested profiling
         self.operation_stack: List[str] = []
@@ -79,7 +91,7 @@ class VJProfiler:
             return
 
         print("\n" + "=" * 80)
-        print("VJ PROFILING STATS (last minute)")
+        print(f"VJ PROFILING STATS (last {self.report_interval:.0f}s)")
         print("=" * 80)
 
         # Calculate stats for each operation
@@ -113,8 +125,8 @@ class VJProfiler:
                     "p95_ms": p95 * 1000,
                     "total_ms": total_time * 1000,
                     "fps": (
-                        count / 60.0 if count > 0 else 0
-                    ),  # Approximate FPS over last minute
+                        count / self.report_interval if count > 0 else 0
+                    ),  # Approximate FPS over report interval
                 }
             )
 
@@ -177,7 +189,7 @@ class VJProfiler:
                 "total_calls": self.call_counts[operation],
                 "avg_ms": (total_time / count) * 1000,
                 "total_ms": total_time * 1000,
-                "fps": count / 60.0 if count > 0 else 0,
+                "fps": count / self.report_interval if count > 0 else 0,
             }
 
         return stats

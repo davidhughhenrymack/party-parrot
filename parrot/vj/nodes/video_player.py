@@ -369,27 +369,19 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Bind video texture
         video_texture.use(0)
 
-        # Set uniforms
-        self.shader_program["video_texture"] = 0
+        shader = self.shader_program
+        shader["video_texture"] = 0
 
-        # Calculate shader uniforms for proper scaling
-        # We need to invert the scaling logic for the shader
-        video_aspect = self.video_width / self.video_height
         target_aspect = self.width / self.height
+        video_aspect = self.video_width / self.video_height
 
         if video_aspect > target_aspect:
-            # Video is wider - we'll crop the sides
             shader_scale = target_aspect / video_aspect
-            shader_offset_x = 0.0
-            shader_offset_y = 0.0
         else:
-            # Video is taller - we'll crop top/bottom
             shader_scale = video_aspect / target_aspect
-            shader_offset_x = 0.0
-            shader_offset_y = 0.0
 
-        self.shader_program["scale_factor"] = shader_scale
-        self.shader_program["offset"] = (shader_offset_x, shader_offset_y)
+        shader["scale_factor"] = shader_scale
+        shader["offset"] = (0.0, 0.0)
 
         # Render
         self.quad_vao.render(mgl.TRIANGLE_STRIP)
