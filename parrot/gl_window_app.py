@@ -32,33 +32,25 @@ def run_gl_window_app(args):
     )
 
     ctx = window.ctx
-    print(f"✅ Window created: {ctx.info['GL_RENDERER']}")
 
     # Initialize state and components
-    print("Initializing components...")
     state = State()
     signal_states = SignalStates()
 
     # Initialize audio analyzer
-    print("🎵 Initializing audio analyzer...")
     audio_analyzer = AudioAnalyzer(signal_states)
 
     # Initialize VJ system
-    print("🎨 Initializing VJ Director...")
     vj_director = VJDirector(state.mode or Mode.chill)
     vj_director.setup(ctx)
-    print("✅ VJ Director initialized")
 
     # Initialize director
-    print("Initializing Director...")
     director = Director(state, vj_director)
-    print("✅ Director initialized")
 
     # Initialize DMX
     dmx = get_controller()
 
     # Setup display shader
-    print("Setting up display shader...")
     vertex_shader = """
     #version 330
     in vec2 in_position;
@@ -133,7 +125,6 @@ def run_gl_window_app(args):
     display_quad = ctx.vertex_array(
         display_shader, [(vbo, "2f 2f", "in_position", "in_texcoord")]
     )
-    print("✅ Display shader ready")
 
     # Start web server if not disabled
     if not getattr(args, "no_web", False):
@@ -144,10 +135,6 @@ def run_gl_window_app(args):
     # Timing
     last_audio_update = time.perf_counter()
     audio_update_interval = 0.03
-    frame_count = 0
-    last_fps_update = time.perf_counter()
-
-    print("🎉 Starting render loop...")
 
     # Check if we're in debug frame capture mode
     debug_frame_mode = getattr(args, "debug_frame", False)
@@ -156,6 +143,28 @@ def run_gl_window_app(args):
 
     # Main render loop
     import pyglet
+
+    # Setup keyboard handler on the underlying pyglet window
+    class KeyboardHandler:
+        def on_key_press(self, symbol, modifiers):
+            if symbol == pyglet.window.key.SPACE:
+                print("⚡ Spacebar pressed - regenerating interpreters...")
+                director.generate_interpreters()
+                return True  # Event handled
+
+    keyboard_handler = KeyboardHandler()
+
+    # Access the underlying pyglet window and register the handler
+    if hasattr(window, "wnd"):
+        window.wnd.push_handlers(keyboard_handler)
+        print("⌨️  Keyboard handler registered (press SPACE to regenerate interpreters)")
+    else:
+        # Fallback: try to get from pyglet.app.windows
+        for w in pyglet.app.windows:
+            w.push_handlers(keyboard_handler)
+        print(
+            "⌨️  Keyboard handler registered via fallback (press SPACE to regenerate interpreters)"
+        )
 
     frame_counter = 0
 
@@ -210,14 +219,6 @@ def run_gl_window_app(args):
                 display_quad.render(mgl.TRIANGLE_STRIP)
             except Exception as e:
                 print(f"Error displaying to screen: {e}")
-
-        # FPS counter
-        frame_count += 1
-        if time.perf_counter() - last_fps_update >= 5.0:
-            fps = frame_count / (time.perf_counter() - last_fps_update)
-            print(f"FPS: {fps:.1f}")
-            frame_count = 0
-            last_fps_update = time.perf_counter()
 
         # Swap buffers and poll events
         window.swap_buffers()
@@ -276,22 +277,19 @@ def run_gl_window_app(args):
             w.dispatch_events()
 
     # Cleanup
-    print("\nShutting down...")
+    print("\n👋 Shutting down...")
     try:
         state.save_state()
-        print("✅ State saved")
     except:
         pass
 
     try:
         audio_analyzer.cleanup()
-        print("✅ Audio cleaned up")
     except:
         pass
 
     try:
         vj_director.cleanup()
-        print("✅ VJ cleaned up")
     except:
         pass
 
@@ -299,5 +297,3 @@ def run_gl_window_app(args):
         window.destroy()
     except:
         pass
-
-    print("👋 Done!")
