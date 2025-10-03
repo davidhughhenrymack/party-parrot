@@ -1,0 +1,25 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.flake8",
+    "ms-python.black-formatter",
+    "ms-python.mypy-type-checker",
+    "charliermarsh.ruff",
+    "ms-vscode.test-adapter-converter",
+    "ms-python.pytest",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-json",
+    "ms-vscode.cmake-tools",
+    "twxs.cmake",
+    "ms-vscode.cpptools",
+    "github.copilot",
+    "github.copilot-chat",
+    "ms-vsliveshare.vsliveshare",
+    "eamodio.gitlens",
+    "ms-vscode.live-server"
+  ],
+  "unwantedRecommendations": [
+    "ms-python.pylint"
+  ]
+}
