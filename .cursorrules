@@ -1,0 +1,99 @@
+# Party Parrot - DMX Lighting & Visuals System
+
+## Project Overview
+Party Parrot is a real-time audio-responsive DMX lighting and visual system that processes microphone input to create dynamic lighting effects and visuals for dance music.
+
+## Development Environment Setup
+
+### Prerequisites
+- Python 3.12+
+- Poetry for dependency management
+- Just command runner
+- Audio system access (for microphone input)
+- DMX hardware (optional for development)
+
+### Quick Start Commands
+```bash
+# Install dependencies
+poetry install
+
+# Run main application
+just launch
+
+# Run with profiling
+just launch-profile
+
+# Run tests
+just test
+
+# Check coverage
+just coverage
+
+# Render laser visualizations
+just render-lasers
+
+# Analyze laser images
+just analyze-lasers
+```
+
+### Environment Setup Script
+Run the setup script to install all required tools:
+```bash
+./setup-dev-env.sh
+```
+
+## Code Standards
+
+### Type Safety
+- Use beartype decorators on all classes and standalone methods
+- Maintain complete type enforcement throughout the codebase
+- Write unit tests to verify type safety
+
+### Testing
+- Use pytest for all tests
+- Focus on testing complex logic, not trivial operations
+- New code must include meaningful tests
+- Run tests after making changes
+- For OpenGL code, ensure headless rendering tests pass
+- For major changes, run the main program with timeout to verify functionality
+
+### Code Quality
+- No print statements unless explicitly requested
+- Use poetry for all dependency management
+- Add major new features to the Justfile
+- Follow existing project structure and patterns
+
+## Architecture Notes
+
+### Nodes
+- BaseInterpretationNode classes have specific calling patterns
+- Read the base class carefully before implementing to avoid breaking functionality
+- Maintain inheritance contracts
+
+### Project Structure
+- Use poetry run for all Python commands
+- Major commands should be accessible via just
+- Don't add README/markdown files unless requested
+- Don't add example code files unless requested
+
+## Audio Processing
+- Real-time microphone processing
+- Audio interpretation for lighting control
+- DMX output for hardware control
+
+## Visual System
+- OpenGL-based rendering
+- Laser array visualization
+- Real-time visual effects
+
+## Hardware Integration
+- DMX lighting control
+- USB device scanning
+- Hardware fixture management
+
+## Development Workflow
+1. Make changes
+2. Run relevant tests
+3. For OpenGL changes, verify headless rendering
+4. For major changes, test main program execution
+5. Add test coverage for new functionality

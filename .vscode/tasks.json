@@ -1,0 +1,160 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Party Parrot: Launch",
+      "type": "shell",
+      "command": "just",
+      "args": ["launch"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Launch the main Party Parrot application"
+    },
+    {
+      "label": "Party Parrot: Launch with Profiling",
+      "type": "shell",
+      "command": "just",
+      "args": ["launch-profile"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Launch Party Parrot with performance profiling enabled"
+    },
+    {
+      "label": "Party Parrot: Run Tests",
+      "type": "shell",
+      "command": "just",
+      "args": ["test"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Run the test suite using pytest"
+    },
+    {
+      "label": "Party Parrot: Coverage Report",
+      "type": "shell",
+      "command": "just",
+      "args": ["coverage"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Generate and display test coverage report"
+    },
+    {
+      "label": "Party Parrot: Render Lasers",
+      "type": "shell",
+      "command": "just",
+      "args": ["render-lasers"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Render laser array visualization"
+    },
+    {
+      "label": "Party Parrot: Analyze Lasers",
+      "type": "shell",
+      "command": "just",
+      "args": ["analyze-lasers"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Analyze laser beam images"
+    },
+    {
+      "label": "Setup Development Environment",
+      "type": "shell",
+      "command": "./setup-dev-env.sh",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Install and configure all development dependencies"
+    },
+    {
+      "label": "Poetry: Install Dependencies",
+      "type": "shell",
+      "command": "poetry",
+      "args": ["install"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Install Python dependencies using Poetry"
+    },
+    {
+      "label": "Poetry: Shell",
+      "type": "shell",
+      "command": "poetry",
+      "args": ["shell"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Activate Poetry virtual environment"
+    }
+  ]
+}
