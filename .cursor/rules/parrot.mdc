@@ -37,5 +37,6 @@ If things break, add test coverage for future.
 
 ## General
 Don't add print statements unless asked
+Do not make .txt or .md files unless asked
 
 

@@ -16,6 +16,14 @@ def parse_arguments():
     parser.add_argument(
         "--vj-fullscreen", action="store_true", help="Run VJ in fullscreen mode"
     )
+    parser.add_argument(
+        "--legacy-gui", action="store_true", help="Use legacy tkinter GUI (deprecated)"
+    )
+    parser.add_argument(
+        "--debug-frame",
+        action="store_true",
+        help="Capture frame 20 and exit for debugging",
+    )
     return parser.parse_args()
 
 
@@ -23,9 +31,18 @@ if __name__ == "__main__":
     # Enable beartype runtime type checking for the parrot package
     # beartype_package("parrot")  # Temporarily disabled due to type issues
 
-    from parrot.listeners.mic_to_dmx import MicToDmx
+    import sys
 
     args = parse_arguments()
 
-    app = MicToDmx(args)
-    app.run()
+    # Use legacy tkinter GUI if requested, otherwise use modern GL window
+    if args.legacy_gui:
+        print("⚠️  Using legacy tkinter GUI (deprecated)")
+        from parrot.listeners.mic_to_dmx import MicToDmx
+
+        app = MicToDmx(args)
+        app.run()
+    else:
+        from parrot.gl_window_app import run_gl_window_app
+
+        run_gl_window_app(args)

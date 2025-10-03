@@ -2,15 +2,20 @@
 
 <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXl1NGRjNzkxeHc1bnpkNjdybXRpOGRlbWk0c2s1aGgyaDZpNHJzaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2zVr6cu95nF6O4/giphy.gif" />
 
-Party Parrot is a lighting-designer robot companion for DJs.
+Party Parrot is a lighting-designer robot companion for DJs with integrated VJ visual system.
 
-It listens on your computer's microphone, then coordinates any number of DMX fixtures. It currently supports:
- - Moving lights
- - Moving led bars
- - LED Pars
- - Lasers
+It listens on your computer's microphone in real-time, analyzes the music, then coordinates:
+ - **DMX Lighting**: Moving heads, LED pars, lasers, strobes (via Entec Pro USB)
+ - **VJ Visuals**: GPU-accelerated video effects synchronized to the music
+ - **Web Interface**: Mobile-friendly remote control
 
-Via Entec Pro USB -> DMX
+## Features
+- Real-time audio analysis with beat detection
+- GPU-accelerated visual effects (bloom, camera zoom, color grading, etc.)
+- Automatic scene generation and transitions
+- DMX fixture support: Moving lights, LED pars, lasers, strobes
+- Modern OpenGL window (870+ FPS)
+- Modular architecture for easy extension
 
 
 # Installation
@@ -21,7 +26,16 @@ Via Entec Pro USB -> DMX
 
 # Run
 
-`./main.sh`
+```bash
+# Run with modern GL window and VJ
+just launch
+
+# Run fullscreen
+just launch-fullscreen
+
+# Or use Poetry directly
+poetry run python parrot/main.py
+```
 
 # Testing
 
