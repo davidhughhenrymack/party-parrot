@@ -19,6 +19,25 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            portaudio19-dev \
+            python3-dev \
+            libasound2-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libxrandr2 \
+            libxinerama1 \
+            libxcursor1 \
+            libxi6 \
+            libxext6 \
+            libxfixes3 \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            xvfb
+
       - name: Install Poetry
         run: pipx install poetry
 
@@ -36,5 +55,9 @@ jobs:
         run: poetry install --with dev
 
       - name: Run tests
-        run: poetry run python -m pytest
+        env:
+          DISPLAY: ":99"
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          MESA_GL_VERSION_OVERRIDE: "3.3"
+        run: xvfb-run -a -s "-screen 0 1024x768x24" poetry run python -m pytest
 
