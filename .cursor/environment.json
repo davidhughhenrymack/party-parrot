@@ -1,0 +1,28 @@
+{
+  "env": {
+    "DISPLAY": ":99",
+    "MPLBACKEND": "Agg",
+    "EGL_PLATFORM": "surfaceless",
+    "MESA_GL_VERSION_OVERRIDE": "3.3",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "QT_QPA_PLATFORM": "offscreen",
+    "SDL_VIDEODRIVER": "dummy",
+    "PYOPENGL_PLATFORM": "egl",
+    "PATH": "/home/ubuntu/.local/bin:$PATH"
+  },
+  "commands": {
+    "launch": "just launch",
+    "test": "just test",
+    "install": "poetry install --no-root"
+  },
+  "setup": [
+    "sudo apt-get update -qq",
+    "sudo apt-get install -y -qq xvfb libegl1-mesa-dev libgl1-mesa-dri libglib2.0-0 libasound2-dev portaudio19-dev python3-tk pulseaudio pulseaudio-utils",
+    "curl -sSL https://install.python-poetry.org | python3 -",
+    "curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin",
+    "Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &",
+    "pulseaudio --start --exit-idle-time=-1 --system=false --daemonize=false &",
+    "sleep 3",
+    "pactl load-module module-null-sink sink_name=dummy"
+  ]
+}
