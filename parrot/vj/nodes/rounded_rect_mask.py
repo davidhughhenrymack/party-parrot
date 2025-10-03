@@ -2,6 +2,7 @@
 
 import random
 import numpy as np
+import moderngl as mgl
 from PIL import Image, ImageDraw
 from beartype import beartype
 
@@ -61,6 +62,10 @@ class RoundedRectMask(PostProcessEffectBase):
         self.mask_texture = None
         self.mask_array = None  # Cache the generated mask array
         self.mask_needs_update = True
+
+        # Film scroll animation state
+        self.frame_counter = 0
+        self.sprocket_offset = 0  # Vertical offset for sprocket holes (in pixels)
 
     def generate(self, vibe: Vibe):
         """Configure rounded rectangle mask parameters based on the vibe"""
@@ -131,6 +136,9 @@ class RoundedRectMask(PostProcessEffectBase):
 
         # Add film sprocket holes along the left edge
         mask_array = self._add_film_sprocket_holes(mask_array, left, top, right, bottom)
+
+        # Apply progressive blur to the right edge
+        mask_array = self._apply_right_edge_blur(mask_array, left, top, right, bottom)
 
         return mask_array
 
@@ -438,17 +446,53 @@ class RoundedRectMask(PostProcessEffectBase):
         hole_spacing = 30  # Vertical spacing between holes
         left_offset = 15  # Distance from left edge (inside the mask)
 
-        # Calculate number of holes that fit vertically
-        num_holes = height // hole_spacing
+        # Calculate number of holes needed (add extras for wrapping)
+        num_holes = (height // hole_spacing) + 2  # Extra holes for smooth wrapping
 
-        # Calculate starting y position to center the holes vertically
-        start_y = top + (height - (num_holes - 1) * hole_spacing) // 2
+        # Calculate starting y position with animated offset
+        # Use modulo to create seamless looping
+        animated_offset = self.sprocket_offset % hole_spacing
+        start_y = top - hole_spacing + animated_offset
 
         # Draw each sprocket hole
         hole_x = left + left_offset
         for i in range(num_holes):
             hole_y = start_y + i * hole_spacing
-            self._draw_circle(mask_array, hole_x, hole_y, hole_radius, 0)
+            # Only draw if within reasonable bounds (with some margin)
+            if hole_y >= top - hole_radius and hole_y <= bottom + hole_radius:
+                self._draw_circle(mask_array, hole_x, hole_y, hole_radius, 0)
+
+        return mask_array
+
+    def _apply_right_edge_blur(
+        self, mask_array: np.ndarray, left: int, top: int, right: int, bottom: int
+    ) -> np.ndarray:
+        """Apply a progressive blur to the right edge of the mask"""
+        from scipy.ndimage import gaussian_filter
+
+        height, width = mask_array.shape
+
+        # Define the blur zone on the right side (20% of width)
+        blur_zone_width = int((right - left) * 0.2)
+        blur_start_x = right - blur_zone_width
+
+        # Create a copy for blurred version
+        blurred = gaussian_filter(mask_array.astype(np.float32), sigma=3.0)
+
+        # Apply progressive blending from sharp to blurred
+        for x in range(blur_start_x, right + 1):
+            if x >= 0 and x < width:
+                # Calculate blend factor (0.0 = sharp, 1.0 = fully blurred)
+                blend_factor = (x - blur_start_x) / blur_zone_width
+                blend_factor = np.clip(blend_factor, 0.0, 1.0)
+
+                # Blend between original and blurred for this column
+                for y in range(max(0, top), min(height, bottom + 1)):
+                    original_val = mask_array[y, x]
+                    blurred_val = blurred[y, x]
+                    mask_array[y, x] = int(
+                        original_val * (1 - blend_factor) + blurred_val * blend_factor
+                    )
 
         return mask_array
 
@@ -465,7 +509,7 @@ class RoundedRectMask(PostProcessEffectBase):
             // Sample the input texture
             vec3 input_color = texture(input_texture, uv).rgb;
             
-            // Sample the mask texture (single channel, so use .r)
+            // Sample the mask texture (single channel)
             float mask_value = texture(mask_texture, uv).r;
             
             // Apply mask to input color
@@ -475,6 +519,9 @@ class RoundedRectMask(PostProcessEffectBase):
 
     def _set_effect_uniforms(self, frame: Frame, scheme: ColorScheme):
         """Set mask texture uniform and update mask if needed"""
+        # Update film scroll animation (jittery 30fps effect)
+        self._update_film_scroll()
+
         # Update mask texture only once per generate() call
         # The mask is generated and cached until the next generate() call
         if self.mask_needs_update or self.mask_texture is None:
@@ -484,6 +531,21 @@ class RoundedRectMask(PostProcessEffectBase):
         if self.mask_texture:
             self.mask_texture.use(1)
             self.shader_program["mask_texture"] = 1
+
+    def _update_film_scroll(self):
+        """Update the film scroll animation with jittery 30fps effect"""
+        self.frame_counter += 1
+
+        # Simulate jerky film by only updating every 3 frames
+        # This creates a more pronounced jittery look of old film projection
+        if self.frame_counter % 3 == 0:
+            # Scroll down by 3 pixels per update for faster, jerkier movement
+            # This simulates film moving through a worn projector
+            self.sprocket_offset += 3
+
+            # Clear the cached mask array so it regenerates with new offset
+            self.mask_array = None
+            self.mask_needs_update = True
 
     def _update_mask_texture(self):
         """Generate and upload the mask texture to OpenGL"""
@@ -498,15 +560,23 @@ class RoundedRectMask(PostProcessEffectBase):
         if self.mask_texture:
             self.mask_texture.release()
 
-        # Create single-channel texture (grayscale mask)
-        # Normalize to 0.0-1.0 range for OpenGL
-        mask_normalized = self.mask_array.astype(np.float32) / 255.0
+        # Create single-channel texture (grayscale mask) as float
+        # Flip vertically to match OpenGL coordinate system
+        mask_flipped = np.flipud(self.mask_array)
+
+        # Convert to float32 and normalize to 0.0-1.0
+        mask_normalized = mask_flipped.astype(np.float32) / 255.0
 
         self.mask_texture = context.texture(
             (self.mask_width, self.mask_height),
-            1,  # Single channel
+            1,  # Single channel (grayscale)
             mask_normalized.tobytes(),
-            dtype="f4",
+            dtype="f4",  # 32-bit float
         )
+
+        # Set texture filtering and wrapping for proper rendering
+        self.mask_texture.filter = (mgl.LINEAR, mgl.LINEAR)
+        self.mask_texture.repeat_x = False
+        self.mask_texture.repeat_y = False
 
         self.mask_needs_update = False
