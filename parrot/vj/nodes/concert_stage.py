@@ -41,7 +41,18 @@ from parrot.vj.nodes.rounded_rect_mask import RoundedRectMask
 from parrot.vj.nodes.sepia_effect import SepiaEffect
 from parrot.vj.nodes.glow_effect import GlowEffect
 from parrot.vj.nodes.bloom_filter import BloomFilter
+from parrot.vj.nodes.hot_sparks_effect import HotSparksEffect
 from parrot.vj.profiler import vj_profiler
+from parrot.fixtures.base import GoboWheelEntry
+from parrot.fixtures.moving_head import MovingHead
+from parrot.director.mode_interpretations import get_interpreter
+from parrot.interpreters.base import InterpreterArgs
+from parrot.vj.nodes.fixture_interpreter import FixtureInterpreterNode
+from parrot.vj.nodes.moving_head_array_renderer import (
+    MovingHeadArrayRenderer,
+    MovingHeadPlacement,
+)
+from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 
 
 @beartype
@@ -182,6 +193,9 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )
         self.laser_array = laser_array
 
+        moving_head_renderer = self._create_virtual_moving_heads()
+        self.moving_head_renderer = moving_head_renderer
+
         # Create oscilloscope effect for retro waveform visualization
         oscilloscope = OscilloscopeEffect()
         self.oscilloscope = oscilloscope
@@ -196,6 +210,10 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         color_strobe = ColorStrobe()
         self.color_strobe = color_strobe
 
+        # Create hot sparks effect that responds to small pulse signals
+        hot_sparks = HotSparksEffect()
+        self.hot_sparks = hot_sparks
+
         # Create base layer composition (everything below the strobe)
         base_layers = LayerCompose(
             LayerSpec(black_background, BlendMode.NORMAL),  # Base layer: solid black
@@ -204,6 +222,11 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             ),  # Oscilloscope: additive blending for glow with 30% opacity
             LayerSpec(canvas_2d, BlendMode.NORMAL),  # Canvas: video + text
             # LayerSpec(laser_array, BlendMode.ADDITIVE),  # Lasers: additive blending
+            # LayerSpec(
+            #     moving_head_renderer,
+            #     BlendMode.ADDITIVE,
+            #     opacity=0.85,
+            # ),
         )
 
         # Wrap base layers in brightness pulse effect for rave mode
@@ -219,6 +242,9 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             LayerSpec(
                 brightness_pulsed_layers, BlendMode.NORMAL
             ),  # Brightness-pulsed base layers
+            LayerSpec(
+                hot_sparks, BlendMode.ADDITIVE, opacity=0.9
+            ),  # Hot sparks: additive for glow effects
             LayerSpec(
                 color_strobe, BlendMode.ADDITIVE
             ),  # Color strobe: additive for flash effects
@@ -330,6 +356,52 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             gentle=gentle_with_zoom,
             blackout=black_node,
             chill=chill_video_with_bloom,
+        )
+
+    def _create_virtual_moving_heads(self) -> MovingHeadArrayRenderer:
+        placements: list[MovingHeadPlacement] = []
+        fixtures: list[MovingHead] = []
+
+        base_forward = self.camera_eye - self.camera_target
+        base_forward = base_forward / np.linalg.norm(base_forward)
+
+        offsets = [
+            np.array([-5.0, 8.5, -1.0], dtype=np.float32),
+            np.array([-1.5, 8.0, -1.5], dtype=np.float32),
+            np.array([1.5, 8.0, -1.5], dtype=np.float32),
+            np.array([5.0, 8.5, -1.0], dtype=np.float32),
+        ]
+
+        for idx, position in enumerate(offsets):
+            forward = self.camera_target - position
+            placements.append(MovingHeadPlacement(position=position, forward=forward))
+            fixtures.append(
+                ChauvetSpot160_12Ch(
+                    patch=200 + idx * 16,
+                    pan_lower=270,
+                    pan_upper=450,
+                    tilt_lower=0,
+                    tilt_upper=90,
+                )
+            )
+
+        def interpreter_factory(mode: Mode, group: list[MovingHead]):
+            hype = 75 if mode == Mode.rave else 40
+            args = InterpreterArgs(hype, True, 0, 100)
+            return get_interpreter(mode, group, args)
+
+        interpreter_node = FixtureInterpreterNode(
+            fixtures=fixtures,
+            interpreter_factory=interpreter_factory,
+            initial_mode=Mode.rave,
+        )
+
+        return MovingHeadArrayRenderer(
+            interpreter_node,
+            placements=placements,
+            camera_eye=self.camera_eye,
+            camera_target=self.camera_target,
+            camera_up=self.camera_up,
         )
 
     def render(

@@ -8,6 +8,7 @@ from beartype import beartype
 import time
 from typing import Optional, Tuple
 from PIL import Image, ImageTk
+import traceback
 
 from parrot.director.frame import Frame as DirectorFrame
 from parrot.director.color_scheme import ColorScheme
@@ -296,8 +297,13 @@ class VJRenderer:
                             image_data = source_texture.read()
                     return image_data, width, height
 
-            except Exception as e:
-                print(f"VJ render error: {e}")
+            except Exception as exc:
+                if 'Forward reference "mgl.Context"' in str(exc):
+                    print(
+                        "VJ render error: moderngl (mgl) not installed; install it or disable VJ rendering."
+                    )
+                print(f"VJ render error: {exc}")
+                traceback.print_exc()
 
             return None
 

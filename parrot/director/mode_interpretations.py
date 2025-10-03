@@ -223,8 +223,6 @@ mode_interpretations: Dict[
                     randomize(
                         DimmersBeatChase,
                         GentlePulse,
-                        HardSpatialPulse,
-                        HardSpatialCenterOutPulse,
                     ),
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),

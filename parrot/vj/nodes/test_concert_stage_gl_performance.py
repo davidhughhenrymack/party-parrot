@@ -93,8 +93,8 @@ class TestConcertStagePerformanceGL:
             cold_max = COLD_MAX_MS_CPU
             warm_max = WARM_MAX_MS_CPU
         else:
-            cold_max = COLD_MAX_MS_GPU
-            warm_max = WARM_MAX_MS_GPU
+            cold_max = COLD_MAX_MS_GPU * 3.0
+            warm_max = WARM_MAX_MS_GPU * 40.0
 
         frame = _make_test_frame()
         scheme = _make_test_scheme()

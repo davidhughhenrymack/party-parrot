@@ -93,12 +93,12 @@ scheme_berlin = [
 ]
 
 scheme_halloween = [
-    ColorScheme(Color("orange"), Color("purple"), Color("green")),
-    ColorScheme(Color("white"), Color("orange"), Color("purple")),
-    ColorScheme(Color("green"), Color("orange"), Color("purple")),
-    ColorScheme(Color("purple"), Color("orange"), Color("green")),
-    ColorScheme(Color("orange"), Color("green"), Color("purple")),
-    ColorScheme(Color("white"), Color("purple"), Color("orange")),
+    ColorScheme(Color("purple"), Color("purple"), Color("green")),
+    ColorScheme(Color("white"), Color("red"), Color("purple")),
+    ColorScheme(Color("green"), Color("blue"), Color("purple")),
+    ColorScheme(Color("purple"), Color("blue"), Color("green")),
+    ColorScheme(Color("white"), Color("red"), Color("red")),
+    ColorScheme(Color("white"), Color("purple"), Color("blue")),
 ]
 
 

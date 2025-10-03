@@ -2,6 +2,9 @@
 launch:
     poetry run python -m parrot.main $@
 
+launch-profile:
+    PROFILE_VJ=true PROFILE_VJ_INTERVAL=30 poetry run python -m parrot.main $@
+
 test:
     poetry run python -m pytest
 

@@ -121,6 +121,7 @@ class State:
 
         self._theme = value
         self.events.on_theme_change(self._theme)
+        self.save_state()
 
     @property
     def venue(self):
@@ -132,6 +133,7 @@ class State:
 
         self._venue = value
         self.events.on_venue_change(self._venue)
+        self.save_state()
 
     @property
     def manual_dimmer(self):

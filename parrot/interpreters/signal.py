@@ -6,7 +6,7 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase, FixtureWithBulbs
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.interpreters.bulbs import for_bulbs
-from parrot.interpreters.spatial import HardSpatialPulse
+from parrot.interpreters.spatial import HardSpatialCenterOutPulse, HardSpatialPulse
 
 
 T = TypeVar("T", bound=FixtureBase)
@@ -45,6 +45,10 @@ def signal_switch(
                 signal: random.random() < probability
                 for signal, probability in SIGNAL_PROBABILITIES.items()
             }
+
+            self.pulse_type = random.choice(
+                [HardSpatialPulse, HardSpatialCenterOutPulse]
+            )
 
             # Initialize state
             self.big_blinder_dimmer = 0.0
@@ -120,11 +124,11 @@ def signal_switch(
                             f for f in self.group if isinstance(f, FixtureWithBulbs)
                         ]
                         if bulb_fixtures:
-                            self.pulse_interp = for_bulbs(HardSpatialPulse)(
+                            self.pulse_interp = for_bulbs(self.pulse_type)(
                                 self.group, self.args
                             )
                         else:
-                            self.pulse_interp = HardSpatialPulse(self.group, self.args)
+                            self.pulse_interp = self.pulse_type(self.group, self.args)
                 else:
                     if self.pulse_active:
                         self.pulse_active = False
