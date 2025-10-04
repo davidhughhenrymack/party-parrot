@@ -39,6 +39,11 @@ def parse_arguments():
         action="store_true",
         help="Start in rave mode",
     )
+    parser.add_argument(
+        "--fixture-mode",
+        action="store_true",
+        help="Start in fixture renderer mode (toggle with backslash)",
+    )
     return parser.parse_args()
 
 

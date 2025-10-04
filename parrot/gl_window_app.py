@@ -52,6 +52,16 @@ def run_gl_window_app(args):
     vj_director = VJDirector(state)
     vj_director.setup(ctx)
 
+    # Initialize fixture renderer
+    from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
+
+    fixture_renderer = DMXFixtureRenderer(
+        state=state,
+        width=1920,
+        height=1080,
+    )
+    fixture_renderer.enter(ctx)
+
     # Initialize director
     director = Director(state, vj_director)
 
@@ -171,15 +181,32 @@ def run_gl_window_app(args):
         screenshot_time = time.perf_counter() + 0.5
         print("📸 Screenshot mode: will capture after 0.5s and exit")
 
+    # Fixture mode toggle
+    show_fixture_mode = getattr(args, "fixture_mode", False)
+    if show_fixture_mode:
+        print("💡 Starting in fixture renderer mode")
+
+    def toggle_fixture_mode():
+        nonlocal show_fixture_mode
+        show_fixture_mode = not show_fixture_mode
+        mode_str = "FIXTURE RENDERER" if show_fixture_mode else "VJ CONTENT"
+        print(f"💡 Switched to {mode_str} mode")
+
     # Setup keyboard handler on the underlying pyglet window
-    keyboard_handler = KeyboardHandler(director, overlay, signal_states, state)
+    keyboard_handler = KeyboardHandler(
+        director,
+        overlay,
+        signal_states,
+        state,
+        show_fixture_mode_callback=toggle_fixture_mode,
+    )
 
     # Access the underlying pyglet window and register the handler
     for w in pyglet.app.windows:
         w.push_handlers(keyboard_handler)
     print("⌨️  Keyboard shortcuts:")
     print("   SPACE/S: Regenerate interpreters  |  O: Shift")
-    print("   ENTER: Toggle overlay")
+    print("   ENTER: Toggle overlay  |  \\: Toggle fixture/VJ mode")
     print("   E: Gentle  |  F: Chill  |  C: Rave  |  D: Blackout")
     print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
 
@@ -223,7 +250,11 @@ def run_gl_window_app(args):
         # Get current window size
         window_width, window_height = window.size
 
-        rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)
+        # Render based on mode (fixture or VJ)
+        if show_fixture_mode:
+            rendered_fbo = fixture_renderer.render(frame_data, scheme_data, ctx)
+        else:
+            rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)
 
         # Bind the window's default framebuffer (screen) and render to it
         ctx.screen.use()

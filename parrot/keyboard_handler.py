@@ -21,11 +21,13 @@ class KeyboardHandler:
         overlay: OverlayUI,
         signal_states: SignalStates,
         state: State,
+        show_fixture_mode_callback=None,
     ):
         self.director = director
         self.overlay = overlay
         self.signal_states = signal_states
         self.state = state
+        self.show_fixture_mode_callback = show_fixture_mode_callback
 
     def on_key_press(self, symbol: int, modifiers: int) -> bool:
         """Handle key press events"""
@@ -35,6 +37,10 @@ class KeyboardHandler:
             return True  # Event handled
         elif symbol == pyglet.window.key.RETURN or symbol == pyglet.window.key.ENTER:
             self.overlay.toggle()
+            return True  # Event handled
+        elif symbol == pyglet.window.key.BACKSLASH:
+            if self.show_fixture_mode_callback:
+                self.show_fixture_mode_callback()
             return True  # Event handled
 
         # Signal buttons (press and hold)
