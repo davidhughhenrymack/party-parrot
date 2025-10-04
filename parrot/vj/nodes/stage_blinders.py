@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+
+import time
+from beartype import beartype
+
+from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import format_node_status
+from parrot.director.frame import Frame, FrameSignal
+from parrot.director.color_scheme import ColorScheme
+from parrot.vj.nodes.canvas_effect_base import GenerativeEffectBase
+
+
+@beartype
+class StageBlinders(GenerativeEffectBase):
+    """
+    Stage blinder lights effect that emulates the bright white blinder lights
+    at rock concerts. Creates a line of white circles with blur across the bottom
+    of the screen. Responds to big_blinder and small_blinder signals with
+    attack and decay fade in/out behavior.
+    """
+
+    def __init__(
+        self,
+        width: int = 1920,
+        height: int = 1080,
+        num_blinders: int = 8,
+        attack_time: float = 0.05,  # Fast attack (50ms)
+        decay_time: float = 0.3,  # Medium decay (300ms)
+    ):
+        """
+        Args:
+            width: Width of the effect
+            height: Height of the effect
+            num_blinders: Number of blinder circles
+            attack_time: Time to fade in (seconds)
+            decay_time: Time to fade out (seconds)
+        """
+        super().__init__(width, height)
+        self.num_blinders = num_blinders
+        self.attack_time = attack_time
+        self.decay_time = decay_time
+        self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
+
+        # Track blinder state
+        self.big_blinder_level = 0.0
+        self.small_blinder_level = 0.0
+        self.big_blinder_target = 0.0
+        self.small_blinder_target = 0.0
+        self.last_update_time = time.time()
+
+    def generate(self, vibe: Vibe):
+        """Configure blinder parameters based on the vibe"""
+        from parrot.director.mode import Mode
+
+        if vibe.mode == Mode.rave:
+            self.num_blinders = 10  # More blinders for rave mode
+            self.attack_time = 0.03  # Even faster attack
+            self.decay_time = 0.25  # Slightly faster decay
+            self.mode_opacity_multiplier = (
+                0.8  # Reduced to make fullscreen flash less intense
+            )
+        elif vibe.mode == Mode.chill:
+            self.num_blinders = 6  # Fewer for chill mode
+            self.attack_time = 0.1  # Slower attack
+            self.decay_time = 0.5  # Slower decay
+            self.mode_opacity_multiplier = 0.25  # Very subtle in chill
+        elif vibe.mode == Mode.gentle:
+            self.num_blinders = 7  # Medium for gentle mode
+            self.attack_time = 0.08
+            self.decay_time = 0.4
+            self.mode_opacity_multiplier = 0.4  # Reduced in gentle
+        elif vibe.mode == Mode.blackout:
+            self.num_blinders = 0
+            self.mode_opacity_multiplier = 0.0  # No blinders in blackout
+        else:
+            self.num_blinders = 8
+            self.attack_time = 0.05
+            self.decay_time = 0.3
+            self.mode_opacity_multiplier = 0.7
+
+    def print_self(self) -> str:
+        return format_node_status(
+            self.__class__.__name__,
+            emoji="💡",
+            num_blinders=self.num_blinders,
+        )
+
+    def _get_fragment_shader(self) -> str:
+        """Fragment shader for stage blinders rendering"""
+        return """
+        #version 330 core
+        in vec2 uv;
+        out vec3 color;
+        
+        uniform int num_blinders;
+        uniform float big_blinder_level;
+        uniform float small_blinder_level;
+        uniform vec2 resolution;
+        uniform float mode_opacity_multiplier;
+        
+        // Smooth circle SDF
+        float circle_sdf(vec2 p, float radius) {
+            return length(p) - radius;
+        }
+        
+        // Smooth falloff for blur effect
+        float smooth_circle(vec2 p, float radius, float blur) {
+            float dist = circle_sdf(p, radius);
+            return 1.0 - smoothstep(-blur, blur, dist);
+        }
+        
+        // Exponential falloff for outer glow
+        float exp_glow(vec2 p, float radius, float intensity) {
+            float dist = length(p);
+            return intensity * exp(-dist / radius);
+        }
+        
+        void main() {
+            vec3 final_color = vec3(0.0);
+            
+            // Calculate aspect ratio for proper circles
+            float aspect = resolution.x / resolution.y;
+            vec2 aspect_uv = uv;
+            aspect_uv.x *= aspect;
+            
+            // Position blinders at bottom of screen (y = 0.15 in UV space)
+            float blinder_y = 0.15;
+            
+            // Calculate center x position in aspect-corrected space
+            float center_x = aspect / 2.0;
+            
+            // Calculate spread width (80% of total width)
+            float spread_width = aspect * 0.8;
+            
+            // Render big blinders
+            if (big_blinder_level > 0.01) {
+                // Big blinder circle size
+                float circle_radius = 0.06;
+                float medium_blur_radius = 0.04;
+                float high_blur_radius = 0.15;
+                
+                // Calculate spacing to spread blinders evenly across spread_width
+                float spacing = spread_width / float(num_blinders + 1);
+                float start_x = center_x - spread_width / 2.0;
+                
+                for (int i = 0; i < num_blinders; i++) {
+                    float blinder_x = start_x + spacing * float(i + 1);
+                    vec2 blinder_pos = vec2(blinder_x, blinder_y);
+                    vec2 p = aspect_uv - blinder_pos;
+                    
+                    // Core white circle with medium blur
+                    float core = smooth_circle(p, circle_radius, medium_blur_radius);
+                    
+                    // Outer glow with high blur (lower opacity)
+                    float glow = exp_glow(p, high_blur_radius, 0.4);
+                    
+                    // Combine core and glow
+                    float intensity = core + glow;
+                    
+                    // White light
+                    final_color += vec3(1.0) * intensity * big_blinder_level;
+                }
+            }
+            
+            // Render small blinders (smaller but with MORE blur/glow like big blinders)
+            if (small_blinder_level > 0.01) {
+                // Small blinder circle size (60% of big blinder size)
+                float circle_radius = 0.036;
+                float medium_blur_radius = 0.024;
+                // INCREASED blur/glow radius to match big blinder's full-screen effect
+                float high_blur_radius = 0.15;  // Same as big blinder
+                
+                // Calculate spacing to spread blinders evenly across spread_width
+                float spacing = spread_width / float(num_blinders + 1);
+                float start_x = center_x - spread_width / 2.0;
+                
+                for (int i = 0; i < num_blinders; i++) {
+                    float blinder_x = start_x + spacing * float(i + 1);
+                    vec2 blinder_pos = vec2(blinder_x, blinder_y);
+                    vec2 p = aspect_uv - blinder_pos;
+                    
+                    // Core white circle with medium blur
+                    float core = smooth_circle(p, circle_radius, medium_blur_radius);
+                    
+                    // Outer glow with high blur - INCREASED glow intensity
+                    float glow = exp_glow(p, high_blur_radius, 0.45);  // Increased from 0.3 to 0.45
+                    
+                    // Combine core and glow
+                    float intensity = core + glow;
+                    
+                    // White light (70% brightness of big blinders)
+                    final_color += vec3(1.0) * intensity * small_blinder_level * 0.7;
+                }
+            }
+            
+            // Apply mode-based opacity multiplier and clamp to prevent overexposure
+            color = clamp(final_color * mode_opacity_multiplier, 0.0, 3.0);  // Allow some overexposure for bloom effect
+        }
+        """
+
+    def _set_effect_uniforms(self, frame: Frame, scheme: ColorScheme):
+        """Set stage blinders effect uniforms"""
+        current_time = time.time()
+        dt = current_time - self.last_update_time
+        self.last_update_time = current_time
+
+        # Get signal values
+        big_blinder_signal = frame[FrameSignal.big_blinder]
+        small_blinder_signal = frame[FrameSignal.small_blinder]
+
+        # Set targets based on signals
+        self.big_blinder_target = 1.0 if big_blinder_signal > 0.5 else 0.0
+        self.small_blinder_target = 1.0 if small_blinder_signal > 0.5 else 0.0
+
+        # Apply attack/decay to big blinder
+        if self.big_blinder_target > self.big_blinder_level:
+            # Attack: fade in
+            attack_rate = 1.0 / self.attack_time if self.attack_time > 0 else 999.0
+            self.big_blinder_level = min(
+                self.big_blinder_level + attack_rate * dt, self.big_blinder_target
+            )
+        else:
+            # Decay: fade out
+            decay_rate = 1.0 / self.decay_time if self.decay_time > 0 else 999.0
+            self.big_blinder_level = max(
+                self.big_blinder_level - decay_rate * dt, self.big_blinder_target
+            )
+
+        # Apply attack/decay to small blinder
+        if self.small_blinder_target > self.small_blinder_level:
+            # Attack: fade in
+            attack_rate = 1.0 / self.attack_time if self.attack_time > 0 else 999.0
+            self.small_blinder_level = min(
+                self.small_blinder_level + attack_rate * dt, self.small_blinder_target
+            )
+        else:
+            # Decay: fade out
+            decay_rate = 1.0 / self.decay_time if self.decay_time > 0 else 999.0
+            self.small_blinder_level = max(
+                self.small_blinder_level - decay_rate * dt, self.small_blinder_target
+            )
+
+        # Set uniforms
+        self.shader_program["num_blinders"] = self.num_blinders
+        self.shader_program["big_blinder_level"] = self.big_blinder_level
+        self.shader_program["small_blinder_level"] = self.small_blinder_level
+        self.shader_program["resolution"] = (float(self.width), float(self.height))
+        self.shader_program["mode_opacity_multiplier"] = self.mode_opacity_multiplier

@@ -40,6 +40,7 @@ class HotSparksEffect(GenerativeEffectBase):
         super().__init__(width, height)
         self.num_sparks = num_sparks
         self.signal = signal
+        self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
 
         # Track emission state
         self.start_time = time.time()  # Reference time for relative calculations
@@ -57,12 +58,22 @@ class HotSparksEffect(GenerativeEffectBase):
         if vibe.mode == Mode.rave:
             self.num_sparks = 500  # More for rave mode
             self.spark_speed = 1.2
+            self.mode_opacity_multiplier = 1.0
         elif vibe.mode == Mode.chill:
             self.num_sparks = 200  # Fewer for chill mode
             self.spark_speed = 0.5
+            self.mode_opacity_multiplier = 0.3  # Subtle sparks in chill
+        elif vibe.mode == Mode.gentle:
+            self.num_sparks = 150  # Medium for gentle mode
+            self.spark_speed = 0.6
+            self.mode_opacity_multiplier = 0.5  # Medium intensity
+        elif vibe.mode == Mode.blackout:
+            self.num_sparks = 0
+            self.mode_opacity_multiplier = 0.0  # No sparks in blackout
         else:
             self.num_sparks = 100
             self.spark_speed = 0.4
+            self.mode_opacity_multiplier = 0.7
 
         self.spark_lifetime = 1.0
 
@@ -87,6 +98,7 @@ class HotSparksEffect(GenerativeEffectBase):
         uniform int num_sparks;
         uniform float spark_lifetime;
         uniform bool is_emitting;
+        uniform float mode_opacity_multiplier;
         
         // High-quality pseudo-random function
         float random(vec2 st) {
@@ -255,7 +267,7 @@ class HotSparksEffect(GenerativeEffectBase):
                 }
             }
             
-            color = clamp(final_color, 0.0, 1.0);
+            color = clamp(final_color * mode_opacity_multiplier, 0.0, 1.0);
         }
         """
 
@@ -293,3 +305,4 @@ class HotSparksEffect(GenerativeEffectBase):
         self.shader_program["num_sparks"] = self.num_sparks
         self.shader_program["spark_lifetime"] = self.spark_lifetime
         self.shader_program["is_emitting"] = self.is_emitting
+        self.shader_program["mode_opacity_multiplier"] = self.mode_opacity_multiplier

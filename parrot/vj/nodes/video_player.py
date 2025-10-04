@@ -180,7 +180,6 @@ class VideoPlayer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Calculate scaling to cover the target area while preserving aspect ratio
         self._calculate_scaling()
 
-        print(f"▶️  {os.path.basename(video_path)}")
         self.current_video_path = video_path
 
     def _calculate_scaling(self):
