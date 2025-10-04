@@ -156,8 +156,15 @@ class Test3DRoomRender:
 
         renderer.exit()
 
-    def test_fixture_positions_loaded(self, renderer):
+    def test_fixture_positions_loaded(self, gl_context, renderer):
         """Test that fixture positions are loaded from JSON"""
+        renderer.enter(gl_context)
+
+        # Render once to initialize renderers
+        frame = Frame({})
+        scheme = scheme_halloween[0]
+        fbo = renderer.render(frame, scheme, gl_context)
+
         # Should have loaded fixtures
         assert len(renderer.renderers) > 0
 
@@ -167,6 +174,8 @@ class Test3DRoomRender:
 
         # Should have some variety in positions
         assert len(unique_positions) > 1
+
+        renderer.exit()
 
     def test_camera_rotation(self, gl_context, renderer):
         """Test that camera rotates around the room"""

@@ -18,6 +18,7 @@ Add major new features to the `Justfile`
 Don't add print statements unless asked
 Do not make .txt or .md files unless asked
 Do not wrap code in try-except-pass instead make the code work reliably
+Avoid uisng `hasattr` instead use concrete typing and None testing. We want our code to be precisely correct, not full of sloppy fallbacks and exception wrappers
 
 ## Nodes
 If you're working on nodes that inherit from BaseInterpretationNode, read the base class to understand the calling patterns precisely

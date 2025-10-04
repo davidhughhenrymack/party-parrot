@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from beartype import beartype
+from typing import Optional, Any
 
 from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.moving_head import MovingHead
@@ -14,17 +15,23 @@ from parrot.vj.renderers.motionstrip import MotionstripRenderer
 
 
 @beartype
-def create_renderer(fixture: FixtureBase) -> FixtureRenderer:
+def create_renderer(
+    fixture: FixtureBase, room_renderer: Optional[Any] = None
+) -> FixtureRenderer:
     """
-    Factory function to create the appropriate renderer for a fixture.
-    Similar to renderer_for_fixture in the legacy GUI.
+    Factory function to create the appropriate 3D renderer for a fixture.
+    All renderers now render in 3D space.
+
+    Args:
+        fixture: The fixture to create a renderer for
+        room_renderer: Room3DRenderer instance for 3D rendering
     """
     if isinstance(fixture, MovingHead):
-        return MovingHeadRenderer(fixture)
+        return MovingHeadRenderer(fixture, room_renderer)
     elif isinstance(fixture, Laser):
-        return LaserRenderer(fixture)
+        return LaserRenderer(fixture, room_renderer)
     elif isinstance(fixture, Motionstrip):
-        return MotionstripRenderer(fixture)
+        return MotionstripRenderer(fixture, room_renderer)
     else:
         # Default to bulb renderer for all other fixtures
-        return BulbRenderer(fixture)
+        return BulbRenderer(fixture, room_renderer)

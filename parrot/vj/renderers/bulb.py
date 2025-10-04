@@ -1,54 +1,44 @@
 #!/usr/bin/env python3
 
 from beartype import beartype
+from typing import Optional, Any
 
 from parrot.fixtures.base import FixtureBase
 from parrot.vj.renderers.base import FixtureRenderer
-from parrot.vj.renderers.render_utils import SimpleShapeRenderer
 from parrot.director.frame import Frame
 
 
 @beartype
 class BulbRenderer(FixtureRenderer):
-    """Renderer for simple bulb/PAR fixtures - circle with color.
-    Mimics legacy GUI: gray box with lit circle."""
+    """3D Renderer for simple bulb/PAR fixtures - gray cube body with colored sphere bulb"""
 
-    def __init__(self, fixture: FixtureBase):
-        super().__init__(fixture)
-        self._shape_renderer = None
+    def __init__(self, fixture: FixtureBase, room_renderer: Optional[Any] = None):
+        super().__init__(fixture, room_renderer)
 
     def _get_default_size(self) -> tuple[float, float]:
         return (30.0, 30.0)
 
     def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render bulb: gray box with colored circle that lights up"""
-        # Create shape renderer if needed
-        if self._shape_renderer is None:
-            self._shape_renderer = SimpleShapeRenderer(
-                context, canvas_size[0], canvas_size[1]
-            )
+        """Render bulb in 3D: gray cube body + colored sphere"""
+        if self.room_renderer is None:
+            return
 
-        x, y = self.position
-        width, height = self.size
+        # Get 3D position
+        room_x, room_y, room_z = self.get_3d_position(canvas_size)
 
-        # Draw gray background box
-        self._shape_renderer.draw_rectangle(
-            x, y, width, height, color=(0.3, 0.3, 0.3), alpha=1.0
+        # Render gray body cube (small, compact fixture)
+        body_size = self.cube_size * 0.6
+        body_color = (0.3, 0.3, 0.3)  # Dark gray
+        self.room_renderer.render_fixture_cube(
+            room_x, room_y + body_size / 2, room_z, body_color, body_size
         )
 
-        # Draw colored circle with dimmer effect
-        color = self.get_color()
-        dimmer = self.get_effective_dimmer(frame)
+        # Render colored bulb sphere on top, higher in Z
+        bulb_radius = body_size * 0.5
+        bulb_height_offset = body_size * 1.2  # Raise it higher
+        bulb_y = room_y + bulb_height_offset + bulb_radius
+        bulb_color = self.get_render_color(frame, is_bulb=True)  # Brighter
 
-        if dimmer > 0.01:
-            # Draw bulb circle at center
-            cx = x + width / 2.0
-            cy = y + height / 2.0
-            radius = min(width, height) * 0.4
-
-            # Apply dimmer to color brightness
-            dimmed_color = (color[0] * dimmer, color[1] * dimmer, color[2] * dimmer)
-
-            self._shape_renderer.draw_circle(
-                cx, cy, radius, color=dimmed_color, alpha=1.0
-            )
+        self.room_renderer.render_sphere(
+            room_x, bulb_y, room_z, bulb_color, bulb_radius
+        )

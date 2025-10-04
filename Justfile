@@ -14,6 +14,9 @@ launch-profile:
 launch-rave:
     poetry run python -m parrot.main --rave $@
 
+launch-fixture:
+    poetry run python -m parrot.main --fixture-mode $@
+
 test:
     poetry run python -m pytest
 

@@ -1,42 +1,37 @@
 #!/usr/bin/env python3
 
 from beartype import beartype
+from typing import Optional, Any
 
 from parrot.fixtures.laser import Laser
 from parrot.vj.renderers.base import FixtureRenderer
-from parrot.vj.renderers.render_utils import SimpleShapeRenderer
 from parrot.director.frame import Frame
 
 
 @beartype
 class LaserRenderer(FixtureRenderer):
-    """Renderer for laser fixtures with radiating beams"""
+    """3D Renderer for laser fixtures - gray body with beam (TODO)"""
 
-    def __init__(self, fixture: Laser):
-        super().__init__(fixture)
-        self._shape_renderer = None
+    def __init__(self, fixture: Laser, room_renderer: Optional[Any] = None):
+        super().__init__(fixture, room_renderer)
 
     def _get_default_size(self) -> tuple[float, float]:
         return (50.0, 50.0)
 
     def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render laser: gray box (beams TODO)"""
-        if self._shape_renderer is None:
-            self._shape_renderer = SimpleShapeRenderer(
-                context, canvas_size[0], canvas_size[1]
-            )
+        """Render laser in 3D: gray box body (beams TODO)"""
+        if self.room_renderer is None:
+            return
 
-        x, y = self.position
-        width, height = self.size
+        # Get 3D position
+        room_x, room_y, room_z = self.get_3d_position(canvas_size)
 
-        # Draw gray box
-        box_width = width * 0.6
-        box_height = height * 0.3
-        self._shape_renderer.draw_rectangle(
-            x + (width - box_width) / 2,
-            y + (height - box_height) / 2,
-            box_width,
-            box_height,
-            color=(0.3, 0.3, 0.3),
-            alpha=1.0,
+        # Render gray body cube
+        body_color = (0.3, 0.3, 0.3)
+        self.room_renderer.render_fixture_cube(
+            room_x,
+            room_y + self.cube_size / 2,
+            room_z,
+            body_color,
+            self.cube_size * 0.5,
         )

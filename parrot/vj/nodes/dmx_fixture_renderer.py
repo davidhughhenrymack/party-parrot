@@ -15,7 +15,6 @@ from parrot.fixtures.base import FixtureBase, FixtureGroup
 from parrot.vj.renderers.factory import create_renderer
 from parrot.vj.renderers.base import FixtureRenderer
 from parrot.vj.renderers.room_3d import Room3DRenderer
-from parrot.vj.renderers.fixture_3d import Fixture3DRenderer
 from parrot.state import State
 from typing import Optional
 import moderngl as mgl
@@ -101,9 +100,9 @@ class DMXFixtureRenderer(GenerativeEffectBase):
                 # Individual fixture
                 fixtures.append(item)
 
-        # Create renderer for each fixture
-        self.renderers = [create_renderer(fixture) for fixture in fixtures]
-        print(self.renderers)
+        # Store fixtures temporarily - will create renderers after room_renderer is initialized
+        self._fixtures = fixtures
+        self.renderers = []
 
     def _load_positions(self):
         """Load fixture positions from JSON file (legacy GUI format)"""
@@ -193,6 +192,16 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         if self.room_renderer is None:
             self.room_renderer = Room3DRenderer(context, self.width, self.height)
 
+            # Now create renderers with room_renderer
+            if hasattr(self, "_fixtures"):
+                self.renderers = [
+                    create_renderer(fixture, self.room_renderer)
+                    for fixture in self._fixtures
+                ]
+                # Load positions for the newly created renderers
+                self._load_positions()
+                print(f"Created {len(self.renderers)} 3D renderers")
+
         # Update camera rotation based on frame time
         self.room_renderer.update_camera(frame.time)
 
@@ -210,16 +219,10 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         # Render floor grid
         self.room_renderer.render_floor()
 
-        # Render each fixture as 3D cube
+        # Render each fixture in 3D (all renderers are now 3D)
         canvas_size = (float(self.canvas_width), float(self.canvas_height))
         for renderer in self.renderers:
-            if isinstance(renderer, Fixture3DRenderer):
-                renderer.render(context, canvas_size, frame)
-            else:
-                # Convert regular renderer to 3D renderer
-                fixture_3d = Fixture3DRenderer(renderer.fixture, self.room_renderer)
-                fixture_3d.set_position(*renderer.position)
-                fixture_3d.render(context, canvas_size, frame)
+            renderer.render(context, canvas_size, frame)
 
         context.disable(context.DEPTH_TEST)
 

@@ -183,14 +183,10 @@ def run_gl_window_app(args):
 
     # Fixture mode toggle
     show_fixture_mode = getattr(args, "fixture_mode", False)
-    if show_fixture_mode:
-        print("💡 Starting in fixture renderer mode")
 
     def toggle_fixture_mode():
         nonlocal show_fixture_mode
         show_fixture_mode = not show_fixture_mode
-        mode_str = "FIXTURE RENDERER" if show_fixture_mode else "VJ CONTENT"
-        print(f"💡 Switched to {mode_str} mode")
 
     # Setup keyboard handler on the underlying pyglet window
     keyboard_handler = KeyboardHandler(
