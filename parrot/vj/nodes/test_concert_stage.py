@@ -22,26 +22,20 @@ class TestConcertStage:
         # Should have all components
         assert hasattr(stage, "canvas_2d")
         assert hasattr(stage, "volumetric_beams")
-        assert hasattr(stage, "laser_array")
+        assert hasattr(stage, "laser_scan_heads")
+        assert hasattr(stage, "color_strobe")
+        assert hasattr(stage, "stage_blinders")
+        assert hasattr(stage, "hot_sparks")
 
         # Check camera system
         assert np.allclose(stage.camera_eye, [0.0, 6.0, -8.0])
         assert np.allclose(stage.camera_target, [0.0, 6.0, 0.0])
         assert np.allclose(stage.camera_up, [0.0, 1.0, 0.0])
 
-        # Check component properties (new LaserArray defaults)
+        # Check component properties
         assert stage.volumetric_beams.beam_count == 6
-        assert stage.laser_array.laser_count >= 1
-        assert len(stage.laser_array.lasers) == stage.laser_array.laser_count
-
-        # Check laser array camera integration
-        assert np.allclose(stage.laser_array.camera_eye, stage.camera_eye)
-        assert np.allclose(stage.laser_array.camera_target, stage.camera_target)
-        assert np.allclose(stage.laser_array.camera_up, stage.camera_up)
-
-        # Check laser positioning
-        expected_laser_pos = np.array([-4.0, 8.0, 2.0])
-        assert np.allclose(stage.laser_array.laser_position, expected_laser_pos)
+        assert stage.laser_scan_heads.num_heads == 4
+        assert stage.laser_scan_heads.beams_per_head == 12
 
     def test_component_access(self):
         """Test accessing individual components"""
@@ -50,20 +44,24 @@ class TestConcertStage:
         # Test direct access to components
         canvas_2d = stage.canvas_2d
         volumetric_beams = stage.volumetric_beams
-        laser_array = stage.laser_array
+        laser_scan_heads = stage.laser_scan_heads
+        color_strobe = stage.color_strobe
 
         assert canvas_2d is not None
         assert volumetric_beams is not None
-        assert laser_array is not None
+        assert laser_scan_heads is not None
+        assert color_strobe is not None
 
         # Check types
         from parrot.vj.nodes.camera_zoom import CameraZoom
         from parrot.vj.nodes.volumetric_beam import VolumetricBeam
-        from parrot.vj.nodes.laser_array import LaserArray
+        from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
+        from parrot.vj.nodes.color_strobe import ColorStrobe
 
         assert isinstance(canvas_2d, CameraZoom)
         assert isinstance(volumetric_beams, VolumetricBeam)
-        assert isinstance(laser_array, LaserArray)
+        assert isinstance(laser_scan_heads, LaserScanHeads)
+        assert isinstance(color_strobe, ColorStrobe)
 
     def test_mode_adjustments(self):
         """Test that mode changes adjust lighting appropriately via fixture generate methods"""
@@ -71,27 +69,32 @@ class TestConcertStage:
 
         # Test rave mode - call generate on each fixture directly
         rave_vibe = Vibe(Mode.rave)
-        stage.laser_array.generate(rave_vibe)
+        stage.laser_scan_heads.generate(rave_vibe)
         stage.volumetric_beams.generate(rave_vibe)
 
-        # LaserArray simplified: no fan_signal attribute in current implementation
         assert stage.volumetric_beams.beam_intensity == 3.5  # Updated for visibility
+        assert stage.laser_scan_heads.beams_per_head == 16  # Rave mode
+        assert stage.laser_scan_heads.mode_opacity_multiplier == 1.0
 
         # Test gentle mode
         gentle_vibe = Vibe(Mode.gentle)
-        stage.laser_array.generate(gentle_vibe)
+        stage.laser_scan_heads.generate(gentle_vibe)
         stage.volumetric_beams.generate(gentle_vibe)
 
         # Verify gentle mode intensity
         assert stage.volumetric_beams.beam_intensity == 2.0  # Updated for visibility
+        assert stage.laser_scan_heads.beams_per_head == 10  # Gentle mode
+        assert stage.laser_scan_heads.mode_opacity_multiplier == 0.5
 
         # Test blackout mode
         blackout_vibe = Vibe(Mode.blackout)
-        stage.laser_array.generate(blackout_vibe)
+        stage.laser_scan_heads.generate(blackout_vibe)
         stage.volumetric_beams.generate(blackout_vibe)
 
         # Verify blackout intensity
         assert stage.volumetric_beams.beam_intensity == 0.0
+        assert stage.laser_scan_heads.beams_per_head == 0
+        assert stage.laser_scan_heads.mode_opacity_multiplier == 0.0
 
     def test_generate_with_vibe(self):
         """Test generate method with different vibes using recursive generation"""
@@ -102,31 +105,26 @@ class TestConcertStage:
         rave_vibe = Vibe(Mode.rave)
 
         # The recursive generate will fail when it tries to enter GL nodes
-        # This is expected behavior - we're testing the LaserArray setup
+        # This is expected behavior - we're testing the component setup
         try:
             stage.generate_recursive(rave_vibe)
         except Exception:
             # Expected - GL context required for some child nodes
             pass
 
-        # The laser array should still be configured (at least one beam)
-        assert stage.laser_array.laser_count >= 1
+        # The laser scan heads should still be configured
+        assert stage.laser_scan_heads.beams_per_head >= 1
 
     def test_direct_component_control(self):
         """Test direct control of lighting components"""
         stage = ConcertStage()
 
-        # Test laser array properties (new interface)
-        assert stage.laser_array.laser_count >= 1
-        assert stage.laser_array.laser_length > 0
-        assert stage.laser_array.laser_thickness > 0
-
-        # Test that we can access laser beams
-        assert len(stage.laser_array.lasers) == stage.laser_array.laser_count
-        for laser in stage.laser_array.lasers:
-            assert hasattr(laser, "beam_id")
-            assert hasattr(laser, "fan_angle")
-            assert hasattr(laser, "intensity")
+        # Test laser scan heads properties
+        assert stage.laser_scan_heads.num_heads == 4
+        assert stage.laser_scan_heads.beams_per_head >= 1
+        assert stage.laser_scan_heads.base_rotation_speed > 0
+        assert stage.laser_scan_heads.base_tilt_speed > 0
+        assert stage.laser_scan_heads.base_beam_spread > 0
 
         # Test direct beam controls
         stage.volumetric_beams.beam_intensity = 2.0
@@ -181,8 +179,9 @@ class TestConcertStage:
         # Volumetric beams should react to bass
         assert stage.volumetric_beams.signal == FrameSignal.freq_low
 
-        # Laser array simplified; ensure it's present and configured
-        assert stage.laser_array.laser_count >= 1
+        # Laser scan heads are present and configured
+        assert stage.laser_scan_heads.num_heads == 4
+        assert stage.laser_scan_heads.beams_per_head >= 1
 
     def test_default_configuration(self):
         """Test default configuration values"""
@@ -197,42 +196,15 @@ class TestConcertStage:
         assert beams.haze_density == 0.9
         assert beams.movement_speed == 1.8
 
-        # Laser array defaults (simplified interface)
-        lasers = stage.laser_array
-        assert lasers.laser_count >= 1
-        assert lasers.laser_length > 0
-        assert lasers.laser_thickness > 0
-        assert lasers.width > 0
-        assert lasers.height > 0
-
-    def test_laser_direction_calculation(self):
-        """Test that laser directions are calculated correctly"""
-        stage = ConcertStage()
-
-        # Test that laser point vector points toward camera
-        laser_pos = stage.laser_array.laser_position
-        camera_pos = stage.laser_array.camera_eye
-        expected_direction = camera_pos - laser_pos
-        expected_direction = expected_direction / np.linalg.norm(expected_direction)
-
-        actual_direction = stage.laser_array.laser_point_vector
-
-        # Should be pointing toward the camera (audience)
-        assert np.allclose(actual_direction, expected_direction, atol=1e-6)
-
-    def test_laser_fan_distribution(self):
-        """Test that laser beams are distributed in a fan pattern"""
-        stage = ConcertStage()
-
-        # Check that laser beams have different fan angles
-        fan_angles = [laser.fan_angle for laser in stage.laser_array.lasers]
-
-        # Should have a range of angles (unless only 1 laser)
-        if len(fan_angles) > 1:
-            assert len(set(fan_angles)) > 1
-            # Should span from negative to positive angles
-            assert min(fan_angles) < 0
-            assert max(fan_angles) > 0
+        # Laser scan heads defaults
+        lasers = stage.laser_scan_heads
+        assert lasers.num_heads == 4
+        assert lasers.beams_per_head == 12
+        assert lasers.base_rotation_speed == 0.4
+        assert lasers.base_tilt_speed == 0.3
+        assert lasers.base_beam_spread == 0.25
+        assert lasers.width == 1920
+        assert lasers.height == 1080
 
     def test_shift_changes_node_tree(self):
         """Test that shift operation with 0.3 threshold changes the VJ node tree"""
@@ -335,47 +307,22 @@ class TestConcertStage:
             "✅ Both guaranteed (threshold=1.0) and probabilistic (threshold=0.3) shifts tested"
         )
 
-    def test_blackout_mode_returns_black_node(self):
-        """Test that ConcertStage uses ModeSwitch which returns black node when in blackout mode"""
+    def test_blackout_mode_configures_components(self):
+        """Test that blackout mode configures components to have zero intensity"""
         stage = ConcertStage()
 
-        # Mock objects for render call
-        frame = Mock(spec=Frame)
-        scheme = Mock(spec=ColorScheme)
-        context = Mock(spec=mgl.Context)
+        # Apply blackout mode to all components
+        blackout_vibe = Vibe(Mode.blackout)
+        stage.volumetric_beams.generate(blackout_vibe)
+        stage.laser_scan_heads.generate(blackout_vibe)
+        stage.stage_blinders.generate(blackout_vibe)
 
-        # Mock the mode switch's black node and layer compose render methods
-        mock_black_framebuffer = Mock(spec=mgl.Framebuffer)
-        stage.mode_switch.mode_nodes[Mode.blackout].render = Mock(
-            return_value=mock_black_framebuffer
-        )
-
-        mock_layer_framebuffer = Mock(spec=mgl.Framebuffer)
-        stage.mode_switch.mode_nodes[Mode.rave].render = Mock(
-            return_value=mock_layer_framebuffer
-        )
-
-        # Test normal mode (should use layer compose)
-        stage.mode_switch.generate(Vibe(Mode.rave))
-        result = stage.mode_switch.render(frame, scheme, context)
-        assert result == mock_layer_framebuffer
-        stage.mode_switch.mode_nodes[Mode.rave].render.assert_called_once_with(
-            frame, scheme, context
-        )
-        stage.mode_switch.mode_nodes[Mode.blackout].render.assert_not_called()
-
-        # Reset mocks
-        stage.mode_switch.mode_nodes[Mode.rave].render.reset_mock()
-        stage.mode_switch.mode_nodes[Mode.blackout].render.reset_mock()
-
-        # Test blackout mode (should use black node)
-        stage.mode_switch.generate(Vibe(Mode.blackout))
-        result = stage.mode_switch.render(frame, scheme, context)
-        assert result == mock_black_framebuffer
-        stage.mode_switch.mode_nodes[Mode.blackout].render.assert_called_once_with(
-            frame, scheme, context
-        )
-        stage.mode_switch.mode_nodes[Mode.rave].render.assert_not_called()
+        # Verify all components are disabled/minimal in blackout
+        assert stage.volumetric_beams.beam_intensity == 0.0
+        assert stage.laser_scan_heads.beams_per_head == 0
+        assert stage.laser_scan_heads.mode_opacity_multiplier == 0.0
+        assert stage.stage_blinders.num_blinders == 0
+        assert stage.stage_blinders.mode_opacity_multiplier == 0.0
 
 
 if __name__ == "__main__":

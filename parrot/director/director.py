@@ -44,9 +44,6 @@ class Director:
         self.state = state
         self.vj_director = vj_director
 
-        # Set default mode only if not already set (without triggering event)
-        if self.state.mode is None:
-            self.state._mode = Mode.chill
         self.setup_patch()
         self.generate_color_scheme()
 

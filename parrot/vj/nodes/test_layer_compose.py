@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 
+import os
 import pytest
 import moderngl as mgl
 import numpy as np
 from unittest.mock import Mock
+from PIL import Image
 
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.text_renderer import TextRenderer
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
-from parrot.vj.nodes.laser_array import LaserArray
+from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
+from parrot.vj.nodes.static_color import StaticColor
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
+from parrot.utils.colour import Color
 from parrot.graph.BaseInterpretationNode import Vibe
 from parrot.director.mode import Mode
 
@@ -173,29 +177,14 @@ class TestSceneElementComposition:
         assert isinstance(layer_compose.layer_specs[1].node, VolumetricBeam)
         assert layer_compose.layer_specs[1].blend_mode == BlendMode.NORMAL
 
-    def test_laser_array_on_black_composition(self):
-        """Test laser array compositing on black background with additive blending"""
+    def test_laser_scan_heads_on_black_composition(self):
+        """Test laser scan heads compositing on black background with additive blending"""
         black = Black()
 
-        # Create laser array with new interface
-        import numpy as np
-
-        camera_eye = np.array([0.0, 6.0, -8.0])
-        camera_target = np.array([0.0, 6.0, 0.0])
-        camera_up = np.array([0.0, 1.0, 0.0])
-        laser_position = np.array([-4.0, 8.0, 2.0])
-        laser_point_vector = camera_eye - laser_position
-        laser_point_vector = laser_point_vector / np.linalg.norm(laser_point_vector)
-
-        lasers = LaserArray(
-            camera_eye=camera_eye,
-            camera_target=camera_target,
-            camera_up=camera_up,
-            laser_position=laser_position,
-            laser_point_vector=laser_point_vector,
-            laser_count=4,
-            laser_length=15.0,
-            laser_thickness=0.02,
+        # Create laser scan heads
+        lasers = LaserScanHeads(
+            num_heads=4,
+            beams_per_head=12,
         )
 
         layer_compose = LayerCompose(
@@ -206,7 +195,7 @@ class TestSceneElementComposition:
         # Verify layer setup
         assert len(layer_compose.layer_specs) == 2
         assert isinstance(layer_compose.layer_specs[0].node, Black)
-        assert isinstance(layer_compose.layer_specs[1].node, LaserArray)
+        assert isinstance(layer_compose.layer_specs[1].node, LaserScanHeads)
         assert layer_compose.layer_specs[1].blend_mode == BlendMode.ADDITIVE
 
     def test_full_concert_stage_composition(self):
@@ -216,24 +205,8 @@ class TestSceneElementComposition:
         text = TextRenderer(text="CONCERT", font_size=64)
         beams = VolumetricBeam(beam_count=4, signal=FrameSignal.freq_low)
 
-        # Create laser array with new interface
-        import numpy as np
-
-        camera_eye = np.array([0.0, 6.0, -8.0])
-        camera_target = np.array([0.0, 6.0, 0.0])
-        camera_up = np.array([0.0, 1.0, 0.0])
-        laser_position = np.array([-4.0, 8.0, 2.0])
-        laser_point_vector = camera_eye - laser_position
-        laser_point_vector = laser_point_vector / np.linalg.norm(laser_point_vector)
-
-        lasers = LaserArray(
-            camera_eye=camera_eye,
-            camera_target=camera_target,
-            camera_up=camera_up,
-            laser_position=laser_position,
-            laser_point_vector=laser_point_vector,
-            laser_count=6,
-        )
+        # Create laser scan heads
+        lasers = LaserScanHeads(num_heads=4, beams_per_head=16)
 
         layer_compose = LayerCompose(
             LayerSpec(black, BlendMode.NORMAL),  # Black base
@@ -278,3 +251,290 @@ class TestSceneElementComposition:
         assert len(layer_compose.children) == 2
         assert layer_compose.children[0] is black
         assert layer_compose.children[1] is video
+
+
+class TestLayerComposeRendering:
+    """Test LayerCompose with actual rendering to PNG"""
+
+    @pytest.fixture
+    def gl_context(self):
+        """Create standalone GL context"""
+        try:
+            ctx = mgl.create_context(standalone=True, backend="egl")
+            yield ctx
+        except Exception:
+            ctx = mgl.create_context(standalone=True)
+            yield ctx
+        finally:
+            ctx.release()
+
+    @pytest.fixture
+    def test_frame(self):
+        """Create test frame with signals"""
+        return Frame(
+            {
+                FrameSignal.strobe: 0.8,
+                FrameSignal.freq_low: 0.6,
+                FrameSignal.freq_high: 0.7,
+                FrameSignal.sustained_low: 0.5,
+            }
+        )
+
+    @pytest.fixture
+    def test_scheme(self):
+        """Create test color scheme"""
+        return ColorScheme(
+            fg=Color("#FF0066"),  # Pink
+            bg=Color("#000000"),  # Black
+            bg_contrast=Color("#00FFFF"),  # Cyan
+        )
+
+    def _save_framebuffer_to_png(self, fb: mgl.Framebuffer, filename: str):
+        """Helper to save framebuffer to PNG"""
+        # Read pixels as RGB
+        data = fb.read(components=3)
+        width, height = fb.width, fb.height
+
+        # Convert to numpy array
+        arr = np.frombuffer(data, dtype=np.uint8).reshape((height, width, 3))
+
+        # Flip vertically (OpenGL convention)
+        arr = np.flipud(arr)
+
+        # Save PNG
+        project_out_dir = os.path.join(os.getcwd(), "test_output")
+        os.makedirs(project_out_dir, exist_ok=True)
+        out_path = os.path.join(project_out_dir, filename)
+
+        img = Image.fromarray(arr, mode="RGB")
+        img.save(out_path)
+
+        print(f"✅ Saved render to: {out_path}")
+        return out_path
+
+    def test_normal_blend_two_colors(self, gl_context, test_frame, test_scheme):
+        """Test normal blending with two colored layers"""
+        # Create two colored layers
+        red_layer = StaticColor(color=(1.0, 0.0, 0.0), width=800, height=600)
+        blue_layer = StaticColor(color=(0.0, 0.0, 1.0), width=800, height=600)
+
+        # Compose with normal blending (opacity in LayerSpec)
+        compose = LayerCompose(
+            LayerSpec(red_layer, BlendMode.NORMAL),
+            LayerSpec(blue_layer, BlendMode.NORMAL, opacity=0.5),
+            width=800,
+            height=600,
+        )
+
+        # Initialize all nodes
+        red_layer.enter(gl_context)
+        blue_layer.enter(gl_context)
+        compose.enter(gl_context)
+        compose.generate(Vibe(mode=Mode.rave))
+
+        # Render
+        result = compose.render(test_frame, test_scheme, gl_context)
+        assert result is not None
+
+        # Save to PNG
+        self._save_framebuffer_to_png(result, "layer_compose_normal_blend.png")
+
+        # Cleanup
+        compose.exit()
+        red_layer.exit()
+        blue_layer.exit()
+
+    def test_additive_blend_layers(self, gl_context, test_frame, test_scheme):
+        """Test additive blending (like lasers on black)"""
+        # Black base
+        black = Black(width=800, height=600)
+
+        # Red and blue layers
+        red_layer = StaticColor(color=(0.5, 0.0, 0.0), width=800, height=600)
+        blue_layer = StaticColor(color=(0.0, 0.0, 0.5), width=800, height=600)
+
+        # Compose with additive blending
+        compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),
+            LayerSpec(red_layer, BlendMode.ADDITIVE),
+            LayerSpec(blue_layer, BlendMode.ADDITIVE),
+            width=800,
+            height=600,
+        )
+
+        # Initialize all nodes
+        black.enter(gl_context)
+        red_layer.enter(gl_context)
+        blue_layer.enter(gl_context)
+        compose.enter(gl_context)
+        compose.generate(Vibe(mode=Mode.rave))
+
+        # Render
+        result = compose.render(test_frame, test_scheme, gl_context)
+        assert result is not None
+
+        # Save to PNG
+        self._save_framebuffer_to_png(result, "layer_compose_additive_blend.png")
+
+        # Cleanup
+        compose.exit()
+        black.exit()
+        red_layer.exit()
+        blue_layer.exit()
+
+    def test_multiply_blend_mask(self, gl_context, test_frame, test_scheme):
+        """Test multiply blending (like text mask)"""
+        # White base
+        white = StaticColor(color=(1.0, 1.0, 1.0), width=800, height=600)
+
+        # Gray layer for mask effect
+        mask = StaticColor(color=(0.5, 0.5, 0.5), width=800, height=600)
+
+        # Compose with multiply blending
+        compose = LayerCompose(
+            LayerSpec(white, BlendMode.NORMAL),
+            LayerSpec(mask, BlendMode.MULTIPLY),
+            width=800,
+            height=600,
+        )
+
+        # Initialize all nodes
+        white.enter(gl_context)
+        mask.enter(gl_context)
+        compose.enter(gl_context)
+        compose.generate(Vibe(mode=Mode.rave))
+
+        # Render
+        result = compose.render(test_frame, test_scheme, gl_context)
+        assert result is not None
+
+        # Save to PNG
+        self._save_framebuffer_to_png(result, "layer_compose_multiply_blend.png")
+
+        # Cleanup
+        compose.exit()
+        white.exit()
+        mask.exit()
+
+    def test_laser_heads_on_black(self, gl_context, test_frame, test_scheme):
+        """Test laser scan heads with additive blending on black"""
+        # Black base
+        black = Black(width=1280, height=720)
+
+        # Laser scan heads
+        lasers = LaserScanHeads(width=1280, height=720, beams_per_head=16)
+
+        # Compose
+        compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),
+            LayerSpec(lasers, BlendMode.ADDITIVE),
+            width=1280,
+            height=720,
+        )
+
+        # Initialize all nodes
+        black.enter(gl_context)
+        lasers.enter(gl_context)
+        compose.enter(gl_context)
+        compose.generate(Vibe(mode=Mode.rave))
+
+        # Render
+        result = compose.render(test_frame, test_scheme, gl_context)
+        assert result is not None
+
+        # Save to PNG
+        self._save_framebuffer_to_png(result, "layer_compose_lasers_on_black.png")
+
+        # Cleanup
+        compose.exit()
+        black.exit()
+        lasers.exit()
+
+    def test_volumetric_beams_composition(self, gl_context, test_frame, test_scheme):
+        """Test volumetric beams with normal blending"""
+        # Black base
+        black = Black(width=1280, height=720)
+
+        # Volumetric beams
+        beams = VolumetricBeam(
+            beam_count=4,
+            beam_length=10.0,
+            beam_width=0.3,
+            signal=FrameSignal.freq_low,
+            width=1280,
+            height=720,
+        )
+
+        # Compose
+        compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),
+            LayerSpec(beams, BlendMode.NORMAL),
+            width=1280,
+            height=720,
+        )
+
+        # Initialize all nodes
+        black.enter(gl_context)
+        beams.enter(gl_context)
+        compose.enter(gl_context)
+        compose.generate(Vibe(mode=Mode.rave))
+
+        # Render
+        result = compose.render(test_frame, test_scheme, gl_context)
+        assert result is not None
+
+        # Save to PNG
+        self._save_framebuffer_to_png(result, "layer_compose_beams.png")
+
+        # Cleanup
+        compose.exit()
+        black.exit()
+        beams.exit()
+
+    def test_multi_layer_composition(self, gl_context, test_frame, test_scheme):
+        """Test complex multi-layer composition with different blend modes"""
+        # Base layer
+        black = Black(width=1280, height=720)
+
+        # Colored background
+        bg_color = StaticColor(color=(0.1, 0.05, 0.2), width=1280, height=720)
+
+        # Volumetric beams
+        beams = VolumetricBeam(
+            beam_count=3, signal=FrameSignal.freq_low, width=1280, height=720
+        )
+
+        # Laser scan heads
+        lasers = LaserScanHeads(width=1280, height=720, beams_per_head=12)
+
+        # Compose all layers
+        compose = LayerCompose(
+            LayerSpec(black, BlendMode.NORMAL),  # Black base
+            LayerSpec(bg_color, BlendMode.NORMAL),  # Colored background
+            LayerSpec(beams, BlendMode.NORMAL),  # Atmospheric beams
+            LayerSpec(lasers, BlendMode.ADDITIVE),  # Sharp laser effects
+            width=1280,
+            height=720,
+        )
+
+        # Initialize all nodes
+        black.enter(gl_context)
+        bg_color.enter(gl_context)
+        beams.enter(gl_context)
+        lasers.enter(gl_context)
+        compose.enter(gl_context)
+        compose.generate(Vibe(mode=Mode.rave))
+
+        # Render
+        result = compose.render(test_frame, test_scheme, gl_context)
+        assert result is not None
+
+        # Save to PNG
+        self._save_framebuffer_to_png(result, "layer_compose_multi_layer.png")
+
+        # Cleanup
+        compose.exit()
+        black.exit()
+        bg_color.exit()
+        beams.exit()
+        lasers.exit()

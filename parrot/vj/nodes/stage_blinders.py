@@ -204,13 +204,13 @@ class StageBlinders(GenerativeEffectBase):
         dt = current_time - self.last_update_time
         self.last_update_time = current_time
 
-        # Get signal values
+        # Get signal values - only big blinder now (small blinder is for laser heads)
         big_blinder_signal = frame[FrameSignal.big_blinder]
-        small_blinder_signal = frame[FrameSignal.small_blinder]
 
         # Set targets based on signals
         self.big_blinder_target = 1.0 if big_blinder_signal > 0.5 else 0.0
-        self.small_blinder_target = 1.0 if small_blinder_signal > 0.5 else 0.0
+        # Small blinder no longer used - set to 0
+        self.small_blinder_target = 0.0
 
         # Apply attack/decay to big blinder
         if self.big_blinder_target > self.big_blinder_level:
@@ -226,19 +226,8 @@ class StageBlinders(GenerativeEffectBase):
                 self.big_blinder_level - decay_rate * dt, self.big_blinder_target
             )
 
-        # Apply attack/decay to small blinder
-        if self.small_blinder_target > self.small_blinder_level:
-            # Attack: fade in
-            attack_rate = 1.0 / self.attack_time if self.attack_time > 0 else 999.0
-            self.small_blinder_level = min(
-                self.small_blinder_level + attack_rate * dt, self.small_blinder_target
-            )
-        else:
-            # Decay: fade out
-            decay_rate = 1.0 / self.decay_time if self.decay_time > 0 else 999.0
-            self.small_blinder_level = max(
-                self.small_blinder_level - decay_rate * dt, self.small_blinder_target
-            )
+        # Small blinder is always off (used by laser heads now)
+        self.small_blinder_level = 0.0
 
         # Set uniforms
         self.shader_program["num_blinders"] = self.num_blinders

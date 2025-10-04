@@ -29,7 +29,6 @@ from parrot.vj.nodes.text_renderer import TextRenderer
 from parrot.vj.nodes.text_color_pulse import TextColorPulse
 from parrot.vj.nodes.multiply_compose import MultiplyCompose
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
-from parrot.vj.nodes.laser_array import LaserArray
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.mode_switch import ModeSwitch
 from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
@@ -42,6 +41,7 @@ from parrot.vj.nodes.glow_effect import GlowEffect
 from parrot.vj.nodes.bloom_filter import BloomFilter
 from parrot.vj.nodes.hot_sparks_effect import HotSparksEffect
 from parrot.vj.nodes.stage_blinders import StageBlinders
+from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
 from parrot.vj.profiler import vj_profiler
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.moving_head import MovingHead
@@ -161,22 +161,6 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         volumetric_beams = VolumetricBeam()
 
         self.volumetric_beams = volumetric_beams
-        # Create 3D laser array for sharp laser effects
-        # Position at top left of stage pointing back at audience
-        laser_position = np.array([-4.0, 8.0, 2.0])  # Top left of stage
-        laser_point_vector = self.camera_eye - laser_position  # Point toward audience
-        laser_point_vector = laser_point_vector / np.linalg.norm(
-            laser_point_vector
-        )  # Normalize
-
-        laser_array = LaserArray(
-            camera_eye=self.camera_eye,
-            camera_target=self.camera_target,
-            camera_up=self.camera_up,
-            laser_position=laser_position,
-            laser_point_vector=laser_point_vector,
-        )
-        self.laser_array = laser_array
 
         moving_head_renderer = self._create_virtual_moving_heads()
         self.moving_head_renderer = moving_head_renderer
@@ -329,6 +313,9 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         color_strobe = ColorStrobe()
         self.color_strobe = color_strobe
 
+        laser_scan_heads = LaserScanHeads()
+        self.laser_scan_heads = laser_scan_heads
+
         hot_sparks = HotSparksEffect()
         self.hot_sparks = hot_sparks
 
@@ -344,8 +331,11 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 hot_sparks, BlendMode.ADDITIVE, opacity=0.9
             ),  # Hot sparks: additive for glow effects
             LayerSpec(
+                laser_scan_heads, BlendMode.ADDITIVE, opacity=1.0
+            ),  # Laser scan heads: respond to small_blinder signal
+            LayerSpec(
                 stage_blinders, BlendMode.ADDITIVE, opacity=1.0
-            ),  # Stage blinders: additive for bright blinder lights
+            ),  # Stage blinders: respond to big_blinder signal
             LayerSpec(
                 color_strobe, BlendMode.ADDITIVE
             ),  # Color strobe: additive for flash effects

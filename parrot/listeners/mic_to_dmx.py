@@ -99,7 +99,7 @@ class MicToDmx(object):
 
         # Initialize VJ system
 
-        self.vj_director = VJDirector(self.state.mode or Mode.chill)
+        self.vj_director = VJDirector(self.state)
 
         # Initialize director with VJ director
         self.director = Director(self.state, self.vj_director)
