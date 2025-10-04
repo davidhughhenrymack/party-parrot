@@ -97,11 +97,14 @@ class MotionstripRenderer(FixtureRenderer):
                         bulb_y_local = body_height / 2
                         bulb_z_local = bulb_forward_distance
 
-                        self.room_renderer.render_sphere(
+                        # Render bulb circle with beam facing forward (+Z)
+                        self.room_renderer.render_bulb_with_beam(
                             (bulb_x_local, bulb_y_local, bulb_z_local),
                             bulb_color,
-                            bulb_radius,
+                            bulb_radius=bulb_radius,
+                            normal=(0.0, 0.0, 1.0),  # Face forward toward audience
                             alpha=effective_alpha,
+                            beam_length=6.0,
                         )
                     except:
                         pass

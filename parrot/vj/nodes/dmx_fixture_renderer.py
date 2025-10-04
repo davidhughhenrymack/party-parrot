@@ -191,7 +191,9 @@ class DMXFixtureRenderer(GenerativeEffectBase):
 
         # Initialize room renderer if needed
         if self.room_renderer is None:
-            self.room_renderer = Room3DRenderer(context, self.width, self.height)
+            self.room_renderer = Room3DRenderer(
+                context, self.width, self.height, show_floor=True
+            )
 
             # Now create renderers with room_renderer
             if hasattr(self, "_fixtures"):

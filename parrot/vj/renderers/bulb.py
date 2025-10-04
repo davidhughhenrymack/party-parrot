@@ -38,7 +38,7 @@ class BulbRenderer(FixtureRenderer):
                     (0.0, body_size / 2, 0.0), body_color, body_size
                 )
 
-                # Render colored bulb sphere on audience-facing side (+Z in local coords)
+                # Render colored bulb circle with beam on audience-facing side (+Z in local coords)
                 bulb_radius = body_size * 0.5
                 bulb_distance = body_size * 0.7  # Distance from center toward audience
 
@@ -47,9 +47,12 @@ class BulbRenderer(FixtureRenderer):
                 dimmer = self.get_effective_dimmer(frame)
 
                 # Bulb position in local coordinates (at body height, forward toward audience)
-                self.room_renderer.render_sphere(
+                # Normal points forward in +Z (toward audience)
+                self.room_renderer.render_bulb_with_beam(
                     (0.0, body_size, bulb_distance),
                     bulb_color,
-                    bulb_radius,
+                    bulb_radius=bulb_radius,
+                    normal=(0.0, 0.0, 1.0),  # Face forward toward audience
                     alpha=dimmer,
+                    beam_length=8.0,
                 )

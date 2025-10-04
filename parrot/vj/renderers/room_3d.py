@@ -21,10 +21,13 @@ from parrot.utils.input_events import InputEvents
 class Room3DRenderer:
     """3D room renderer with floor grid and 3D fixture cubes"""
 
-    def __init__(self, context: mgl.Context, width: int, height: int):
+    def __init__(
+        self, context: mgl.Context, width: int, height: int, show_floor: bool = False
+    ):
         self.ctx = context
         self.width = width
         self.height = height
+        self.show_floor = show_floor
 
         # Room dimensions (in arbitrary units)
         self.room_width = 20.0  # Stage to back wall
@@ -74,7 +77,10 @@ class Room3DRenderer:
         self.shininess = 32.0
 
         self._setup_shaders()
-        self._setup_floor_geometry()
+
+        # Only setup floor geometry if enabled
+        if self.show_floor:
+            self._setup_floor_geometry()
 
         # Transform stacks for hierarchical rendering
         self.position_stack: list[tuple[float, float, float]] = [(0.0, 0.0, 0.0)]
@@ -461,6 +467,9 @@ class Room3DRenderer:
 
     def render_floor(self):
         """Render the floor quad and grid lines with lighting"""
+        if not self.show_floor:
+            return
+
         mvp = self._get_mvp_matrix()
         model = np.eye(4, dtype=np.float32)
 
@@ -800,6 +809,137 @@ class Room3DRenderer:
         color_vbo.release()
         vao.release()
 
+    def render_circle(
+        self,
+        position: tuple[float, float, float],
+        color: tuple[float, float, float],
+        radius: float = 0.3,
+        normal: tuple[float, float, float] = (0.0, 0.0, 1.0),
+        alpha: float = 1.0,
+        segments: int = 24,
+    ):
+        """Render a flat circular disc in local coordinates
+
+        Args:
+            position: Local position (x, y, z) relative to current transform
+            color: RGB color tuple
+            radius: Radius of the circle
+            normal: Normal direction the circle faces (default: +Z, toward audience)
+            alpha: Alpha transparency (0.0 = fully transparent, 1.0 = fully opaque)
+            segments: Number of segments around the circle
+        """
+        import math
+
+        x, y, z = position
+        nx, ny, nz = normal
+
+        # Normalize the normal vector
+        normal_length = math.sqrt(nx * nx + ny * ny + nz * nz)
+        if normal_length < 0.001:
+            nx, ny, nz = 0.0, 0.0, 1.0
+        else:
+            nx, ny, nz = nx / normal_length, ny / normal_length, nz / normal_length
+
+        # Create perpendicular vectors for the circle plane
+        # Find a vector perpendicular to normal
+        if abs(nx) < 0.9:
+            perp1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        else:
+            perp1 = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+
+        normal_vec = np.array([nx, ny, nz], dtype=np.float32)
+        perp1 = perp1 - normal_vec * np.dot(perp1, normal_vec)
+        perp1 = perp1 / np.linalg.norm(perp1)
+
+        # Second perpendicular vector (cross product)
+        perp2 = np.cross(normal_vec, perp1)
+        perp2 = perp2 / np.linalg.norm(perp2)
+
+        # Build circle geometry as a triangle fan
+        circle_vertices = []
+        circle_normals = []
+        circle_colors = []
+
+        # Center point
+        center = [x, y, z]
+
+        # Generate circle points and triangles
+        for i in range(segments):
+            angle1 = 2.0 * math.pi * i / segments
+            angle2 = 2.0 * math.pi * ((i + 1) % segments) / segments
+
+            cos1, sin1 = math.cos(angle1), math.sin(angle1)
+            cos2, sin2 = math.cos(angle2), math.sin(angle2)
+
+            # Point 1 on circle
+            offset1 = perp1 * cos1 * radius + perp2 * sin1 * radius
+            point1 = [
+                center[0] + offset1[0],
+                center[1] + offset1[1],
+                center[2] + offset1[2],
+            ]
+
+            # Point 2 on circle
+            offset2 = perp1 * cos2 * radius + perp2 * sin2 * radius
+            point2 = [
+                center[0] + offset2[0],
+                center[1] + offset2[1],
+                center[2] + offset2[2],
+            ]
+
+            # Triangle: center -> point1 -> point2
+            circle_vertices.extend(center)
+            circle_vertices.extend(point1)
+            circle_vertices.extend(point2)
+
+            # All normals point in the normal direction
+            for _ in range(3):
+                circle_normals.extend([nx, ny, nz])
+                circle_colors.extend([color[0], color[1], color[2], alpha])
+
+        # Create VBOs
+        vertices_array = np.array(circle_vertices, dtype=np.float32)
+        normals_array = np.array(circle_normals, dtype=np.float32)
+        colors_array = np.array(circle_colors, dtype=np.float32)
+
+        vbo = self.ctx.buffer(vertices_array.tobytes())
+        color_vbo = self.ctx.buffer(colors_array.tobytes())
+        normal_vbo = self.ctx.buffer(normals_array.tobytes())
+
+        vao = self.ctx.vertex_array(
+            self.shader,
+            [
+                (vbo, "3f", "position"),
+                (color_vbo, "4f", "color"),
+                (normal_vbo, "3f", "normal"),
+            ],
+        )
+
+        # Render circle with emission (bulbs glow independently)
+        model = self._get_current_model_matrix()
+        mvp_with_model = self._get_mvp_matrix() @ model
+
+        self.shader["mvp"] = mvp_with_model.T.flatten()
+        self.shader["model"] = model.T.flatten()
+        self.shader["emission"] = 1.0  # Bulbs are emissive - not affected by lighting
+
+        # Enable blending for transparency if alpha < 1.0
+        if alpha < 1.0:
+            self.ctx.enable(mgl.BLEND)
+            self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+
+        vao.render(mgl.TRIANGLES)
+
+        # Disable blending
+        if alpha < 1.0:
+            self.ctx.disable(mgl.BLEND)
+
+        # Cleanup
+        vbo.release()
+        color_vbo.release()
+        normal_vbo.release()
+        vao.release()
+
     def render_sphere(
         self,
         position: tuple[float, float, float],
@@ -934,6 +1074,47 @@ class Room3DRenderer:
         color_vbo.release()
         normal_vbo.release()
         vao.release()
+
+    def render_bulb_with_beam(
+        self,
+        position: tuple[float, float, float],
+        color: tuple[float, float, float],
+        bulb_radius: float = 0.3,
+        normal: tuple[float, float, float] = (0.0, 0.0, 1.0),
+        alpha: float = 1.0,
+        beam_length: float = 5.0,
+        beam_alpha: float = 0.15,
+    ):
+        """Render a bulb (circle) with a cone beam projecting from it
+
+        Args:
+            position: Local position (x, y, z) relative to current transform
+            color: RGB color tuple
+            bulb_radius: Radius of the bulb circle
+            normal: Normal direction the bulb faces (default: +Z, toward audience)
+            alpha: Alpha transparency for the bulb (0.0 = fully transparent, 1.0 = fully opaque)
+            beam_length: Length of the cone beam
+            beam_alpha: Alpha transparency for the beam (default: 0.15 for subtle effect)
+        """
+        # Render the bulb circle
+        self.render_circle(position, color, bulb_radius, normal, alpha)
+
+        # Render the cone beam if alpha is significant
+        if alpha > 0.05:
+            x, y, z = position
+            # Beam projects in the same direction as the bulb normal
+            self.render_cone_beam(
+                x,
+                y,
+                z,
+                normal,
+                color,
+                length=beam_length,
+                start_radius=bulb_radius * 0.3,
+                end_radius=bulb_radius * 3.0,
+                segments=16,
+                alpha=beam_alpha * alpha,  # Scale beam alpha with bulb alpha
+            )
 
     def render_cone_beam(
         self,
@@ -1127,19 +1308,21 @@ class Room3DRenderer:
 
     def cleanup(self):
         """Clean up OpenGL resources"""
-        if hasattr(self, "floor_vbo"):
-            self.floor_vbo.release()
-        if hasattr(self, "floor_normal_vbo"):
-            self.floor_normal_vbo.release()
-        if hasattr(self, "floor_color_vbo"):
-            self.floor_color_vbo.release()
-        if hasattr(self, "floor_vao"):
-            self.floor_vao.release()
-        if hasattr(self, "grid_vbo"):
-            self.grid_vbo.release()
-        if hasattr(self, "grid_normal_vbo"):
-            self.grid_normal_vbo.release()
-        if hasattr(self, "grid_color_vbo"):
-            self.grid_color_vbo.release()
-        if hasattr(self, "grid_vao"):
-            self.grid_vao.release()
+        # Only cleanup floor resources if they were created
+        if self.show_floor:
+            if hasattr(self, "floor_vbo"):
+                self.floor_vbo.release()
+            if hasattr(self, "floor_normal_vbo"):
+                self.floor_normal_vbo.release()
+            if hasattr(self, "floor_color_vbo"):
+                self.floor_color_vbo.release()
+            if hasattr(self, "floor_vao"):
+                self.floor_vao.release()
+            if hasattr(self, "grid_vbo"):
+                self.grid_vbo.release()
+            if hasattr(self, "grid_normal_vbo"):
+                self.grid_normal_vbo.release()
+            if hasattr(self, "grid_color_vbo"):
+                self.grid_color_vbo.release()
+            if hasattr(self, "grid_vao"):
+                self.grid_vao.release()

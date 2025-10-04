@@ -45,7 +45,7 @@ class MovingHeadRenderer(FixtureRenderer):
                     (0.0, body_size / 2, 0.0), body_color, body_size
                 )
 
-                # Render colored light sphere bulb on audience-facing side
+                # Render colored light circle bulb with beam
                 bulb_radius = body_size * 0.4
                 bulb_distance = body_size * 0.8  # Distance from center toward audience
 
@@ -53,56 +53,49 @@ class MovingHeadRenderer(FixtureRenderer):
                 bulb_color = self.get_color()  # Full RGB color
                 dimmer = self.get_effective_dimmer(frame)
 
-                # Bulb position in local coordinates (at body height, forward toward audience)
-                self.room_renderer.render_sphere(
+                # Calculate beam direction based on pan/tilt
+                # Get pan and tilt angles (scaled by 0.5 for more realistic range)
+                pan_rad, tilt_rad = self.get_angles()
+                pan_rad *= 0.5  # Halve the angular range
+                tilt_rad *= 0.5  # Halve the angular range
+                pan_rad += math.pi  # Rotate pan by 180 degrees
+
+                # Calculate beam direction vector from pan and tilt
+                # Default orientation: pointing toward audience (+Z in local space)
+                # Pan rotates around Y axis (horizontal), Tilt rotates around local X axis (vertical)
+                cos_tilt = math.cos(tilt_rad)
+                sin_tilt = math.sin(tilt_rad)
+                cos_pan = math.cos(pan_rad)
+                sin_pan = math.sin(pan_rad)
+
+                # Calculate beam direction in world space
+                # Pan rotates left/right, tilt rotates up/down
+                beam_dir_x = sin_pan * cos_tilt
+                beam_dir_y = -sin_tilt  # Negative because tilt up should point up (+Y)
+                beam_dir_z = cos_pan * cos_tilt
+                beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
+
+                # Render bulb circle facing the beam direction
+                self.room_renderer.render_circle(
                     (0.0, body_size, bulb_distance),
                     bulb_color,
                     bulb_radius,
+                    normal=beam_direction,
                     alpha=dimmer,
                 )
 
-                # Render beam based on pan/tilt/dimmer/color
-                # Only render beam if dimmer is above threshold
+                # Render cone beam from bulb position if dimmer is significant
                 if dimmer > 0.05:
-                    # Get pan and tilt angles (scaled by 0.5 for more realistic range)
-                    pan_rad, tilt_rad = self.get_angles()
-                    pan_rad *= 0.5  # Halve the angular range
-                    tilt_rad *= 0.5  # Halve the angular range
-                    pan_rad += math.pi  # Rotate pan by 180 degrees
-
-                    # Calculate beam direction vector from pan and tilt
-                    # Default orientation: pointing toward audience (+Z in local space)
-                    # Pan rotates around Y axis (horizontal), Tilt rotates around local X axis (vertical)
-
-                    # Start with default forward direction
-                    cos_tilt = math.cos(tilt_rad)
-                    sin_tilt = math.sin(tilt_rad)
-                    cos_pan = math.cos(pan_rad)
-                    sin_pan = math.sin(pan_rad)
-
-                    # Calculate beam direction in world space
-                    # Pan rotates left/right, tilt rotates up/down
-                    beam_dir_x = sin_pan * cos_tilt
-                    beam_dir_y = (
-                        -sin_tilt
-                    )  # Negative because tilt up should point up (+Y)
-                    beam_dir_z = cos_pan * cos_tilt
-
-                    # Get beam color (full brightness, dimmer affects alpha)
-                    base_color = self.get_color()
-                    beam_color = base_color  # Use full color, not dimmed
-
-                    # Render cone beam from bulb position in local coordinates
                     beam_length = 15.0  # Fixed length regardless of dimmer
                     self.room_renderer.render_cone_beam(
                         0.0,
                         body_size,
                         bulb_distance,
-                        (beam_dir_x, beam_dir_y, beam_dir_z),
-                        beam_color,
+                        beam_direction,
+                        bulb_color,
                         length=beam_length,
                         start_radius=bulb_radius * 0.3,
                         end_radius=bulb_radius * 1.2,
                         segments=16,
-                        alpha=dimmer,  # Dimmer controls transparency
+                        alpha=dimmer * 0.4,  # Slightly more visible beam
                     )

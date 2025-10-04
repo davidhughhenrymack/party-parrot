@@ -256,3 +256,84 @@ def test_room_renderer_transform_stacks():
     # Cleanup
     room.cleanup()
     ctx.release()
+
+
+def test_room_renderer_circle():
+    """Test that room renderer can render circles"""
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+
+    ctx = mgl.create_context(standalone=True)
+    room = Room3DRenderer(ctx, 800, 600)
+
+    # Create a framebuffer to render to
+    fbo = ctx.framebuffer(color_attachments=[ctx.texture((800, 600), 3)])
+    fbo.use()
+    ctx.clear(0.0, 0.0, 0.0)
+
+    # Render a circle facing forward
+    room.render_circle(
+        position=(0.0, 1.0, 0.0),
+        color=(1.0, 0.0, 0.0),
+        radius=0.5,
+        normal=(0.0, 0.0, 1.0),
+        alpha=1.0,
+    )
+
+    # Should not crash
+    # Cleanup
+    fbo.release()
+    room.cleanup()
+    ctx.release()
+
+
+def test_room_renderer_bulb_with_beam():
+    """Test that room renderer can render bulbs with beams"""
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+
+    ctx = mgl.create_context(standalone=True)
+    room = Room3DRenderer(ctx, 800, 600)
+
+    # Create a framebuffer to render to
+    fbo = ctx.framebuffer(color_attachments=[ctx.texture((800, 600), 3)])
+    fbo.use()
+    ctx.clear(0.0, 0.0, 0.0)
+
+    # Render a bulb with beam
+    room.render_bulb_with_beam(
+        position=(0.0, 1.0, 0.0),
+        color=(0.0, 1.0, 0.0),
+        bulb_radius=0.3,
+        normal=(0.0, 0.0, 1.0),
+        alpha=0.8,
+        beam_length=5.0,
+        beam_alpha=0.2,
+    )
+
+    # Should not crash
+    # Cleanup
+    fbo.release()
+    room.cleanup()
+    ctx.release()
+
+
+def test_room_renderer_floor_optional():
+    """Test that floor is optional and disabled by default"""
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+
+    ctx = mgl.create_context(standalone=True)
+
+    # Default: floor disabled
+    room_no_floor = Room3DRenderer(ctx, 800, 600)
+    assert room_no_floor.show_floor is False
+    assert not hasattr(room_no_floor, "floor_vertices")
+
+    # Explicitly enable floor
+    room_with_floor = Room3DRenderer(ctx, 800, 600, show_floor=True)
+    assert room_with_floor.show_floor is True
+    assert hasattr(room_with_floor, "floor_vertices")
+    assert len(room_with_floor.floor_vertices) > 0
+
+    # Cleanup
+    room_no_floor.cleanup()
+    room_with_floor.cleanup()
+    ctx.release()
