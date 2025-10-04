@@ -81,14 +81,14 @@ class Room3DRenderer:
             vertex_shader="""
                 #version 330 core
                 in vec3 position;
-                in vec3 color;
+                in vec4 color;
                 in vec3 normal;
                 
                 uniform mat4 mvp;
                 uniform mat4 model;
                 
                 out vec3 frag_pos;
-                out vec3 frag_color;
+                out vec4 frag_color;
                 out vec3 frag_normal;
                 
                 void main() {
@@ -103,7 +103,7 @@ class Room3DRenderer:
             fragment_shader="""
                 #version 330 core
                 in vec3 frag_pos;
-                in vec3 frag_color;
+                in vec4 frag_color;
                 in vec3 frag_normal;
                 
                 out vec4 color;
@@ -122,19 +122,19 @@ class Room3DRenderer:
                 void main() {
                     // If emission is high, just use the color directly (emissive)
                     if (emission > 0.5) {
-                        color = vec4(frag_color, 1.0);
+                        color = frag_color;  // Use full RGBA including alpha
                     } else {
                         // Normal lighting calculations
                         vec3 norm = normalize(frag_normal);
                         vec3 viewDir = normalize(viewPos - frag_pos);
                         
                         // Ambient
-                        vec3 ambient = ambientStrength * frag_color;
+                        vec3 ambient = ambientStrength * frag_color.rgb;
                         
                         // Directional light (Blinn-Phong)
                         vec3 lightDir = normalize(-dirLightDir);
                         float diff = max(dot(norm, lightDir), 0.0);
-                        vec3 diffuse = diff * dirLightColor * frag_color;
+                        vec3 diffuse = diff * dirLightColor * frag_color.rgb;
                         
                         vec3 halfwayDir = normalize(lightDir + viewDir);
                         float spec = pow(max(dot(norm, halfwayDir), 0.0), shininess);
@@ -145,7 +145,7 @@ class Room3DRenderer:
                         float pointDiff = max(dot(norm, pointLightDir), 0.0);
                         float distance = length(pointLightPos - frag_pos);
                         float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-                        vec3 pointDiffuse = pointDiff * pointLightColor * frag_color * attenuation;
+                        vec3 pointDiffuse = pointDiff * pointLightColor * frag_color.rgb * attenuation;
                         
                         vec3 pointHalfway = normalize(pointLightDir + viewDir);
                         float pointSpec = pow(max(dot(norm, pointHalfway), 0.0), shininess);
@@ -153,7 +153,7 @@ class Room3DRenderer:
                         
                         // Combine lighting
                         vec3 result = ambient + diffuse + specular + pointDiffuse + pointSpecular;
-                        color = vec4(result, 1.0);
+                        color = vec4(result, frag_color.a);  // Preserve alpha from input
                     }
                 }
             """,
@@ -181,17 +181,17 @@ class Room3DRenderer:
         ]
 
         floor_normals = [floor_normal] * 6
-        floor_colors = [self.floor_color] * 6
+        floor_colors_rgb = [self.floor_color] * 6
 
-        # Convert to flat arrays
+        # Convert to flat arrays with RGBA
         floor_verts_flat = []
         floor_norms_flat = []
         floor_cols_flat = []
 
-        for vert, norm, col in zip(floor_vertices, floor_normals, floor_colors):
+        for vert, norm, col in zip(floor_vertices, floor_normals, floor_colors_rgb):
             floor_verts_flat.extend(vert)
             floor_norms_flat.extend(norm)
-            floor_cols_flat.extend(col)
+            floor_cols_flat.extend([col[0], col[1], col[2], 1.0])  # Add alpha=1.0
 
         # Create VBO and VAO for floor
         self.floor_vertices = np.array(floor_verts_flat, dtype=np.float32)
@@ -206,7 +206,7 @@ class Room3DRenderer:
             self.shader,
             [
                 (self.floor_vbo, "3f", "position"),
-                (self.floor_color_vbo, "3f", "color"),
+                (self.floor_color_vbo, "4f", "color"),
                 (self.floor_normal_vbo, "3f", "normal"),
             ],
         )
@@ -220,11 +220,15 @@ class Room3DRenderer:
         for line in grid_lines:
             # Start point
             grid_verts.extend(line[:3])
-            grid_cols.extend(self.grid_color)
+            grid_cols.extend(
+                [self.grid_color[0], self.grid_color[1], self.grid_color[2], 1.0]
+            )
             grid_norms.extend(floor_normal)
             # End point
             grid_verts.extend(line[3:])
-            grid_cols.extend(self.grid_color)
+            grid_cols.extend(
+                [self.grid_color[0], self.grid_color[1], self.grid_color[2], 1.0]
+            )
             grid_norms.extend(floor_normal)
 
         self.grid_vertices = np.array(grid_verts, dtype=np.float32)
@@ -239,7 +243,7 @@ class Room3DRenderer:
             self.shader,
             [
                 (self.grid_vbo, "3f", "position"),
-                (self.grid_color_vbo, "3f", "color"),
+                (self.grid_color_vbo, "4f", "color"),
                 (self.grid_normal_vbo, "3f", "normal"),
             ],
         )
@@ -489,11 +493,11 @@ class Room3DRenderer:
                 cube_vertices.extend(vertex)
                 cube_normals.extend(normal)
 
-        # Create colors (same color for all vertices)
+        # Create colors (same color for all vertices) with alpha=1.0
         num_vertices = len(cube_vertices) // 3
         cube_colors = []
         for _ in range(num_vertices):
-            cube_colors.extend(color)
+            cube_colors.extend([color[0], color[1], color[2], 1.0])
 
         # Create VBOs
         vertices_array = np.array(cube_vertices, dtype=np.float32)
@@ -508,7 +512,7 @@ class Room3DRenderer:
             self.shader,
             [
                 (vbo, "3f", "position"),
-                (color_vbo, "3f", "color"),
+                (color_vbo, "4f", "color"),
                 (normal_vbo, "3f", "normal"),
             ],
         )
@@ -634,11 +638,11 @@ class Room3DRenderer:
                 box_vertices.extend(vertex)
                 box_normals.extend(normal)
 
-        # Create colors (same color for all vertices)
+        # Create colors (same color for all vertices) with alpha=1.0
         num_vertices = len(box_vertices) // 3
         box_colors = []
         for _ in range(num_vertices):
-            box_colors.extend(color)
+            box_colors.extend([color[0], color[1], color[2], 1.0])
 
         # Create VBOs
         vertices_array = np.array(box_vertices, dtype=np.float32)
@@ -653,7 +657,7 @@ class Room3DRenderer:
             self.shader,
             [
                 (vbo, "3f", "position"),
-                (color_vbo, "3f", "color"),
+                (color_vbo, "4f", "color"),
                 (normal_vbo, "3f", "normal"),
             ],
         )
@@ -689,8 +693,16 @@ class Room3DRenderer:
         z: float,
         color: tuple[float, float, float],
         radius: float = 0.3,
+        alpha: float = 1.0,
     ):
-        """Render a 3D sphere (approximated with icosahedron for performance)"""
+        """Render a 3D sphere (approximated with icosahedron for performance)
+
+        Args:
+            x, y, z: Position of sphere center
+            color: RGB color tuple
+            radius: Radius of the sphere
+            alpha: Alpha transparency (0.0 = fully transparent, 1.0 = fully opaque)
+        """
         # Create icosahedron vertices (simple sphere approximation)
         t = (1.0 + math.sqrt(5.0)) / 2.0
 
@@ -753,28 +765,216 @@ class Room3DRenderer:
             triangle_vertices.append(sphere_vertices[face[1]])
             triangle_vertices.append(sphere_vertices[face[2]])
 
-        # Create colors (same color for all vertices)
-        sphere_colors = [color] * len(triangle_vertices)
+        # Create colors (same color for all vertices) with specified alpha
+        sphere_colors = []
+        sphere_normals = []
+        for vert in triangle_vertices:
+            sphere_colors.append([color[0], color[1], color[2], alpha])
+            # Calculate normal from vertex position (pointing outward from center)
+            dx, dy, dz = vert[0] - x, vert[1] - y, vert[2] - z
+            length = math.sqrt(dx * dx + dy * dy + dz * dz)
+            if length > 0.001:
+                sphere_normals.extend([dx / length, dy / length, dz / length])
+            else:
+                sphere_normals.extend([0.0, 1.0, 0.0])
 
         # Create VBOs
         vertices_array = np.array(triangle_vertices, dtype=np.float32).flatten()
         colors_array = np.array(sphere_colors, dtype=np.float32).flatten()
+        normals_array = np.array(sphere_normals, dtype=np.float32)
 
         vbo = self.ctx.buffer(vertices_array.tobytes())
         color_vbo = self.ctx.buffer(colors_array.tobytes())
+        normal_vbo = self.ctx.buffer(normals_array.tobytes())
 
         vao = self.ctx.vertex_array(
-            self.shader, [(vbo, "3f", "position"), (color_vbo, "3f", "color")]
+            self.shader,
+            [
+                (vbo, "3f", "position"),
+                (color_vbo, "4f", "color"),
+                (normal_vbo, "3f", "normal"),
+            ],
         )
 
         # Render sphere with emission (bulbs glow independently)
         mvp = self._get_mvp_matrix()
         self.shader["mvp"] = mvp.T.flatten()
         self.shader["emission"] = 1.0  # Bulbs are emissive - not affected by lighting
+
+        # Enable blending for transparency if alpha < 1.0
+        if alpha < 1.0:
+            self.ctx.enable(mgl.BLEND)
+            self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+
         vao.render(mgl.TRIANGLES)
+
+        # Disable blending
+        if alpha < 1.0:
+            self.ctx.disable(mgl.BLEND)
 
         # Cleanup
         vbo.release()
+        color_vbo.release()
+        normal_vbo.release()
+        vao.release()
+
+    def render_cone_beam(
+        self,
+        start_x: float,
+        start_y: float,
+        start_z: float,
+        direction: tuple[float, float, float],
+        color: tuple[float, float, float],
+        length: float = 5.0,
+        start_radius: float = 0.1,
+        end_radius: float = 0.8,
+        segments: int = 12,
+        alpha: float = 1.0,
+    ):
+        """Render a cone-shaped light beam projecting in a direction
+
+        Args:
+            start_x, start_y, start_z: Starting position of the beam
+            direction: Normalized direction vector (dx, dy, dz)
+            color: RGB color tuple
+            length: Length of the beam
+            start_radius: Radius at the start (near light source)
+            end_radius: Radius at the end (far from light source)
+            segments: Number of segments around the cone circumference
+            alpha: Alpha transparency (0.0 = fully transparent, 1.0 = fully opaque)
+        """
+        # Normalize direction
+        dx, dy, dz = direction
+        dir_length = math.sqrt(dx * dx + dy * dy + dz * dz)
+        if dir_length < 0.001:
+            return  # Invalid direction
+        dx, dy, dz = dx / dir_length, dy / dir_length, dz / dir_length
+
+        # Calculate end position
+        end_x = start_x + dx * length
+        end_y = start_y + dy * length
+        end_z = start_z + dz * length
+
+        # Create perpendicular vectors for the cone circle
+        # Find a vector perpendicular to direction
+        if abs(dx) < 0.9:
+            perp1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        else:
+            perp1 = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+
+        direction_vec = np.array([dx, dy, dz], dtype=np.float32)
+        perp1 = perp1 - direction_vec * np.dot(perp1, direction_vec)
+        perp1 = perp1 / np.linalg.norm(perp1)
+
+        # Second perpendicular vector (cross product)
+        perp2 = np.cross(direction_vec, perp1)
+        perp2 = perp2 / np.linalg.norm(perp2)
+
+        # Build cone geometry
+        cone_vertices = []
+        cone_normals = []
+
+        # Generate circle points at start and end
+        start_circle = []
+        end_circle = []
+
+        for i in range(segments):
+            angle = 2.0 * math.pi * i / segments
+            cos_a = math.cos(angle)
+            sin_a = math.sin(angle)
+
+            # Start circle point
+            start_offset = perp1 * cos_a * start_radius + perp2 * sin_a * start_radius
+            start_point = [
+                start_x + start_offset[0],
+                start_y + start_offset[1],
+                start_z + start_offset[2],
+            ]
+            start_circle.append(start_point)
+
+            # End circle point
+            end_offset = perp1 * cos_a * end_radius + perp2 * sin_a * end_radius
+            end_point = [
+                end_x + end_offset[0],
+                end_y + end_offset[1],
+                end_z + end_offset[2],
+            ]
+            end_circle.append(end_point)
+
+        # Build triangles for cone surface
+        for i in range(segments):
+            next_i = (i + 1) % segments
+
+            # Two triangles per segment
+            # Triangle 1: start[i], end[i], start[next_i]
+            cone_vertices.extend(start_circle[i])
+            cone_vertices.extend(end_circle[i])
+            cone_vertices.extend(start_circle[next_i])
+
+            # Normals (approximate - pointing outward from cone axis)
+            for _ in range(3):
+                cone_normals.extend([0.0, 1.0, 0.0])  # Simple normal
+
+            # Triangle 2: start[next_i], end[i], end[next_i]
+            cone_vertices.extend(start_circle[next_i])
+            cone_vertices.extend(end_circle[i])
+            cone_vertices.extend(end_circle[next_i])
+
+            for _ in range(3):
+                cone_normals.extend([0.0, 1.0, 0.0])  # Simple normal
+
+        # Create colors with alpha (RGBA for transparency)
+        num_vertices = len(cone_vertices) // 3
+        cone_colors = []
+        for _ in range(num_vertices):
+            cone_colors.extend([color[0], color[1], color[2], alpha])
+
+        # Create VBOs
+        vertices_array = np.array(cone_vertices, dtype=np.float32)
+        normals_array = np.array(cone_normals, dtype=np.float32)
+        colors_array = np.array(cone_colors, dtype=np.float32)
+
+        vbo = self.ctx.buffer(vertices_array.tobytes())
+        normal_vbo = self.ctx.buffer(normals_array.tobytes())
+        color_vbo = self.ctx.buffer(colors_array.tobytes())
+
+        vao = self.ctx.vertex_array(
+            self.shader,
+            [
+                (vbo, "3f", "position"),
+                (color_vbo, "4f", "color"),  # Changed to 4f for RGBA
+                (normal_vbo, "3f", "normal"),
+            ],
+        )
+
+        # Set uniforms
+        mvp = self._get_mvp_matrix()
+        model = np.eye(4, dtype=np.float32)
+
+        horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
+        cam_x = horizontal_distance * math.sin(self.camera_angle)
+        cam_z = horizontal_distance * math.cos(self.camera_angle)
+        cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
+        view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
+
+        self.shader["mvp"] = mvp.T.flatten()
+        self.shader["model"] = model.T.flatten()
+        self.shader["viewPos"] = tuple(view_pos)
+        self.shader["emission"] = 0.9  # Beams are highly emissive
+
+        # Enable blending for semi-transparent beams
+        self.ctx.enable(mgl.BLEND)
+        self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+
+        # Render cone
+        vao.render(mgl.TRIANGLES)
+
+        # Disable blending
+        self.ctx.disable(mgl.BLEND)
+
+        # Cleanup
+        vbo.release()
+        normal_vbo.release()
         color_vbo.release()
         vao.release()
 

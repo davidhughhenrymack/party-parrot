@@ -44,8 +44,11 @@ class BulbRenderer(FixtureRenderer):
         bulb_x = room_x + world_offset[0]
         bulb_y = room_y + body_size + world_offset[1]
         bulb_z = room_z + world_offset[2]
-        bulb_color = self.get_render_color(frame, is_bulb=True)  # Brighter
+
+        # Use full color with dimmer as alpha (transparency)
+        bulb_color = self.get_color()  # Full RGB color
+        dimmer = self.get_effective_dimmer(frame)
 
         self.room_renderer.render_sphere(
-            bulb_x, bulb_y, bulb_z, bulb_color, bulb_radius
+            bulb_x, bulb_y, bulb_z, bulb_color, bulb_radius, alpha=dimmer
         )

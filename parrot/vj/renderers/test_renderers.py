@@ -142,3 +142,43 @@ def test_renderer_render_moving_head():
     # Cleanup
     fbo.release()
     ctx.release()
+
+
+def test_moving_head_beam_with_room_renderer():
+    """Test that MovingHeadRenderer renders beam with room renderer"""
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+
+    ctx = mgl.create_context(standalone=True)
+
+    # Create room renderer
+    room = Room3DRenderer(ctx, 800, 600)
+
+    # Create moving head with color and dimmer
+    fixture = ChauvetSpot160_12Ch(1)
+    fixture.set_color(Color("blue"))
+    fixture.set_dimmer(200)  # High dimmer to trigger beam
+    fixture.set_pan(128)  # Pan to middle
+    fixture.set_tilt(64)  # Tilt slightly down
+
+    renderer = MovingHeadRenderer(fixture, room_renderer=room)
+    renderer.set_position(250.0, 250.0)
+
+    # Create a framebuffer to render to
+    fbo = ctx.framebuffer(color_attachments=[ctx.texture((800, 600), 3)])
+    fbo.use()
+    ctx.clear(0.0, 0.0, 0.0)
+
+    frame = Frame({signal: 0.0 for signal in FrameSignal})
+    frame.time = 0.0
+
+    # Should render beam without crashing
+    renderer.render(ctx, (500.0, 500.0), frame)
+
+    # Test with low dimmer (should not render beam)
+    fixture.set_dimmer(10)  # Very low dimmer
+    renderer.render(ctx, (500.0, 500.0), frame)
+
+    # Cleanup
+    room.cleanup()
+    fbo.release()
+    ctx.release()

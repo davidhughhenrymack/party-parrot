@@ -92,21 +92,22 @@ class MotionstripRenderer(FixtureRenderer):
                 else:
                     r, g, b = (1.0, 1.0, 1.0)  # Default white
 
+                # Use full color with dimmer as alpha (transparency)
                 bulb_dimmer = bulb.get_dimmer() / 255.0
-                dimmer = self.get_dimmer()
+                fixture_dimmer = self.get_dimmer()
 
-                # Make bulbs brighter like PARs
-                effective_dimmer = max(bulb_dimmer * dimmer * 1.5, 0.1)
-                effective_dimmer = min(effective_dimmer, 1.0)
+                # Combine bulb and fixture dimmer for alpha
+                effective_alpha = bulb_dimmer * fixture_dimmer
 
-                bulb_color = (
-                    r * effective_dimmer,
-                    g * effective_dimmer,
-                    b * effective_dimmer,
-                )
+                bulb_color = (r, g, b)  # Full color, not dimmed
 
                 self.room_renderer.render_sphere(
-                    bulb_x, bulb_y, bulb_z, bulb_color, bulb_radius
+                    bulb_x,
+                    bulb_y,
+                    bulb_z,
+                    bulb_color,
+                    bulb_radius,
+                    alpha=effective_alpha,
                 )
             except:
                 pass

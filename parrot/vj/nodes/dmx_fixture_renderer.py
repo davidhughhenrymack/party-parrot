@@ -200,7 +200,6 @@ class DMXFixtureRenderer(GenerativeEffectBase):
                 ]
                 # Load positions for the newly created renderers
                 self._load_positions()
-                print(f"Created {len(self.renderers)} 3D renderers")
 
         # Update camera rotation based on frame time
         self.room_renderer.update_camera(frame.time)
