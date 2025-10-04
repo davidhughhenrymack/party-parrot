@@ -156,4 +156,12 @@ class OverlayUI:
 
     def shutdown(self):
         """Cleanup resources"""
-        self.renderer.shutdown()
+        try:
+            self.renderer.shutdown()
+        except Exception as e:
+            # Ignore OpenGL errors during shutdown as the context may already be destroyed
+            if "GLError" in str(type(e)) or "invalid value" in str(e):
+                print(f"⚠️  Ignoring OpenGL error during imgui shutdown: {e}")
+            else:
+                # Re-raise non-OpenGL errors
+                raise

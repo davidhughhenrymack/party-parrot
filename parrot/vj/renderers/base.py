@@ -40,21 +40,12 @@ class FixtureRenderer:
 
     def get_color(self) -> tuple[float, float, float]:
         """Get RGB color from fixture (0-1 range)"""
-        try:
-            color = self.fixture.get_color()
-            # Convert Color object to tuple
-            if hasattr(color, "r") and hasattr(color, "g") and hasattr(color, "b"):
-                return (color.r / 255.0, color.g / 255.0, color.b / 255.0)
-            return (1.0, 1.0, 1.0)
-        except:
-            return (1.0, 1.0, 1.0)
+        color = self.fixture.get_color()
+        return (color.red, color.green, color.blue)
 
     def get_dimmer(self) -> float:
         """Get dimmer value (0-1 range)"""
-        try:
-            return self.fixture.get_dimmer() / 255.0
-        except:
-            return 0.0
+        return self.fixture.get_dimmer() / 255.0
 
     def get_strobe(self) -> float:
         """Get strobe value (0-1 range)"""

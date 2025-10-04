@@ -63,7 +63,7 @@ class DMXFixtureRenderer(GenerativeEffectBase):
     def _load_fixtures(self):
         """Load fixtures from the current venue's patch bay, create renderers, and flatten groups"""
         fixtures = []
-
+        print(f"loading fixtures for {self.state.venue}")
         # Get fixtures from current venue in state (live fixtures)
         for item in venue_patches[self.state.venue]:
             if isinstance(item, FixtureGroup):
@@ -76,6 +76,7 @@ class DMXFixtureRenderer(GenerativeEffectBase):
 
         # Create renderer for each fixture
         self.renderers = [create_renderer(fixture) for fixture in fixtures]
+        print(self.renderers)
 
     def _load_positions(self):
         """Load fixture positions from JSON file (legacy GUI format)"""

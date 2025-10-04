@@ -29,8 +29,7 @@ class SimpleShapeRenderer:
                     // Convert from canvas coordinates to clip space (-1 to 1)
                     vec2 normalized = in_position / canvas_size;
                     vec2 clip_pos = normalized * 2.0 - 1.0;
-                    // Flip Y since canvas Y goes down but OpenGL Y goes up
-                    clip_pos.y = -clip_pos.y;
+                    clip_pos.y = clip_pos.y;
                     gl_Position = vec4(clip_pos, 0.0, 1.0);
                 }
             """,

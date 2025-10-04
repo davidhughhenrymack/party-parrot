@@ -353,5 +353,12 @@ def run_gl_window_app(args):
     state.save_state()
     audio_analyzer.cleanup()
     vj_director.cleanup()
+
+    # Cleanup fixture renderer
+    fixture_renderer.exit()
+
+    # Shutdown overlay before destroying window to avoid OpenGL context issues
     overlay.shutdown()
+
+    # Destroy window last to ensure OpenGL context is still valid during cleanup
     window.destroy()
