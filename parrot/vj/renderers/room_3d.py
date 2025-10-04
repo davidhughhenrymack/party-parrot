@@ -30,10 +30,10 @@ class Room3DRenderer:
         self.stage_depth = 3.0  # How deep the stage is
 
         # Camera setup - looking from audience towards stage
-        self.camera_distance = 2.0  # Distance from center
-        self.camera_height = 3.5  # Height above floor
+        self.camera_distance = 10  # Distance from center
+        self.camera_height = 2.0  # Height above floor
         self.camera_rotation_speed = 0.1  # Radians per second
-        self.camera_angle = 0.0  # Current rotation angle
+        self.camera_angle = 0  # Current rotation angle
 
         # Floor grid parameters
         self.grid_size = 1.0  # Size of each grid square
@@ -244,22 +244,23 @@ class Room3DRenderer:
 
     def _get_mvp_matrix(self):
         """Calculate Model-View-Projection matrix for camera perspective"""
-        # Use orthographic projection for now to debug
-        # This will make objects visible regardless of depth
-        left = -10.0
-        right = 10.0
-        bottom = -10.0
-        top = 10.0
+        # Use proper perspective projection
+        fov = 60.0  # Field of view in degrees
+        aspect = self.width / self.height  # Aspect ratio
         near = 0.1
         far = 100.0
 
-        # Orthographic projection matrix
+        # Convert FOV to radians
+        fov_rad = math.radians(fov)
+        f = 1.0 / math.tan(fov_rad / 2.0)
+
+        # Perspective projection matrix
         proj = np.array(
             [
-                [2.0 / (right - left), 0, 0, -(right + left) / (right - left)],
-                [0, 2.0 / (top - bottom), 0, -(top + bottom) / (top - bottom)],
-                [0, 0, -2.0 / (far - near), -(far + near) / (far - near)],
-                [0, 0, 0, 1],
+                [f / aspect, 0, 0, 0],
+                [0, f, 0, 0],
+                [0, 0, (far + near) / (near - far), (2 * far * near) / (near - far)],
+                [0, 0, -1, 0],
             ],
             dtype=np.float32,
         )
