@@ -102,7 +102,6 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
         frame: Frame,
         scheme: ColorScheme,
         context: C,
-        window_size: tuple[int, int],
     ) -> RR:
         """
         Render the node. Rendering code is expected to call .render() on any children
@@ -112,7 +111,6 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
             frame: The current audio frame data
             scheme: The current color scheme
             context: The rendering context (e.g. ModernGL context)
-            window_size: The target window size as (width, height)
         """
         pass
 
@@ -282,9 +280,8 @@ class RandomOperation(BaseInterpretationNode[C, RR, RR]):
         frame: Frame,
         scheme: ColorScheme,
         context: C,
-        window_size: tuple[int, int] = (1920, 1080),
     ) -> RR:
-        return self.current_operation.render(frame, scheme, context, window_size)
+        return self.current_operation.render(frame, scheme, context)
 
 
 class RandomChild(BaseInterpretationNode[C, RI, RR]):
@@ -381,10 +378,9 @@ class RandomChild(BaseInterpretationNode[C, RI, RR]):
         frame: Frame,
         scheme: ColorScheme,
         context: C,
-        window_size: tuple[int, int] = (1920, 1080),
     ) -> RR:
         if self._current_child is None:
             raise RuntimeError(
                 "RandomChild has no selected child. Call generate() before render()."
             )
-        return self._current_child.render(frame, scheme, context, window_size)
+        return self._current_child.render(frame, scheme, context)

@@ -85,6 +85,11 @@ class MicToDmx(object):
         self.state = State()
         self.signal_states = SignalStates()
 
+        # Set initial mode if specified via args
+        if getattr(args, "rave", False):
+            self.state.set_mode(Mode.rave)
+            print("🎉 Starting in RAVE mode")
+
         self.should_stop = False
 
         # Queue for thread-safe GUI updates

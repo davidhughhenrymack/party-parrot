@@ -34,6 +34,11 @@ def parse_arguments():
         action="store_true",
         help="Start with overlay UI visible",
     )
+    parser.add_argument(
+        "--rave",
+        action="store_true",
+        help="Start in rave mode",
+    )
     return parser.parse_args()
 
 

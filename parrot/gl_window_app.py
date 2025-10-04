@@ -38,6 +38,11 @@ def run_gl_window_app(args):
     state = State()
     signal_states = SignalStates()
 
+    # Set initial mode if specified via args
+    if getattr(args, "rave", False):
+        state.set_mode(Mode.rave)
+        print("🎉 Starting in RAVE mode")
+
     # Initialize audio analyzer
     audio_analyzer = AudioAnalyzer(signal_states)
 
@@ -173,6 +178,7 @@ def run_gl_window_app(args):
     # Setup keyboard handler on the underlying pyglet window
     class KeyboardHandler:
         def on_key_press(self, symbol, modifiers):
+            # Keep current functionality
             if symbol == pyglet.window.key.SPACE:
                 print("⚡ Spacebar pressed - regenerating interpreters...")
                 director.generate_interpreters()
@@ -183,21 +189,86 @@ def run_gl_window_app(args):
                 overlay.toggle()
                 return True  # Event handled
 
+            # Signal buttons (press and hold)
+            elif symbol == pyglet.window.key.I:
+                signal_states.set_signal(FrameSignal.small_blinder, 1.0)
+                return True
+            elif symbol == pyglet.window.key.G:
+                signal_states.set_signal(FrameSignal.big_blinder, 1.0)
+                return True
+            elif symbol == pyglet.window.key.H:
+                signal_states.set_signal(FrameSignal.strobe, 1.0)
+                return True
+            elif symbol == pyglet.window.key.J:
+                signal_states.set_signal(FrameSignal.pulse, 1.0)
+                return True
+
+            return False
+
+        def on_key_release(self, symbol, modifiers):
+            # Signal buttons (release)
+            if symbol == pyglet.window.key.I:
+                signal_states.set_signal(FrameSignal.small_blinder, 0.0)
+                return True
+            elif symbol == pyglet.window.key.G:
+                signal_states.set_signal(FrameSignal.big_blinder, 0.0)
+                return True
+            elif symbol == pyglet.window.key.H:
+                signal_states.set_signal(FrameSignal.strobe, 0.0)
+                return True
+            elif symbol == pyglet.window.key.J:
+                signal_states.set_signal(FrameSignal.pulse, 0.0)
+                return True
+
+            # Mode selection
+            elif symbol == pyglet.window.key.E:
+                print("⚡ Mode: Gentle")
+                state.set_mode(Mode.gentle)
+                return True
+            elif symbol == pyglet.window.key.F:
+                print("⚡ Mode: Chill")
+                state.set_mode(Mode.chill)
+                return True
+            elif symbol == pyglet.window.key.C:
+                print("⚡ Mode: Rave")
+                state.set_mode(Mode.rave)
+                return True
+            elif symbol == pyglet.window.key.D:
+                print("⚡ Mode: Blackout")
+                state.set_mode(Mode.blackout)
+                return True
+
+            # Director commands
+            elif symbol == pyglet.window.key.S:
+                print("⚡ Regenerating interpreters...")
+                director.generate_interpreters()
+                return True
+            elif symbol == pyglet.window.key.O:
+                print("⚡ Shifting...")
+                director.shift()
+                return True
+
+            return False
+
     keyboard_handler = KeyboardHandler()
 
     # Access the underlying pyglet window and register the handler
     if hasattr(window, "wnd"):
         window.wnd.push_handlers(keyboard_handler)
-        print(
-            "⌨️  Keyboard handler registered (press SPACE to regenerate interpreters, ENTER to toggle overlay)"
-        )
+        print("⌨️  Keyboard shortcuts:")
+        print("   SPACE/S: Regenerate interpreters  |  O: Shift")
+        print("   ENTER: Toggle overlay")
+        print("   E: Gentle  |  F: Chill  |  C: Rave  |  D: Blackout")
+        print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
     else:
         # Fallback: try to get from pyglet.app.windows
         for w in pyglet.app.windows:
             w.push_handlers(keyboard_handler)
-        print(
-            "⌨️  Keyboard handler registered via fallback (press SPACE to regenerate interpreters, ENTER to toggle overlay)"
-        )
+        print("⌨️  Keyboard shortcuts (via fallback):")
+        print("   SPACE/S: Regenerate interpreters  |  O: Shift")
+        print("   ENTER: Toggle overlay")
+        print("   E: Gentle  |  F: Chill  |  C: Rave  |  D: Blackout")
+        print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
 
     frame_counter = 0
 
