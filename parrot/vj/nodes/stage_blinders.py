@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import random
 from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
@@ -40,6 +41,7 @@ class StageBlinders(GenerativeEffectBase):
         self.attack_time = attack_time
         self.decay_time = decay_time
         self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
+        self.use_color_scheme = False  # Whether to use color scheme fg or white
 
         # Track blinder state
         self.big_blinder_level = 0.0
@@ -51,6 +53,9 @@ class StageBlinders(GenerativeEffectBase):
     def generate(self, vibe: Vibe):
         """Configure blinder parameters based on the vibe"""
         from parrot.director.mode import Mode
+
+        # 50% chance to use color scheme fg color instead of white
+        self.use_color_scheme = random.random() < 0.5
 
         if vibe.mode == Mode.rave:
             self.num_blinders = 10  # More blinders for rave mode
@@ -83,6 +88,7 @@ class StageBlinders(GenerativeEffectBase):
             self.__class__.__name__,
             emoji="💡",
             num_blinders=self.num_blinders,
+            use_color_scheme=self.use_color_scheme,
         )
 
     def _get_fragment_shader(self) -> str:
@@ -97,6 +103,7 @@ class StageBlinders(GenerativeEffectBase):
         uniform float small_blinder_level;
         uniform vec2 resolution;
         uniform float mode_opacity_multiplier;
+        uniform vec3 blinder_color;
         
         // Smooth circle SDF
         float circle_sdf(vec2 p, float radius) {
@@ -148,7 +155,7 @@ class StageBlinders(GenerativeEffectBase):
                     vec2 blinder_pos = vec2(blinder_x, blinder_y);
                     vec2 p = aspect_uv - blinder_pos;
                     
-                    // Core white circle with medium blur
+                    // Core circle with medium blur
                     float core = smooth_circle(p, circle_radius, medium_blur_radius);
                     
                     // Outer glow with high blur (lower opacity)
@@ -157,8 +164,8 @@ class StageBlinders(GenerativeEffectBase):
                     // Combine core and glow
                     float intensity = core + glow;
                     
-                    // White light
-                    final_color += vec3(1.0) * intensity * big_blinder_level;
+                    // Use blinder_color (either white or color scheme fg)
+                    final_color += blinder_color * intensity * big_blinder_level;
                 }
             }
             
@@ -179,7 +186,7 @@ class StageBlinders(GenerativeEffectBase):
                     vec2 blinder_pos = vec2(blinder_x, blinder_y);
                     vec2 p = aspect_uv - blinder_pos;
                     
-                    // Core white circle with medium blur
+                    // Core circle with medium blur
                     float core = smooth_circle(p, circle_radius, medium_blur_radius);
                     
                     // Outer glow with high blur - INCREASED glow intensity
@@ -188,13 +195,23 @@ class StageBlinders(GenerativeEffectBase):
                     // Combine core and glow
                     float intensity = core + glow;
                     
-                    // White light (70% brightness of big blinders)
-                    final_color += vec3(1.0) * intensity * small_blinder_level * 0.7;
+                    // Use blinder_color (70% brightness of big blinders)
+                    final_color += blinder_color * intensity * small_blinder_level * 0.7;
                 }
             }
             
-            // Apply mode-based opacity multiplier and clamp to prevent overexposure
-            color = clamp(final_color * mode_opacity_multiplier, 0.0, 3.0);  // Allow some overexposure for bloom effect
+            // Apply mode-based opacity multiplier
+            // Use softer clamping to preserve color saturation in bright areas
+            vec3 adjusted = final_color * mode_opacity_multiplier;
+            
+            // Preserve color hue even in bright areas by clamping per-channel with color-aware scaling
+            float max_component = max(max(adjusted.r, adjusted.g), adjusted.b);
+            if (max_component > 2.0) {
+                // Scale down to preserve color ratios while allowing some overexposure
+                adjusted = adjusted * (2.0 / max_component);
+            }
+            
+            color = adjusted;
         }
         """
 
@@ -229,9 +246,16 @@ class StageBlinders(GenerativeEffectBase):
         # Small blinder is always off (used by laser heads now)
         self.small_blinder_level = 0.0
 
+        # Determine blinder color based on use_color_scheme flag
+        if self.use_color_scheme:
+            blinder_color = scheme.fg.rgb  # Use color scheme foreground color
+        else:
+            blinder_color = (1.0, 1.0, 1.0)  # Use white
+
         # Set uniforms
         self.shader_program["num_blinders"] = self.num_blinders
         self.shader_program["big_blinder_level"] = self.big_blinder_level
         self.shader_program["small_blinder_level"] = self.small_blinder_level
         self.shader_program["resolution"] = (float(self.width), float(self.height))
         self.shader_program["mode_opacity_multiplier"] = self.mode_opacity_multiplier
+        self.shader_program["blinder_color"] = blinder_color
