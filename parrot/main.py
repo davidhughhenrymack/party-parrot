@@ -24,6 +24,16 @@ def parse_arguments():
         action="store_true",
         help="Capture frame 20 and exit for debugging",
     )
+    parser.add_argument(
+        "--screenshot",
+        action="store_true",
+        help="Capture screenshot after 0.5s and exit",
+    )
+    parser.add_argument(
+        "--start-with-overlay",
+        action="store_true",
+        help="Start with overlay UI visible",
+    )
     return parser.parse_args()
 
 

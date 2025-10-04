@@ -13,11 +13,13 @@ Launch tests with `just test`
 Launch main app with `just launch`
 Add major new features to the `Justfile`
 
-Don't add readme/md files unless asked to.
-Don't add "example" code files unless asked to.
+
+## General
+Don't add print statements unless asked
+Do not make .txt or .md files unless asked
+Do not wrap code in try-except-pass instead make the code work reliably
 
 ## Nodes
-
 If you're working on nodes that inherit from BaseInterpretationNode, read the base class to understand the calling patterns precisely
 so that you do not break the intended operation of these classes
 
@@ -35,8 +37,8 @@ If you work on open gl code make sure it passes a headless rendering test.
 If you make big changes, run the main program with a timeout to check it runs.
 If things break, add test coverage for future.
 
-## General
-Don't add print statements unless asked
-Do not make .txt or .md files unless asked
+Embrace writing code that will render the real application (or a portion of it) to a png then
+read that png back to test. Keeping main entry flag like "capture to png after 1s" is helpful for this
+
 
 

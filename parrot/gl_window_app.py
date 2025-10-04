@@ -14,6 +14,7 @@ from parrot.state import State
 from parrot.utils.dmx_utils import get_controller
 from parrot.vj.vj_director import VJDirector
 from parrot.director.signal_states import SignalStates
+from parrot.utils.overlay_ui import OverlayUI
 
 
 def run_gl_window_app(args):
@@ -23,7 +24,7 @@ def run_gl_window_app(args):
     # Create window using moderngl_window
     window_cls = mglw.get_local_window_cls("pyglet")
     window = window_cls(
-        title="Party Parrot VJ - Concert Stage",
+        title="Party Parrot",
         size=(1920, 1080),
         resizable=True,
         vsync=True,
@@ -144,6 +145,31 @@ def run_gl_window_app(args):
     # Main render loop
     import pyglet
 
+    # Get the underlying pyglet window for input handling
+    pyglet_window = None
+    if hasattr(window, "wnd"):
+        pyglet_window = window.wnd
+    else:
+        # Fallback: get from pyglet.app.windows
+        for w in pyglet.app.windows:
+            pyglet_window = w
+            break
+
+    # Initialize overlay UI
+    overlay = OverlayUI(ctx, pyglet_window, state)
+
+    # Check for start-with-overlay flag
+    if getattr(args, "start_with_overlay", False):
+        overlay.show()
+        print("🖥️  Starting with overlay visible")
+
+    # Screenshot mode
+    screenshot_mode = getattr(args, "screenshot", False)
+    screenshot_time = None
+    if screenshot_mode:
+        screenshot_time = time.perf_counter() + 0.5
+        print("📸 Screenshot mode: will capture after 0.5s and exit")
+
     # Setup keyboard handler on the underlying pyglet window
     class KeyboardHandler:
         def on_key_press(self, symbol, modifiers):
@@ -151,25 +177,49 @@ def run_gl_window_app(args):
                 print("⚡ Spacebar pressed - regenerating interpreters...")
                 director.generate_interpreters()
                 return True  # Event handled
+            elif (
+                symbol == pyglet.window.key.RETURN or symbol == pyglet.window.key.ENTER
+            ):
+                overlay.toggle()
+                return True  # Event handled
 
     keyboard_handler = KeyboardHandler()
 
     # Access the underlying pyglet window and register the handler
     if hasattr(window, "wnd"):
         window.wnd.push_handlers(keyboard_handler)
-        print("⌨️  Keyboard handler registered (press SPACE to regenerate interpreters)")
+        print(
+            "⌨️  Keyboard handler registered (press SPACE to regenerate interpreters, ENTER to toggle overlay)"
+        )
     else:
         # Fallback: try to get from pyglet.app.windows
         for w in pyglet.app.windows:
             w.push_handlers(keyboard_handler)
         print(
-            "⌨️  Keyboard handler registered via fallback (press SPACE to regenerate interpreters)"
+            "⌨️  Keyboard handler registered via fallback (press SPACE to regenerate interpreters, ENTER to toggle overlay)"
         )
 
     frame_counter = 0
 
     while not window.is_closing:
         current_time = time.perf_counter()
+
+        # Check if we should take screenshot
+        if screenshot_mode and screenshot_time and current_time >= screenshot_time:
+            print("\n📸 Capturing screenshot...")
+            from PIL import Image
+
+            window_w, window_h = window.size
+            ctx.screen.use()
+            screen_data = ctx.screen.read()
+            screen_img = Image.frombuffer(
+                "RGB", (window_w, window_h), screen_data, "raw", "RGB", 0, 1
+            )
+            screen_img = screen_img.transpose(Image.FLIP_TOP_BOTTOM)
+            screen_img.save("test_output/screenshot.png")
+            print(f"✅ Saved screenshot: {window_w}x{window_h}")
+            print("🛑 Exiting after screenshot")
+            break
 
         # Update audio at intervals
         if time.perf_counter() - last_audio_update >= audio_update_interval:
@@ -186,22 +236,22 @@ def run_gl_window_app(args):
             frame_data = Frame({signal: 0.0 for signal in FrameSignal})
             scheme_data = director.scheme.render()
 
-        # Render VJ content
-        rendered_fbo = None
-        try:
-            rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)
-        except Exception as e:
-            print(f"Error rendering VJ: {e}")
+        # Get current window size
+        window_width, window_height = window.size
+
+        rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)
 
         # Bind the window's default framebuffer (screen) and render to it
         ctx.screen.use()
         ctx.clear(0.0, 0.0, 0.0)
 
+        # IMPORTANT: Set viewport to full window size before rendering
+        ctx.viewport = (0, 0, window_width, window_height)
+
         if rendered_fbo and rendered_fbo.color_attachments:
             try:
                 source_texture = rendered_fbo.color_attachments[0]
                 source_width, source_height = source_texture.size
-                window_width, window_height = window.size
 
                 # Bind texture and set uniforms
                 source_texture.use(0)
@@ -215,10 +265,16 @@ def run_gl_window_app(args):
                     float(window_height),
                 )
 
-                # Render to screen
+                # Render to screen with proper viewport
                 display_quad.render(mgl.TRIANGLE_STRIP)
             except Exception as e:
                 print(f"Error displaying to screen: {e}")
+
+        # Restore viewport before rendering overlay (imgui manages its own viewport)
+        ctx.viewport = (0, 0, window_width, window_height)
+
+        # Render overlay UI
+        overlay.render()
 
         # Swap buffers and poll events
         window.swap_buffers()
@@ -263,6 +319,7 @@ def run_gl_window_app(args):
                     screen_pixels = np.frombuffer(screen_data, dtype=np.uint8).reshape(
                         window_h, window_w, 3
                     )
+
                     print(
                         f"  Screen brightness: min={screen_pixels.min()}, max={screen_pixels.max()}, mean={screen_pixels.mean():.1f}"
                     )
@@ -278,22 +335,8 @@ def run_gl_window_app(args):
 
     # Cleanup
     print("\n👋 Shutting down...")
-    try:
-        state.save_state()
-    except:
-        pass
-
-    try:
-        audio_analyzer.cleanup()
-    except:
-        pass
-
-    try:
-        vj_director.cleanup()
-    except:
-        pass
-
-    try:
-        window.destroy()
-    except:
-        pass
+    state.save_state()
+    audio_analyzer.cleanup()
+    vj_director.cleanup()
+    overlay.shutdown()
+    window.destroy()
