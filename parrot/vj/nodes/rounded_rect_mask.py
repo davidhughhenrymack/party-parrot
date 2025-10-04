@@ -129,6 +129,9 @@ class RoundedRectMask(PostProcessEffectBase):
             mask_array, left, top, right, bottom
         )
 
+        # Add film sprocket holes along the left edge
+        mask_array = self._add_film_sprocket_holes(mask_array, left, top, right, bottom)
+
         return mask_array
 
     def _apply_confetti_scanlines(
@@ -423,6 +426,31 @@ class RoundedRectMask(PostProcessEffectBase):
                 else:
                     # We're in the main rectangle area (not in corners)
                     mask_array[y, x] = value
+
+    def _add_film_sprocket_holes(
+        self, mask_array: np.ndarray, left: int, top: int, right: int, bottom: int
+    ) -> np.ndarray:
+        """Add a vertical line of small black circles along the left inside edge to simulate film sprocket holes"""
+        height = bottom - top
+
+        # Sprocket hole parameters
+        hole_radius = 4  # Small circles
+        hole_spacing = 30  # Vertical spacing between holes
+        left_offset = 15  # Distance from left edge (inside the mask)
+
+        # Calculate number of holes that fit vertically
+        num_holes = height // hole_spacing
+
+        # Calculate starting y position to center the holes vertically
+        start_y = top + (height - (num_holes - 1) * hole_spacing) // 2
+
+        # Draw each sprocket hole
+        hole_x = left + left_offset
+        for i in range(num_holes):
+            hole_y = start_y + i * hole_spacing
+            self._draw_circle(mask_array, hole_x, hole_y, hole_radius, 0)
+
+        return mask_array
 
     def _get_fragment_shader(self) -> str:
         """Simple fragment shader that uses the pre-generated mask texture"""

@@ -44,6 +44,7 @@ class ColorStrobe(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         self.current_color = (0.0, 0.0, 0.0)  # Start with black
         self.last_strobe_time = 0.0
         self.strobe_color_index = 0
+        self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
 
         # Color cycling for strobe effects
         self.strobe_colors = []  # Will be populated from color scheme
@@ -75,16 +76,23 @@ class ColorStrobe(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def generate(self, vibe: Vibe):
         """Configure strobe parameters based on the vibe"""
-        # Adjust strobe frequency based on mode
+        # Adjust strobe frequency and intensity based on mode
         if vibe.mode == Mode.rave:
-            # High energy: faster strobing
+            # High energy: faster strobing, full intensity
             self.strobe_frequency = 12.0
+            self.mode_opacity_multiplier = 1.0
         elif vibe.mode == Mode.gentle:
-            # Medium energy: normal strobing
-            self.strobe_frequency = 8.0
-        elif vibe.mode == Mode.blackout:
-            # Low energy: slower strobing (though blackout typically means no visuals)
+            # Medium energy: slower strobing, reduced intensity
+            self.strobe_frequency = 6.0
+            self.mode_opacity_multiplier = 0.4
+        elif vibe.mode == Mode.chill:
+            # Low energy: very slow strobing, subtle intensity
             self.strobe_frequency = 4.0
+            self.mode_opacity_multiplier = 0.2
+        elif vibe.mode == Mode.blackout:
+            # Blackout: disable
+            self.strobe_frequency = 4.0
+            self.mode_opacity_multiplier = 0.0
 
     def _setup_gl_resources(self, context: mgl.Context):
         """Setup OpenGL resources for rendering a solid color rectangle"""
@@ -207,6 +215,9 @@ class ColorStrobe(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Store current color for consistency
         self.current_color = color
+
+        # Apply mode-based opacity reduction
+        opacity *= self.mode_opacity_multiplier
 
         # Render
         self.framebuffer.use()

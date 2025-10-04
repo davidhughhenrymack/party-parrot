@@ -2,6 +2,7 @@ import os
 import socket
 import threading
 import time
+import logging
 from flask import Flask, jsonify, request, send_from_directory
 from parrot.director.mode import Mode
 from parrot.state import State
@@ -198,6 +199,11 @@ def start_web_server(state, director=None, host="0.0.0.0", port=5000):
     global state_instance, director_instance
     state_instance = state
     director_instance = director
+
+    # Suppress Flask/Werkzeug logs
+    log = logging.getLogger("werkzeug")
+    log.setLevel(logging.ERROR)
+    app.logger.setLevel(logging.ERROR)
 
     # Get local IP address
     local_ip = get_local_ip()

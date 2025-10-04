@@ -9,6 +9,7 @@ from parrot.director.mode import Mode
 from parrot.graph.BaseInterpretationNode import Vibe
 from parrot.vj.nodes.concert_stage import ConcertStage
 from parrot.vj.profiler import vj_profiler
+from parrot.state import State
 
 
 @beartype
@@ -18,14 +19,14 @@ class VJDirector:
     Handles the visual composition and effects that respond to audio and lighting.
     """
 
-    def __init__(self, mode: Mode):
+    def __init__(self, state: State):
         # Create the complete concert stage with 2D canvas and 3D lighting
         self.concert_stage = ConcertStage()
 
         self.last_shift_time = time.time()
         self.shift_count = 0
         self.window = None  # Will be set by the window manager
-        self.current_mode = mode
+        self.state = state
 
         # Latest frame data from director
         self._latest_frame = None
@@ -36,7 +37,7 @@ class VJDirector:
         with vj_profiler.profile("vj_director_setup"):
             self.concert_stage.enter_recursive(context)
 
-            vibe = Vibe(self.current_mode)
+            vibe = Vibe(self.state.mode)
             self.concert_stage.generate_recursive(vibe)
 
             # Print the tree structure after initialization
@@ -60,7 +61,6 @@ class VJDirector:
     def shift(self, mode: Mode, threshold: float = 1.0):
         """Shift the visual mode and update the concert stage"""
         with vj_profiler.profile("vj_director_shift"):
-            self.current_mode = mode  # Track the current mode
             vibe = Vibe(mode)
             self.concert_stage.generate_recursive(vibe, threshold)
 
@@ -77,11 +77,11 @@ class VJDirector:
 
     def get_current_mode(self) -> Mode:
         """Get the current mode"""
-        return self.current_mode
+        return self.state.mode
 
     def shift_current_mode(self, threshold: float = 1.0):
         """Shift using the current mode (regenerate with same mode)"""
-        self.shift(self.current_mode, threshold)
+        self.shift(self.state.mode, threshold)
 
     def set_window(self, window):
         """Set the window for rendering"""

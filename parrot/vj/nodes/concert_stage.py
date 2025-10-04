@@ -29,11 +29,9 @@ from parrot.vj.nodes.text_renderer import TextRenderer
 from parrot.vj.nodes.text_color_pulse import TextColorPulse
 from parrot.vj.nodes.multiply_compose import MultiplyCompose
 from parrot.vj.nodes.volumetric_beam import VolumetricBeam
-from parrot.vj.nodes.laser_array import LaserArray
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.mode_switch import ModeSwitch
 from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
-from parrot.vj.nodes.infinite_zoom_effect import InfiniteZoomEffect
 from parrot.vj.nodes.color_strobe import ColorStrobe
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 from parrot.vj.nodes.circular_mask import CircularMask
@@ -42,6 +40,8 @@ from parrot.vj.nodes.sepia_effect import SepiaEffect
 from parrot.vj.nodes.glow_effect import GlowEffect
 from parrot.vj.nodes.bloom_filter import BloomFilter
 from parrot.vj.nodes.hot_sparks_effect import HotSparksEffect
+from parrot.vj.nodes.stage_blinders import StageBlinders
+from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
 from parrot.vj.profiler import vj_profiler
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.moving_head import MovingHead
@@ -97,12 +97,20 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 RGBShiftEffect,
                 ScanlinesEffect,
                 NoiseEffect,
-                InfiniteZoomEffect,
             ],
         )
 
         # Create text renderer with white text on black background (perfect for masking)
-        zombie_texts = ["DEAD\nSEXY", "RAVE", "BRAINS", "U R SEXY"]
+        zombie_texts = [
+            "DEAD\nSEXY",
+            "RAVE",
+            "BRAINS",
+            "U R SEXY",
+            "BITE ME",
+            "GET DOWN",
+            "SUCK MY\nBLOOD",
+            "DOM ZOM",
+        ]
         text_renderer = TextRenderer(
             text=zombie_texts,
             font_name="The Sonnyfive",
@@ -110,27 +118,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             text_color=(255, 255, 255),  # White text
             bg_color=(0, 0, 0),  # Black background
         )
-        text_renderer_with_fx = RandomOperation(
-            text_renderer,
-            [
-                BrightnessPulse,
-                CameraShake,
-                NoiseEffect,
-                PixelateEffect,
-                ScanlinesEffect,
-                InfiniteZoomEffect,
-            ],
-        )
-        text_renderer_with_fxzoom = CameraZoom(
-            text_renderer_with_fx, signal=FrameSignal.freq_high
-        )
-
         text_masked_video_no_fx = MultiplyCompose(video_player, text_renderer)
-
-        # Multiply video with text mask - white text shows video, black background hides it
-        text_masked_video_with_fx = MultiplyCompose(
-            video_with_fx, text_renderer_with_fxzoom
-        )
 
         # Create black text overlay on video
         black_text_renderer = TextRenderer(
@@ -149,7 +137,6 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                 NoiseEffect,
                 PixelateEffect,
                 ScanlinesEffect,
-                InfiniteZoomEffect,
             ],
         )
         black_text_renderer = CameraZoom(
@@ -165,9 +152,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             ),  # Black text overlay with multiply blend
         )
 
-        optional_masked_video = RandomChild(
-            [video_with_fx, text_masked_video_with_fx, video_with_black_text]
-        )
+        optional_masked_video = RandomChild([video_with_fx, video_with_black_text])
 
         canvas_2d = CameraZoom(optional_masked_video)
         self.canvas_2d = canvas_2d
@@ -176,22 +161,6 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         volumetric_beams = VolumetricBeam()
 
         self.volumetric_beams = volumetric_beams
-        # Create 3D laser array for sharp laser effects
-        # Position at top left of stage pointing back at audience
-        laser_position = np.array([-4.0, 8.0, 2.0])  # Top left of stage
-        laser_point_vector = self.camera_eye - laser_position  # Point toward audience
-        laser_point_vector = laser_point_vector / np.linalg.norm(
-            laser_point_vector
-        )  # Normalize
-
-        laser_array = LaserArray(
-            camera_eye=self.camera_eye,
-            camera_target=self.camera_target,
-            camera_up=self.camera_up,
-            laser_position=laser_position,
-            laser_point_vector=laser_point_vector,
-        )
-        self.laser_array = laser_array
 
         moving_head_renderer = self._create_virtual_moving_heads()
         self.moving_head_renderer = moving_head_renderer
@@ -205,14 +174,6 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         optional_oscilloscope = RandomChild(
             [oscilloscope, Black()], weights=[0.05, 0.95]
         )
-
-        # Create color strobe effect that responds to strobe signals
-        color_strobe = ColorStrobe()
-        self.color_strobe = color_strobe
-
-        # Create hot sparks effect that responds to small pulse signals
-        hot_sparks = HotSparksEffect()
-        self.hot_sparks = hot_sparks
 
         # Create base layer composition (everything below the strobe)
         base_layers = LayerCompose(
@@ -237,19 +198,8 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.freq_high,
         )
 
-        # Create final layer composition with strobe on top
-        layer_compose = LayerCompose(
-            LayerSpec(
-                brightness_pulsed_layers, BlendMode.NORMAL
-            ),  # Brightness-pulsed base layers
-            LayerSpec(
-                hot_sparks, BlendMode.ADDITIVE, opacity=0.9
-            ),  # Hot sparks: additive for glow effects
-            LayerSpec(
-                color_strobe, BlendMode.ADDITIVE
-            ),  # Color strobe: additive for flash effects
-        )
-        self.layer_compose = layer_compose
+        # Store rave composition (without effects - they'll be added after mode switch)
+        rave_composition = brightness_pulsed_layers
 
         # Create a black node for blackout mode
         black_node = Black()
@@ -350,13 +300,48 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
-        # Create mode switch with layer composition for rave/gentle and black for blackout
-        return ModeSwitch(
-            rave=layer_compose,
+        # Create mode switch WITHOUT effects (effects will be added after)
+        mode_switch = ModeSwitch(
+            rave=rave_composition,
             gentle=gentle_with_zoom,
             blackout=black_node,
             chill=chill_video_with_bloom,
         )
+
+        # Create effects that will be applied to ALL modes
+        # Effects will dial themselves down in gentle/chill modes via their generate() methods
+        color_strobe = ColorStrobe()
+        self.color_strobe = color_strobe
+
+        laser_scan_heads = LaserScanHeads()
+        self.laser_scan_heads = laser_scan_heads
+
+        hot_sparks = HotSparksEffect()
+        self.hot_sparks = hot_sparks
+
+        stage_blinders = StageBlinders()
+        self.stage_blinders = stage_blinders
+
+        # Create final layer composition with effects applied AFTER mode switch
+        # This means effects will be visible in all modes (rave, gentle, chill)
+        # Effects internally reduce their intensity for gentle/chill modes
+        final_composition = LayerCompose(
+            LayerSpec(mode_switch, BlendMode.NORMAL),  # Base: mode-specific content
+            LayerSpec(
+                hot_sparks, BlendMode.ADDITIVE, opacity=0.9
+            ),  # Hot sparks: additive for glow effects
+            LayerSpec(
+                laser_scan_heads, BlendMode.ADDITIVE, opacity=1.0
+            ),  # Laser scan heads: respond to small_blinder signal
+            LayerSpec(
+                stage_blinders, BlendMode.ADDITIVE, opacity=1.0
+            ),  # Stage blinders: respond to big_blinder signal
+            LayerSpec(
+                color_strobe, BlendMode.ADDITIVE
+            ),  # Color strobe: additive for flash effects
+        )
+
+        return final_composition
 
     def _create_virtual_moving_heads(self) -> MovingHeadArrayRenderer:
         placements: list[MovingHeadPlacement] = []

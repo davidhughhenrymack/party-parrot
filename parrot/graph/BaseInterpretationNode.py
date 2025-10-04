@@ -97,10 +97,20 @@ class BaseInterpretationNode(ABC, Generic[C, RI, RR]):
             for input_node in self.all_inputs:
                 input_node.generate_recursive(vibe, threshold)
 
-    def render(self, frame: Frame, scheme: ColorScheme, context: C) -> RR:
+    def render(
+        self,
+        frame: Frame,
+        scheme: ColorScheme,
+        context: C,
+    ) -> RR:
         """
         Render the node. Rendering code is expected to call .render() on any children
         or props that are needed.
+
+        Args:
+            frame: The current audio frame data
+            scheme: The current color scheme
+            context: The rendering context (e.g. ModernGL context)
         """
         pass
 
@@ -265,7 +275,12 @@ class RandomOperation(BaseInterpretationNode[C, RR, RR]):
                 self.current_operation.enter_recursive(self._context)
             self.current_operation.generate_recursive(vibe)
 
-    def render(self, frame: Frame, scheme: ColorScheme, context: C) -> RR:
+    def render(
+        self,
+        frame: Frame,
+        scheme: ColorScheme,
+        context: C,
+    ) -> RR:
         return self.current_operation.render(frame, scheme, context)
 
 
@@ -358,7 +373,12 @@ class RandomChild(BaseInterpretationNode[C, RI, RR]):
             self.generate(vibe)
             # Don't call generate_recursive on all_inputs since generate() already did it
 
-    def render(self, frame: Frame, scheme: ColorScheme, context: C) -> RR:
+    def render(
+        self,
+        frame: Frame,
+        scheme: ColorScheme,
+        context: C,
+    ) -> RR:
         if self._current_child is None:
             raise RuntimeError(
                 "RandomChild has no selected child. Call generate() before render()."

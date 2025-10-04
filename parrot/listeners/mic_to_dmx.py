@@ -54,7 +54,7 @@ class MicToDmx(object):
         if args.profile:
             tracemalloc.start()
 
-        from parrot.gui.gui import Window
+        from parrot.gui_legacy.tkinter_gui.gui import Window
 
         self.pa = pyaudio.PyAudio()
         self.stream = self.open_mic_stream()
@@ -85,6 +85,11 @@ class MicToDmx(object):
         self.state = State()
         self.signal_states = SignalStates()
 
+        # Set initial mode if specified via args
+        if getattr(args, "rave", False):
+            self.state.set_mode(Mode.rave)
+            print("🎉 Starting in RAVE mode")
+
         self.should_stop = False
 
         # Queue for thread-safe GUI updates
@@ -94,7 +99,7 @@ class MicToDmx(object):
 
         # Initialize VJ system
 
-        self.vj_director = VJDirector(self.state.mode or Mode.chill)
+        self.vj_director = VJDirector(self.state)
 
         # Initialize director with VJ director
         self.director = Director(self.state, self.vj_director)
@@ -239,7 +244,7 @@ class MicToDmx(object):
                 )
                 count = len(raw_block) / 2
                 total = total + count
-                frame_buffer.append(np.fromstring(raw_block, dtype=np.int16))
+                frame_buffer.append(np.frombuffer(raw_block, dtype=np.int16))
 
         snd_block = np.hstack(frame_buffer)
 

@@ -15,6 +15,8 @@ class TestMain(unittest.TestCase):
             self.assertFalse(args.plot)
             self.assertEqual(args.web_port, 4040)
             self.assertFalse(args.no_web)
+            self.assertFalse(args.screenshot)
+            self.assertFalse(args.start_with_overlay)
 
     def test_parse_arguments_custom(self):
         """Test that argument parsing works with custom values"""

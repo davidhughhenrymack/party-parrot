@@ -15,20 +15,18 @@ from parrot.vj.nodes.canvas_effect_base import GenerativeEffectBase
 @beartype
 class HotSparksEffect(GenerativeEffectBase):
     """
-    A hot sparks particle effect that fires glowing spark particles from the top
-    corners downward toward the center of the screen on small pulse signals.
-    Sparks fade over time and have a glow effect.
-    Emits for 1/3 of spark lifetime when triggered.
+    A hot sparks particle effect that fires white spark particles with gold glow
+    from the top corners downward toward the center of the screen on small pulse signals.
+    Sparks start as chips then grow into four-pointed starbursts (with one point elongated)
+    before suddenly disappearing and respawning. Continuously emits while signal is active.
     """
 
     def __init__(
         self,
         width: int = 1920,
         height: int = 1080,
-        num_sparks: int = 200,
-        spark_lifetime: float = 1.0,
-        spark_speed: float = 0.5,
-        signal: FrameSignal = FrameSignal.small_blinder,
+        num_sparks: int = 600,
+        signal: FrameSignal = FrameSignal.pulse,
     ):
         """
         Args:
@@ -41,31 +39,43 @@ class HotSparksEffect(GenerativeEffectBase):
         """
         super().__init__(width, height)
         self.num_sparks = num_sparks
-        self.spark_lifetime = spark_lifetime
-        self.spark_speed = spark_speed
         self.signal = signal
+        self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
 
         # Track emission state
         self.start_time = time.time()  # Reference time for relative calculations
         self.emission_start_time = (
             -10.0
         )  # When continuous emission started (negative = not emitting)
+        self.emission_stop_time = -10.0  # When emission stopped
         self.pulse_seed = random.random()
         self.is_emitting = False  # Track if currently emitting
-        self.signal_went_high_time = (
-            -10.0
-        )  # When signal went high (for emission duration)
 
     def generate(self, vibe: Vibe):
         """Configure spark parameters based on the vibe"""
         from parrot.director.mode import Mode
 
         if vibe.mode == Mode.rave:
-            self.num_sparks = 600  # Even more for rave mode
+            self.num_sparks = 500  # More for rave mode
             self.spark_speed = 1.2
+            self.mode_opacity_multiplier = 1.0
         elif vibe.mode == Mode.chill:
             self.num_sparks = 200  # Fewer for chill mode
             self.spark_speed = 0.5
+            self.mode_opacity_multiplier = 0.3  # Subtle sparks in chill
+        elif vibe.mode == Mode.gentle:
+            self.num_sparks = 150  # Medium for gentle mode
+            self.spark_speed = 0.6
+            self.mode_opacity_multiplier = 0.5  # Medium intensity
+        elif vibe.mode == Mode.blackout:
+            self.num_sparks = 0
+            self.mode_opacity_multiplier = 0.0  # No sparks in blackout
+        else:
+            self.num_sparks = 100
+            self.spark_speed = 0.4
+            self.mode_opacity_multiplier = 0.7
+
+        self.spark_lifetime = 1.0
 
     def print_self(self) -> str:
         return format_node_status(
@@ -83,10 +93,12 @@ class HotSparksEffect(GenerativeEffectBase):
         
         uniform float time;
         uniform float emission_start_time;
+        uniform float emission_stop_time;
         uniform float pulse_seed;
         uniform int num_sparks;
         uniform float spark_lifetime;
-        uniform vec3 spark_color;
+        uniform bool is_emitting;
+        uniform float mode_opacity_multiplier;
         
         // High-quality pseudo-random function
         float random(vec2 st) {
@@ -106,15 +118,43 @@ class HotSparksEffect(GenerativeEffectBase):
             return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
         }
         
+        // Distance function for a four-pointed star (cross/plus shape, one point longer)
+        float starburst(vec2 p, float size, float elongation) {
+            vec2 ap = abs(p);
+            
+            // Create a cross/plus shape using two rectangles
+            // Horizontal bar
+            float horizontal = max(ap.x - size, ap.y - size * 0.2);
+            // Vertical bar (elongated)
+            float vertical = max(ap.y - size * elongation, ap.x - size * 0.2);
+            
+            // Union of the two bars
+            return min(horizontal, vertical);
+        }
+        
         // Calculate spark contribution
         vec3 calculate_spark(vec2 uv, int spark_id, float emission_time, float current_time) {
-            // Calculate when this specific spark was emitted (staggered emission)
-            float spark_birth_time = emission_time + float(spark_id) * 0.001; // 5ms stagger between sparks (shorter emission period)
+            float spawn_stagger = 1 / float(num_sparks);
+            float spark_birth_time = emission_time + float(spark_id) * spawn_stagger;
             float spark_age = current_time - spark_birth_time;
             
-            // Don't render if not yet born or past lifetime
-            if (spark_age < 0.0 || spark_age > spark_lifetime) {
+            // Don't render if not yet born
+            if (spark_age < 0.0) {
                 return vec3(0.0);
+            }
+            
+            // Only loop particles if still emitting
+            if (is_emitting) {
+                spark_age = mod(spark_age, spark_lifetime);
+            } else {
+                // Not emitting - don't spawn new particles after emission stopped
+                if (spark_birth_time > emission_stop_time) {
+                    return vec3(0.0);
+                }
+                // If past lifetime, don't render
+                if (spark_age > spark_lifetime) {
+                    return vec3(0.0);
+                }
             }
             
             // Use spark_id and pulse_seed for random values
@@ -131,22 +171,20 @@ class HotSparksEffect(GenerativeEffectBase):
                 // Left cannon at TOP left corner
                 // In OpenGL/UV space: y=0.0 is BOTTOM, y=1.0 is TOP (standard OpenGL convention)
                 start_pos = vec2(0.10 + random(seed + vec2(10.0, 0.0)) * 0.05, 0.98);
-                // Fire DOWNWARD (negative Y) and toward center (positive X) with random spread
-                float base_speed = 0.6 + random(seed + vec2(40.0, 0.0)) * 0.3; // 0.6-0.9
-                float angle_spread = (random(seed + vec2(30.0, 0.0)) - 0.5) * 0.4; // -0.2 to 0.2
-                initial_velocity = vec2(0.25 + angle_spread, -base_speed); // Negative Y = downward
+                // Fire DOWNWARD (negative Y) and toward center (positive X) with wider random spread - FASTER
+                float base_speed = 1.2 + random(seed + vec2(40.0, 0.0)) * 0.6; // 1.2-1.8 (2x faster)
+                float angle_spread = (random(seed + vec2(30.0, 0.0)) - 0.5) * 0.8; // -0.4 to 0.4 (doubled width)
+                initial_velocity = vec2(0.35 + angle_spread, -base_speed); // Negative Y = downward, wider horizontal
             } else {
                 // Right cannon at TOP right corner
                 start_pos = vec2(0.90 - random(seed + vec2(10.0, 0.0)) * 0.05, 0.98);
-                // Fire DOWNWARD (negative Y) and toward center (negative X) with random spread
-                float base_speed = 0.6 + random(seed + vec2(40.0, 0.0)) * 0.3; // 0.6-0.9
-                float angle_spread = (random(seed + vec2(30.0, 0.0)) - 0.5) * 0.4; // -0.2 to 0.2
-                initial_velocity = vec2(-0.25 + angle_spread, -base_speed); // Negative Y = downward
+                // Fire DOWNWARD (negative Y) and toward center (negative X) with wider random spread - FASTER
+                float base_speed = 1.2 + random(seed + vec2(40.0, 0.0)) * 0.6; // 1.2-1.8 (2x faster)
+                float angle_spread = (random(seed + vec2(30.0, 0.0)) - 0.5) * 0.8; // -0.4 to 0.4 (doubled width)
+                initial_velocity = vec2(-0.35 + angle_spread, -base_speed); // Negative Y = downward, wider horizontal
             }
             
-            // Physics simulation: position = start + velocity*t + 0.5*gravity*t^2
-            // Gravity pulls UP (positive Y in UV space where y=1 is top)
-            float gravity = -0.25; // Upward acceleration (positive Y = up in UV coords)
+            float gravity = 0.8; // Positive value pulls toward y=0 (downward)
             vec2 spark_pos = start_pos + initial_velocity * spark_age;
             spark_pos.y += 0.5 * gravity * spark_age * spark_age;
             
@@ -154,47 +192,63 @@ class HotSparksEffect(GenerativeEffectBase):
             float drift = sin(spark_age * 2.0 + float(spark_id)) * 0.01;
             spark_pos.x += drift;
             
-            // Spark chip size (small rectangular chips) - 1/3 original size
+            // Spark chip size (small rectangular chips) - 30% smaller
             vec2 spark_size = vec2(
-                0.001 + random(seed + vec2(40.0, 0.0)) * 0.0013,  // width: 0.001-0.0023 (1/3 of 0.003-0.007)
-                0.0007 + random(seed + vec2(50.0, 0.0)) * 0.001   // height: 0.0007-0.0017 (1/3 of 0.002-0.005)
+                (0.0005 + random(seed + vec2(40.0, 0.0)) * 0.002) * 0.7,  // 30% smaller
+                (0.0003 + random(seed + vec2(50.0, 0.0)) * 0.0017) * 0.7  // 30% smaller
             );
             
-            // Random rotation that evolves over time
-            float base_rotation = random(seed + vec2(60.0, 0.0)) * 6.28318; // 0 to 2π
-            float rotation = base_rotation + spark_age * 3.0; // Spin during flight
-            
-            // Transform UV to spark space
+            // Transform UV to spark space (no rotation)
             vec2 spark_uv = uv - spark_pos;
-            spark_uv = rotate2d(rotation) * spark_uv;
             
-            // Calculate distance to chip shape
-            float dist = rounded_rect(spark_uv, spark_size, spark_size.y * 0.3);
+            // Starburst animation progress
+            float age_normalized = spark_age / spark_lifetime;
+            float growth = smoothstep(0.0, 0.6, age_normalized); // Grow over first 60% of lifetime
+            
+            // Start as chip, grow into starburst
+            float chip_dist = rounded_rect(spark_uv, spark_size, spark_size.y * 0.3);
+            
+            // Starburst grows and one point elongates - HALF SIZE
+            float star_size = max(spark_size.x, spark_size.y) * (1.0 + growth * 0.25);  // Much smaller max size
+            float elongation = 1.0 + growth * 0.6; // One point becomes 1.6x longer (half of previous)
+            float star_dist = starburst(spark_uv, star_size, elongation);
+            
+            // Blend from chip to starburst
+            float dist = mix(chip_dist, star_dist, growth);
             
             // Smooth falloff for the core spark
             float core_mask = 1.0 - smoothstep(0.0, spark_size.y * 0.5, dist);
             
-            // Glow effect - much subtler (100x less intense)
-            float glow_mask = 1.0 / (1.0 + dist * 80000.0);
-            float strong_glow = 1.0 / (1.0 + dist * 20000.0);
+            // Gold/amber glow effect - much stronger and more visible
+            float glow_radius = star_size * 3.0; // Larger glow radius
+            float glow_mask = exp(-dist / (glow_radius * 0.3)); // Exponential falloff for softer glow
+            float strong_glow = exp(-dist / (glow_radius * 0.1)); // Tighter bright glow
             
-            // Fade over lifetime (3 seconds)
-            float fade = 1.0 - (spark_age / spark_lifetime);
-            fade = smoothstep(0.0, 0.15, fade); // Gradual fade at end
+            // NO FADE - sudden disappearance (just check if still alive)
+            float alive = (age_normalized < 1.0) ? 1.0 : 0.0;
             
             // Add some brightness variation per spark
             float brightness = 0.7 + random(seed + vec2(70.0, 0.0)) * 0.3; // 0.7-1.0
             
-            // Combine core and subtle glow
-            float intensity = (core_mask * 1.2 + strong_glow * 0.008 + glow_mask * 0.003) * fade * brightness;
+            // Sizzle effect: random white-gold color variation over time
+            float sizzle_speed = 15.0 + random(seed + vec2(80.0, 0.0)) * 10.0; // Random flicker rate per spark
+            float sizzle = random(vec2(spark_age * sizzle_speed, float(spark_id) * 0.37));
             
-            // Apply color with slight warmth variation
-            vec3 spark_col = spark_color;
-            // Add slight orange/yellow tint for "hot" look
-            spark_col.r *= 1.1;
-            spark_col.g *= 1.05;
+            // White spark with gold/amber glow
+            vec3 white = vec3(1.0, 1.0, 1.0);
+            vec3 gold = vec3(1.0, 0.75, 0.2); // Warm gold/amber color
             
-            return spark_col * intensity;
+            // Sizzle between white-hot and gold-hot randomly
+            float gold_mix = 0.3 + sizzle * 0.7; // Randomly 30%-100% gold
+            vec3 sizzle_color = mix(white, gold, gold_mix);
+            
+            // Core is white-gold sizzle, glow is gold
+            vec3 core_color = sizzle_color * core_mask * 1.5;
+            vec3 glow_color = gold * (strong_glow * 0.8 + glow_mask * 0.4);
+            
+            vec3 final = (core_color + glow_color) * alive * brightness;
+            
+            return final;
         }
         
         void main() {
@@ -204,7 +258,7 @@ class HotSparksEffect(GenerativeEffectBase):
             if (emission_start_time >= 0.0) {
                 // Render all sparks (they have staggered birth times and individual lifetimes)
                 // Limit loop iterations for shader optimization (GLSL doesn't optimize unbounded loops well)
-                int max_sparks = min(num_sparks, 500);  // Hard limit to prevent shader slowdown
+                int max_sparks = min(num_sparks, 1200);  // Hard limit to prevent shader slowdown
                 for (int i = 0; i < max_sparks; i++) {
                     if (i >= num_sparks) break;  // Early exit
                     vec3 spark_contribution = calculate_spark(uv, i, emission_start_time, time);
@@ -213,7 +267,7 @@ class HotSparksEffect(GenerativeEffectBase):
                 }
             }
             
-            color = clamp(final_color, 0.0, 1.0);
+            color = clamp(final_color * mode_opacity_multiplier, 0.0, 1.0);
         }
         """
 
@@ -225,30 +279,30 @@ class HotSparksEffect(GenerativeEffectBase):
         # Get signal value
         signal_value = frame[self.signal]
         emission_threshold = 0.5
-        emission_duration = self.spark_lifetime / 3.0  # Emit for 1/3 of spark lifetime
 
-        # Check if we should be emitting
+        # Continuous emission while signal is high
         if signal_value > emission_threshold:
             if not self.is_emitting:
-                # Signal just went high - start tracking and emitting
-                self.signal_went_high_time = current_time
+                # Signal just went high - start emitting
                 self.emission_start_time = current_time
-                self.pulse_seed = random.random()  # New random seed for new emission
+                self.pulse_seed = (
+                    random.random()
+                )  # New random seed for this emission cycle
                 self.is_emitting = True
-            else:
-                # Signal is still high - check if we've emitted for 1/3 of the time
-                time_since_signal_high = current_time - self.signal_went_high_time
-                if time_since_signal_high > emission_duration:
-                    # Stop emitting but let existing sparks finish their lifetime
-                    self.is_emitting = False
+            # While signal is high, particles continuously loop/respawn
         else:
-            # Signal dropped - stop emitting but let existing sparks finish their lifetime
+            # Signal dropped - stop emitting but keep emission_start_time so particles finish
+            if self.is_emitting:
+                # Just stopped - record the time
+                self.emission_stop_time = current_time
             self.is_emitting = False
 
         # Set uniforms (using relative time for precision)
         self.shader_program["time"] = current_time
         self.shader_program["emission_start_time"] = self.emission_start_time
+        self.shader_program["emission_stop_time"] = self.emission_stop_time
         self.shader_program["pulse_seed"] = self.pulse_seed
         self.shader_program["num_sparks"] = self.num_sparks
         self.shader_program["spark_lifetime"] = self.spark_lifetime
-        self.shader_program["spark_color"] = scheme.fg.rgb
+        self.shader_program["is_emitting"] = self.is_emitting
+        self.shader_program["mode_opacity_multiplier"] = self.mode_opacity_multiplier

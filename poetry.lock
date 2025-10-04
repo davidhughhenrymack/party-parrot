@@ -473,6 +473,88 @@ files = [
 ]
 
 [[package]]
+name = "imgui"
+version = "2.0.0"
+description = "Cython-based Python bindings for dear imgui"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "imgui-2.0.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:5876314bd7137115325d843e6985c1d939b7ab992bdc4259cbcd178988d02944"},
+    {file = "imgui-2.0.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d6e3a48cdd5b1289bbf6a3477b86712528d3bf3f1b74f5a481647581830527ba"},
+    {file = "imgui-2.0.0-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c1a88dd008046d19f9e9df95e34a8df8908007be76aefcd6a36aad759b6fe7d0"},
+    {file = "imgui-2.0.0-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:6602d18ed735766e08cb4fb9e1c9fd420be96f8112f7357134dadd3a848a51ce"},
+    {file = "imgui-2.0.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:d5e028485346057f286d9116e7bbed4e38da9990da41cdc8efc26d3bc6e010c9"},
+    {file = "imgui-2.0.0-cp310-cp310-win32.whl", hash = "sha256:3da16856d89de0f1c0c0d9732d2a1dfc7ed68182545a7a6e87ecd74b93e52da0"},
+    {file = "imgui-2.0.0-cp310-cp310-win_amd64.whl", hash = "sha256:377a210a1c118a19b70f6127384772f352bc4d5e78028a948db6182e37b6e343"},
+    {file = "imgui-2.0.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:1d7449ca6380420ccfcf8d8483cb5ad838e222bf55347fbeeba51181ba9b721d"},
+    {file = "imgui-2.0.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aba45749ee9356202d10661f1390b75a701c0540e8d3bd3f7e51dafbf6cf36f6"},
+    {file = "imgui-2.0.0-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7f4fa4b7b2c917446ba285541574775fd61a4c5c23050989314961ea06c59ad1"},
+    {file = "imgui-2.0.0-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:ea6d37ef37e4acaa6e9ea0111cb4a61db6ed32c44164ac8bebe96b01036387bd"},
+    {file = "imgui-2.0.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:ffcd54fb088d20ce682cba3ade24831fbbdd620807e20ab147ab0083111d0243"},
+    {file = "imgui-2.0.0-cp311-cp311-win32.whl", hash = "sha256:c4ea5d971bb781ec06697b72ecfa802548ebdd1f5144353d530982c1ef1d86b1"},
+    {file = "imgui-2.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:c1af2761708c40c852053dd0a7d570ea0241a75ad3c27d7b55430b12003198e0"},
+    {file = "imgui-2.0.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:d09b85532124f2c3138bef243adc25fd57d81fa3a049d96c2a6f8c4383d90127"},
+    {file = "imgui-2.0.0-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:51b7084e11a50a84e09d2e5baf18926a165676325951929eb53d5936b3971eb3"},
+    {file = "imgui-2.0.0-cp36-cp36m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:772283312cda96d0a33cc7102c644a4b796b60fc51cd7e38c926e0d7d3c5e952"},
+    {file = "imgui-2.0.0-cp36-cp36m-musllinux_1_1_i686.whl", hash = "sha256:b994278d0d90348a471f884930e2bd731ed92b2ae36171efdc645ffc2a64db4e"},
+    {file = "imgui-2.0.0-cp36-cp36m-musllinux_1_1_x86_64.whl", hash = "sha256:a0a333d1745721fd23bb8015fdd34deb0d6e9a2450c993506688742b9c5a0941"},
+    {file = "imgui-2.0.0-cp36-cp36m-win32.whl", hash = "sha256:94a100c9050fb41cc043076517f1adb41cb38f0bfeaf84d21452a89ec500969f"},
+    {file = "imgui-2.0.0-cp36-cp36m-win_amd64.whl", hash = "sha256:23f67fc8789e1e56c8990783dc78031b6b196f37109fb6808389cde7c3fd1bb0"},
+    {file = "imgui-2.0.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:d7ace8c05a17b359ddbc89882c4c0fc698d537eb9a0410254caaa0829003fa01"},
+    {file = "imgui-2.0.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c32b442874bae79b358cacfd30be416430c8af97f9c5edcba4c22375b58fc1ed"},
+    {file = "imgui-2.0.0-cp37-cp37m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:59cf4cce7642305b28c5b961392a7e5a72537036c84ba5fde2a6bf10c154a27b"},
+    {file = "imgui-2.0.0-cp37-cp37m-musllinux_1_1_i686.whl", hash = "sha256:0fc382e0d3fea4da7a88a5fcd395e028722fda1bdbbe4936071f4cb0420f9dd5"},
+    {file = "imgui-2.0.0-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:b22f30c640a48d2e03a85bf91f80d6ed5fa6a7d0b40643e423ccf1f8411d5612"},
+    {file = "imgui-2.0.0-cp37-cp37m-win32.whl", hash = "sha256:f619b045688abad4ccc1896dd911d54006fdcf33da2453b9987e803b63a9a6da"},
+    {file = "imgui-2.0.0-cp37-cp37m-win_amd64.whl", hash = "sha256:9015a85e90be27ab8c7d730fa1fd876fac3407b8c369fbe29fa290ed044eff79"},
+    {file = "imgui-2.0.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:206f217a71055d12f8395aca14a3c9e60a6411fc852791bb5e108834953ffcc6"},
+    {file = "imgui-2.0.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3811b91e818eafa924116628b400294d023819efceb71a7ed2e4b7a6b3727ecb"},
+    {file = "imgui-2.0.0-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:66a5a3ea2c5487b83fc99d56d56df3f23b49010c2f65162ae318076beecd387d"},
+    {file = "imgui-2.0.0-cp38-cp38-musllinux_1_1_i686.whl", hash = "sha256:f5775be372ff7154a728a8add224560c2c7654a9c902b1feb524f9342747051e"},
+    {file = "imgui-2.0.0-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:e9c5985f24671571a94f21f793b487d2b775a5d96092145c2c242b8aee29e487"},
+    {file = "imgui-2.0.0-cp38-cp38-win32.whl", hash = "sha256:385dbd48aa5abd297b5b9b665bd2806fbcf57c2d0f4a3b4f609bf64cc0487202"},
+    {file = "imgui-2.0.0-cp38-cp38-win_amd64.whl", hash = "sha256:ff0aa7736067ae5d4d0d118902d339fd1133f2dd2181cafc3b246391a4f036a1"},
+    {file = "imgui-2.0.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:cbea38112f8b4c232ef065a537266f561f952324d19409ebb0e7221648632dd3"},
+    {file = "imgui-2.0.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:14fcacd6645fbcc0770d4f746abb4ee631a694895f58aef0e0d2976eab431226"},
+    {file = "imgui-2.0.0-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:a1f5c95505c73cd03f70d348e3f15ee2baa72b2251a636c09095b2a312c9a582"},
+    {file = "imgui-2.0.0-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:cc2c7074e07ca9802089c17ddc3a7c3059d0848c7c596a22e5aa86026d99cc18"},
+    {file = "imgui-2.0.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:f2448957ab4052d1a69e2e134a36d2a87c7599834639385daa88f62ac5302154"},
+    {file = "imgui-2.0.0-cp39-cp39-win32.whl", hash = "sha256:e086cb9d1709b0391a06d43f1cecaa3bc384382dac3d3ca8489937050cd85efc"},
+    {file = "imgui-2.0.0-cp39-cp39-win_amd64.whl", hash = "sha256:bead8db082403dde37429a14b439df6fada0c909a0f06fb310c1dec94338dad4"},
+    {file = "imgui-2.0.0-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:5ef6411f9a2f1e528894bc184f4505b935aff0d80e258e38e91ab06e308b6ae8"},
+    {file = "imgui-2.0.0-pp37-pypy37_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2bc50d3b4464f8b9465ab220854ea1131166af0717c963a3a175b3c7966a029e"},
+    {file = "imgui-2.0.0-pp37-pypy37_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c30c11780982eeb619b6badcccab2eb90acf6141d9610902679b44fbaf588310"},
+    {file = "imgui-2.0.0-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:5899bf6c8492c60b1e36dfcc850bdf27da3cc90d596cdfff7e563ecfedfa269b"},
+    {file = "imgui-2.0.0-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:c7541813f477e407db32e0242880205f4b46d23c72e16dd3f1890dd853e7549d"},
+    {file = "imgui-2.0.0-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b0e61e7f5f42391f149bfbd7196148a4009a446c7663b69fea0629ff7b857f38"},
+    {file = "imgui-2.0.0-pp38-pypy38_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8bce66afefbc6cb383c19405255a3333eef10b5082e54d7fff075244aa8ac8cf"},
+    {file = "imgui-2.0.0-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:4ae29fb159f83561d2fb5659509de9c34113ba46c8d7c066279fdddac391545e"},
+    {file = "imgui-2.0.0-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:adfd23b70ec4696a9128f64228a471fda9d2a709ab6c46affadb5ceb2b620626"},
+    {file = "imgui-2.0.0-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d4dd5551d2140980fb533d7a35d7efefd5060199d9cdf0ce3e65bbb27264090"},
+    {file = "imgui-2.0.0-pp39-pypy39_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ac287738a6add06da73ecc7d9a0227e74f3d013c9aace17f4014814b35e85dbe"},
+    {file = "imgui-2.0.0-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:c93d2bbeac28661efaef263f7ef139269358d42e9002357ee96d901ff851fc59"},
+    {file = "imgui-2.0.0.tar.gz", hash = "sha256:2fbdb8eed3b8dbd7ea98af9e4c1c6582b0bc4da942a258de16333d8c653d67e1"},
+]
+
+[package.dependencies]
+pyglet = [
+    {version = "*", optional = true, markers = "sys_platform != \"darwin\" and extra == \"pyglet\""},
+    {version = ">=1.5.6", optional = true, markers = "sys_platform == \"darwin\" and extra == \"pyglet\""},
+]
+PyOpenGL = {version = "*", optional = true, markers = "extra == \"pyglet\""}
+
+[package.extras]
+cocos2d = ["PyOpenGL", "cocos2d", "pyglet (>=1.5.6) ; sys_platform == \"darwin\""]
+cython = ["Cython (>=0.24,<0.30)"]
+full = ["Cython (>=0.24,<0.30)", "PyOpenGL", "PySDL2", "cocos2d", "glfw", "pygame", "pyglet (>=1.5.6) ; sys_platform == \"darwin\"", "pyglet ; sys_platform != \"darwin\""]
+glfw = ["PyOpenGL", "glfw"]
+opengl = ["PyOpenGL"]
+pygame = ["PyOpenGL", "pygame"]
+pyglet = ["PyOpenGL", "pyglet (>=1.5.6) ; sys_platform == \"darwin\"", "pyglet ; sys_platform != \"darwin\""]
+sdl2 = ["PyOpenGL", "PySDL2"]
+
+[[package]]
 name = "iniconfig"
 version = "2.1.0"
 description = "brain-dead simple config-ini parsing"
@@ -1569,4 +1651,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "bbd7cbbb8e4d28df3b6cd960ac968bbbc73bbebb377b6a6518c385787aeb8d26"
+content-hash = "d685496e2f9638b69c868857be390be91bd4dbcd9d7d35ac0be95cdfedddc1ff"

@@ -203,7 +203,8 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Get blend function
         blend_src, blend_dst = self._get_blend_func(blend_mode)
 
-        # Set up blending
+        # Set up required GL state for compositing
+        # No need to save/restore - we explicitly set what we need
         context.disable(mgl.DEPTH_TEST)
         context.enable(mgl.BLEND)
         context.blend_func = blend_src, blend_dst
@@ -219,9 +220,6 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         context.viewport = (0, 0, self.width, self.height)
         self.quad_vao.render(mgl.TRIANGLE_STRIP)
 
-        # Disable blending
-        context.disable(mgl.BLEND)
-
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> Optional[mgl.Framebuffer]:
@@ -229,8 +227,13 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         if not self.final_framebuffer or not self.layer_specs:
             return None
 
+        # Save GL state that we will modify
+        saved_viewport = context.viewport
+        saved_fbo = context.fbo
+
         # Clear final framebuffer to transparent black
         self.final_framebuffer.use()
+        context.viewport = (0, 0, self.width, self.height)
         context.clear(0.0, 0.0, 0.0, 0.0)
 
         # Render and composite each layer
@@ -243,6 +246,8 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
             if i == 0:
                 # First layer: copy directly (base layer)
+                # Disable blending for base layer copy
+                context.disable(mgl.BLEND)
                 context.copy_framebuffer(self.final_framebuffer, layer_result)
             else:
                 # Subsequent layers: composite with blend mode
@@ -252,5 +257,12 @@ class LayerCompose(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
                     layer_spec.blend_mode,
                     layer_spec.opacity,
                 )
+
+        # Restore GL state to be a good citizen
+        # Leave blending disabled (expected by calling code)
+        context.disable(mgl.BLEND)
+        if saved_fbo:
+            saved_fbo.use()
+        context.viewport = saved_viewport
 
         return self.final_framebuffer
