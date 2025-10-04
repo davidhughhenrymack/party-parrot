@@ -232,23 +232,29 @@ class Test3DRoomRender:
         room_renderer = renderer.room_renderer
         assert room_renderer is not None
 
-        # Test corners of the [0-500] space
-        # Bottom-left: (0, 0) -> should map to (-5, 0, -5)
-        x, y, z = room_renderer.convert_2d_to_3d(0.0, 0.0, 500.0, 500.0)
+        # Test corners of the [0-500] space with default height z=0
+        # Bottom-left: (0, 0, z=0) -> should map to (-5, 0, -5)
+        x, y, z = room_renderer.convert_2d_to_3d(0.0, 0.0, 0.0, 500.0, 500.0)
         assert abs(x - (-5.0)) < 0.01
-        assert abs(y - 0.0) < 0.01
+        assert abs(y - 0.0) < 0.01  # y is height, should be z parameter
         assert abs(z - (-5.0)) < 0.01
 
-        # Top-right: (500, 500) -> should map to (5, 0, 5)
-        x, y, z = room_renderer.convert_2d_to_3d(500.0, 500.0, 500.0, 500.0)
+        # Top-right: (500, 500, z=0) -> should map to (5, 0, 5)
+        x, y, z = room_renderer.convert_2d_to_3d(500.0, 500.0, 0.0, 500.0, 500.0)
         assert abs(x - 5.0) < 0.01
-        assert abs(y - 0.0) < 0.01
+        assert abs(y - 0.0) < 0.01  # y is height, should be z parameter
         assert abs(z - 5.0) < 0.01
 
-        # Center: (250, 250) -> should map to (0, 0, 0)
-        x, y, z = room_renderer.convert_2d_to_3d(250.0, 250.0, 500.0, 500.0)
+        # Center: (250, 250, z=0) -> should map to (0, 0, 0)
+        x, y, z = room_renderer.convert_2d_to_3d(250.0, 250.0, 0.0, 500.0, 500.0)
         assert abs(x - 0.0) < 0.01
-        assert abs(y - 0.0) < 0.01
+        assert abs(y - 0.0) < 0.01  # y is height, should be z parameter
+        assert abs(z - 0.0) < 0.01
+
+        # Test with different height (z=5)
+        x, y, z = room_renderer.convert_2d_to_3d(250.0, 250.0, 5.0, 500.0, 500.0)
+        assert abs(x - 0.0) < 0.01
+        assert abs(y - 5.0) < 0.01  # Height should be 5
         assert abs(z - 0.0) < 0.01
 
         renderer.exit()

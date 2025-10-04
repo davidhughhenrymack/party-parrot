@@ -67,7 +67,11 @@ def test_renderer_set_position():
     fixture = ParRGB(1)
     renderer = BulbRenderer(fixture)
     renderer.set_position(100.0, 200.0)
-    assert renderer.position == (100.0, 200.0)
+    assert renderer.position == (100.0, 200.0, 3.0)  # Default z is 3.0
+
+    # Test with explicit z
+    renderer.set_position(150.0, 250.0, 5.0)
+    assert renderer.position == (150.0, 250.0, 5.0)
 
 
 def test_renderer_get_color():

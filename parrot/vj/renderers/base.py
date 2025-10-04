@@ -70,7 +70,7 @@ class FixtureRenderer:
 
     def __init__(self, fixture: FixtureBase, room_renderer: Optional[Any] = None):
         self.fixture = fixture
-        self.position = (0.0, 0.0)  # (x, y) in canvas coordinates
+        self.position = (0.0, 0.0, 3.0)  # (x, y, z) - z is height
         self.size = self._get_default_size()
         self.room_renderer = room_renderer  # Room3DRenderer instance
         self.cube_size = 0.8  # Size of fixture body cube
@@ -79,9 +79,9 @@ class FixtureRenderer:
         # Default orientation: Z-axis points toward audience (negative Z in room coords)
         self.orientation = quaternion_identity()
 
-    def set_position(self, x: float, y: float):
-        """Set the position of the fixture in canvas coordinates"""
-        self.position = (x, y)
+    def set_position(self, x: float, y: float, z: float = 3.0):
+        """Set the position of the fixture in canvas coordinates (x, y) and height (z)"""
+        self.position = (x, y, z)
 
     @abstractmethod
     def _get_default_size(self) -> tuple[float, float]:
@@ -129,8 +129,10 @@ class FixtureRenderer:
         if self.room_renderer is None:
             return (0.0, 0.0, 0.0)
 
-        x, y = self.position
-        return self.room_renderer.convert_2d_to_3d(x, y, canvas_size[0], canvas_size[1])
+        x, y, z = self.position
+        return self.room_renderer.convert_2d_to_3d(
+            x, y, z, canvas_size[0], canvas_size[1]
+        )
 
     def get_oriented_offset(self, offset: tuple[float, float, float]) -> np.ndarray:
         """Apply orientation quaternion to a local offset vector

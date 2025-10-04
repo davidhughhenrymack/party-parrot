@@ -123,7 +123,8 @@ class DMXFixtureRenderer(GenerativeEffectBase):
                     pos_data = data[renderer.fixture.id]
                     x = float(pos_data.get("x", 0))
                     y = float(pos_data.get("y", 0))
-                    renderer.set_position(x, y)
+                    z = float(pos_data.get("z", 3))  # Default height of 3
+                    renderer.set_position(x, y, z)
                 else:
                     # Fixture not in saved data, use default
                     self._set_default_position(renderer)

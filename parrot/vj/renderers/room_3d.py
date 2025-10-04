@@ -979,11 +979,12 @@ class Room3DRenderer:
         vao.release()
 
     def convert_2d_to_3d(
-        self, x: float, y: float, canvas_width: float, canvas_height: float
+        self, x: float, y: float, z: float, canvas_width: float, canvas_height: float
     ):
         """Convert 2D canvas coordinates to 3D room coordinates
 
         Maps fixture positions from [0-500] range to floor space [-5 to 5]
+        z parameter controls height above floor
         """
         # Assume fixtures are positioned in a [0-500] coordinate system
         # Map to floor space which is [-5 to 5] in both X and Z
@@ -1002,8 +1003,8 @@ class Room3DRenderer:
         # Y coordinate from canvas becomes Z depth (forward/back)
         room_z = (norm_y - 0.5) * floor_size
 
-        # Y: height above floor (cubes sit on floor)
-        room_y = 0.0
+        # Y: height above floor (from z parameter)
+        room_y = z
 
         return room_x, room_y, room_z
 
