@@ -24,31 +24,32 @@ class BulbRenderer(FixtureRenderer):
             return
 
         # Get 3D position (center of fixture)
-        room_x, room_y, room_z = self.get_3d_position(canvas_size)
+        position_3d = self.get_3d_position(canvas_size)
 
-        # Render gray body cube (small, compact fixture)
-        body_size = self.cube_size * 0.6
-        body_color = (0.3, 0.3, 0.3)  # Dark gray
-        self.room_renderer.render_fixture_cube(
-            room_x, room_y + body_size / 2, room_z, body_color, body_size
-        )
+        # Render with local transforms - much cleaner!
+        with self.room_renderer.local_position(position_3d):
+            with self.room_renderer.local_rotation(self.orientation):
+                # Render gray body cube (small, compact fixture)
+                body_size = self.cube_size * 0.6
+                body_color = (0.3, 0.3, 0.3)  # Dark gray
 
-        # Render colored bulb sphere on audience-facing side (+Z in local coords)
-        bulb_radius = body_size * 0.5
-        bulb_distance = body_size * 0.7  # Distance from center toward audience
+                # Body sits on floor (y=0 to y=body_size)
+                self.room_renderer.render_cube(
+                    (0.0, body_size / 2, 0.0), body_color, body_size
+                )
 
-        # Local offset: forward toward audience
-        local_offset = (0.0, 0.0, bulb_distance)
-        world_offset = self.get_oriented_offset(local_offset)
+                # Render colored bulb sphere on audience-facing side (+Z in local coords)
+                bulb_radius = body_size * 0.5
+                bulb_distance = body_size * 0.7  # Distance from center toward audience
 
-        bulb_x = room_x + world_offset[0]
-        bulb_y = room_y + body_size + world_offset[1]
-        bulb_z = room_z + world_offset[2]
+                # Use full color with dimmer as alpha (transparency)
+                bulb_color = self.get_color()  # Full RGB color
+                dimmer = self.get_effective_dimmer(frame)
 
-        # Use full color with dimmer as alpha (transparency)
-        bulb_color = self.get_color()  # Full RGB color
-        dimmer = self.get_effective_dimmer(frame)
-
-        self.room_renderer.render_sphere(
-            bulb_x, bulb_y, bulb_z, bulb_color, bulb_radius, alpha=dimmer
-        )
+                # Bulb position in local coordinates (at body height, forward toward audience)
+                self.room_renderer.render_sphere(
+                    (0.0, body_size, bulb_distance),
+                    bulb_color,
+                    bulb_radius,
+                    alpha=dimmer,
+                )

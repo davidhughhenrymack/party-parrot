@@ -186,3 +186,73 @@ def test_moving_head_beam_with_room_renderer():
     room.cleanup()
     fbo.release()
     ctx.release()
+
+
+def test_room_renderer_context_managers():
+    """Test that local_position and local_rotation context managers work correctly"""
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+    import numpy as np
+
+    ctx = mgl.create_context(standalone=True)
+    room = Room3DRenderer(ctx, 800, 600)
+
+    # Test initial state
+    assert len(room.position_stack) == 1
+    assert len(room.rotation_stack) == 1
+    assert room.position_stack[-1] == (0.0, 0.0, 0.0)
+
+    # Test local_position context manager
+    with room.local_position((1.0, 2.0, 3.0)):
+        assert len(room.position_stack) == 2
+        assert room.position_stack[-1] == (1.0, 2.0, 3.0)
+
+        # Test nested position
+        with room.local_position((4.0, 5.0, 6.0)):
+            assert len(room.position_stack) == 3
+            assert room.position_stack[-1] == (4.0, 5.0, 6.0)
+
+        # Should pop back
+        assert len(room.position_stack) == 2
+        assert room.position_stack[-1] == (1.0, 2.0, 3.0)
+
+    # Should pop back to initial
+    assert len(room.position_stack) == 1
+    assert room.position_stack[-1] == (0.0, 0.0, 0.0)
+
+    # Test local_rotation context manager
+    test_quat = np.array([0.0, 0.707, 0.0, 0.707], dtype=np.float32)
+    with room.local_rotation(test_quat):
+        assert len(room.rotation_stack) == 2
+        assert np.allclose(room.rotation_stack[-1], test_quat)
+
+    # Should pop back to identity
+    assert len(room.rotation_stack) == 1
+
+    # Cleanup
+    room.cleanup()
+    ctx.release()
+
+
+def test_room_renderer_transform_stacks():
+    """Test that transform stacks produce correct model matrices"""
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+    import numpy as np
+
+    ctx = mgl.create_context(standalone=True)
+    room = Room3DRenderer(ctx, 800, 600)
+
+    # Test identity model matrix
+    model = room._get_current_model_matrix()
+    assert np.allclose(model, np.eye(4, dtype=np.float32))
+
+    # Test position transform
+    with room.local_position((1.0, 2.0, 3.0)):
+        model = room._get_current_model_matrix()
+        # Check that translation is in the matrix
+        assert abs(model[0, 3] - 1.0) < 0.01
+        assert abs(model[1, 3] - 2.0) < 0.01
+        assert abs(model[2, 3] - 3.0) < 0.01
+
+    # Cleanup
+    room.cleanup()
+    ctx.release()

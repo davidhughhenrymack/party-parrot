@@ -9,6 +9,7 @@ import moderngl as mgl
 import numpy as np
 import math
 from typing import Optional
+from contextlib import contextmanager
 
 from parrot.fixtures.base import FixtureBase
 from parrot.vj.renderers.base import FixtureRenderer
@@ -74,6 +75,10 @@ class Room3DRenderer:
 
         self._setup_shaders()
         self._setup_floor_geometry()
+
+        # Transform stacks for hierarchical rendering
+        self.position_stack: list[tuple[float, float, float]] = [(0.0, 0.0, 0.0)]
+        self.rotation_stack: list[np.ndarray] = [self._identity_quaternion()]
 
     def _setup_shaders(self):
         """Setup OpenGL shaders for 3D rendering with Blinn-Phong lighting"""
@@ -366,6 +371,94 @@ class Room3DRenderer:
         # Camera angle is now controlled by mouse drag
         pass
 
+    # Transform stack methods
+
+    def _identity_quaternion(self) -> np.ndarray:
+        """Return identity quaternion (no rotation)"""
+        return np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
+
+    def _quaternion_to_matrix(self, q: np.ndarray) -> np.ndarray:
+        """Convert quaternion to 4x4 rotation matrix"""
+        x, y, z, w = q
+        return np.array(
+            [
+                [
+                    1 - 2 * y * y - 2 * z * z,
+                    2 * x * y - 2 * w * z,
+                    2 * x * z + 2 * w * y,
+                    0,
+                ],
+                [
+                    2 * x * y + 2 * w * z,
+                    1 - 2 * x * x - 2 * z * z,
+                    2 * y * z - 2 * w * x,
+                    0,
+                ],
+                [
+                    2 * x * z - 2 * w * y,
+                    2 * y * z + 2 * w * x,
+                    1 - 2 * x * x - 2 * y * y,
+                    0,
+                ],
+                [0, 0, 0, 1],
+            ],
+            dtype=np.float32,
+        )
+
+    def _get_current_model_matrix(self) -> np.ndarray:
+        """Get the current model matrix from transform stacks"""
+        # Start with identity
+        model = np.eye(4, dtype=np.float32)
+
+        # Apply position translation
+        pos = self.position_stack[-1]
+        translation = np.array(
+            [[1, 0, 0, pos[0]], [0, 1, 0, pos[1]], [0, 0, 1, pos[2]], [0, 0, 0, 1]],
+            dtype=np.float32,
+        )
+
+        # Apply rotation
+        rotation = self._quaternion_to_matrix(self.rotation_stack[-1])
+
+        # Combine: model = translation * rotation
+        model = translation @ rotation
+
+        return model
+
+    @contextmanager
+    def local_position(self, position: tuple[float, float, float]):
+        """Context manager for local position transform
+
+        Usage:
+            with room_renderer.local_position((x, y, z)):
+                # Render at this position
+                room_renderer.render_cube((0, 0, 0), color, size)
+        """
+        # Push new position onto stack
+        self.position_stack.append(position)
+        try:
+            yield
+        finally:
+            # Pop position from stack
+            self.position_stack.pop()
+
+    @contextmanager
+    def local_rotation(self, quaternion: np.ndarray):
+        """Context manager for local rotation transform
+
+        Usage:
+            with room_renderer.local_rotation(quat):
+                # Render with this rotation
+                room_renderer.render_sphere((0, 0, 0.5), color, radius)
+        """
+        # Push new rotation onto stack
+        self.rotation_stack.append(quaternion)
+        try:
+            yield
+        finally:
+            # Pop rotation from stack
+            self.rotation_stack.pop()
+
     def render_floor(self):
         """Render the floor quad and grid lines with lighting"""
         mvp = self._get_mvp_matrix()
@@ -399,15 +492,20 @@ class Room3DRenderer:
         # Render grey grid lines on top
         self.grid_vao.render(mgl.LINES)
 
-    def render_fixture_cube(
+    def render_cube(
         self,
-        x: float,
-        y: float,
-        z: float,
+        position: tuple[float, float, float],
         color: tuple[float, float, float],
         size: float = 0.5,
     ):
-        """Render a 3D cube for a fixture with normals and lighting"""
+        """Render a 3D cube with normals and lighting in local coordinates
+
+        Args:
+            position: Local position (x, y, z) relative to current transform
+            color: RGB color tuple
+            size: Size of the cube
+        """
+        x, y, z = position
         # Create cube vertices
         half_size = size / 2.0
 
@@ -517,9 +615,9 @@ class Room3DRenderer:
             ],
         )
 
-        # Set uniforms (reuse from render_floor)
+        # Set uniforms using current model matrix from transform stack
         mvp = self._get_mvp_matrix()
-        model = np.eye(4, dtype=np.float32)
+        model = self._get_current_model_matrix()
 
         horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
         cam_x = horizontal_distance * math.sin(self.camera_angle)
@@ -527,7 +625,10 @@ class Room3DRenderer:
         cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
         view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
 
-        self.shader["mvp"] = mvp.T.flatten()
+        # Compute MVP with model transform
+        mvp_with_model = self._get_mvp_matrix() @ model
+
+        self.shader["mvp"] = mvp_with_model.T.flatten()
         self.shader["model"] = model.T.flatten()
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["emission"] = 0.0  # Fixture bodies use normal lighting
@@ -540,6 +641,19 @@ class Room3DRenderer:
         normal_vbo.release()
         color_vbo.release()
         vao.release()
+
+    # Backward compatibility alias
+    def render_fixture_cube(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        color: tuple[float, float, float],
+        size: float = 0.5,
+    ):
+        """Legacy method - use render_cube with local_position context manager instead"""
+        with self.local_position((x, y, z)):
+            self.render_cube((0.0, 0.0, 0.0), color, size)
 
     def render_rectangular_box(
         self,
@@ -662,9 +776,9 @@ class Room3DRenderer:
             ],
         )
 
-        # Set uniforms
-        mvp = self._get_mvp_matrix()
-        model = np.eye(4, dtype=np.float32)
+        # Set uniforms using current model matrix from transform stack
+        model = self._get_current_model_matrix()
+        mvp_with_model = self._get_mvp_matrix() @ model
 
         horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
         cam_x = horizontal_distance * math.sin(self.camera_angle)
@@ -672,7 +786,7 @@ class Room3DRenderer:
         cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
         view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
 
-        self.shader["mvp"] = mvp.T.flatten()
+        self.shader["mvp"] = mvp_with_model.T.flatten()
         self.shader["model"] = model.T.flatten()
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["emission"] = 0.0  # Rectangular boxes use normal lighting
@@ -688,21 +802,21 @@ class Room3DRenderer:
 
     def render_sphere(
         self,
-        x: float,
-        y: float,
-        z: float,
+        position: tuple[float, float, float],
         color: tuple[float, float, float],
         radius: float = 0.3,
         alpha: float = 1.0,
     ):
-        """Render a 3D sphere (approximated with icosahedron for performance)
+        """Render a 3D sphere (approximated with icosahedron for performance) in local coordinates
 
         Args:
-            x, y, z: Position of sphere center
+            position: Local position (x, y, z) relative to current transform
             color: RGB color tuple
             radius: Radius of the sphere
             alpha: Alpha transparency (0.0 = fully transparent, 1.0 = fully opaque)
         """
+        x, y, z = position
+
         # Create icosahedron vertices (simple sphere approximation)
         t = (1.0 + math.sqrt(5.0)) / 2.0
 
@@ -797,8 +911,11 @@ class Room3DRenderer:
         )
 
         # Render sphere with emission (bulbs glow independently)
-        mvp = self._get_mvp_matrix()
-        self.shader["mvp"] = mvp.T.flatten()
+        model = self._get_current_model_matrix()
+        mvp_with_model = self._get_mvp_matrix() @ model
+
+        self.shader["mvp"] = mvp_with_model.T.flatten()
+        self.shader["model"] = model.T.flatten()
         self.shader["emission"] = 1.0  # Bulbs are emissive - not affected by lighting
 
         # Enable blending for transparency if alpha < 1.0
@@ -947,9 +1064,9 @@ class Room3DRenderer:
             ],
         )
 
-        # Set uniforms
-        mvp = self._get_mvp_matrix()
-        model = np.eye(4, dtype=np.float32)
+        # Set uniforms using current model matrix from transform stack
+        model = self._get_current_model_matrix()
+        mvp_with_model = self._get_mvp_matrix() @ model
 
         horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
         cam_x = horizontal_distance * math.sin(self.camera_angle)
@@ -957,7 +1074,7 @@ class Room3DRenderer:
         cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
         view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
 
-        self.shader["mvp"] = mvp.T.flatten()
+        self.shader["mvp"] = mvp_with_model.T.flatten()
         self.shader["model"] = model.T.flatten()
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["emission"] = 0.9  # Beams are highly emissive

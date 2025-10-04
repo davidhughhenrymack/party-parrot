@@ -23,15 +23,17 @@ class LaserRenderer(FixtureRenderer):
         if self.room_renderer is None:
             return
 
-        # Get 3D position
-        room_x, room_y, room_z = self.get_3d_position(canvas_size)
+        # Get 3D position (center of fixture)
+        position_3d = self.get_3d_position(canvas_size)
 
-        # Render gray body cube
-        body_color = (0.3, 0.3, 0.3)
-        self.room_renderer.render_fixture_cube(
-            room_x,
-            room_y + self.cube_size / 2,
-            room_z,
-            body_color,
-            self.cube_size * 0.5,
-        )
+        # Render with local transforms
+        with self.room_renderer.local_position(position_3d):
+            with self.room_renderer.local_rotation(self.orientation):
+                # Render gray body cube
+                body_size = self.cube_size * 0.5
+                body_color = (0.3, 0.3, 0.3)
+
+                # Body sits on floor (y=0 to y=body_size)
+                self.room_renderer.render_cube(
+                    (0.0, body_size / 2, 0.0), body_color, body_size
+                )
