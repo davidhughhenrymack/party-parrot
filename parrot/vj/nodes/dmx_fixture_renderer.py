@@ -14,7 +14,11 @@ from parrot.patch_bay import venue_patches
 from parrot.fixtures.base import FixtureBase, FixtureGroup
 from parrot.vj.renderers.factory import create_renderer
 from parrot.vj.renderers.base import FixtureRenderer
+from parrot.vj.renderers.room_3d import Room3DRenderer
+from parrot.vj.renderers.fixture_3d import Fixture3DRenderer
 from parrot.state import State
+from typing import Optional
+import moderngl as mgl
 
 
 @beartype
@@ -51,9 +55,32 @@ class DMXFixtureRenderer(GenerativeEffectBase):
 
         # Load fixtures and create renderers for each
         self.renderers: list[FixtureRenderer] = []
+        self.room_renderer: Optional[Room3DRenderer] = None
+        self.depth_texture: Optional[mgl.Texture] = None
 
         self._load_fixtures()
         self._load_positions()
+
+    def _setup_gl_resources(
+        self, context: mgl.Context, width: int = 1920, height: int = 1080
+    ):
+        """Override to add depth buffer for 3D rendering"""
+        if not self.texture:
+            self.texture = context.texture((width, height), 3)  # RGB texture
+            self.depth_texture = context.depth_texture((width, height))
+            self.framebuffer = context.framebuffer(
+                color_attachments=[self.texture], depth_attachment=self.depth_texture
+            )
+
+        if not self.shader_program:
+            vertex_shader = self._get_vertex_shader()
+            fragment_shader = self._get_fragment_shader()
+            self.shader_program = context.program(
+                vertex_shader=vertex_shader, fragment_shader=fragment_shader
+            )
+
+        if not self.quad_vao:
+            self.quad_vao = self._create_fullscreen_quad(context)
 
     def _on_venue_change(self, venue):
         """Reload fixtures when venue changes"""
@@ -158,23 +185,43 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         """
 
     def render(self, frame: Frame, scheme: ColorScheme, context):
-        """Override base render to use custom fixture rendering instead of shader"""
+        """Override base render to use 3D room rendering"""
         if not self.framebuffer:
             self._setup_gl_resources(context, self.width, self.height)
 
+        # Initialize room renderer if needed
+        if self.room_renderer is None:
+            self.room_renderer = Room3DRenderer(context, self.width, self.height)
+
+        # Update camera rotation based on frame time
+        self.room_renderer.update_camera(frame.time)
+
         self.framebuffer.use()
+
+        # Clear both color and depth buffers for proper 3D rendering
         context.clear(0.0, 0.0, 0.0)
+        if self.framebuffer.depth_attachment:
+            context.clear(depth=1.0)
 
-        # Enable blending for overlapping fixtures
-        context.enable(context.BLEND)
-        context.blend_func = context.SRC_ALPHA, context.ONE_MINUS_SRC_ALPHA
+        # Enable depth testing for 3D rendering with proper depth sorting
+        context.enable(context.DEPTH_TEST)
+        context.depth_func = "<"  # Standard OpenGL LESS comparison
 
-        # Render each fixture to the current framebuffer
+        # Render floor grid
+        self.room_renderer.render_floor()
+
+        # Render each fixture as 3D cube
         canvas_size = (float(self.canvas_width), float(self.canvas_height))
         for renderer in self.renderers:
-            renderer.render(context, canvas_size, frame)
+            if isinstance(renderer, Fixture3DRenderer):
+                renderer.render(context, canvas_size, frame)
+            else:
+                # Convert regular renderer to 3D renderer
+                fixture_3d = Fixture3DRenderer(renderer.fixture, self.room_renderer)
+                fixture_3d.set_position(*renderer.position)
+                fixture_3d.render(context, canvas_size, frame)
 
-        context.disable(context.BLEND)
+        context.disable(context.DEPTH_TEST)
 
         return self.framebuffer
 
