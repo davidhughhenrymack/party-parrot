@@ -178,7 +178,9 @@ class Test3DRoomRender:
         renderer.exit()
 
     def test_camera_rotation(self, gl_context, renderer):
-        """Test that camera rotates around the room"""
+        """Test that camera rotates via mouse drag"""
+        from parrot.utils.input_events import InputEvents
+
         renderer.enter(gl_context)
 
         # Set some fixtures to be visible
@@ -192,22 +194,24 @@ class Test3DRoomRender:
                 pass
 
         scheme = scheme_halloween[0]
+        frame = Frame({FrameSignal.freq_low: 0.8})
+        frame.time = 0.0
 
-        # Render at different times
-        times = [0.0, 5.0, 10.0]
-        frames_data = []
+        # Render initial frame to initialize room renderer
+        fbo = renderer.render(frame, scheme, gl_context)
+        initial_data = fbo.color_attachments[0].read()
 
-        for time in times:
-            frame = Frame({FrameSignal.freq_low: 0.8})
-            frame.time = time
+        # Simulate mouse drag to rotate camera
+        input_events = InputEvents.get_instance()
+        input_events.handle_mouse_press(500.0, 500.0)
+        input_events.handle_mouse_drag(700.0, 500.0)  # Drag 200 pixels
 
-            fbo = renderer.render(frame, scheme, gl_context)
-            data = fbo.color_attachments[0].read()
-            frames_data.append(data)
+        # Render again with rotated camera
+        fbo = renderer.render(frame, scheme, gl_context)
+        rotated_data = fbo.color_attachments[0].read()
 
         # Verify that frames are different (camera rotated)
-        # Compare first and last frame
-        assert frames_data[0] != frames_data[-1], "Camera should rotate between frames"
+        assert initial_data != rotated_data, "Camera should rotate with mouse drag"
 
         # Verify room renderer has updated camera angle
         assert renderer.room_renderer is not None

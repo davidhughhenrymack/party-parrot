@@ -13,6 +13,7 @@ from typing import Optional
 from parrot.fixtures.base import FixtureBase
 from parrot.vj.renderers.base import FixtureRenderer
 from parrot.director.frame import Frame
+from parrot.utils.input_events import InputEvents
 
 
 @beartype
@@ -32,8 +33,24 @@ class Room3DRenderer:
         # Camera setup - looking from audience towards stage
         self.camera_distance = 10  # Distance from center
         self.camera_height = 2.0  # Height above floor
-        self.camera_rotation_speed = 0.1  # Radians per second
-        self.camera_angle = 0  # Current rotation angle
+        self.camera_angle = 0.0  # Current rotation angle (radians) - horizontal
+        self.camera_tilt = (
+            0.3  # Tilt angle (radians) - vertical (0 = level, positive = looking down)
+        )
+        self.camera_rotation_sensitivity = 0.005  # Radians per pixel of mouse drag
+        self.camera_tilt_sensitivity = 0.005  # Radians per pixel of vertical drag
+        self.camera_zoom_sensitivity = 0.5  # Units per scroll tick
+
+        # Camera constraints
+        self.min_camera_distance = 3.0
+        self.max_camera_distance = 30.0
+        self.min_camera_tilt = -0.5  # Can't look too far up
+        self.max_camera_tilt = 1.4  # Can't look too far down
+
+        # Register for mouse events
+        self.input_events = InputEvents.get_instance()
+        self.input_events.register_mouse_drag_callback(self._on_mouse_drag)
+        self.input_events.register_mouse_scroll_callback(self._on_mouse_scroll)
 
         # Floor grid parameters
         self.grid_size = 1.0  # Size of each grid square
@@ -265,17 +282,19 @@ class Room3DRenderer:
             dtype=np.float32,
         )
 
-        # Calculate camera position based on rotation angle
+        # Calculate camera position based on rotation angle and tilt
         # Camera orbits around the center at (0, 0, 0)
-        cam_x = self.camera_distance * math.sin(self.camera_angle)
-        cam_z = self.camera_distance * math.cos(self.camera_angle)
-        cam_y = self.camera_height
+        # Apply tilt by adjusting the vertical position based on tilt angle
+        horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
+        cam_x = horizontal_distance * math.sin(self.camera_angle)
+        cam_z = horizontal_distance * math.cos(self.camera_angle)
+        cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
 
         # Create view matrix using lookAt approach
         # Camera position
         eye = np.array([cam_x, cam_y, cam_z])
-        # Look at center of room
-        center = np.array([0.0, 0.0, 0.0])
+        # Look at center of room (slightly above floor for better view)
+        center = np.array([0.0, self.camera_height * 0.5, 0.0])
         # Up vector
         up = np.array([0.0, 1.0, 0.0])
 
@@ -314,19 +333,45 @@ class Room3DRenderer:
         )
         return view
 
+    def _on_mouse_drag(self, dx: float, dy: float):
+        """Handle mouse drag to rotate and tilt camera"""
+        # Horizontal drag rotates around Y axis
+        self.camera_angle -= dx * self.camera_rotation_sensitivity
+
+        # Vertical drag tilts camera up/down
+        self.camera_tilt += dy * self.camera_tilt_sensitivity
+
+        # Clamp tilt to prevent looking too far up or down
+        self.camera_tilt = max(
+            self.min_camera_tilt, min(self.max_camera_tilt, self.camera_tilt)
+        )
+
+    def _on_mouse_scroll(self, scroll_x: float, scroll_y: float):
+        """Handle mouse scroll to zoom camera in/out"""
+        # Scroll up = zoom in (decrease distance), scroll down = zoom out (increase distance)
+        self.camera_distance -= scroll_y * self.camera_zoom_sensitivity
+
+        # Clamp distance to prevent getting too close or too far
+        self.camera_distance = max(
+            self.min_camera_distance,
+            min(self.max_camera_distance, self.camera_distance),
+        )
+
     def update_camera(self, time: float):
-        """Update camera rotation based on time"""
-        self.camera_angle = time * self.camera_rotation_speed
+        """Update camera - no longer auto-rotates, controlled by mouse"""
+        # Camera angle is now controlled by mouse drag
+        pass
 
     def render_floor(self):
         """Render the floor quad and grid lines with lighting"""
         mvp = self._get_mvp_matrix()
         model = np.eye(4, dtype=np.float32)
 
-        # Calculate camera position for lighting
-        cam_x = self.camera_distance * math.sin(self.camera_angle)
-        cam_z = self.camera_distance * math.cos(self.camera_angle)
-        cam_y = self.camera_height
+        # Calculate camera position for lighting (same as in _get_mvp_matrix)
+        horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
+        cam_x = horizontal_distance * math.sin(self.camera_angle)
+        cam_z = horizontal_distance * math.cos(self.camera_angle)
+        cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
         view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
 
         # Set uniforms
@@ -472,9 +517,10 @@ class Room3DRenderer:
         mvp = self._get_mvp_matrix()
         model = np.eye(4, dtype=np.float32)
 
-        cam_x = self.camera_distance * math.sin(self.camera_angle)
-        cam_z = self.camera_distance * math.cos(self.camera_angle)
-        cam_y = self.camera_height
+        horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
+        cam_x = horizontal_distance * math.sin(self.camera_angle)
+        cam_z = horizontal_distance * math.cos(self.camera_angle)
+        cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
         view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
 
         self.shader["mvp"] = mvp.T.flatten()
@@ -616,9 +662,10 @@ class Room3DRenderer:
         mvp = self._get_mvp_matrix()
         model = np.eye(4, dtype=np.float32)
 
-        cam_x = self.camera_distance * math.sin(self.camera_angle)
-        cam_z = self.camera_distance * math.cos(self.camera_angle)
-        cam_y = self.camera_height
+        horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
+        cam_x = horizontal_distance * math.sin(self.camera_angle)
+        cam_z = horizontal_distance * math.cos(self.camera_angle)
+        cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
         view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
 
         self.shader["mvp"] = mvp.T.flatten()

@@ -16,6 +16,7 @@ from parrot.vj.vj_director import VJDirector
 from parrot.director.signal_states import SignalStates
 from parrot.utils.overlay_ui import OverlayUI
 from parrot.keyboard_handler import KeyboardHandler
+from parrot.utils.input_events import InputEvents
 
 
 def run_gl_window_app(args):
@@ -197,14 +198,43 @@ def run_gl_window_app(args):
         show_fixture_mode_callback=toggle_fixture_mode,
     )
 
-    # Access the underlying pyglet window and register the handler
+    # Setup mouse handler for input events
+    input_events = InputEvents.get_instance()
+
+    class MouseHandler:
+        """Handle mouse events and forward to input events system"""
+
+        def on_mouse_press(self, x, y, button, modifiers):
+            # Only handle left mouse button
+            if button == pyglet.window.mouse.LEFT:
+                input_events.handle_mouse_press(float(x), float(y))
+
+        def on_mouse_release(self, x, y, button, modifiers):
+            # Only handle left mouse button
+            if button == pyglet.window.mouse.LEFT:
+                input_events.handle_mouse_release(float(x), float(y))
+
+        def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+            # Only handle left mouse button drag
+            if buttons & pyglet.window.mouse.LEFT:
+                input_events.handle_mouse_drag(float(x), float(y))
+
+        def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+            # Forward scroll events for camera zoom
+            input_events.handle_mouse_scroll(float(scroll_x), float(scroll_y))
+
+    mouse_handler = MouseHandler()
+
+    # Access the underlying pyglet window and register the handlers
     for w in pyglet.app.windows:
         w.push_handlers(keyboard_handler)
+        w.push_handlers(mouse_handler)
     print("⌨️  Keyboard shortcuts:")
     print("   SPACE/S: Regenerate interpreters  |  O: Shift")
     print("   ENTER: Toggle overlay  |  \\: Toggle fixture/VJ mode")
     print("   E: Gentle  |  F: Chill  |  C: Rave  |  D: Blackout")
     print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
+    print("🖱️  Mouse: Drag to rotate/tilt camera  |  Scroll to zoom (in fixture mode)")
 
     frame_counter = 0
 
