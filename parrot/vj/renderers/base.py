@@ -10,6 +10,56 @@ from parrot.fixtures.base import FixtureBase
 from parrot.director.frame import Frame
 
 
+def quaternion_identity() -> np.ndarray:
+    """Return identity quaternion (no rotation)"""
+    return np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
+
+
+def quaternion_from_axis_angle(axis: np.ndarray, angle: float) -> np.ndarray:
+    """Create quaternion from axis-angle representation"""
+    axis = axis / np.linalg.norm(axis)
+    half_angle = angle / 2.0
+    return np.array(
+        [
+            axis[0] * math.sin(half_angle),
+            axis[1] * math.sin(half_angle),
+            axis[2] * math.sin(half_angle),
+            math.cos(half_angle),
+        ],
+        dtype=np.float32,
+    )
+
+
+def quaternion_multiply(q1: np.ndarray, q2: np.ndarray) -> np.ndarray:
+    """Multiply two quaternions"""
+    x1, y1, z1, w1 = q1
+    x2, y2, z2, w2 = q2
+    return np.array(
+        [
+            w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+            w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+            w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
+            w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+        ],
+        dtype=np.float32,
+    )
+
+
+def quaternion_rotate_vector(q: np.ndarray, v: np.ndarray) -> np.ndarray:
+    """Rotate a vector by a quaternion"""
+    # Convert vector to quaternion [v.x, v.y, v.z, 0]
+    v_quat = np.array([v[0], v[1], v[2], 0.0], dtype=np.float32)
+
+    # Conjugate of q
+    q_conj = np.array([-q[0], -q[1], -q[2], q[3]], dtype=np.float32)
+
+    # Rotate: q * v * q_conj
+    temp = quaternion_multiply(q, v_quat)
+    result = quaternion_multiply(temp, q_conj)
+
+    return np.array([result[0], result[1], result[2]], dtype=np.float32)
+
+
 @beartype
 class FixtureRenderer:
     """
@@ -24,6 +74,10 @@ class FixtureRenderer:
         self.size = self._get_default_size()
         self.room_renderer = room_renderer  # Room3DRenderer instance
         self.cube_size = 0.8  # Size of fixture body cube
+
+        # Orientation quaternion - identity means pointing down room at audience
+        # Default orientation: Z-axis points toward audience (negative Z in room coords)
+        self.orientation = quaternion_identity()
 
     def set_position(self, x: float, y: float):
         """Set the position of the fixture in canvas coordinates"""
@@ -77,6 +131,19 @@ class FixtureRenderer:
 
         x, y = self.position
         return self.room_renderer.convert_2d_to_3d(x, y, canvas_size[0], canvas_size[1])
+
+    def get_oriented_offset(self, offset: tuple[float, float, float]) -> np.ndarray:
+        """Apply orientation quaternion to a local offset vector
+
+        Args:
+            offset: Local offset (x, y, z) relative to fixture center
+                   With identity orientation: +Z points toward audience
+
+        Returns:
+            Rotated offset in world space
+        """
+        offset_vec = np.array(offset, dtype=np.float32)
+        return quaternion_rotate_vector(self.orientation, offset_vec)
 
     def get_render_color(
         self, frame: Frame, is_bulb: bool = False

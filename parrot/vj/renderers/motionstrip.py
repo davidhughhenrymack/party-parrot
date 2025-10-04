@@ -29,11 +29,11 @@ class MotionstripRenderer(FixtureRenderer):
         return (width, height)
 
     def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render motionstrip in 3D: gray body + row of 8 colored sphere bulbs"""
+        """Render motionstrip in 3D: gray body + row of colored sphere bulbs on audience side"""
         if self.room_renderer is None:
             return
 
-        # Get 3D position
+        # Get 3D position (center of fixture)
         room_x, room_y, room_z = self.get_3d_position(canvas_size)
 
         # Render gray body as rectangular box matching bulb layout
@@ -53,17 +53,26 @@ class MotionstripRenderer(FixtureRenderer):
             body_depth,
         )
 
-        # Render all bulb spheres in a row - ensure all 8 are visible
+        # Render all bulb spheres in a row on audience-facing side
         bulb_spacing = 0.22  # Space them out more
-        start_offset = -(self._num_bulbs - 1) * bulb_spacing / 2
+        start_offset_x = -(self._num_bulbs - 1) * bulb_spacing / 2
         bulb_radius = 0.1  # Make them slightly bigger
-        bulb_height_offset = body_height * 1.2  # Raise them higher
+        bulb_forward_distance = body_depth * 0.7  # Distance forward from center
 
         bulbs = self.fixture.get_bulbs()
 
         for i, bulb in enumerate(bulbs):
-            bulb_x = room_x + start_offset + i * bulb_spacing
-            bulb_y = room_y + bulb_height_offset + bulb_radius
+            # Local position of bulb (in fixture's local space)
+            local_offset = (
+                start_offset_x + i * bulb_spacing,
+                0.0,
+                bulb_forward_distance,
+            )
+            world_offset = self.get_oriented_offset(local_offset)
+
+            bulb_x = room_x + world_offset[0]
+            bulb_y = room_y + body_height / 2 + world_offset[1]
+            bulb_z = room_z + world_offset[2]
 
             try:
                 bulb_color_obj = bulb.get_color()
@@ -97,7 +106,7 @@ class MotionstripRenderer(FixtureRenderer):
                 )
 
                 self.room_renderer.render_sphere(
-                    bulb_x, bulb_y, room_z, bulb_color, bulb_radius
+                    bulb_x, bulb_y, bulb_z, bulb_color, bulb_radius
                 )
             except:
                 pass

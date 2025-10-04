@@ -26,11 +26,11 @@ class MovingHeadRenderer(FixtureRenderer):
         return pan_rad, tilt_rad
 
     def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render moving head in 3D: gray body + colored sphere bulb (beam TODO)"""
+        """Render moving head in 3D: gray body + colored sphere bulb on audience side"""
         if self.room_renderer is None:
             return
 
-        # Get 3D position
+        # Get 3D position (center of fixture)
         room_x, room_y, room_z = self.get_3d_position(canvas_size)
 
         # Render gray body cube
@@ -44,12 +44,19 @@ class MovingHeadRenderer(FixtureRenderer):
             body_size,
         )
 
-        # Render colored light sphere bulb on top, higher like PARs
+        # Render colored light sphere bulb on audience-facing side
         bulb_radius = body_size * 0.4
-        bulb_height_offset = body_size * 1.15  # Raise it higher
-        bulb_y = room_y + bulb_height_offset + bulb_radius
+        bulb_distance = body_size * 0.8  # Distance from center toward audience
+
+        # Local offset: forward toward audience
+        local_offset = (0.0, 0.0, bulb_distance)
+        world_offset = self.get_oriented_offset(local_offset)
+
+        bulb_x = room_x + world_offset[0]
+        bulb_y = room_y + body_size + world_offset[1]
+        bulb_z = room_z + world_offset[2]
         bulb_color = self.get_render_color(frame, is_bulb=True)  # Brighter
 
         self.room_renderer.render_sphere(
-            room_x, bulb_y, room_z, bulb_color, bulb_radius
+            bulb_x, bulb_y, bulb_z, bulb_color, bulb_radius
         )
