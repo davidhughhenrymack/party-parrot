@@ -3,6 +3,7 @@
 import json
 import os
 from beartype import beartype
+import numpy as np
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.graph.BaseInterpretationNode import format_node_status
@@ -125,6 +126,11 @@ class DMXFixtureRenderer(GenerativeEffectBase):
                     y = float(pos_data.get("y", 0))
                     z = float(pos_data.get("z", 3))  # Default height of 3
                     renderer.set_position(x, y, z)
+
+                    # Load orientation if present
+                    if "orientation" in pos_data:
+                        orientation = pos_data["orientation"]
+                        renderer.orientation = np.array(orientation, dtype=np.float32)
                 else:
                     # Fixture not in saved data, use default
                     self._set_default_position(renderer)

@@ -288,3 +288,32 @@ class Test3DRoomRender:
         assert non_black_pixels > 0, "Dark fixtures should still be visible"
 
         renderer.exit()
+
+    def test_par_fixtures_rotated_downward(self, gl_context, renderer):
+        """Test that PAR fixtures have downward orientation loaded from JSON"""
+        renderer.enter(gl_context)
+
+        # Create a frame to trigger renderer initialization
+        frame = Frame({})
+        scheme = scheme_halloween[0]
+        fbo = renderer.render(frame, scheme, gl_context)
+
+        # Find PAR fixtures in renderers
+        par_renderers = [
+            r for r in renderer.renderers if r.fixture.id.startswith("par-rgbawu@")
+        ]
+
+        # Should have PAR fixtures
+        assert len(par_renderers) > 0, "Should have PAR fixtures"
+
+        # Check that they have the downward-pointing orientation
+        # Quaternion [0.707, 0, 0, 0.707] rotates 90 degrees around X axis (points down)
+        downward_quat = np.array([0.707, 0.0, 0.0, 0.707], dtype=np.float32)
+
+        for par_renderer in par_renderers:
+            # Check orientation is close to downward quaternion
+            assert np.allclose(
+                par_renderer.orientation, downward_quat, atol=0.01
+            ), f"PAR {par_renderer.fixture.id} should point downward"
+
+        renderer.exit()
