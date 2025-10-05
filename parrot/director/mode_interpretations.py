@@ -84,43 +84,45 @@ mode_interpretations: Dict[
             )
         ],
         MovingHead: [
-            combo(
-                signal_switch(
-                    randomize(
-                        SequenceFadeDimmers,
-                        GentlePulse,
-                        VerySlowDecay,
-                        SlowSustained,
-                        SoftSpatialPulse,
-                    )
-                ),
-                ColorBg,
-                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
-            )
+            Dimmer0,
+            # combo(
+            #     signal_switch(
+            #         randomize(
+            #             SequenceFadeDimmers,
+            #             GentlePulse,
+            #             VerySlowDecay,
+            #             SlowSustained,
+            #             SoftSpatialPulse,
+            #         )
+            #     ),
+            #     ColorBg,
+            #     randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+            # )
         ],
         Motionstrip: [
-            combo(
-                signal_switch(
-                    randomize(
-                        combo(Dimmer255, for_bulbs(Twinkle)),
-                        combo(DimmersBeatChase, AllBulbs255),
-                        combo(SlowDecay, AllBulbs255),
-                        combo(
-                            Dimmer255,
-                            for_bulbs(
-                                with_args(
-                                    "GentlePulseTrigger0.1",
-                                    GentlePulse,
-                                    trigger_level=0.1,
-                                )
-                            ),
-                        ),
-                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
-                    ),
-                ),
-                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                randomize(PanLatched, MoveCircles),
-            ),
+            Dimmer0
+            # combo(
+            #     signal_switch(
+            #         randomize(
+            #             combo(Dimmer255, for_bulbs(Twinkle)),
+            #             combo(DimmersBeatChase, AllBulbs255),
+            #             combo(SlowDecay, AllBulbs255),
+            #             combo(
+            #                 Dimmer255,
+            #                 for_bulbs(
+            #                     with_args(
+            #                         "GentlePulseTrigger0.1",
+            #                         GentlePulse,
+            #                         trigger_level=0.1,
+            #                     )
+            #                 ),
+            #             ),
+            #             combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+            #         ),
+            #     ),
+            #     randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+            #     randomize(PanLatched, MoveCircles),
+            # ),
         ],
         ChauvetColorBandPiX_36Ch: [
             combo(
@@ -147,32 +149,49 @@ mode_interpretations: Dict[
             combo(
                 signal_switch(
                     randomize(
-                        SequenceFadeDimmers,
+                        DimmersBeatChase,
                         GentlePulse,
-                        VerySlowDecay,
-                        SlowSustained,
-                        SoftSpatialPulse,
-                    )
+                    ),
                 ),
-                ColorBg,
-            )
+                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
+            ),
         ],
         MovingHead: [
             combo(
                 signal_switch(
                     randomize(
-                        SequenceFadeDimmers,
+                        HardSpatialPulse,
+                        HardSpatialCenterOutPulse,
+                        DimmersBeatChase,
+                        SlowDecay,
                         GentlePulse,
-                        VerySlowDecay,
-                        SlowSustained,
-                        SoftSpatialPulse,
-                    )
+                        DimmerFadeLatched,
+                        SequenceDimmers,
+                        SequenceFadeDimmers,
+                    ),
                 ),
-                ColorBg,
+                weighted_randomize((95, ColorFg), (5, ColorRainbow)),
                 randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                weighted_randomize(
+                    (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
+                    (90, MoverNoGobo),
+                ),
             )
         ],
         Motionstrip: [
+            combo(
+                signal_switch(
+                    randomize(
+                        combo(Dimmer255, for_bulbs(Twinkle)),
+                        combo(DimmersBeatChase, AllBulbs255),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                    ),
+                ),
+                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                randomize(PanLatched, MoveCircles),
+            ),
+        ],
+        ChauvetColorBandPiX_36Ch: [
             combo(
                 signal_switch(
                     randomize(
@@ -193,28 +212,39 @@ mode_interpretations: Dict[
                     ),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                randomize(PanLatched, MoveCircles),
             ),
         ],
-        ChauvetColorBandPiX_36Ch: [
-            combo(
-                signal_switch(
-                    randomize(
-                        for_bulbs(SequenceFadeDimmers),
-                        for_bulbs(GentlePulse),
-                        VerySlowDecay,
-                        SlowSustained,
-                        for_bulbs(Twinkle),
-                    )
-                ),
-                ColorBg,
-            )
-        ],
-        Laser: [signal_switch(Dimmer0)],
+        Laser: [signal_switch(LaserLatch), StrobeHighSustained],
         ChauvetRotosphere_28Ch: [
-            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
+            combo(
+                RotosphereSpinColor,
+                randomize(
+                    DimmerFadeIn,
+                    for_bulbs(Twinkle),
+                    for_bulbs(GentlePulse),
+                    DimmerFadeLatched4s,
+                    SlowSustained,
+                ),
+            ),
+            combo(
+                for_bulbs(ColorRainbow),
+                Spin,
+                VerySlowDecay,
+            ),
         ],
-        ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
+        ChauvetDerby: [
+            combo(
+                randomize(Spin, Noop),
+                randomize(ColorAlternateBg, ColorFg),
+                randomize(
+                    GentlePulse,
+                    DimmerFadeLatched,
+                    DimmerFadeLatched4s,
+                    SlowDecay,
+                    Dimmer0,
+                ),
+            ),
+        ],
     },
     Mode.rave: {
         Par: [

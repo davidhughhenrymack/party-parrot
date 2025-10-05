@@ -77,6 +77,7 @@ class Room3DRenderer:
         self.shininess = 32.0
 
         self._setup_shaders()
+        self._setup_emission_shader()  # Separate shader for pure emission (no lighting)
 
         # Only setup floor geometry if enabled
         if self.show_floor:
@@ -132,8 +133,10 @@ class Room3DRenderer:
                 
                 void main() {
                     // If emission is high, just use the color directly (emissive)
-                    if (emission > 0.5) {
-                        color = frag_color;  // Use full RGBA including alpha
+                    // Use >= to be more robust
+                    if (emission >= 0.99) {
+                        // Pure emission - use color directly without any lighting
+                        color = frag_color;
                     } else {
                         // Normal lighting calculations
                         vec3 norm = normalize(frag_normal);
@@ -166,6 +169,37 @@ class Room3DRenderer:
                         vec3 result = ambient + diffuse + specular + pointDiffuse + pointSpecular;
                         color = vec4(result, frag_color.a);  // Preserve alpha from input
                     }
+                }
+            """,
+        )
+
+    def _setup_emission_shader(self):
+        """Setup pure emission shader with NO lighting calculations"""
+        self.emission_shader = self.ctx.program(
+            vertex_shader="""
+                #version 330 core
+                in vec3 position;
+                in vec4 color;
+                
+                uniform mat4 mvp;
+                
+                out vec4 frag_color;
+                
+                void main() {
+                    vec4 pos = mvp * vec4(position, 1.0);
+                    pos.y = -pos.y;  // Flip Y axis
+                    gl_Position = pos;
+                    frag_color = color;  // Just pass through color
+                }
+            """,
+            fragment_shader="""
+                #version 330 core
+                in vec4 frag_color;
+                out vec4 color;
+                
+                void main() {
+                    // Pure emission - just output the color directly, no lighting
+                    color = frag_color;
                 }
             """,
         )
@@ -499,7 +533,7 @@ class Room3DRenderer:
         self.floor_vao.render(mgl.TRIANGLES)
 
         # Render grey grid lines on top
-        self.grid_vao.render(mgl.LINES)
+        # self.grid_vao.render(mgl.LINES)
 
     def render_cube(
         self,
@@ -1236,12 +1270,13 @@ class Room3DRenderer:
         normal_vbo = self.ctx.buffer(normals_array.tobytes())
         color_vbo = self.ctx.buffer(colors_array.tobytes())
 
+        # Use emission shader for beams (no lighting)
+        # Don't bind normals - emission shader doesn't need them
         vao = self.ctx.vertex_array(
-            self.shader,
+            self.emission_shader,
             [
                 (vbo, "3f", "position"),
-                (color_vbo, "4f", "color"),  # Changed to 4f for RGBA
-                (normal_vbo, "3f", "normal"),
+                (color_vbo, "4f", "color"),
             ],
         )
 
@@ -1249,25 +1284,23 @@ class Room3DRenderer:
         model = self._get_current_model_matrix()
         mvp_with_model = self._get_mvp_matrix() @ model
 
-        horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
-        cam_x = horizontal_distance * math.sin(self.camera_angle)
-        cam_z = horizontal_distance * math.cos(self.camera_angle)
-        cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
-        view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
-
-        self.shader["mvp"] = mvp_with_model.T.flatten()
-        self.shader["model"] = model.T.flatten()
-        self.shader["viewPos"] = tuple(view_pos)
-        self.shader["emission"] = 0.9  # Beams are highly emissive
+        # Only need MVP for emission shader (no lighting, no model matrix needed)
+        self.emission_shader["mvp"] = mvp_with_model.T.flatten()
 
         # Enable blending for semi-transparent beams
         self.ctx.enable(mgl.BLEND)
-        self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+        # Use additive blending so overlapping beams brighten each other
+        self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE
+
+        # Disable depth writes so beams don't occlude anything behind them
+        # But keep depth testing so beams don't render in front of solid objects
+        self.ctx.depth_mask = False
 
         # Render cone
         vao.render(mgl.TRIANGLES)
 
-        # Disable blending
+        # Restore depth writes and disable blending
+        self.ctx.depth_mask = True
         self.ctx.disable(mgl.BLEND)
 
         # Cleanup

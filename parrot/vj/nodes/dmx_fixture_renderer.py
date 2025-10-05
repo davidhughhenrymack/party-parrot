@@ -227,10 +227,18 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         # Render floor grid
         self.room_renderer.render_floor()
 
-        # Render each fixture in 3D (all renderers are now 3D)
+        # Two-pass rendering for proper transparency:
+        # Pass 1: Render all opaque geometry (cubes, boxes, circles)
+        # Pass 2: Render all transparent geometry (beams)
         canvas_size = (float(self.canvas_width), float(self.canvas_height))
+
+        # Pass 1: Opaque
         for renderer in self.renderers:
-            renderer.render(context, canvas_size, frame)
+            renderer.render_opaque(context, canvas_size, frame)
+
+        # Pass 2: Transparent (beams)
+        for renderer in self.renderers:
+            renderer.render_transparent(context, canvas_size, frame)
 
         context.disable(context.DEPTH_TEST)
 

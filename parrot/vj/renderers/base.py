@@ -186,3 +186,31 @@ class FixtureRenderer:
             frame: Current frame with timing and signal data
         """
         pass
+
+    def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
+        """
+        Render only the opaque parts of this fixture (cubes, boxes, etc).
+        Override this for two-pass rendering. Default: render everything.
+
+        Args:
+            context: ModernGL context
+            canvas_size: (width, height) of the canvas
+            frame: Current frame with timing and signal data
+        """
+        # Default: call full render
+        self.render(context, canvas_size, frame)
+
+    def render_transparent(
+        self, context, canvas_size: tuple[float, float], frame: Frame
+    ):
+        """
+        Render only the transparent parts of this fixture (beams).
+        Override this for two-pass rendering. Default: do nothing.
+
+        Args:
+            context: ModernGL context
+            canvas_size: (width, height) of the canvas
+            frame: Current frame with timing and signal data
+        """
+        # Default: do nothing (beams already rendered in render_opaque)
+        pass

@@ -27,13 +27,19 @@ class MovingHeadRenderer(FixtureRenderer):
 
     def render(self, context, canvas_size: tuple[float, float], frame: Frame):
         """Render moving head in 3D: gray body + colored sphere bulb + beam"""
+        # Default implementation calls both passes
+        self.render_opaque(context, canvas_size, frame)
+        self.render_transparent(context, canvas_size, frame)
+
+    def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
+        """Render only the opaque parts (cube body and bulb circle)"""
         if self.room_renderer is None:
             return
 
         # Get 3D position (center of fixture)
         position_3d = self.get_3d_position(canvas_size)
 
-        # Render with local transforms - much cleaner!
+        # Render with local transforms
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
                 # Render gray body cube
@@ -45,33 +51,26 @@ class MovingHeadRenderer(FixtureRenderer):
                     (0.0, body_size / 2, 0.0), body_color, body_size
                 )
 
-                # Render colored light circle bulb with beam
+                # Render colored light circle bulb
                 bulb_radius = body_size * 0.4
-                bulb_distance = body_size * 0.8  # Distance from center toward audience
-
-                # Use full color with dimmer as alpha (transparency)
-                bulb_color = self.get_color()  # Full RGB color
+                bulb_distance = body_size * 0.8
+                bulb_color = self.get_color()
                 dimmer = self.get_effective_dimmer(frame)
 
                 # Calculate beam direction based on pan/tilt
-                # Get pan and tilt angles (scaled by 0.5 for more realistic range)
                 pan_rad, tilt_rad = self.get_angles()
-                pan_rad *= 0.5  # Halve the angular range
-                tilt_rad *= 0.5  # Halve the angular range
-                pan_rad += math.pi  # Rotate pan by 180 degrees
+                pan_rad *= 0.5
+                tilt_rad *= 0.5
+                pan_rad += math.pi
 
-                # Calculate beam direction vector from pan and tilt
-                # Default orientation: pointing toward audience (+Z in local space)
-                # Pan rotates around Y axis (horizontal), Tilt rotates around local X axis (vertical)
+                # Calculate beam direction vector
                 cos_tilt = math.cos(tilt_rad)
                 sin_tilt = math.sin(tilt_rad)
                 cos_pan = math.cos(pan_rad)
                 sin_pan = math.sin(pan_rad)
 
-                # Calculate beam direction in world space
-                # Pan rotates left/right, tilt rotates up/down
                 beam_dir_x = sin_pan * cos_tilt
-                beam_dir_y = -sin_tilt  # Negative because tilt up should point up (+Y)
+                beam_dir_y = -sin_tilt
                 beam_dir_z = cos_pan * cos_tilt
                 beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
 
@@ -84,9 +83,45 @@ class MovingHeadRenderer(FixtureRenderer):
                     alpha=dimmer,
                 )
 
-                # Render cone beam from bulb position if dimmer is significant
+    def render_transparent(
+        self, context, canvas_size: tuple[float, float], frame: Frame
+    ):
+        """Render only the transparent parts (beam)"""
+        if self.room_renderer is None:
+            return
+
+        # Get 3D position (center of fixture)
+        position_3d = self.get_3d_position(canvas_size)
+
+        # Render with local transforms
+        with self.room_renderer.local_position(position_3d):
+            with self.room_renderer.local_rotation(self.orientation):
+                body_size = self.cube_size * 0.7
+                bulb_radius = body_size * 0.4
+                bulb_distance = body_size * 0.8
+                bulb_color = self.get_color()
+                dimmer = self.get_effective_dimmer(frame)
+
+                # Calculate beam direction based on pan/tilt
+                pan_rad, tilt_rad = self.get_angles()
+                pan_rad *= 0.5
+                tilt_rad *= 0.5
+                pan_rad += math.pi
+
+                # Calculate beam direction vector
+                cos_tilt = math.cos(tilt_rad)
+                sin_tilt = math.sin(tilt_rad)
+                cos_pan = math.cos(pan_rad)
+                sin_pan = math.sin(pan_rad)
+
+                beam_dir_x = sin_pan * cos_tilt
+                beam_dir_y = -sin_tilt
+                beam_dir_z = cos_pan * cos_tilt
+                beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
+
+                # Render cone beam if dimmer is significant
                 if dimmer > 0.05:
-                    beam_length = 15.0  # Fixed length regardless of dimmer
+                    beam_length = 15.0
                     self.room_renderer.render_cone_beam(
                         0.0,
                         body_size,
@@ -97,5 +132,5 @@ class MovingHeadRenderer(FixtureRenderer):
                         start_radius=bulb_radius * 0.3,
                         end_radius=bulb_radius * 1.2,
                         segments=16,
-                        alpha=dimmer * 0.4,  # Slightly more visible beam
+                        alpha=dimmer * 0.4,
                     )
