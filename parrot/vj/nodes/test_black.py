@@ -42,7 +42,7 @@ class TestBlack:
     def test_generate(self):
         """Test generate method"""
         black = Black()
-        vibe = Vibe(Mode.gentle)
+        vibe = Vibe(Mode.chill)
 
         # Generate should not raise any errors
         black.generate(vibe)

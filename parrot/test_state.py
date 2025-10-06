@@ -63,9 +63,9 @@ class TestState:
         """Test thread-safe mode setting."""
         state = State()
 
-        state.set_mode_thread_safe(Mode.gentle)
+        state.set_mode_thread_safe(Mode.chill)
 
-        assert state.mode == Mode.gentle
+        assert state.mode == Mode.chill
 
     def test_set_hype(self):
         """Test setting hype value triggers events."""

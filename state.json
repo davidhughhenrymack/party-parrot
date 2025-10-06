@@ -4,5 +4,6 @@
   "venue_name": "mtn_lotus",
   "manual_dimmer": 0,
   "hype_limiter": false,
-  "show_waveform": true
+  "show_waveform": true,
+  "vj_mode": "music_vids"
 }

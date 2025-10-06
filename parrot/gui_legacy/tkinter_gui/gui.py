@@ -317,7 +317,7 @@ class Window(Tk):
         self.mode_buttons = {}
 
         # Create buttons for each mode in the desired order
-        mode_order = [Mode.blackout, Mode.chill, Mode.gentle, Mode.rave]
+        mode_order = [Mode.blackout, Mode.chill, Mode.rave]
         for mode in mode_order:
             btn = RoundedButton(
                 self.mode_frame,
@@ -620,7 +620,6 @@ class Window(Tk):
             "<KeyRelease-j>",
             lambda e: self._handle_signal_button_release(FrameSignal.pulse),
         )
-        self.bind("<KeyRelease-e>", lambda e: self._select_mode(Mode.gentle))
         self.bind("<KeyRelease-f>", lambda e: self._select_mode(Mode.chill))
 
         self.bind("<KeyRelease-c>", lambda e: self._select_mode(Mode.rave))

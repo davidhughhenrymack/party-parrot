@@ -14,6 +14,7 @@ from parrot.graph.BaseInterpretationNode import (
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
+from parrot.vj.vj_mode import VJMode
 from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.brightness_pulse import BrightnessPulse
 from parrot.vj.nodes.saturation_pulse import SaturationPulse
@@ -28,14 +29,13 @@ from parrot.vj.nodes.noise_effect import NoiseEffect
 from parrot.vj.nodes.text_renderer import TextRenderer
 from parrot.vj.nodes.text_color_pulse import TextColorPulse
 from parrot.vj.nodes.multiply_compose import MultiplyCompose
-from parrot.vj.nodes.volumetric_beam import VolumetricBeam
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.mode_switch import ModeSwitch
 from parrot.vj.nodes.oscilloscope_effect import OscilloscopeEffect
 from parrot.vj.nodes.color_strobe import ColorStrobe
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
-from parrot.vj.nodes.circular_mask import CircularMask
-from parrot.vj.nodes.rounded_rect_mask import RoundedRectMask
+from parrot.vj.nodes.vintage_film_mask import VintageFilmMask
+from parrot.vj.nodes.crt_mask import CRTMask
 from parrot.vj.nodes.sepia_effect import SepiaEffect
 from parrot.vj.nodes.glow_effect import GlowEffect
 from parrot.vj.nodes.bloom_filter import BloomFilter
@@ -157,11 +157,6 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         canvas_2d = CameraZoom(optional_masked_video)
         self.canvas_2d = canvas_2d
 
-        # Create 3D volumetric beams for atmospheric lighting
-        volumetric_beams = VolumetricBeam()
-
-        self.volumetric_beams = volumetric_beams
-
         moving_head_renderer = self._create_virtual_moving_heads()
         self.moving_head_renderer = moving_head_renderer
 
@@ -229,7 +224,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )
 
         # Apply rounded rectangle mask with decayed film edges
-        chill_video_masked = RoundedRectMask(chill_video_with_gentle_zoom)
+        chill_video_masked = VintageFilmMask(chill_video_with_gentle_zoom)
 
         # Apply signal-responsive sepia effect for vintage warmth
         chill_video_with_sepia = SepiaEffect(
@@ -300,31 +295,172 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
-        # Create mode switch WITHOUT effects (effects will be added after)
-        mode_switch = ModeSwitch(
-            rave=rave_composition,
-            gentle=gentle_with_zoom,
-            blackout=black_node,
-            chill=chill_video_with_bloom,
+        # Create 80s music video aesthetic with vibrant colors and CRT effects
+        # Use separate video player for music_vids mode with bg_music_vid folder
+        music_vid_player = VideoPlayer(fn_group="bg_music_vid")
+
+        # Apply RGB shift for chromatic aberration (80s VHS look)
+        music_vid_with_rgb = RGBShiftEffect(
+            music_vid_player,
+            shift_strength=0.006,  # Moderate RGB shift for 80s VHS effect
+            signal=FrameSignal.freq_high,  # Pulse with music
         )
 
-        # Create effects that will be applied to ALL modes
-        # Effects will dial themselves down in gentle/chill modes via their generate() methods
-        color_strobe = ColorStrobe()
+        # Apply scanlines for CRT monitor look
+        music_vid_with_scanlines = ScanlinesEffect(
+            music_vid_with_rgb,
+            scanline_intensity=0.25,  # Visible but not overwhelming scanlines
+            scanline_count=400.0,  # Dense scanlines for CRT effect
+            signal=FrameSignal.sustained_low,
+        )
+
+        # Apply saturation pulse for vibrant 80s colors
+        music_vid_with_saturation = SaturationPulse(
+            music_vid_with_scanlines,
+            base_saturation=1.2,  # Boosted base saturation for vibrant 80s colors
+            intensity=0.6,  # Moderate intensity for saturation variation
+            signal=FrameSignal.sustained_low,
+        )
+
+        # Add brightness pulse for dynamic energy
+        music_vid_with_brightness = BrightnessPulse(
+            music_vid_with_saturation,
+            intensity=0.7,  # Moderate intensity
+            base_brightness=0.5,  # Medium base brightness
+            signal=FrameSignal.sustained_low,
+        )
+
+        # Add camera zoom for movement (before CRT mask so zoom is inside the screen)
+        music_vid_with_zoom = CameraZoom(
+            music_vid_with_brightness,
+            max_zoom=1.4,  # Moderate zoom
+            zoom_speed=3.0,  # Medium zoom speed
+            return_speed=2.0,  # Smooth return
+            blur_intensity=0.3,  # Slight blur
+            signal=FrameSignal.sustained_low,
+        )
+
+        # Apply CRT mask for old TV screen shape with fisheye (after zoom so mask stays fixed)
+        music_vid_with_crt = CRTMask(music_vid_with_zoom)
+
+        # Create mode switch WITHOUT effects (effects will be added after)
+        # Maps VJMode enum values to visual compositions
+        mode_switch = ModeSwitch(
+            full_rave=rave_composition,
+            early_rave=gentle_with_zoom,
+            blackout=black_node,
+            golden_age=chill_video_with_bloom,
+            music_vids=music_vid_with_crt,  # 80s music video aesthetic with CRT mask
+        )
+
+        # Create mode-specific effects with different parameters per mode
+        # Use ModeSwitch to select the appropriate instance based on mode
+
+        # Color Strobe - different frequency and opacity per mode
+        color_strobe = ModeSwitch(
+            full_rave=ColorStrobe(strobe_frequency=12.0, opacity_multiplier=1.0),
+            early_rave=ColorStrobe(strobe_frequency=6.0, opacity_multiplier=0.4),
+            golden_age=ColorStrobe(strobe_frequency=4.0, opacity_multiplier=0.2),
+            music_vids=ColorStrobe(strobe_frequency=4.0, opacity_multiplier=0.2),
+            blackout=Black(),
+        )
         self.color_strobe = color_strobe
 
-        laser_scan_heads = LaserScanHeads()
+        # Laser Scan Heads - different beam count, speed, and opacity per mode
+        laser_scan_heads = ModeSwitch(
+            full_rave=LaserScanHeads(
+                num_heads=6,
+                beams_per_head=16,
+                base_rotation_speed=0.6,
+                base_tilt_speed=0.4,
+                base_beam_spread=0.35,
+                attack_time=0.05,
+                decay_time=0.3,
+                opacity_multiplier=1.0,
+                head_placement_scheme="corners",
+                allow_random_heads=True,
+                allow_random_placement=True,
+            ),
+            early_rave=LaserScanHeads(
+                num_heads=4,
+                beams_per_head=10,
+                base_rotation_speed=0.25,
+                base_tilt_speed=0.2,
+                base_beam_spread=0.20,
+                attack_time=0.1,
+                decay_time=0.5,
+                opacity_multiplier=0.5,
+                head_placement_scheme="corners",
+                allow_random_heads=True,
+                allow_random_placement=True,
+            ),
+            golden_age=LaserScanHeads(
+                num_heads=4,
+                beams_per_head=8,
+                base_rotation_speed=0.15,
+                base_tilt_speed=0.1,
+                base_beam_spread=0.15,
+                attack_time=0.15,
+                decay_time=0.6,
+                opacity_multiplier=0.3,
+                head_placement_scheme="corners",
+            ),
+            music_vids=LaserScanHeads(
+                num_heads=4,
+                beams_per_head=8,
+                base_rotation_speed=0.15,
+                base_tilt_speed=0.1,
+                base_beam_spread=0.15,
+                attack_time=0.15,
+                decay_time=0.6,
+                opacity_multiplier=0.3,
+                head_placement_scheme="corners",
+            ),
+            blackout=Black(),
+        )
         self.laser_scan_heads = laser_scan_heads
 
-        hot_sparks = HotSparksEffect()
+        # Hot Sparks - different particle count and opacity per mode
+        hot_sparks = ModeSwitch(
+            full_rave=HotSparksEffect(num_sparks=500, opacity_multiplier=1.0),
+            early_rave=HotSparksEffect(num_sparks=150, opacity_multiplier=0.5),
+            golden_age=HotSparksEffect(num_sparks=200, opacity_multiplier=0.3),
+            music_vids=HotSparksEffect(num_sparks=200, opacity_multiplier=0.3),
+            blackout=Black(),
+        )
         self.hot_sparks = hot_sparks
 
-        stage_blinders = StageBlinders()
+        # Stage Blinders - different count, timing, and opacity per mode
+        stage_blinders = ModeSwitch(
+            full_rave=StageBlinders(
+                num_blinders=10,
+                attack_time=0.03,
+                decay_time=0.25,
+                opacity_multiplier=0.8,
+            ),
+            early_rave=StageBlinders(
+                num_blinders=7,
+                attack_time=0.08,
+                decay_time=0.4,
+                opacity_multiplier=0.4,
+            ),
+            golden_age=StageBlinders(
+                num_blinders=6,
+                attack_time=0.1,
+                decay_time=0.5,
+                opacity_multiplier=0.25,
+            ),
+            music_vids=StageBlinders(
+                num_blinders=6,
+                attack_time=0.1,
+                decay_time=0.5,
+                opacity_multiplier=0.25,
+            ),
+            blackout=Black(),
+        )
         self.stage_blinders = stage_blinders
 
-        # Create final layer composition with effects applied AFTER mode switch
-        # This means effects will be visible in all modes (rave, gentle, chill)
-        # Effects internally reduce their intensity for gentle/chill modes
+        # Create final layer composition with mode-switched effects
         final_composition = LayerCompose(
             LayerSpec(mode_switch, BlendMode.NORMAL),  # Base: mode-specific content
             LayerSpec(

@@ -202,23 +202,26 @@ def test_vibe_adaptation():
     """Test that strobe adapts to different vibes"""
     from parrot.director.mode import Mode
 
-    strobe = ColorStrobe()
-
-    # Test with real Mode enum values
-    # High energy mode: rave
+    # Test rave mode configuration
+    rave_strobe = ColorStrobe(strobe_frequency=12.0, opacity_multiplier=1.0)
     rave_vibe = Vibe(mode=Mode.rave)
-    strobe.generate(rave_vibe)
-    assert strobe.strobe_frequency == 12.0
+    rave_strobe.generate(rave_vibe)
+    assert rave_strobe.strobe_frequency == 12.0
+    assert rave_strobe.mode_opacity_multiplier == 1.0
 
-    # Medium energy mode: gentle
-    gentle_vibe = Vibe(mode=Mode.gentle)
-    strobe.generate(gentle_vibe)
-    assert strobe.strobe_frequency == 8.0
+    # Test chill mode configuration
+    chill_strobe = ColorStrobe(strobe_frequency=4.0, opacity_multiplier=0.2)
+    chill_vibe = Vibe(mode=Mode.chill)
+    chill_strobe.generate(chill_vibe)
+    assert chill_strobe.strobe_frequency == 4.0
+    assert chill_strobe.mode_opacity_multiplier == 0.2
 
-    # Low energy mode: blackout
+    # Test blackout mode configuration
+    blackout_strobe = ColorStrobe(strobe_frequency=4.0, opacity_multiplier=0.0)
     blackout_vibe = Vibe(mode=Mode.blackout)
-    strobe.generate(blackout_vibe)
-    assert strobe.strobe_frequency == 4.0
+    blackout_strobe.generate(blackout_vibe)
+    assert blackout_strobe.strobe_frequency == 4.0
+    assert blackout_strobe.mode_opacity_multiplier == 0.0
 
 
 def test_strobe_color_cycling():

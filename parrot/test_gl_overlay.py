@@ -19,12 +19,11 @@ class TestGLOverlay(unittest.TestCase):
     def test_mode_enum_iteration(self):
         """Test that we can iterate over Mode enum for UI buttons"""
         modes = list(Mode)
-        self.assertEqual(len(modes), 4)
+        self.assertEqual(len(modes), 3)
 
         mode_names = [mode.name for mode in modes]
         self.assertIn("rave", mode_names)
         self.assertIn("blackout", mode_names)
-        self.assertIn("gentle", mode_names)
         self.assertIn("chill", mode_names)
 
     def test_keyboard_handler_logic(self):
@@ -53,8 +52,8 @@ class TestGLOverlay(unittest.TestCase):
         state.set_mode(Mode.chill)
         self.assertEqual(state.mode, Mode.chill)
 
-        state.set_mode(Mode.gentle)
-        self.assertEqual(state.mode, Mode.gentle)
+        state.set_mode(Mode.chill)
+        self.assertEqual(state.mode, Mode.chill)
 
         state.set_mode(Mode.blackout)
         self.assertEqual(state.mode, Mode.blackout)

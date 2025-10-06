@@ -101,7 +101,7 @@ class TestSaturationPulse:
         input_node = MockInputNode()
         effect = SaturationPulse(input_node)
 
-        vibe = Vibe(mode=Mode.gentle)
+        vibe = Vibe(mode=Mode.chill)
 
         # Should not raise any exceptions
         effect.generate(vibe)

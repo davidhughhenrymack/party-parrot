@@ -77,29 +77,23 @@ class KeyboardHandler:
 
         # Mode selection
         elif symbol == pyglet.window.key.E:
-            print("⚡ Mode: Gentle")
-            self.state.set_mode(Mode.gentle)
+            self.state.set_mode(Mode.chill)
             return True
         elif symbol == pyglet.window.key.F:
-            print("⚡ Mode: Chill")
             self.state.set_mode(Mode.chill)
             return True
         elif symbol == pyglet.window.key.C:
-            print("⚡ Mode: Rave")
             self.state.set_mode(Mode.rave)
             return True
         elif symbol == pyglet.window.key.D:
-            print("⚡ Mode: Blackout")
             self.state.set_mode(Mode.blackout)
             return True
 
         # Director commands
         elif symbol == pyglet.window.key.S:
-            print("⚡ Regenerating interpreters...")
             self.director.generate_interpreters()
             return True
         elif symbol == pyglet.window.key.O:
-            print("⚡ Shifting...")
             self.director.shift()
             return True
 

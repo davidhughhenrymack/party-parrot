@@ -308,9 +308,9 @@ class VJRenderer:
             return None
 
     def shift_scene(self):
-        """Shift scene using current system mode"""
+        """Shift scene using current VJ mode"""
         if self.vj_director:
-            current_mode = self.vj_director.get_current_mode()
+            current_vj_mode = self.vj_director.get_current_vj_mode()
             self.vj_director.shift_current_mode()
 
     def cleanup(self):

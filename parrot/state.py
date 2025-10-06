@@ -4,6 +4,7 @@ import queue
 from events import Events
 from beartype import beartype
 from parrot.director.mode import Mode
+from parrot.vj.vj_mode import VJMode
 from parrot.director.themes import themes, get_theme_by_name
 from parrot.patch_bay import venues
 
@@ -15,6 +16,7 @@ class State:
 
         # Default values
         self._mode = None
+        self._vj_mode = VJMode.full_rave  # Default VJ mode
         self._hype = 30
         self._theme = themes[0]
         self._venue = venues.dmack
@@ -101,6 +103,18 @@ class State:
             raise
 
     @property
+    def vj_mode(self):
+        return self._vj_mode
+
+    def set_vj_mode(self, value: VJMode):
+        if self._vj_mode == value:
+            return
+
+        self._vj_mode = value
+        self.events.on_vj_mode_change(self._vj_mode)
+        self.save_state()
+
+    @property
     def hype(self):
         return self._hype
 
@@ -177,6 +191,7 @@ class State:
             "manual_dimmer": 0,  # We do not want to restart the app with lights on
             "hype_limiter": self._hype_limiter,
             "show_waveform": self._show_waveform,
+            "vj_mode": self._vj_mode.name if self._vj_mode else None,
         }
 
         try:
@@ -231,6 +246,12 @@ class State:
 
             if "show_waveform" in state_data:
                 self._show_waveform = state_data["show_waveform"]
+
+            if "vj_mode" in state_data and state_data["vj_mode"]:
+                try:
+                    self._vj_mode = VJMode[state_data["vj_mode"]]
+                except KeyError:
+                    print(f"VJ mode '{state_data['vj_mode']}' not found, using default")
 
         except Exception as e:
             print(f"Error loading state: {e}")

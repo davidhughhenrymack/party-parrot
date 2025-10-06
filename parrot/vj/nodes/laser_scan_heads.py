@@ -31,18 +31,26 @@ class LaserScanHeads(GenerativeEffectBase):
         base_beam_spread: float = 0.25,
         attack_time: float = 0.08,  # Fast attack (80ms)
         decay_time: float = 0.4,  # Medium decay (400ms)
+        opacity_multiplier: float = 1.0,
+        head_placement_scheme: str = "corners",
+        allow_random_heads: bool = False,
+        allow_random_placement: bool = False,
     ):
         """
         Args:
             width: Width of the effect
             height: Height of the effect
-            num_heads: Number of laser heads (fixed at 4 for corner placement)
+            num_heads: Number of laser heads
             beams_per_head: Number of beams per laser head
             base_rotation_speed: Base pan rotation speed (radians per second)
             base_tilt_speed: Base tilt speed (radians per second)
             base_beam_spread: Base angular spread of beam cluster (radians)
             attack_time: Time to fade in (seconds)
             decay_time: Time to fade out (seconds)
+            opacity_multiplier: Overall opacity/intensity multiplier
+            head_placement_scheme: Placement scheme (corners, bottom_row, or top_row)
+            allow_random_heads: Allow random variation in number of heads
+            allow_random_placement: Allow random variation in placement scheme
         """
         super().__init__(width, height)
         self.num_heads = num_heads
@@ -52,7 +60,10 @@ class LaserScanHeads(GenerativeEffectBase):
         self.base_beam_spread = base_beam_spread
         self.attack_time = attack_time
         self.decay_time = decay_time
-        self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
+        self.mode_opacity_multiplier = opacity_multiplier
+        self.head_placement_scheme = head_placement_scheme
+        self._allow_random_heads = allow_random_heads
+        self._allow_random_placement = allow_random_placement
 
         # Track blinder intensity with attack/decay
         self.blinder_level = 0.0
@@ -63,61 +74,22 @@ class LaserScanHeads(GenerativeEffectBase):
         self.tilt_angle = 0.0
         self.last_update_time = time.time()
 
-        # Head placement configuration (set in generate)
-        self.head_placement_scheme = "corners"  # corners, bottom_row, or top_row
-
     def generate(self, vibe: Vibe):
         """Configure laser head parameters based on the vibe"""
-        from parrot.director.mode import Mode
         import random
 
-        if vibe.mode == Mode.rave:
-            self.beams_per_head = 16  # More beams for rave mode
-            self.base_rotation_speed = 0.6  # Faster rotation
-            self.base_tilt_speed = 0.4  # Faster tilt
-            self.base_beam_spread = 0.35  # Wider spread
-            self.attack_time = 0.05  # Very fast attack
-            self.decay_time = 0.3  # Fast decay
-            self.mode_opacity_multiplier = 1.0  # Full intensity
-            # Randomly choose number of heads and placement for rave
-            self.num_heads = random.choice([4, 6, 8])
-            self.head_placement_scheme = random.choice(
+        # Randomly choose number of heads and placement (within init constraints)
+        if hasattr(self, "_allow_random_heads") and self._allow_random_heads:
+            head_options = [4, 6, 8] if self.num_heads >= 6 else [4, 6]
+            self.num_heads = random.choice(head_options)
+
+        if hasattr(self, "_allow_random_placement") and self._allow_random_placement:
+            placement_options = (
                 ["corners", "bottom_row", "top_row"]
+                if self.num_heads >= 6
+                else ["corners", "bottom_row"]
             )
-        elif vibe.mode == Mode.chill:
-            self.beams_per_head = 8  # Fewer beams
-            self.base_rotation_speed = 0.15  # Slower rotation
-            self.base_tilt_speed = 0.1  # Slower tilt
-            self.base_beam_spread = 0.15  # Narrower spread
-            self.attack_time = 0.15  # Slower attack
-            self.decay_time = 0.6  # Slower decay
-            self.mode_opacity_multiplier = 0.3  # Very subtle in chill
-            self.num_heads = 4
-            self.head_placement_scheme = "corners"
-        elif vibe.mode == Mode.gentle:
-            self.beams_per_head = 10  # Medium beams
-            self.base_rotation_speed = 0.25  # Medium rotation
-            self.base_tilt_speed = 0.2  # Medium tilt
-            self.base_beam_spread = 0.20  # Medium spread
-            self.attack_time = 0.1  # Medium attack
-            self.decay_time = 0.5  # Medium decay
-            self.mode_opacity_multiplier = 0.5  # Reduced in gentle
-            self.num_heads = random.choice([4, 6])
-            self.head_placement_scheme = random.choice(["corners", "bottom_row"])
-        elif vibe.mode == Mode.blackout:
-            self.beams_per_head = 0
-            self.mode_opacity_multiplier = 0.0  # No lasers in blackout
-            self.num_heads = 0
-        else:
-            self.beams_per_head = 12
-            self.base_rotation_speed = 0.4
-            self.base_tilt_speed = 0.3
-            self.base_beam_spread = 0.25
-            self.attack_time = 0.08
-            self.decay_time = 0.4
-            self.mode_opacity_multiplier = 0.8
-            self.num_heads = 4
-            self.head_placement_scheme = "corners"
+            self.head_placement_scheme = random.choice(placement_options)
 
     def print_self(self) -> str:
         return format_node_status(

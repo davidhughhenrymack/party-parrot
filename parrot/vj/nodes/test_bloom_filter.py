@@ -159,7 +159,7 @@ class TestBloomFilter:
         original_threshold = bloom.threshold
 
         # Generate new configuration
-        vibe = Vibe(Mode.gentle)
+        vibe = Vibe(Mode.chill)
         bloom.generate(vibe)
 
         # Check that parameters were modified

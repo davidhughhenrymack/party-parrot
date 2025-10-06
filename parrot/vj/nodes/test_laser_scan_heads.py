@@ -104,31 +104,33 @@ def test_laser_scan_heads_modes():
     """Test that different modes configure parameters correctly"""
     ctx = mgl.create_standalone_context()
 
-    laser_heads = LaserScanHeads(width=800, height=600)
-    laser_heads.enter(ctx)
+    # Test rave mode configuration
+    rave_laser_heads = LaserScanHeads(
+        width=800, height=600, beams_per_head=16, opacity_multiplier=1.0
+    )
+    rave_laser_heads.enter(ctx)
+    assert rave_laser_heads.beams_per_head == 16
+    assert rave_laser_heads.mode_opacity_multiplier == 1.0
+    rave_laser_heads.exit()
 
-    # Test rave mode
-    laser_heads.generate(Vibe(mode=Mode.rave))
-    assert laser_heads.beams_per_head == 16
-    assert laser_heads.mode_opacity_multiplier == 1.0
+    # Test chill mode configuration
+    chill_laser_heads = LaserScanHeads(
+        width=800, height=600, beams_per_head=8, opacity_multiplier=0.3
+    )
+    chill_laser_heads.enter(ctx)
+    assert chill_laser_heads.beams_per_head == 8
+    assert chill_laser_heads.mode_opacity_multiplier == 0.3
+    chill_laser_heads.exit()
 
-    # Test chill mode
-    laser_heads.generate(Vibe(mode=Mode.chill))
-    assert laser_heads.beams_per_head == 8
-    assert laser_heads.mode_opacity_multiplier == 0.3
+    # Test blackout mode configuration
+    blackout_laser_heads = LaserScanHeads(
+        width=800, height=600, beams_per_head=0, opacity_multiplier=0.0
+    )
+    blackout_laser_heads.enter(ctx)
+    assert blackout_laser_heads.beams_per_head == 0
+    assert blackout_laser_heads.mode_opacity_multiplier == 0.0
+    blackout_laser_heads.exit()
 
-    # Test gentle mode
-    laser_heads.generate(Vibe(mode=Mode.gentle))
-    assert laser_heads.beams_per_head == 10
-    assert laser_heads.mode_opacity_multiplier == 0.5
-
-    # Test blackout mode
-    laser_heads.generate(Vibe(mode=Mode.blackout))
-    assert laser_heads.beams_per_head == 0
-    assert laser_heads.mode_opacity_multiplier == 0.0
-
-    # Clean up
-    laser_heads.exit()
     ctx.release()
 
 

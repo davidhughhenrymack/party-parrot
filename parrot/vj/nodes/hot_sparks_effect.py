@@ -27,20 +27,23 @@ class HotSparksEffect(GenerativeEffectBase):
         height: int = 1080,
         num_sparks: int = 600,
         signal: FrameSignal = FrameSignal.pulse,
+        spark_lifetime: float = 1.0,
+        opacity_multiplier: float = 1.0,
     ):
         """
         Args:
             width: Width of the effect
             height: Height of the effect
             num_sparks: Number of spark particles per emission
-            spark_lifetime: How long sparks live before fading out (seconds)
-            spark_speed: Speed of spark movement
             signal: Which frame signal triggers the sparks
+            spark_lifetime: How long sparks live before fading out (seconds)
+            opacity_multiplier: Overall opacity/intensity multiplier
         """
         super().__init__(width, height)
         self.num_sparks = num_sparks
         self.signal = signal
-        self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
+        self.spark_lifetime = spark_lifetime
+        self.mode_opacity_multiplier = opacity_multiplier
 
         # Track emission state
         self.start_time = time.time()  # Reference time for relative calculations
@@ -53,29 +56,7 @@ class HotSparksEffect(GenerativeEffectBase):
 
     def generate(self, vibe: Vibe):
         """Configure spark parameters based on the vibe"""
-        from parrot.director.mode import Mode
-
-        if vibe.mode == Mode.rave:
-            self.num_sparks = 500  # More for rave mode
-            self.spark_speed = 1.2
-            self.mode_opacity_multiplier = 1.0
-        elif vibe.mode == Mode.chill:
-            self.num_sparks = 200  # Fewer for chill mode
-            self.spark_speed = 0.5
-            self.mode_opacity_multiplier = 0.3  # Subtle sparks in chill
-        elif vibe.mode == Mode.gentle:
-            self.num_sparks = 150  # Medium for gentle mode
-            self.spark_speed = 0.6
-            self.mode_opacity_multiplier = 0.5  # Medium intensity
-        elif vibe.mode == Mode.blackout:
-            self.num_sparks = 0
-            self.mode_opacity_multiplier = 0.0  # No sparks in blackout
-        else:
-            self.num_sparks = 100
-            self.spark_speed = 0.4
-            self.mode_opacity_multiplier = 0.7
-
-        self.spark_lifetime = 1.0
+        pass
 
     def print_self(self) -> str:
         return format_node_status(

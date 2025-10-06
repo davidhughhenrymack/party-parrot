@@ -140,7 +140,7 @@ class Director:
 
         # Also shift VJ director with high threshold for "shift all" (complete regeneration)
         if self.vj_director:
-            self.vj_director.shift(self.state.mode, threshold=1.0)
+            self.vj_director.shift(self.state.vj_mode, threshold=1.0)
 
     def generate_color_scheme(self):
         s = random.choice(self.state.theme.color_scheme)
@@ -207,7 +207,7 @@ class Director:
 
         # Shift VJ director if available (with moderate threshold for subtle changes)
         if self.vj_director:
-            self.vj_director.shift(self.state.mode, threshold=0.3)
+            self.vj_director.shift(self.state.vj_mode, threshold=0.3)
 
         self.last_shift_time = time.time()
         self.shift_count += 1

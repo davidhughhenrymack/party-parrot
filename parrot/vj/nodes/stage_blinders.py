@@ -27,6 +27,7 @@ class StageBlinders(GenerativeEffectBase):
         num_blinders: int = 8,
         attack_time: float = 0.05,  # Fast attack (50ms)
         decay_time: float = 0.3,  # Medium decay (300ms)
+        opacity_multiplier: float = 1.0,
     ):
         """
         Args:
@@ -35,12 +36,13 @@ class StageBlinders(GenerativeEffectBase):
             num_blinders: Number of blinder circles
             attack_time: Time to fade in (seconds)
             decay_time: Time to fade out (seconds)
+            opacity_multiplier: Overall opacity/intensity multiplier
         """
         super().__init__(width, height)
         self.num_blinders = num_blinders
         self.attack_time = attack_time
         self.decay_time = decay_time
-        self.mode_opacity_multiplier = 1.0  # Mode-based intensity reduction
+        self.mode_opacity_multiplier = opacity_multiplier
         self.use_color_scheme = False  # Whether to use color scheme fg or white
 
         # Track blinder state
@@ -52,36 +54,8 @@ class StageBlinders(GenerativeEffectBase):
 
     def generate(self, vibe: Vibe):
         """Configure blinder parameters based on the vibe"""
-        from parrot.director.mode import Mode
-
         # 50% chance to use color scheme fg color instead of white
         self.use_color_scheme = random.random() < 0.5
-
-        if vibe.mode == Mode.rave:
-            self.num_blinders = 10  # More blinders for rave mode
-            self.attack_time = 0.03  # Even faster attack
-            self.decay_time = 0.25  # Slightly faster decay
-            self.mode_opacity_multiplier = (
-                0.8  # Reduced to make fullscreen flash less intense
-            )
-        elif vibe.mode == Mode.chill:
-            self.num_blinders = 6  # Fewer for chill mode
-            self.attack_time = 0.1  # Slower attack
-            self.decay_time = 0.5  # Slower decay
-            self.mode_opacity_multiplier = 0.25  # Very subtle in chill
-        elif vibe.mode == Mode.gentle:
-            self.num_blinders = 7  # Medium for gentle mode
-            self.attack_time = 0.08
-            self.decay_time = 0.4
-            self.mode_opacity_multiplier = 0.4  # Reduced in gentle
-        elif vibe.mode == Mode.blackout:
-            self.num_blinders = 0
-            self.mode_opacity_multiplier = 0.0  # No blinders in blackout
-        else:
-            self.num_blinders = 8
-            self.attack_time = 0.05
-            self.decay_time = 0.3
-            self.mode_opacity_multiplier = 0.7
 
     def print_self(self) -> str:
         return format_node_status(

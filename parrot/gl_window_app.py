@@ -232,7 +232,7 @@ def run_gl_window_app(args):
     print("⌨️  Keyboard shortcuts:")
     print("   SPACE/S: Regenerate interpreters  |  O: Shift")
     print("   ENTER: Toggle overlay  |  \\: Toggle fixture/VJ mode")
-    print("   E: Gentle  |  F: Chill  |  C: Rave  |  D: Blackout")
+    print("   F: Chill  |  C: Rave  |  D: Blackout")
     print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
     print("🖱️  Mouse: Drag to rotate/tilt camera  |  Scroll to zoom (in fixture mode)")
 

@@ -51,7 +51,7 @@ class TestGlowEffect:
         original_intensity = glow.base_intensity
         original_radius = glow.glow_radius
 
-        vibe = Vibe(Mode.gentle)
+        vibe = Vibe(Mode.chill)
         glow.generate(vibe)
 
         # Parameters should be randomized (very likely to be different)

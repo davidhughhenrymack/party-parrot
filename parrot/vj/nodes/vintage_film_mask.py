@@ -13,7 +13,7 @@ from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
 
 
 @beartype
-class RoundedRectMask(PostProcessEffectBase):
+class VintageFilmMask(PostProcessEffectBase):
     """
     A rounded rectangle mask effect with decayed film edges.
     Shows the video only within a rounded rectangle with hard noise/decay on the edges

@@ -6,14 +6,14 @@ import moderngl as mgl
 import pytest
 from PIL import Image
 
-from parrot.vj.nodes.rounded_rect_mask import RoundedRectMask
+from parrot.vj.nodes.vintage_film_mask import VintageFilmMask
 from parrot.vj.nodes.static_color import StaticColor
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.utils.colour import Color
 
 
-class TestRoundedRectMaskGL:
+class TestVintageFilmMaskGL:
     @pytest.fixture
     def gl_context(self):
         try:
@@ -29,17 +29,17 @@ class TestRoundedRectMaskGL:
             fg=Color("white"), bg=Color("black"), bg_contrast=Color("white")
         )
 
-    def test_rounded_rect_mask_renders_and_saves_png(
+    def test_vintage_film_mask_renders_and_saves_png(
         self, gl_context, color_scheme, tmp_path
     ):
-        """Test rendering the rounded rect mask with sprocket holes to PNG"""
-        
+        """Test rendering the vintage film mask with sprocket holes to PNG"""
+
         # Create a white background as input
         input_node = StaticColor(color=(1.0, 1.0, 1.0), width=1920, height=1080)
         input_node.enter(gl_context)
-        
-        # Create the rounded rect mask
-        mask_node = RoundedRectMask(
+
+        # Create the vintage film mask
+        mask_node = VintageFilmMask(
             input_node=input_node,
             width=0.7,
             height=0.6,
@@ -51,9 +51,9 @@ class TestRoundedRectMaskGL:
             mask_width=1920,
             mask_height=1080,
         )
-        
+
         mask_node.enter(gl_context)
-        
+
         # Create frame
         frame = Frame(
             {
@@ -64,35 +64,35 @@ class TestRoundedRectMaskGL:
                 FrameSignal.sustained_low: 0.5,
             }
         )
-        
+
         # Render the mask
         fb = mask_node.render(frame, color_scheme, gl_context)
         assert fb is not None
-        
+
         # Read pixels
-        data = fb.read(components=3, dtype="f1")
+        data = fb.read(components=3)
         width, height = fb.width, fb.height
-        
-        # Convert from float32 to uint8
-        arr = np.frombuffer(data, dtype=np.float32).reshape((height, width, 3))
-        arr_uint8 = (arr * 255).astype(np.uint8)
-        
+
+        # Convert to numpy array
+        arr_uint8 = np.frombuffer(data, dtype=np.uint8).reshape((height, width, 3))
+
         # Flip vertically (OpenGL convention)
         arr_uint8 = np.flipud(arr_uint8)
-        
+
         # Save PNG for inspection
         out_path = tmp_path / "rounded_rect_mask.png"
         img = Image.fromarray(arr_uint8, mode="RGB")
         img.save(out_path)
-        
+
         # Also save to project test_output for convenience
         project_out_dir = os.path.join(os.getcwd(), "test_output")
         os.makedirs(project_out_dir, exist_ok=True)
         img.save(os.path.join(project_out_dir, "rounded_rect_mask_with_sprockets.png"))
-        
-        print(f"Saved mask visualization to: {project_out_dir}/rounded_rect_mask_with_sprockets.png")
-        
+
+        print(
+            f"Saved mask visualization to: {project_out_dir}/rounded_rect_mask_with_sprockets.png"
+        )
+
         # Clean up
         mask_node.exit()
         input_node.exit()
-

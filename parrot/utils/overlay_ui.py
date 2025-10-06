@@ -4,6 +4,7 @@ import imgui
 from imgui.integrations.pyglet import create_renderer
 from beartype import beartype
 from parrot.director.mode import Mode
+from parrot.vj.vj_mode import VJMode
 from parrot.state import State
 from parrot.patch_bay import venues
 from parrot.director.themes import themes
@@ -26,9 +27,9 @@ class OverlayUI:
         # This auto-detects the appropriate renderer and handles all input callbacks
         self.renderer = create_renderer(pyglet_window, attach_callbacks=True)
 
-        # UI dimensions (doubled from original 250x200, increased for venue/theme)
+        # UI dimensions (doubled from original 250x200, increased for venue/theme/vj_mode)
         self.window_width = 500
-        self.window_height = 550
+        self.window_height = 630
         self.button_width = 440
         self.button_height = 60
 
@@ -119,6 +120,22 @@ class OverlayUI:
 
                 if is_selected:
                     imgui.pop_style_color(3)
+
+            imgui.spacing()
+            imgui.separator()
+            imgui.spacing()
+
+            # VJ Mode selection
+            imgui.text("VJ Mode (Visuals)")
+            vj_modes = list(VJMode)
+            vj_mode_names = [m.name.replace("_", " ").title() for m in vj_modes]
+            current_vj_mode_idx = vj_modes.index(self.state.vj_mode)
+            clicked, new_vj_mode_idx = imgui.combo(
+                "##vj_mode", current_vj_mode_idx, vj_mode_names
+            )
+            if clicked and new_vj_mode_idx != current_vj_mode_idx:
+                self.state.set_vj_mode(vj_modes[new_vj_mode_idx])
+                print(f"🎬 VJ Mode changed to: {vj_mode_names[new_vj_mode_idx]}")
 
             imgui.spacing()
             imgui.separator()

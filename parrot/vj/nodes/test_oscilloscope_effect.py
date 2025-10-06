@@ -48,7 +48,7 @@ def test_oscilloscope_effect_generate():
     effect = OscilloscopeEffect()
     original_line_count = effect.line_count
 
-    vibe = Vibe(Mode.gentle)
+    vibe = Vibe(Mode.chill)
 
     # Call generate multiple times to test randomization
     for _ in range(10):
