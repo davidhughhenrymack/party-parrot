@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Get current mode on page load
+    // Get current mode and VJ mode on page load
     fetchCurrentmode();
+    fetchCurrentVJMode();
     
     // Add event listeners to mode buttons
     const modeButtons = document.querySelectorAll('.mode-button');
@@ -13,6 +14,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Then send the request
             setmode(mode);
+        });
+    });
+    
+    // Add event listeners to VJ mode buttons
+    const vjModeButtons = document.querySelectorAll('.vj-mode-button');
+    vjModeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const vjMode = this.getAttribute('data-vj-mode');
+            
+            // Update UI immediately for better responsiveness
+            updateUIForVJMode(vjMode);
+            
+            // Then send the request
+            setVJMode(vjMode);
         });
     });
     
@@ -32,9 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to update UI for a mode
     function updateUIFormode(mode) {
-        const currentmodeElement = document.getElementById('current-mode');
-        currentmodeElement.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-        
         // Update button states
         modeButtons.forEach(button => {
             const btnmode = button.getAttribute('data-mode');
@@ -50,9 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to update UI for an effect
     function updateUIForEffect(effect) {
-        const currentmodeElement = document.getElementById('current-mode');
-        currentmodeElement.textContent = effect.charAt(0).toUpperCase() + effect.slice(1);
-        
         // Update button states
         effectButtons.forEach(button => {
             const btnEffect = button.getAttribute('data-effect');
@@ -142,13 +151,77 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.mode) {
                     updateUIFormode(data.mode);
-                } else {
-                    document.getElementById('current-mode').textContent = 'None';
                 }
             })
             .catch(error => {
                 console.error('Error fetching mode:', error);
-                document.getElementById('current-mode').textContent = 'Not Connected';
+            });
+    }
+    
+    // Function to update UI for VJ mode
+    function updateUIForVJMode(vjMode) {
+        // Update button states
+        const vjModeButtons = document.querySelectorAll('.vj-mode-button');
+        vjModeButtons.forEach(button => {
+            const btnVJMode = button.getAttribute('data-vj-mode');
+            
+            // Set active state
+            if (btnVJMode === vjMode) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
+    
+    // Function to set VJ mode
+    function setVJMode(vjMode) {
+        fetch('/api/vj_mode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ vj_mode: vjMode }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                console.error('Error setting VJ mode:', data.error);
+                alert('Error setting VJ mode: ' + data.error);
+                
+                // Refresh to get the actual current state
+                fetchCurrentVJMode();
+            }
+        })
+        .catch(error => {
+            console.error('Error setting VJ mode:', error);
+            
+            // Refresh to get the actual current state
+            fetchCurrentVJMode();
+        });
+    }
+    
+    // Function to fetch current VJ mode
+    function fetchCurrentVJMode() {
+        fetch('/api/vj_mode')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.vj_mode) {
+                    updateUIForVJMode(data.vj_mode);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching VJ mode:', error);
             });
     }
     

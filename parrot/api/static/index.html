@@ -1,21 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Party Parrot</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="parrot-background"></div>
     <div class="container">
-        <div class="current-mode">
-            <h2>Current mode: <span id="current-mode">Loading...</span></h2>
+        <div class="section-divider">
+            <h3>Lighting Mode</h3>
         </div>
         <div class="mode-buttons">
             <button class="mode-button" data-mode="blackout">Blackout</button>
-            <button class="mode-button" data-mode="gentle">Gentle</button>
+            <button class="mode-button" data-mode="chill">Chill</button>
             <button class="mode-button" data-mode="rave">Rave</button>
+        </div>
+        <div class="section-divider">
+            <h3>VJ Mode</h3>
+        </div>
+        <div class="vj-mode-buttons">
+            <button class="vj-mode-button" data-vj-mode="blackout">Blackout</button>
+            <button class="vj-mode-button" data-vj-mode="golden_age">Golden Age</button>
+            <button class="vj-mode-button" data-vj-mode="early_rave">Early Rave</button>
+            <button class="vj-mode-button" data-vj-mode="full_rave">Full Rave</button>
+            <button class="vj-mode-button" data-vj-mode="music_vids">Music Vids</button>
         </div>
         <div class="effect-buttons">
             <button id="strobe-button" class="effect-button" data-effect="strobe">Strobe</button>
@@ -31,4 +43,5 @@
     </div>
     <script src="script.js"></script>
 </body>
+
 </html>

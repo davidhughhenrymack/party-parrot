@@ -17,6 +17,9 @@ from parrot.director.signal_states import SignalStates
 from parrot.utils.overlay_ui import OverlayUI
 from parrot.keyboard_handler import KeyboardHandler
 from parrot.utils.input_events import InputEvents
+from parrot.director.themes import themes
+from parrot.vj.vj_mode import VJMode
+from parrot.patch_bay import venues
 
 
 def run_gl_window_app(args):
@@ -174,6 +177,209 @@ def run_gl_window_app(args):
     if getattr(args, "start_with_overlay", False):
         overlay.show()
         print("🖥️  Starting with overlay visible")
+
+    # Setup native macOS menu bar for settings
+    def create_settings_menus():
+        """Create native macOS menu bar with mode/theme/venue selection using PyObjC"""
+        import sys
+
+        if sys.platform != "darwin":
+            print("⚠️  Menu bar only supported on macOS")
+            return
+
+        try:
+            from AppKit import NSApplication, NSMenu, NSMenuItem
+            from Foundation import NSObject
+            import objc
+
+            # Get the shared application
+            app = NSApplication.sharedApplication()
+            main_menu = app.mainMenu()
+
+            # Create a unified delegate class for all menu callbacks
+            class SettingsMenuDelegate(NSObject):
+                def initWithState_(self, state_obj):
+                    self = objc.super(SettingsMenuDelegate, self).init()
+                    if self is None:
+                        return None
+                    self.state = state_obj
+                    self.modes = list(Mode)
+                    self.vj_modes = list(VJMode)
+                    self.venues_list = list(venues)
+                    self.themes = themes
+                    # Store menu items for updating checkmarks
+                    self.mode_items = []
+                    self.vj_mode_items = []
+                    self.venue_items = []
+                    self.theme_items = []
+                    return self
+
+                def updateModeCheckmarks(self):
+                    """Update checkmarks for mode menu items"""
+                    for idx, item in enumerate(self.mode_items):
+                        item.setState_(1 if self.modes[idx] == self.state.mode else 0)
+
+                def updateVJModeCheckmarks(self):
+                    """Update checkmarks for VJ mode menu items"""
+                    for idx, item in enumerate(self.vj_mode_items):
+                        item.setState_(
+                            1 if self.vj_modes[idx] == self.state.vj_mode else 0
+                        )
+
+                def updateVenueCheckmarks(self):
+                    """Update checkmarks for venue menu items"""
+                    for idx, item in enumerate(self.venue_items):
+                        item.setState_(
+                            1 if self.venues_list[idx] == self.state.venue else 0
+                        )
+
+                def updateThemeCheckmarks(self):
+                    """Update checkmarks for theme menu items"""
+                    for idx, item in enumerate(self.theme_items):
+                        item.setState_(1 if self.themes[idx] == self.state.theme else 0)
+
+                def selectMode_(self, sender):
+                    tag = sender.tag()
+                    if 0 <= tag < len(self.modes):
+                        selected_mode = self.modes[tag]
+                        self.state.set_mode(selected_mode)
+                        self.updateModeCheckmarks()
+                        print(f"🎵 Mode changed to: {selected_mode.name}")
+
+                def selectVJMode_(self, sender):
+                    tag = sender.tag()
+                    if 0 <= tag < len(self.vj_modes):
+                        selected_vj_mode = self.vj_modes[tag]
+                        self.state.set_vj_mode(selected_vj_mode)
+                        self.updateVJModeCheckmarks()
+                        print(f"📺 VJ Mode changed to: {selected_vj_mode.value}")
+
+                def selectVenue_(self, sender):
+                    tag = sender.tag()
+                    if 0 <= tag < len(self.venues_list):
+                        selected_venue = self.venues_list[tag]
+                        self.state.set_venue(selected_venue)
+                        self.updateVenueCheckmarks()
+                        print(f"🏛️  Venue changed to: {selected_venue.name}")
+
+                def selectTheme_(self, sender):
+                    tag = sender.tag()
+                    if 0 <= tag < len(self.themes):
+                        selected_theme = self.themes[tag]
+                        self.state.set_theme(selected_theme)
+                        self.updateThemeCheckmarks()
+                        print(f"🎨 Theme changed to: {selected_theme.name}")
+
+            # Create the delegate
+            delegate = SettingsMenuDelegate.alloc().initWithState_(state)
+
+            # Create Mode menu
+            mode_menu = NSMenu.alloc().initWithTitle_("Mode")
+            for idx, mode in enumerate(Mode):
+                menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                    mode.name.capitalize(),
+                    objc.selector(delegate.selectMode_, signature=b"v@:@"),
+                    "",
+                )
+                menu_item.setTag_(idx)
+                menu_item.setTarget_(delegate)
+                mode_menu.addItem_(menu_item)
+                delegate.mode_items.append(menu_item)
+
+            mode_menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                "Mode", None, ""
+            )
+            mode_menu_item.setSubmenu_(mode_menu)
+            main_menu.addItem_(mode_menu_item)
+            delegate.updateModeCheckmarks()
+
+            # Create VJ Mode menu
+            vj_mode_menu = NSMenu.alloc().initWithTitle_("VJ Mode")
+            for idx, vj_mode in enumerate(VJMode):
+                display_name = vj_mode.value.replace("_", " ").title()
+                menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                    display_name,
+                    objc.selector(delegate.selectVJMode_, signature=b"v@:@"),
+                    "",
+                )
+                menu_item.setTag_(idx)
+                menu_item.setTarget_(delegate)
+                vj_mode_menu.addItem_(menu_item)
+                delegate.vj_mode_items.append(menu_item)
+
+            vj_mode_menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                "VJ Mode", None, ""
+            )
+            vj_mode_menu_item.setSubmenu_(vj_mode_menu)
+            main_menu.addItem_(vj_mode_menu_item)
+            delegate.updateVJModeCheckmarks()
+
+            # Create Venue menu
+            venue_menu = NSMenu.alloc().initWithTitle_("Venue")
+            for idx, venue in enumerate(venues):
+                display_name = venue.name.replace("_", " ").title()
+                menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                    display_name,
+                    objc.selector(delegate.selectVenue_, signature=b"v@:@"),
+                    "",
+                )
+                menu_item.setTag_(idx)
+                menu_item.setTarget_(delegate)
+                venue_menu.addItem_(menu_item)
+                delegate.venue_items.append(menu_item)
+
+            venue_menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                "Venue", None, ""
+            )
+            venue_menu_item.setSubmenu_(venue_menu)
+            main_menu.addItem_(venue_menu_item)
+            delegate.updateVenueCheckmarks()
+
+            # Create Theme menu with keyboard shortcuts
+            theme_menu = NSMenu.alloc().initWithTitle_("Theme")
+            for idx, theme in enumerate(themes):
+                shortcut = f"{idx + 1}" if idx < 9 else ""
+                menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                    theme.name,
+                    objc.selector(delegate.selectTheme_, signature=b"v@:@"),
+                    shortcut,
+                )
+                menu_item.setTag_(idx)
+                menu_item.setTarget_(delegate)
+                theme_menu.addItem_(menu_item)
+                delegate.theme_items.append(menu_item)
+
+            theme_menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                "Theme", None, ""
+            )
+            theme_menu_item.setSubmenu_(theme_menu)
+            main_menu.addItem_(theme_menu_item)
+            delegate.updateThemeCheckmarks()
+
+            print("📋 Menu bar created with:")
+            print(f"   • Mode: {', '.join(m.name.capitalize() for m in Mode)}")
+            print(
+                f"   • VJ Mode: {', '.join(v.value.replace('_', ' ').title() for v in VJMode)}"
+            )
+            print(
+                f"   • Venue: {', '.join(v.name.replace('_', ' ').title() for v in venues)}"
+            )
+            print(
+                f"   • Theme: {', '.join(t.name for t in themes)} (with Cmd+1-5 shortcuts)"
+            )
+
+            # Store delegate reference to prevent garbage collection
+            pyglet_window._settings_menu_delegate = delegate
+
+        except ImportError:
+            print("⚠️  PyObjC not available, menu bar creation skipped")
+            print("   Settings available via overlay (ENTER key)")
+        except Exception as e:
+            print(f"⚠️  Could not create menu bar: {e}")
+            print(f"   Error details: {type(e).__name__}")
+            print("   Settings still available via overlay (ENTER key)")
+
+    create_settings_menus()
 
     # Screenshot mode
     screenshot_mode = getattr(args, "screenshot", False)

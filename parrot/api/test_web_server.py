@@ -8,6 +8,8 @@ from parrot.api.web_server import (
     get_local_ip,
     get_mode,
     set_mode,
+    get_vj_mode,
+    set_vj_mode,
     deploy_hype,
     get_hype_status,
     get_manual_dimmer,
@@ -18,6 +20,7 @@ from parrot.api.web_server import (
     director_instance,
 )
 from parrot.director.mode import Mode
+from parrot.vj.vj_mode import VJMode
 from parrot.state import State
 
 
@@ -376,3 +379,89 @@ class TestWebServer:
         """Test Flask app configuration."""
         assert isinstance(app, Flask)
         assert app.name == "parrot.api.web_server"
+
+    def test_get_vj_mode_no_state(self):
+        """Test GET /api/vj_mode when state is not initialized."""
+        response = self.client.get("/api/vj_mode")
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["vj_mode"] is None
+        assert "available_vj_modes" in data
+        assert isinstance(data["available_vj_modes"], list)
+
+    def test_get_vj_mode_with_state(self):
+        """Test GET /api/vj_mode when state is initialized."""
+        import parrot.api.web_server as web_server_module
+
+        mock_state = Mock()
+        mock_state.vj_mode = VJMode.full_rave
+        web_server_module.state_instance = mock_state
+
+        response = self.client.get("/api/vj_mode")
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["vj_mode"] == "full_rave"
+        assert "available_vj_modes" in data
+
+    def test_set_vj_mode_no_state(self):
+        """Test POST /api/vj_mode when state is not initialized."""
+        response = self.client.post(
+            "/api/vj_mode",
+            json={"vj_mode": "full_rave"},
+            content_type="application/json",
+        )
+        assert response.status_code == 500
+
+        data = json.loads(response.data)
+        assert "error" in data
+
+    def test_set_vj_mode_missing_parameter(self):
+        """Test POST /api/vj_mode with missing vj_mode parameter."""
+        import parrot.api.web_server as web_server_module
+
+        web_server_module.state_instance = Mock()
+
+        response = self.client.post(
+            "/api/vj_mode", json={}, content_type="application/json"
+        )
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert "error" in data
+
+    def test_set_vj_mode_invalid_mode(self):
+        """Test POST /api/vj_mode with invalid vj_mode."""
+        import parrot.api.web_server as web_server_module
+
+        web_server_module.state_instance = Mock()
+
+        response = self.client.post(
+            "/api/vj_mode",
+            json={"vj_mode": "invalid_mode"},
+            content_type="application/json",
+        )
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert "error" in data
+
+    def test_set_vj_mode_valid_mode(self):
+        """Test POST /api/vj_mode with valid vj_mode."""
+        import parrot.api.web_server as web_server_module
+
+        mock_state = Mock()
+        web_server_module.state_instance = mock_state
+
+        response = self.client.post(
+            "/api/vj_mode",
+            json={"vj_mode": "full_rave"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert data["vj_mode"] == "full_rave"
+        mock_state.set_vj_mode_thread_safe.assert_called_once_with(VJMode.full_rave)

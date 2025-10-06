@@ -5,6 +5,7 @@ import time
 import logging
 from flask import Flask, jsonify, request, send_from_directory
 from parrot.director.mode import Mode
+from parrot.vj.vj_mode import VJMode
 from parrot.state import State
 from parrot.patch_bay import has_manual_dimmer
 
@@ -67,24 +68,6 @@ def set_mode():
 
         # Use the thread-safe method to set the mode (after preparing the response)
         state_instance.set_mode_thread_safe(mode)
-
-        # Try to directly update the GUI if possible
-        try:
-            import tkinter as tk
-
-            if hasattr(tk, "_default_root") and tk._default_root:
-                for window in tk.Tk.winfo_children(tk._default_root):
-                    if hasattr(window, "_force_update_button_appearance"):
-                        print(
-                            f"Web server: Directly updating GUI for mode: {mode.name}"
-                        )
-                        # Schedule the update to run in the main thread
-                        window.after(
-                            100, lambda: window._force_update_button_appearance(mode)
-                        )
-                        break
-        except Exception as e:
-            print(f"Web server: Could not directly update GUI: {e}")
 
         return response
     except KeyError:
@@ -192,6 +175,53 @@ def set_effect():
         return response
     except Exception as e:
         return jsonify({"error": f"Error setting effect: {str(e)}"}), 500
+
+
+@app.route("/api/vj_mode", methods=["GET"])
+def get_vj_mode():
+    """Get the current VJ mode."""
+    if state_instance and state_instance.vj_mode:
+        return jsonify(
+            {
+                "vj_mode": state_instance.vj_mode.name,
+                "available_vj_modes": [mode.name for mode in VJMode],
+            }
+        )
+    return jsonify(
+        {"vj_mode": None, "available_vj_modes": [mode.name for mode in VJMode]}
+    )
+
+
+@app.route("/api/vj_mode", methods=["POST"])
+def set_vj_mode():
+    """Set the current VJ mode."""
+    if not state_instance:
+        return jsonify({"error": "State not initialized"}), 500
+
+    data = request.json
+    if not data or "vj_mode" not in data:
+        return jsonify({"error": "Missing vj_mode parameter"}), 400
+
+    vj_mode_name = data["vj_mode"]
+    try:
+        vj_mode = VJMode[vj_mode_name]
+
+        # Return success immediately to make the web UI responsive
+        response = jsonify({"success": True, "vj_mode": vj_mode.name})
+
+        # Use the thread-safe method to set the VJ mode (after preparing the response)
+        state_instance.set_vj_mode_thread_safe(vj_mode)
+
+        return response
+    except KeyError:
+        return (
+            jsonify(
+                {
+                    "error": f"Invalid vj_mode: {vj_mode_name}. Available modes: {[mode.name for mode in VJMode]}"
+                }
+            ),
+            400,
+        )
 
 
 def start_web_server(state, director=None, host="0.0.0.0", port=5000):

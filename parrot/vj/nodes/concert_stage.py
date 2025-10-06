@@ -36,6 +36,7 @@ from parrot.vj.nodes.color_strobe import ColorStrobe
 from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 from parrot.vj.nodes.vintage_film_mask import VintageFilmMask
 from parrot.vj.nodes.crt_mask import CRTMask
+from parrot.vj.nodes.bright_glow import BrightGlow
 from parrot.vj.nodes.sepia_effect import SepiaEffect
 from parrot.vj.nodes.glow_effect import GlowEffect
 from parrot.vj.nodes.bloom_filter import BloomFilter
@@ -343,6 +344,14 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Apply CRT mask for old TV screen shape with fisheye (after zoom so mask stays fixed)
         music_vid_with_crt = CRTMask(music_vid_with_zoom)
 
+        # Apply bright glow on top of CRT for luminous screen effect
+        music_vid_with_glow = BrightGlow(
+            music_vid_with_crt,
+            brightness_threshold=0.75,  # Extract pixels 75%+ bright
+            blur_radius=8,  # Strong blur for glow
+            glow_intensity=0.1,  # 10% blend opacity
+        )
+
         # Create mode switch WITHOUT effects (effects will be added after)
         # Maps VJMode enum values to visual compositions
         mode_switch = ModeSwitch(
@@ -350,7 +359,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             early_rave=gentle_with_zoom,
             blackout=black_node,
             golden_age=chill_video_with_bloom,
-            music_vids=music_vid_with_crt,  # 80s music video aesthetic with CRT mask
+            music_vids=music_vid_with_glow,  # 80s music video with CRT mask and bright glow
         )
 
         # Create mode-specific effects with different parameters per mode

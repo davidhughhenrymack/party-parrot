@@ -69,26 +69,6 @@ class State:
         self._gui_update_queue.put(("mode", value))
         print(f"Queued GUI update for mode: {value.name}")
 
-        # Also try to directly update the GUI if possible
-        # This is a workaround for cases where the queue isn't being processed
-        try:
-            import tkinter as tk
-
-            for handler in list(handlers):
-                if "gui" in handler.__module__:
-                    # Schedule the handler to run in the main thread after a short delay
-                    # This gives time for the GUI to become responsive
-                    for window in tk.Tk.winfo_children(tk._default_root):
-                        if hasattr(window, "after"):
-                            print(
-                                f"Scheduling direct GUI update for mode: {value.name}"
-                            )
-                            window.after(100, lambda v=value, h=handler: h(v))
-                            break
-        except Exception as e:
-            print(f"Could not schedule direct GUI update: {e}")
-            # Fall back to queue-based updates
-
     def set_effect_thread_safe(self, effect: str):
         """Set the effect in a thread-safe way."""
         try:
@@ -112,6 +92,32 @@ class State:
 
         self._vj_mode = value
         self.events.on_vj_mode_change(self._vj_mode)
+        self.save_state()
+
+    def set_vj_mode_thread_safe(self, value: VJMode):
+        """Set the VJ mode in a thread-safe way, avoiding GUI updates."""
+        if self._vj_mode == value:
+            return
+
+        self._vj_mode = value
+        print(f"Thread-safe VJ mode change to: {value.name}")
+
+        # Manually trigger only non-GUI event handlers
+        if hasattr(self.events, "on_vj_mode_change"):
+            handlers = getattr(self.events, "on_vj_mode_change")
+            # Filter out GUI-related handlers
+            for handler in list(handlers):
+                if "gui" not in handler.__module__:
+                    try:
+                        handler(value)
+                    except Exception as e:
+                        print(f"Error in event handler: {e}")
+
+        # Queue the update for the GUI to process in the main thread
+        self._gui_update_queue.put(("vj_mode", value))
+        print(f"Queued GUI update for VJ mode: {value.name}")
+
+        # Save state after changing VJ mode
         self.save_state()
 
     @property
@@ -273,6 +279,20 @@ class State:
                         # Only trigger GUI-related handlers
                         if hasattr(self.events, "on_mode_change"):
                             handlers = getattr(self.events, "on_mode_change")
+                            for handler in list(handlers):
+                                if "gui" in handler.__module__:
+                                    try:
+                                        handler(value)
+                                    except Exception as e:
+                                        print(f"Error in GUI event handler: {e}")
+
+                elif update_type == "vj_mode":
+                    # Update the VJ mode in the GUI
+                    if self._vj_mode != value:
+                        self._vj_mode = value
+                        # Only trigger GUI-related handlers
+                        if hasattr(self.events, "on_vj_mode_change"):
+                            handlers = getattr(self.events, "on_vj_mode_change")
                             for handler in list(handlers):
                                 if "gui" in handler.__module__:
                                     try:
