@@ -8,6 +8,7 @@ from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import PostProcessEffectBase
+from parrot.vj.utils.signal_utils import get_random_frame_signal
 
 
 @beartype
@@ -38,20 +39,7 @@ class SepiaEffect(PostProcessEffectBase):
 
     def generate(self, vibe: Vibe):
         """Configure sepia parameters based on the vibe"""
-        # Randomly pick a signal from available Frame signals
-        available_signals = [
-            FrameSignal.freq_all,
-            FrameSignal.freq_high,
-            FrameSignal.freq_low,
-            FrameSignal.sustained_low,
-            FrameSignal.sustained_high,
-            FrameSignal.strobe,
-            FrameSignal.big_blinder,
-            FrameSignal.small_blinder,
-            FrameSignal.pulse,
-            FrameSignal.dampen,
-        ]
-        self.signal = random.choice(available_signals)
+        self.signal = get_random_frame_signal()
 
         # Vary sepia intensity parameters for organic feel
         self.base_intensity = random.uniform(0.2, 0.5)

@@ -13,6 +13,7 @@ from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.nodes.canvas_effect_base import GenerativeEffectBase
+from parrot.vj.utils.signal_utils import get_random_frame_signal
 
 
 @beartype
@@ -111,20 +112,7 @@ class OscilloscopeEffect(GenerativeEffectBase):
     @beartype
     def generate(self, vibe: Vibe):
         """Configure oscilloscope parameters based on the vibe"""
-        # Randomly pick a signal from available Frame signals
-        available_signals = [
-            FrameSignal.freq_all,
-            FrameSignal.freq_high,
-            FrameSignal.freq_low,
-            FrameSignal.sustained_low,
-            FrameSignal.sustained_high,
-            FrameSignal.strobe,
-            FrameSignal.big_blinder,
-            FrameSignal.small_blinder,
-            FrameSignal.pulse,
-            FrameSignal.dampen,
-        ]
-        self.signal = random.choice(available_signals)
+        self.signal = get_random_frame_signal()
 
         # Randomize some parameters based on the vibe
         if random.random() < 0.3:  # 30% chance to change parameters

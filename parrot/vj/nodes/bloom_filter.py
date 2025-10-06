@@ -54,7 +54,6 @@ class BloomFilter(PostProcessEffectBase):
         low_freq_signals = [
             FrameSignal.sustained_low,
             FrameSignal.freq_low,
-            FrameSignal.dampen,
         ]
         self.signal = random.choice(low_freq_signals)
 

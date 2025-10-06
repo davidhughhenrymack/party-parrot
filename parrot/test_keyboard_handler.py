@@ -11,6 +11,7 @@ from parrot.director.frame import FrameSignal
 from parrot.director.signal_states import SignalStates
 from parrot.state import State
 from parrot.utils.overlay_ui import OverlayUI
+from parrot.vj.vj_mode import VJMode
 
 
 class TestKeyboardHandler:
@@ -85,3 +86,41 @@ class TestKeyboardHandler:
         assert result is False
         result = self.handler.on_key_release(pyglet.window.key.Z, 0)
         assert result is False
+
+    def test_vj_mode_navigate_right(self):
+        """Test that RIGHT arrow key navigates to next VJ mode"""
+        # Start at golden_age
+        self.state.vj_mode = VJMode.golden_age
+
+        result = self.handler.on_key_press(pyglet.window.key.RIGHT, 0)
+        assert result is True
+        self.state.set_vj_mode.assert_called_once_with(VJMode.music_vids)
+
+    def test_vj_mode_navigate_left(self):
+        """Test that LEFT arrow key navigates to previous VJ mode"""
+        # Start at music_vids
+        self.state.vj_mode = VJMode.music_vids
+
+        result = self.handler.on_key_press(pyglet.window.key.LEFT, 0)
+        assert result is True
+        self.state.set_vj_mode.assert_called_once_with(VJMode.golden_age)
+
+    def test_vj_mode_no_wrap_at_last(self):
+        """Test that RIGHT arrow doesn't wrap at last VJ mode"""
+        # Start at last mode
+        self.state.vj_mode = VJMode.full_rave
+
+        result = self.handler.on_key_press(pyglet.window.key.RIGHT, 0)
+        assert result is True
+        # Should not call set_vj_mode since we're at the end
+        self.state.set_vj_mode.assert_not_called()
+
+    def test_vj_mode_no_wrap_at_first(self):
+        """Test that LEFT arrow doesn't wrap at first VJ mode"""
+        # Start at first mode
+        self.state.vj_mode = VJMode.blackout
+
+        result = self.handler.on_key_press(pyglet.window.key.LEFT, 0)
+        assert result is True
+        # Should not call set_vj_mode since we're at the beginning
+        self.state.set_vj_mode.assert_not_called()
