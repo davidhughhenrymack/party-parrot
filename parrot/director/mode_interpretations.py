@@ -75,9 +75,7 @@ mode_interpretations: Dict[
                     randomize(
                         SequenceFadeDimmers,
                         GentlePulse,
-                        VerySlowDecay,
-                        SlowSustained,
-                        SoftSpatialPulse,
+                        Twinkle,
                     )
                 ),
                 ColorBg,
