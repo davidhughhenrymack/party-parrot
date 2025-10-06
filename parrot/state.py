@@ -47,27 +47,10 @@ class State:
         self.events.on_mode_change(self._mode)
 
     def set_mode_thread_safe(self, value: Mode):
-        """Set the mode in a thread-safe way, avoiding GUI updates."""
-        if self._mode == value:
-            return
-
-        self._mode = value
-        print(f"Thread-safe mode change to: {value.name}")
-
-        # Manually trigger only non-GUI event handlers
-        if hasattr(self.events, "on_mode_change"):
-            handlers = getattr(self.events, "on_mode_change")
-            # Filter out GUI-related handlers
-            for handler in list(handlers):
-                if "gui" not in handler.__module__:
-                    try:
-                        handler(value)
-                    except Exception as e:
-                        print(f"Error in event handler: {e}")
-
-        # Queue the update for the GUI to process in the main thread
-        self._gui_update_queue.put(("mode", value))
-        print(f"Queued GUI update for mode: {value.name}")
+        """Set the mode (now safe since web server runs on main thread)."""
+        # Since web server now runs on main thread, just call the regular method
+        self.set_mode(value)
+        print(f"Mode changed from web interface to: {value.name}")
 
     def set_effect_thread_safe(self, effect: str):
         """Set the effect in a thread-safe way."""
@@ -95,30 +78,10 @@ class State:
         self.save_state()
 
     def set_vj_mode_thread_safe(self, value: VJMode):
-        """Set the VJ mode in a thread-safe way, avoiding GUI updates."""
-        if self._vj_mode == value:
-            return
-
-        self._vj_mode = value
-        print(f"Thread-safe VJ mode change to: {value.name}")
-
-        # Manually trigger only non-GUI event handlers
-        if hasattr(self.events, "on_vj_mode_change"):
-            handlers = getattr(self.events, "on_vj_mode_change")
-            # Filter out GUI-related handlers
-            for handler in list(handlers):
-                if "gui" not in handler.__module__:
-                    try:
-                        handler(value)
-                    except Exception as e:
-                        print(f"Error in event handler: {e}")
-
-        # Queue the update for the GUI to process in the main thread
-        self._gui_update_queue.put(("vj_mode", value))
-        print(f"Queued GUI update for VJ mode: {value.name}")
-
-        # Save state after changing VJ mode
-        self.save_state()
+        """Set the VJ mode (now safe since web server runs on main thread)."""
+        # Since web server now runs on main thread, just call the regular method
+        self.set_vj_mode(value)
+        print(f"VJ mode changed from web interface to: {value.name}")
 
     @property
     def hype(self):
@@ -287,18 +250,17 @@ class State:
                                         print(f"Error in GUI event handler: {e}")
 
                 elif update_type == "vj_mode":
-                    # Update the VJ mode in the GUI
+                    # Update the VJ mode on the main thread
                     if self._vj_mode != value:
                         self._vj_mode = value
-                        # Only trigger GUI-related handlers
+                        # Trigger all event handlers (OpenGL operations are safe on main thread)
                         if hasattr(self.events, "on_vj_mode_change"):
                             handlers = getattr(self.events, "on_vj_mode_change")
                             for handler in list(handlers):
-                                if "gui" in handler.__module__:
-                                    try:
-                                        handler(value)
-                                    except Exception as e:
-                                        print(f"Error in GUI event handler: {e}")
+                                try:
+                                    handler(value)
+                                except Exception as e:
+                                    print(f"Error in VJ mode event handler: {e}")
 
                 # Mark the task as done
                 self._gui_update_queue.task_done()

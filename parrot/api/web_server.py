@@ -224,8 +224,8 @@ def set_vj_mode():
         )
 
 
-def start_web_server(state, director=None, host="0.0.0.0", port=5000):
-    """Start the web server in a separate thread."""
+def start_web_server(state, director=None, host="0.0.0.0", port=5000, threaded=True):
+    """Start the web server in a separate thread or return the app for main thread integration."""
     global state_instance, director_instance
     state_instance = state
     director_instance = director
@@ -240,8 +240,18 @@ def start_web_server(state, director=None, host="0.0.0.0", port=5000):
     print(f"\n🌐 Web interface available at: http://{local_ip}:{port}/")
     print(f"📱 Connect from your mobile device using the above URL\n")
 
-    # Start Flask in a separate thread
-    threading.Thread(
-        target=lambda: app.run(host=host, port=port, debug=False, use_reloader=False),
-        daemon=True,
-    ).start()
+    if threaded:
+        # Start Flask in a separate thread (legacy mode)
+        threading.Thread(
+            target=lambda: app.run(
+                host=host, port=port, debug=False, use_reloader=False
+            ),
+            daemon=True,
+        ).start()
+        return None
+    else:
+        # Return app and server for main thread integration
+        from werkzeug.serving import make_server
+
+        server = make_server(host, port, app, threaded=False)
+        return server

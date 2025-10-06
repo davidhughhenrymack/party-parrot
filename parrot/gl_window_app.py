@@ -148,11 +148,17 @@ def run_gl_window_app(args):
         display_shader, [(vbo, "2f 2f", "in_position", "in_texcoord")]
     )
 
-    # Start web server if not disabled
+    # Start web server if not disabled (integrated into main thread)
+    web_server = None
     if not getattr(args, "no_web", False):
         from parrot.api import start_web_server
 
-        start_web_server(state, director=director, port=getattr(args, "web_port", 4040))
+        web_server = start_web_server(
+            state,
+            director=director,
+            port=getattr(args, "web_port", 4040),
+            threaded=False,  # Run in main thread
+        )
 
     # Timing
     last_audio_update = time.perf_counter()
@@ -443,6 +449,25 @@ def run_gl_window_app(args):
     print("🖱️  Mouse: Drag to rotate/tilt camera  |  Scroll to zoom (in fixture mode)")
 
     frame_counter = 0
+
+    # Schedule web server request handling if enabled
+    if web_server:
+        import select
+
+        def handle_web_requests(dt):
+            """Handle web server requests in the main thread"""
+            try:
+                # Check if there are pending requests (non-blocking)
+                ready = select.select([web_server.socket], [], [], 0.0)
+                if ready[0]:
+                    web_server.handle_request()
+            except Exception as e:
+                # Silently ignore errors to avoid spamming console
+                pass
+
+        # Schedule to check for web requests every 50ms
+        pyglet.clock.schedule_interval(handle_web_requests, 0.05)
+        print("🌐 Web server integrated into main thread")
 
     while not window.is_closing:
         current_time = time.perf_counter()
