@@ -296,61 +296,70 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 
-        # Create 80s music video aesthetic with vibrant colors and CRT effects
-        # Use separate video player for music_vids mode with bg_music_vid folder
-        music_vid_player = VideoPlayer(fn_group="bg_music_vid")
+        # Helper function to create CRT-style video aesthetic with vibrant colors
+        def create_crt_video_pipeline(fn_group: str):
+            """Create a CRT-style video pipeline for music video aesthetics"""
+            video_player = VideoPlayer(fn_group=fn_group)
 
-        # Apply RGB shift for chromatic aberration (80s VHS look)
-        music_vid_with_rgb = RGBShiftEffect(
-            music_vid_player,
-            shift_strength=0.006,  # Moderate RGB shift for 80s VHS effect
-            signal=FrameSignal.freq_high,  # Pulse with music
-        )
+            # Apply RGB shift for chromatic aberration (80s VHS look)
+            with_rgb = RGBShiftEffect(
+                video_player,
+                shift_strength=0.006,  # Moderate RGB shift for 80s VHS effect
+                signal=FrameSignal.freq_high,  # Pulse with music
+            )
 
-        # Apply scanlines for CRT monitor look
-        music_vid_with_scanlines = ScanlinesEffect(
-            music_vid_with_rgb,
-            scanline_intensity=0.25,  # Visible but not overwhelming scanlines
-            scanline_count=400.0,  # Dense scanlines for CRT effect
-            signal=FrameSignal.sustained_low,
-        )
+            # Apply scanlines for CRT monitor look
+            with_scanlines = ScanlinesEffect(
+                with_rgb,
+                scanline_intensity=0.25,  # Visible but not overwhelming scanlines
+                scanline_count=400.0,  # Dense scanlines for CRT effect
+                signal=FrameSignal.sustained_low,
+            )
 
-        # Apply saturation pulse for vibrant 80s colors
-        music_vid_with_saturation = SaturationPulse(
-            music_vid_with_scanlines,
-            base_saturation=1.2,  # Boosted base saturation for vibrant 80s colors
-            intensity=0.6,  # Moderate intensity for saturation variation
-            signal=FrameSignal.sustained_low,
-        )
+            # Apply saturation pulse for vibrant colors
+            with_saturation = SaturationPulse(
+                with_scanlines,
+                base_saturation=1.2,  # Boosted base saturation for vibrant colors
+                intensity=0.6,  # Moderate intensity for saturation variation
+                signal=FrameSignal.sustained_low,
+            )
 
-        # Add brightness pulse for dynamic energy
-        music_vid_with_brightness = BrightnessPulse(
-            music_vid_with_saturation,
-            intensity=0.7,  # Moderate intensity
-            base_brightness=0.5,  # Medium base brightness
-            signal=FrameSignal.sustained_low,
-        )
+            # Add brightness pulse for dynamic energy
+            with_brightness = BrightnessPulse(
+                with_saturation,
+                intensity=0.7,  # Moderate intensity
+                base_brightness=0.5,  # Medium base brightness
+                signal=FrameSignal.sustained_low,
+            )
 
-        # Add camera zoom for movement (before CRT mask so zoom is inside the screen)
-        music_vid_with_zoom = CameraZoom(
-            music_vid_with_brightness,
-            max_zoom=1.4,  # Moderate zoom
-            zoom_speed=3.0,  # Medium zoom speed
-            return_speed=2.0,  # Smooth return
-            blur_intensity=0.3,  # Slight blur
-            signal=FrameSignal.sustained_low,
-        )
+            # Add camera zoom for movement (before CRT mask so zoom is inside the screen)
+            with_zoom = CameraZoom(
+                with_brightness,
+                max_zoom=1.4,  # Moderate zoom
+                zoom_speed=3.0,  # Medium zoom speed
+                return_speed=2.0,  # Smooth return
+                blur_intensity=0.3,  # Slight blur
+                signal=FrameSignal.sustained_low,
+            )
 
-        # Apply CRT mask for old TV screen shape with fisheye (after zoom so mask stays fixed)
-        music_vid_with_crt = CRTMask(music_vid_with_zoom)
+            # Apply CRT mask for old TV screen shape with fisheye (after zoom so mask stays fixed)
+            with_crt = CRTMask(with_zoom)
 
-        # Apply bright glow on top of CRT for luminous screen effect
-        music_vid_with_glow = BrightGlow(
-            music_vid_with_crt,
-            brightness_threshold=0.75,  # Extract pixels 75%+ bright
-            blur_radius=8,  # Strong blur for glow
-            glow_intensity=0.1,  # 10% blend opacity
-        )
+            # Apply bright glow on top of CRT for luminous screen effect
+            with_glow = BrightGlow(
+                with_crt,
+                brightness_threshold=0.75,  # Extract pixels 75%+ bright
+                blur_radius=8,  # Strong blur for glow
+                glow_intensity=0.1,  # 10% blend opacity
+            )
+
+            return with_glow
+
+        # Create 80s music video aesthetic
+        music_vid_with_glow = create_crt_video_pipeline("bg_music_vid")
+
+        # Create hip-hop video aesthetic (same pipeline, different videos)
+        hiphop_with_glow = create_crt_video_pipeline("bg_hiphop")
 
         # Create mode switch WITHOUT effects (effects will be added after)
         # Maps VJMode enum values to visual compositions
@@ -360,112 +369,101 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             blackout=black_node,
             golden_age=chill_video_with_bloom,
             music_vids=music_vid_with_glow,  # 80s music video with CRT mask and bright glow
+            hiphop=hiphop_with_glow,  # Hip-hop video with CRT mask and bright glow
         )
 
-        # Create mode-specific effects with different parameters per mode
-        # Use ModeSwitch to select the appropriate instance based on mode
+        # Create mode-specific effects with two parameter sets: gentle and strong
+        # Instantiate effects as variables, then pass into ModeSwitch
 
-        # Color Strobe - different frequency and opacity per mode
+        # Color Strobe effects
+        color_strobe_strong = ColorStrobe(strobe_frequency=12.0, opacity_multiplier=1.0)
+        color_strobe_gentle = ColorStrobe(strobe_frequency=4.0, opacity_multiplier=0.2)
+        color_strobe_black = Black()
+
         color_strobe = ModeSwitch(
-            full_rave=ColorStrobe(strobe_frequency=12.0, opacity_multiplier=1.0),
-            early_rave=ColorStrobe(strobe_frequency=6.0, opacity_multiplier=0.4),
-            golden_age=ColorStrobe(strobe_frequency=4.0, opacity_multiplier=0.2),
-            music_vids=ColorStrobe(strobe_frequency=4.0, opacity_multiplier=0.2),
-            blackout=Black(),
+            full_rave=color_strobe_strong,
+            early_rave=color_strobe_gentle,
+            golden_age=color_strobe_gentle,
+            music_vids=color_strobe_gentle,
+            hiphop=color_strobe_gentle,
+            blackout=color_strobe_black,
         )
         self.color_strobe = color_strobe
 
-        # Laser Scan Heads - different beam count, speed, and opacity per mode
+        # Laser Scan Heads effects
+        laser_scan_heads_strong = LaserScanHeads(
+            num_heads=6,
+            beams_per_head=16,
+            base_rotation_speed=0.6,
+            base_tilt_speed=0.4,
+            base_beam_spread=0.35,
+            attack_time=0.05,
+            decay_time=0.3,
+            opacity_multiplier=1.0,
+            head_placement_scheme="corners",
+            allow_random_heads=True,
+            allow_random_placement=True,
+        )
+        laser_scan_heads_gentle = LaserScanHeads(
+            num_heads=4,
+            beams_per_head=8,
+            base_rotation_speed=0.15,
+            base_tilt_speed=0.1,
+            base_beam_spread=0.15,
+            attack_time=0.15,
+            decay_time=0.6,
+            opacity_multiplier=0.3,
+            head_placement_scheme="corners",
+        )
+        laser_scan_heads_black = Black()
+
         laser_scan_heads = ModeSwitch(
-            full_rave=LaserScanHeads(
-                num_heads=6,
-                beams_per_head=16,
-                base_rotation_speed=0.6,
-                base_tilt_speed=0.4,
-                base_beam_spread=0.35,
-                attack_time=0.05,
-                decay_time=0.3,
-                opacity_multiplier=1.0,
-                head_placement_scheme="corners",
-                allow_random_heads=True,
-                allow_random_placement=True,
-            ),
-            early_rave=LaserScanHeads(
-                num_heads=4,
-                beams_per_head=10,
-                base_rotation_speed=0.25,
-                base_tilt_speed=0.2,
-                base_beam_spread=0.20,
-                attack_time=0.1,
-                decay_time=0.5,
-                opacity_multiplier=0.5,
-                head_placement_scheme="corners",
-                allow_random_heads=True,
-                allow_random_placement=True,
-            ),
-            golden_age=LaserScanHeads(
-                num_heads=4,
-                beams_per_head=8,
-                base_rotation_speed=0.15,
-                base_tilt_speed=0.1,
-                base_beam_spread=0.15,
-                attack_time=0.15,
-                decay_time=0.6,
-                opacity_multiplier=0.3,
-                head_placement_scheme="corners",
-            ),
-            music_vids=LaserScanHeads(
-                num_heads=4,
-                beams_per_head=8,
-                base_rotation_speed=0.15,
-                base_tilt_speed=0.1,
-                base_beam_spread=0.15,
-                attack_time=0.15,
-                decay_time=0.6,
-                opacity_multiplier=0.3,
-                head_placement_scheme="corners",
-            ),
-            blackout=Black(),
+            full_rave=laser_scan_heads_strong,
+            early_rave=laser_scan_heads_gentle,
+            golden_age=laser_scan_heads_gentle,
+            music_vids=laser_scan_heads_gentle,
+            hiphop=laser_scan_heads_gentle,
+            blackout=laser_scan_heads_black,
         )
         self.laser_scan_heads = laser_scan_heads
 
-        # Hot Sparks - different particle count and opacity per mode
+        # Hot Sparks effects
+        hot_sparks_strong = HotSparksEffect(num_sparks=500, opacity_multiplier=1.0)
+        hot_sparks_gentle = HotSparksEffect(num_sparks=200, opacity_multiplier=0.3)
+        hot_sparks_black = Black()
+
         hot_sparks = ModeSwitch(
-            full_rave=HotSparksEffect(num_sparks=500, opacity_multiplier=1.0),
-            early_rave=HotSparksEffect(num_sparks=150, opacity_multiplier=0.5),
-            golden_age=HotSparksEffect(num_sparks=200, opacity_multiplier=0.3),
-            music_vids=HotSparksEffect(num_sparks=200, opacity_multiplier=0.3),
-            blackout=Black(),
+            full_rave=hot_sparks_strong,
+            early_rave=hot_sparks_gentle,
+            golden_age=hot_sparks_gentle,
+            music_vids=hot_sparks_gentle,
+            hiphop=hot_sparks_gentle,
+            blackout=hot_sparks_black,
         )
         self.hot_sparks = hot_sparks
 
-        # Stage Blinders - different count, timing, and opacity per mode
+        # Stage Blinders effects
+        stage_blinders_strong = StageBlinders(
+            num_blinders=10,
+            attack_time=0.03,
+            decay_time=0.25,
+            opacity_multiplier=0.8,
+        )
+        stage_blinders_gentle = StageBlinders(
+            num_blinders=6,
+            attack_time=0.1,
+            decay_time=0.5,
+            opacity_multiplier=0.25,
+        )
+        stage_blinders_black = Black()
+
         stage_blinders = ModeSwitch(
-            full_rave=StageBlinders(
-                num_blinders=10,
-                attack_time=0.03,
-                decay_time=0.25,
-                opacity_multiplier=0.8,
-            ),
-            early_rave=StageBlinders(
-                num_blinders=7,
-                attack_time=0.08,
-                decay_time=0.4,
-                opacity_multiplier=0.4,
-            ),
-            golden_age=StageBlinders(
-                num_blinders=6,
-                attack_time=0.1,
-                decay_time=0.5,
-                opacity_multiplier=0.25,
-            ),
-            music_vids=StageBlinders(
-                num_blinders=6,
-                attack_time=0.1,
-                decay_time=0.5,
-                opacity_multiplier=0.25,
-            ),
-            blackout=Black(),
+            full_rave=stage_blinders_strong,
+            early_rave=stage_blinders_gentle,
+            golden_age=stage_blinders_gentle,
+            music_vids=stage_blinders_gentle,
+            hiphop=stage_blinders_gentle,
+            blackout=stage_blinders_black,
         )
         self.stage_blinders = stage_blinders
 

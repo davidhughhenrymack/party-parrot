@@ -124,3 +124,22 @@ class TestKeyboardHandler:
         assert result is True
         # Should not call set_vj_mode since we're at the beginning
         self.state.set_vj_mode.assert_not_called()
+
+    def test_vj_mode_navigate_includes_hiphop(self):
+        """Test that navigation includes the new hiphop mode"""
+        # Start at music_vids
+        self.state.vj_mode = VJMode.music_vids
+
+        # Navigate right to hiphop
+        result = self.handler.on_key_press(pyglet.window.key.RIGHT, 0)
+        assert result is True
+        self.state.set_vj_mode.assert_called_once_with(VJMode.hiphop)
+
+        # Reset mock
+        self.state.set_vj_mode.reset_mock()
+
+        # Navigate left from early_rave back to hiphop
+        self.state.vj_mode = VJMode.early_rave
+        result = self.handler.on_key_press(pyglet.window.key.LEFT, 0)
+        assert result is True
+        self.state.set_vj_mode.assert_called_once_with(VJMode.hiphop)
