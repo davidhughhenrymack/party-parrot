@@ -45,6 +45,9 @@ class LaserRenderer(FixtureRenderer):
                     (0.0, body_size / 2, 0.0), body_color, body_size
                 )
 
+        # Render DMX address
+        self.render_dmx_address(canvas_size)
+
     def render_transparent(
         self, context, canvas_size: tuple[float, float], frame: Frame
     ):

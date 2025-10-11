@@ -200,6 +200,9 @@ class FixtureRenderer:
         # Default: call full render
         self.render(context, canvas_size, frame)
 
+        # Automatically render DMX address after rendering the fixture
+        self.render_dmx_address(canvas_size)
+
     def render_transparent(
         self, context, canvas_size: tuple[float, float], frame: Frame
     ):
@@ -214,3 +217,30 @@ class FixtureRenderer:
         """
         # Default: do nothing (beams already rendered in render_opaque)
         pass
+
+    def render_dmx_address(self, canvas_size: tuple[float, float]):
+        """
+        Render the DMX address as small text near the fixture.
+        This should be called by subclasses after rendering the fixture body.
+
+        Args:
+            canvas_size: (width, height) of the canvas
+        """
+        if self.room_renderer is None:
+            return
+
+        # Get the 3D position of the fixture
+        room_pos = self.get_3d_position(canvas_size)
+
+        # Render the DMX address text slightly above and to the right of the fixture
+        # Position the text above the fixture
+        text_pos = (room_pos[0], room_pos[1] + self.cube_size + 0.1, room_pos[2])
+
+        # Use the room renderer's local position context manager
+        with self.room_renderer.local_position(room_pos):
+            self.room_renderer.render_text_label(
+                text=str(self.fixture.address),
+                position=(0.0, self.cube_size + 0.1, 0.0),  # Slightly above fixture
+                color=(0.8, 0.8, 0.8),  # Light gray
+                size=0.2,  # Small text
+            )

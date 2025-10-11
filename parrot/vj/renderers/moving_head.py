@@ -83,6 +83,9 @@ class MovingHeadRenderer(FixtureRenderer):
                     alpha=dimmer,
                 )
 
+        # Render DMX address
+        self.render_dmx_address(canvas_size)
+
     def render_transparent(
         self, context, canvas_size: tuple[float, float], frame: Frame
     ):

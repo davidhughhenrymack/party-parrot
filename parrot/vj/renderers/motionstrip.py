@@ -38,7 +38,7 @@ class MotionstripRenderer(FixtureRenderer):
 
     def _get_pan_rotation(self) -> float:
         """Calculate pan rotation angle in degrees based on fixture's pan value.
-        Pan 0 -> -90°, Pan 255 -> +90°
+        Pan 0 -> +90°, Pan 255 -> -90° (flipped)
 
         Note: The fixture's set_pan() already handles invert_pan by inverting the DMX value,
         so we just normalize the stored DMX value and convert to rotation."""
@@ -61,8 +61,8 @@ class MotionstripRenderer(FixtureRenderer):
             # Default: assume 0-255 range for base Motionstrip
             normalized_pan = pan_dmx_value / 255.0
 
-        # Convert to rotation angle: 0 -> -90°, 1.0 -> +90°
-        rotation_deg = -90.0 + normalized_pan * 180.0
+        # Convert to rotation angle: 1.0 -> -90°, 0 -> +90° (flipped)
+        rotation_deg = -90.0 + (1.0 - normalized_pan) * 180.0
 
         return rotation_deg
 
@@ -147,6 +147,9 @@ class MotionstripRenderer(FixtureRenderer):
                             )
                         except:
                             pass
+
+        # Render DMX address
+        self.render_dmx_address(canvas_size)
 
     def render_transparent(
         self, context, canvas_size: tuple[float, float], frame: Frame

@@ -2,6 +2,9 @@
 
 import pytest
 import moderngl as mgl
+import tempfile
+import shutil
+import os
 
 from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
 from parrot.director.frame import Frame, FrameSignal
@@ -15,6 +18,18 @@ from parrot.patch_bay import venues
 
 class TestDMXFixtureRenderer:
     """Test DMXFixtureRenderer with venue changes"""
+
+    def setup_method(self):
+        """Set up test fixtures before each test method - use temp dir to avoid writing to state.json"""
+        self.temp_dir = tempfile.mkdtemp()
+        self.original_cwd = os.getcwd()
+        os.chdir(self.temp_dir)
+
+    def teardown_method(self):
+        """Clean up after each test method"""
+        os.chdir(self.original_cwd)
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
 
     @pytest.fixture
     def gl_context(self):

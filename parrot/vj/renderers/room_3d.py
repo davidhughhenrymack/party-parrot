@@ -10,6 +10,7 @@ import numpy as np
 import math
 from typing import Optional
 from contextlib import contextmanager
+from PIL import Image, ImageDraw, ImageFont
 
 from parrot.fixtures.base import FixtureBase
 from parrot.vj.renderers.base import FixtureRenderer
@@ -78,6 +79,7 @@ class Room3DRenderer:
 
         self._setup_shaders()
         self._setup_emission_shader()  # Separate shader for pure emission (no lighting)
+        self._setup_text_shader()  # Shader for text rendering with texture
 
         # Only setup floor geometry if enabled
         if self.show_floor:
@@ -86,6 +88,11 @@ class Room3DRenderer:
         # Transform stacks for hierarchical rendering
         self.position_stack: list[tuple[float, float, float]] = [(0.0, 0.0, 0.0)]
         self.rotation_stack: list[np.ndarray] = [self._identity_quaternion()]
+
+        # Text rendering cache
+        self._text_texture_cache: dict[str, mgl.Texture] = {}
+        self._text_font: Optional[ImageFont.ImageFont] = None
+        self._load_text_font()
 
     def _setup_shaders(self):
         """Setup OpenGL shaders for 3D rendering with Blinn-Phong lighting"""
@@ -203,6 +210,68 @@ class Room3DRenderer:
                 }
             """,
         )
+
+    def _setup_text_shader(self):
+        """Setup shader for text rendering with texture"""
+        self.text_shader = self.ctx.program(
+            vertex_shader="""
+                #version 330 core
+                in vec3 position;
+                in vec2 texcoord;
+                
+                uniform mat4 mvp;
+                
+                out vec2 uv;
+                
+                void main() {
+                    vec4 pos = mvp * vec4(position, 1.0);
+                    pos.y = -pos.y;  // Flip Y axis
+                    gl_Position = pos;
+                    uv = texcoord;
+                }
+            """,
+            fragment_shader="""
+                #version 330 core
+                in vec2 uv;
+                out vec4 color;
+                
+                uniform sampler2D text_texture;
+                uniform vec3 text_color;
+                
+                void main() {
+                    // Sample text alpha from texture (white text on black background)
+                    float alpha = texture(text_texture, uv).r;
+                    // Output colored text with transparency
+                    color = vec4(text_color, alpha);
+                }
+            """,
+        )
+
+    def _load_text_font(self):
+        """Load a simple font for text rendering"""
+        try:
+            # Try to load a simple monospace font
+            self._text_font = ImageFont.truetype("Courier", 12)
+        except (OSError, IOError):
+            try:
+                # Try system font paths
+                import os
+
+                font_paths = [
+                    "/System/Library/Fonts/Courier.dfont",  # macOS
+                    "/System/Library/Fonts/Monaco.dfont",  # macOS
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",  # Linux
+                ]
+                for path in font_paths:
+                    if os.path.exists(path):
+                        self._text_font = ImageFont.truetype(path, 12)
+                        break
+                else:
+                    # Fallback to default
+                    self._text_font = ImageFont.load_default()
+            except Exception:
+                # Final fallback
+                self._text_font = ImageFont.load_default()
 
     def _setup_floor_geometry(self):
         """Create floor grid geometry with normals"""
@@ -1329,6 +1398,120 @@ class Room3DRenderer:
         color_vbo.release()
         vao.release()
 
+    def render_text_label(
+        self,
+        text: str,
+        position: tuple[float, float, float],
+        color: tuple[float, float, float] = (1.0, 1.0, 1.0),
+        size: float = 0.3,
+    ):
+        """Render text label at a 3D position
+
+        Args:
+            text: Text to render
+            position: Local position (x, y, z) relative to current transform
+            color: RGB color tuple (0-1 range)
+            size: Size of the text quad
+        """
+        if not self._text_font:
+            return
+
+        # Create or get cached texture for this text
+        cache_key = text
+        if cache_key not in self._text_texture_cache:
+            # Create PIL image with text
+            # Use a small image size for text labels
+            img_width, img_height = 64, 16
+            image = Image.new(
+                "L", (img_width, img_height), 0
+            )  # Grayscale, black background
+            draw = ImageDraw.Draw(image)
+
+            # Draw white text
+            draw.text((2, 2), text, fill=255, font=self._text_font)
+
+            # Convert to numpy and flip vertically to match OpenGL texture coordinates
+            img_array = np.array(image, dtype=np.uint8)
+            img_array = np.flipud(img_array)  # Flip to match OpenGL coords
+            texture = self.ctx.texture((img_width, img_height), 1, img_array.tobytes())
+            texture.filter = (mgl.LINEAR, mgl.LINEAR)
+            self._text_texture_cache[cache_key] = texture
+
+        texture = self._text_texture_cache[cache_key]
+
+        # Create a quad to display the text
+        x, y, z = position
+        aspect = 64.0 / 16.0  # Text texture aspect ratio
+        width = size * aspect
+        height = size
+
+        # Create quad vertices (billboard facing camera would be ideal, but for now just face forward)
+        vertices = [
+            [x - width / 2, y, z],
+            [x + width / 2, y, z],
+            [x - width / 2, y + height, z],
+            [x + width / 2, y, z],
+            [x + width / 2, y + height, z],
+            [x - width / 2, y + height, z],
+        ]
+
+        # Texture coordinates
+        texcoords = [
+            [0.0, 0.0],
+            [1.0, 0.0],
+            [0.0, 1.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
+            [0.0, 1.0],
+        ]
+
+        # Flatten arrays
+        vertices_flat = []
+        texcoords_flat = []
+        for vert, tc in zip(vertices, texcoords):
+            vertices_flat.extend(vert)
+            texcoords_flat.extend(tc)
+
+        # Create VBOs
+        vertices_array = np.array(vertices_flat, dtype=np.float32)
+        texcoords_array = np.array(texcoords_flat, dtype=np.float32)
+
+        vbo = self.ctx.buffer(vertices_array.tobytes())
+        texcoord_vbo = self.ctx.buffer(texcoords_array.tobytes())
+
+        vao = self.ctx.vertex_array(
+            self.text_shader,
+            [
+                (vbo, "3f", "position"),
+                (texcoord_vbo, "2f", "texcoord"),
+            ],
+        )
+
+        # Set uniforms
+        model = self._get_current_model_matrix()
+        mvp_with_model = self._get_mvp_matrix() @ model
+
+        self.text_shader["mvp"] = mvp_with_model.T.flatten()
+        self.text_shader["text_color"] = color
+
+        # Bind texture and render
+        texture.use(0)
+        self.text_shader["text_texture"] = 0
+
+        # Enable blending for text transparency
+        self.ctx.enable(mgl.BLEND)
+        self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+
+        vao.render(mgl.TRIANGLES)
+
+        # Disable blending
+        self.ctx.disable(mgl.BLEND)
+
+        # Cleanup
+        vbo.release()
+        texcoord_vbo.release()
+        vao.release()
+
     def convert_2d_to_3d(
         self, x: float, y: float, z: float, canvas_width: float, canvas_height: float
     ):
@@ -1361,6 +1544,11 @@ class Room3DRenderer:
 
     def cleanup(self):
         """Clean up OpenGL resources"""
+        # Cleanup text textures
+        for texture in self._text_texture_cache.values():
+            texture.release()
+        self._text_texture_cache.clear()
+
         # Only cleanup floor resources if they were created
         if self.show_floor:
             if hasattr(self, "floor_vbo"):
