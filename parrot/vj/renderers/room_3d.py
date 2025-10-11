@@ -482,17 +482,37 @@ class Room3DRenderer:
             # Pop position from stack
             self.position_stack.pop()
 
+    def _quaternion_multiply(self, q1: np.ndarray, q2: np.ndarray) -> np.ndarray:
+        """Multiply two quaternions to compose rotations"""
+        x1, y1, z1, w1 = q1
+        x2, y2, z2, w2 = q2
+        return np.array(
+            [
+                w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+                w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+                w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
+                w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+            ],
+            dtype=np.float32,
+        )
+
     @contextmanager
     def local_rotation(self, quaternion: np.ndarray):
         """Context manager for local rotation transform
+
+        Composes with the current rotation on the stack.
 
         Usage:
             with room_renderer.local_rotation(quat):
                 # Render with this rotation
                 room_renderer.render_sphere((0, 0, 0.5), color, radius)
         """
-        # Push new rotation onto stack
-        self.rotation_stack.append(quaternion)
+        # Compose new rotation with current rotation
+        current_rotation = self.rotation_stack[-1]
+        composed_rotation = self._quaternion_multiply(current_rotation, quaternion)
+
+        # Push composed rotation onto stack
+        self.rotation_stack.append(composed_rotation)
         try:
             yield
         finally:

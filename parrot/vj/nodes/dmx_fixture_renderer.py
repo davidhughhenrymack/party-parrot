@@ -156,14 +156,14 @@ class DMXFixtureRenderer(GenerativeEffectBase):
                 context, self.width, self.height, show_floor=True
             )
 
-            # Now create renderers with room_renderer
-            if hasattr(self, "_fixtures"):
-                self.renderers = [
-                    create_renderer(fixture, self.room_renderer)
-                    for fixture in self._fixtures
-                ]
-                # Apply positions from fixtures (set by position manager) to renderers
-                self._apply_positions_to_renderers()
+        # Create or recreate renderers if fixtures changed (venue change)
+        if hasattr(self, "_fixtures") and len(self.renderers) != len(self._fixtures):
+            self.renderers = [
+                create_renderer(fixture, self.room_renderer)
+                for fixture in self._fixtures
+            ]
+            # Apply positions from fixtures (set by position manager) to renderers
+            self._apply_positions_to_renderers()
 
         # Update camera rotation based on frame time
         self.room_renderer.update_camera(frame.time)

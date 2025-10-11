@@ -3,7 +3,6 @@ from parrot.patch_bay import (
     venues,
     venue_patches,
     manual_groups,
-    has_manual_dimmers,
     get_manual_group,
     has_manual_dimmer,
 )
@@ -68,23 +67,6 @@ class TestPatchBay:
             if manual_group is not None:
                 assert isinstance(manual_group, ManualGroup)
 
-    def test_has_manual_dimmers_structure(self):
-        """Test has_manual_dimmers structure."""
-        for venue in venues:
-            assert venue in has_manual_dimmers
-            assert isinstance(has_manual_dimmers[venue], bool)
-
-    def test_truckee_theatre_has_manual_dimmers(self):
-        """Test that truckee_theatre has manual dimmers."""
-        assert has_manual_dimmers[venues.truckee_theatre] is True
-        assert manual_groups[venues.truckee_theatre] is not None
-
-    def test_other_venues_no_manual_dimmers(self):
-        """Test that other venues don't have manual dimmers."""
-        assert has_manual_dimmers[venues.dmack] is False
-        assert has_manual_dimmers[venues.mtn_lotus] is False
-        assert has_manual_dimmers[venues.crux_test] is False
-
     def test_get_manual_group_function(self):
         """Test get_manual_group function."""
         # Test venue with manual group
@@ -99,8 +81,8 @@ class TestPatchBay:
     def test_has_manual_dimmer_function(self):
         """Test has_manual_dimmer function."""
         assert has_manual_dimmer(venues.truckee_theatre) is True
+        assert has_manual_dimmer(venues.mtn_lotus) is True
         assert has_manual_dimmer(venues.dmack) is False
-        assert has_manual_dimmer(venues.mtn_lotus) is False
         assert has_manual_dimmer(venues.crux_test) is False
 
     def test_fixture_addresses_are_valid(self):

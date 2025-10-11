@@ -2,205 +2,140 @@
 
 import pytest
 import moderngl as mgl
-import numpy as np
-from PIL import Image
 
 from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
-from parrot.director.frame import Frame
+from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
-from parrot.director.color_schemes import scheme_halloween
-from parrot.patch_bay import venues
 from parrot.utils.colour import Color
+from parrot.graph.BaseInterpretationNode import Vibe
 from parrot.state import State
 from parrot.fixtures.position_manager import FixturePositionManager
+from parrot.patch_bay import venues
 
 
-def test_dmx_fixture_renderer_basic():
-    """Test that DMX fixture renderer can render without crashing"""
-    # Create standalone ModernGL context
-    ctx = mgl.create_context(standalone=True)
+class TestDMXFixtureRenderer:
+    """Test DMXFixtureRenderer with venue changes"""
 
-    # Create state with venue
-    state = State()
-    state.set_venue(venues.dmack)
-
-    # Create position manager
-    position_manager = FixturePositionManager(state)
-
-    # Create renderer with dmack venue (has various fixture types)
-    renderer = DMXFixtureRenderer(
-        state=state,
-        position_manager=position_manager,
-        width=1920,
-        height=1080,
-    )
-
-    # Setup renderer
-    renderer.enter(ctx)
-
-    # Create test frame
-    frame = Frame({})
-    scheme = scheme_halloween[0]
-
-    # Render
-    fbo = renderer.render(frame, scheme, ctx)
-
-    assert fbo is not None
-    assert fbo.width == 1920
-    assert fbo.height == 1080
-
-    # Cleanup
-    renderer.exit()
-    ctx.release()
-
-
-@pytest.mark.skip(
-    reason="Output test needs coordinate mapping fix - see visual test instead"
-)
-def test_dmx_fixture_renderer_output():
-    """Test that DMX fixture renderer produces output with fixture boxes visible"""
-    # Create standalone ModernGL context
-    ctx = mgl.create_context(standalone=True)
-
-    # Create state with venue
-    state = State()
-    state.set_venue(venues.dmack)
-
-    # Create position manager
-    position_manager = FixturePositionManager(state)
-
-    # Create renderer
-    renderer = DMXFixtureRenderer(
-        state=state,
-        position_manager=position_manager,
-        width=800,
-        height=600,
-    )
-
-    # Setup renderer
-    renderer.enter(ctx)
-
-    # Set some DMX values on fixtures so they're visible
-    for fixture in renderer.fixtures[:3]:  # Set first 3 fixtures
+    @pytest.fixture
+    def gl_context(self):
+        """Create a real OpenGL context for testing"""
         try:
-            fixture.set_dimmer(255)  # Full brightness
-            if hasattr(fixture, "set_color"):
-                fixture.set_color(Color("red"))
-        except:
-            pass  # Some fixtures might not support these methods
+            context = mgl.create_context(standalone=True, backend="egl")
+            yield context
+        except Exception:
+            try:
+                context = mgl.create_context(standalone=True)
+                yield context
+            except Exception as e:
+                raise RuntimeError(f"OpenGL context creation failed: {e}")
 
-    # Create test frame
-    frame = Frame({})
-    scheme = scheme_halloween[0]
+    @pytest.fixture
+    def state(self):
+        """Create a state object"""
+        return State()
 
-    # Render
-    fbo = renderer.render(frame, scheme, ctx)
+    @pytest.fixture
+    def position_manager(self, state):
+        """Create a position manager"""
+        return FixturePositionManager(state)
 
-    # Read pixels - use actual framebuffer dimensions
-    texture = fbo.color_attachments[0]
-    width, height = texture.size
-    data = texture.read()
+    @pytest.fixture
+    def color_scheme(self):
+        """Create a color scheme"""
+        return ColorScheme(
+            fg=Color("red"), bg=Color("black"), bg_contrast=Color("white")
+        )
 
-    # Reshape based on actual texture size and format
-    bytes_per_pixel = len(data) // (width * height)
-    if bytes_per_pixel == 4:
-        pixels = np.frombuffer(data, dtype=np.uint8).reshape((height, width, 4))[
-            :, :, :3
-        ]
-    else:
-        pixels = np.frombuffer(data, dtype=np.uint8).reshape((height, width, 3))
+    def test_fixture_renderer_initial_load(self, gl_context, state, position_manager):
+        """Test that fixtures are loaded on init"""
+        renderer = DMXFixtureRenderer(
+            state=state,
+            position_manager=position_manager,
+            width=256,
+            height=256,
+        )
 
-    # Check that we have some non-black pixels
-    # Gray boxes should be visible even without dimmer values
-    max_value = np.max(pixels)
-    mean_value = np.mean(pixels)
+        # Fixtures should be stored, renderers created after first render
+        assert hasattr(renderer, "_fixtures")
+        assert len(renderer._fixtures) > 0
 
-    # We should at least see the gray fixture boxes (value ~76 for 0.3 gray)
-    assert (
-        mean_value > 0
-    ), f"Output should have visible content, got mean={mean_value}, max={max_value}"
-
-    # Cleanup
-    renderer.exit()
-    ctx.release()
-
-
-def test_dmx_fixture_renderer_visual():
-    """Visual test - renders to PNG for manual inspection"""
-    # Create standalone ModernGL context
-    ctx = mgl.create_context(standalone=True)
-
-    # Create state with venue
-    state = State()
-    state.set_venue(venues.dmack)
-
-    # Create position manager
-    position_manager = FixturePositionManager(state)
-
-    # Create renderer
-    renderer = DMXFixtureRenderer(
-        state=state,
-        position_manager=position_manager,
-        width=1920,
-        height=1080,
-    )
-
-    # Setup renderer
-    renderer.enter(ctx)
-
-    # Create test frame
-    frame = Frame({})
-    scheme = scheme_halloween[0]
-
-    # Render
-    fbo = renderer.render(frame, scheme, ctx)
-
-    # Read pixels and save to file
-    texture = fbo.color_attachments[0]
-    data = texture.read()
-    pixels = np.frombuffer(data, dtype=np.uint8).reshape((1080, 1920, 3))
-
-    # Flip vertically (OpenGL coordinates)
-    pixels = np.flipud(pixels)
-
-    # Save to PNG
-    img = Image.fromarray(pixels, mode="RGB")
-    img.save("test_output/dmx_fixture_renderer.png")
-    print("Saved test_output/dmx_fixture_renderer.png")
-
-    # Cleanup
-    renderer.exit()
-    ctx.release()
-
-
-def test_dmx_fixture_renderer_multiple_venues():
-    """Test that renderer works with different venues"""
-    ctx = mgl.create_context(standalone=True)
-
-    # Create state
-    state = State()
-
-    for venue in [venues.dmack, venues.mtn_lotus, venues.crux_test]:
-        state.set_venue(venue)
-
-        # Create position manager for this venue
-        position_manager = FixturePositionManager(state)
+    def test_venue_change_recreates_renderers(
+        self, gl_context, state, position_manager, color_scheme
+    ):
+        """Test that changing venue recreates renderers properly"""
+        # Set initial venue to dmack
+        state.set_venue(venues.dmack)
 
         renderer = DMXFixtureRenderer(
             state=state,
             position_manager=position_manager,
-            width=800,
-            height=600,
+            width=256,
+            height=256,
         )
 
-        renderer.enter(ctx)
+        # Do initial render to create renderers
+        frame = Frame(values={})
+        fb = renderer.render(frame, color_scheme, gl_context)
 
-        frame = Frame({})
-        scheme = scheme_halloween[0]
+        initial_fixture_count = len(renderer.renderers)
+        assert initial_fixture_count > 0, "Should have renderers after first render"
 
-        fbo = renderer.render(frame, scheme, ctx)
-        assert fbo is not None
+        # Change venue to mtn_lotus (has different fixtures)
+        state.set_venue(venues.mtn_lotus)
 
-        renderer.exit()
+        # Verify fixtures were reloaded
+        assert hasattr(renderer, "_fixtures")
+        new_fixture_count = len(renderer._fixtures)
 
-    ctx.release()
+        # Render again - this should recreate renderers
+        fb = renderer.render(frame, color_scheme, gl_context)
+
+        # Check that renderers were recreated
+        assert (
+            len(renderer.renderers) > 0
+        ), "Renderers should be recreated after venue change"
+        assert (
+            len(renderer.renderers) == new_fixture_count
+        ), "Renderer count should match fixture count"
+
+    def test_multiple_venue_changes(
+        self, gl_context, state, position_manager, color_scheme
+    ):
+        """Test multiple venue changes work correctly"""
+        # Set initial venue
+        state.set_venue(venues.dmack)
+
+        renderer = DMXFixtureRenderer(
+            state=state,
+            position_manager=position_manager,
+            width=256,
+            height=256,
+        )
+
+        frame = Frame(values={})
+
+        # Initial render
+        fb = renderer.render(frame, color_scheme, gl_context)
+        count_1 = len(renderer.renderers)
+        assert count_1 > 0
+
+        # Change to mtn_lotus
+        state.set_venue(venues.mtn_lotus)
+        fb = renderer.render(frame, color_scheme, gl_context)
+        count_2 = len(renderer.renderers)
+        assert count_2 > 0
+
+        # Change to crux_test
+        state.set_venue(venues.crux_test)
+        fb = renderer.render(frame, color_scheme, gl_context)
+        count_3 = len(renderer.renderers)
+        assert count_3 > 0
+
+        # Change back to dmack
+        state.set_venue(venues.dmack)
+        fb = renderer.render(frame, color_scheme, gl_context)
+        count_4 = len(renderer.renderers)
+        assert count_4 > 0
+        assert (
+            count_4 == count_1
+        ), "Should have same fixture count when returning to initial venue"

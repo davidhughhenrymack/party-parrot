@@ -25,16 +25,10 @@ manual_groups = {
         truckee_manual_fixtures, "Truckee Manual Control"
     ),
     venues.dmack: None,
-    venues.mtn_lotus: None,
+    venues.mtn_lotus: ManualGroup(
+        [FixtureBase(1, "SR spot", 1), FixtureBase(2, "SR spot", 1)]
+    ),
     venues.crux_test: None,
-}
-
-# Track which venues have manual dimmers
-has_manual_dimmers = {
-    venues.truckee_theatre: True,
-    venues.dmack: False,
-    venues.mtn_lotus: False,
-    venues.crux_test: False,
 }
 
 venue_patches = {
@@ -53,16 +47,19 @@ venue_patches = {
         # ChauvetRotosphere_28Ch(164),
     ],
     venues.mtn_lotus: [
-        *[ParRGBAWU(i) for i in range(10, 90, 10)],
-        Motionstrip38(80, 0, 256),
-        Motionstrip38(108, 0, 256),
-        ParRGB(192),
-        ParRGB(199),
+        # Address 1 and 2 are the front spots.
+        *[
+            ParRGBAWU(i) for i in range(10, 90, 10)
+        ],  # 10-20-30-40 is back line of pars. 50-60-70-80 is front line of pars.
+        Motionstrip38(90, 0, 256),
+        Motionstrip38(130, 0, 256),
+        ParRGB(195),
+        ParRGB(205),
         # GigbarMove ILS 50 channel
         # *ChauvetGigBarMoveILS(100),
-        TwoBeamLaser(150),
-        ChauvetSpot120_12Ch(160),
-        ChauvetSpot160_12Ch(172),
+        TwoBeamLaser(220),
+        ChauvetSpot120_12Ch(170),
+        ChauvetSpot160_12Ch(182),
     ],
     venues.truckee_theatre: [
         # 6 COLORband PiX fixtures (36 channels each)
@@ -133,4 +130,4 @@ def get_manual_group(venue):
 
 def has_manual_dimmer(venue):
     """Check if a venue has manual dimmers."""
-    return has_manual_dimmers.get(venue, False)
+    return manual_groups.get(venue) is not None
