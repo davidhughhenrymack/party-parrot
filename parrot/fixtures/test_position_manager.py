@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Test fixture position manager"""
 
+import os
+import tempfile
 import pytest
 import numpy as np
 from parrot.state import State
@@ -8,7 +10,21 @@ from parrot.patch_bay import venues
 from parrot.fixtures.position_manager import FixturePositionManager
 
 
-def test_position_manager_loads_positions():
+@pytest.fixture
+def temp_dir_fixture():
+    """Create a temporary directory for tests and clean up after"""
+    temp_dir = tempfile.mkdtemp()
+    original_cwd = os.getcwd()
+    os.chdir(temp_dir)
+    yield temp_dir
+    os.chdir(original_cwd)
+    import shutil
+
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+
+
+def test_position_manager_loads_positions(temp_dir_fixture):
     """Test that position manager loads positions from JSON"""
     state = State()
     state.set_venue(venues.mtn_lotus)
@@ -44,7 +60,7 @@ def test_position_manager_loads_positions():
     ), "Should have loaded at least some fixture positions"
 
 
-def test_position_manager_applies_positions_to_fixtures():
+def test_position_manager_applies_positions_to_fixtures(temp_dir_fixture):
     """Test that position manager sets x, y, z attributes on fixtures"""
     state = State()
     state.set_venue(venues.mtn_lotus)
@@ -78,7 +94,7 @@ def test_position_manager_applies_positions_to_fixtures():
     ), "All fixtures should have position attributes"
 
 
-def test_position_manager_handles_venue_change():
+def test_position_manager_handles_venue_change(temp_dir_fixture):
     """Test that position manager reloads positions when venue changes"""
     state = State()
     state.set_venue(venues.dmack)
@@ -119,7 +135,7 @@ def test_position_manager_handles_venue_change():
             assert dmack_pos is not None or mtn_pos is not None
 
 
-def test_position_manager_loads_orientation():
+def test_position_manager_loads_orientation(temp_dir_fixture):
     """Test that position manager loads orientation quaternions"""
     state = State()
     state.set_venue(venues.mtn_lotus)
@@ -152,7 +168,7 @@ def test_position_manager_loads_orientation():
     assert fixtures_with_orientation > 0, "Should have loaded orientations"
 
 
-def test_spatial_interpreter_can_access_positions():
+def test_spatial_interpreter_can_access_positions(temp_dir_fixture):
     """Test that spatial interpreters can access fixture positions"""
     from parrot.interpreters.spatial import SpatialDownwardsPulse
     from parrot.interpreters.base import InterpreterArgs

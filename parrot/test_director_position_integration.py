@@ -1,13 +1,38 @@
 #!/usr/bin/env python3
 """Integration test for director and position manager"""
 
+import os
+import tempfile
+import pytest
 from parrot.state import State
 from parrot.patch_bay import venues
 from parrot.director.director import Director
 from parrot.director.mode import Mode
 
 
-def test_director_initializes_with_position_manager():
+@pytest.fixture
+def temp_dir_fixture():
+    """Create a temporary directory for tests and clean up after"""
+    temp_dir = tempfile.mkdtemp()
+    original_cwd = os.getcwd()
+    os.chdir(temp_dir)
+    yield temp_dir
+    os.chdir(original_cwd)
+    import shutil
+
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+
+
+def test_temp_dir_isolation(temp_dir_fixture):
+    """Verify that tests run in isolated temp directory"""
+    current_dir = os.path.realpath(os.getcwd())
+    temp_dir = os.path.realpath(temp_dir_fixture)
+    assert current_dir == temp_dir
+    assert "/tmp" in current_dir or "/var/folders" in current_dir
+
+
+def test_director_initializes_with_position_manager(temp_dir_fixture):
     """Test that director creates position manager and fixtures have positions"""
     state = State()
     state.set_venue(venues.mtn_lotus)
@@ -41,7 +66,7 @@ def test_director_initializes_with_position_manager():
     print(f"✓ {fixtures_with_positions}/{len(fixtures)} fixtures have positions")
 
 
-def test_director_interpreters_can_access_positions():
+def test_director_interpreters_can_access_positions(temp_dir_fixture):
     """Test that interpreters created by director can access fixture positions"""
     state = State()
     state.set_venue(venues.mtn_lotus)
@@ -72,7 +97,7 @@ def test_director_interpreters_can_access_positions():
     )
 
 
-def test_position_manager_venue_change_with_director():
+def test_position_manager_venue_change_with_director(temp_dir_fixture):
     """Test that changing venue updates positions for director's fixtures"""
     state = State()
     state.set_venue(venues.dmack)
