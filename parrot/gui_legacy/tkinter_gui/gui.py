@@ -270,7 +270,7 @@ class Window(Tk):
         # Initialize VJ window manager
         self.vj_manager = None
         if vj_director:
-            from parrot.vj.tkinter_vj_window import TkinterVJManager
+            from parrot.gui_legacy.tkinter_vj_window import TkinterVJManager
 
             self.vj_manager = TkinterVJManager(vj_director)
 
@@ -624,8 +624,8 @@ class Window(Tk):
 
         self.bind("<KeyRelease-c>", lambda e: self._select_mode(Mode.rave))
         self.bind("<KeyRelease-d>", lambda e: self._select_mode(Mode.blackout))
-        self.bind("<KeyRelease-s>", lambda e: self.director.generate_interpreters())
-        self.bind("<KeyRelease-o>", lambda e: self.director.shift())
+        self.bind("<KeyRelease-s>", lambda e: self.director.shift_lighting_only())
+        self.bind("<KeyRelease-o>", lambda e: self.director.shift_vj_only())
 
         # Focus the window to receive keyboard events
         self.focus_set()
@@ -1241,7 +1241,7 @@ class Window(Tk):
 
     def _shift_all_command(self, director):
         """Handle Shift All button - triggers both DMX and VJ shift all"""
-        director.generate_interpreters()  # Director handles both DMX and VJ
+        director.generate_all()  # Director handles both DMX and VJ
 
     def load(self):
         filename = f"{self.state.venue.name}_gui.json"

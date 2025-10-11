@@ -28,11 +28,11 @@ class TestKeyboardHandler:
             self.director, self.overlay, self.signal_states, self.state
         )
 
-    def test_space_regenerates_interpreters(self):
-        """Test that SPACE key regenerates interpreters"""
+    def test_space_regenerates_all(self):
+        """Test that SPACE key regenerates both lighting and VJ"""
         result = self.handler.on_key_press(pyglet.window.key.SPACE, 0)
         assert result is True
-        self.director.generate_interpreters.assert_called_once()
+        self.director.generate_all.assert_called_once()
 
     def test_enter_toggles_overlay(self):
         """Test that ENTER key toggles overlay"""
@@ -100,11 +100,17 @@ class TestKeyboardHandler:
         # Should not call set_mode since we're at the bottom
         self.state.set_mode.assert_not_called()
 
-    def test_director_shift(self):
-        """Test that O key triggers director shift"""
+    def test_s_key_shifts_lighting_only(self):
+        """Test that S key triggers lighting-only shift"""
+        result = self.handler.on_key_release(pyglet.window.key.S, 0)
+        assert result is True
+        self.director.shift_lighting_only.assert_called_once()
+
+    def test_o_key_shifts_vj_only(self):
+        """Test that O key triggers VJ-only shift"""
         result = self.handler.on_key_release(pyglet.window.key.O, 0)
         assert result is True
-        self.director.shift.assert_called_once()
+        self.director.shift_vj_only.assert_called_once()
 
     def test_unhandled_key_returns_false(self):
         """Test that unhandled keys return False"""

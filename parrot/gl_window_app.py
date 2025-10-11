@@ -443,7 +443,9 @@ def run_gl_window_app(args):
         pyglet_window.activate()
 
     print("⌨️  Keyboard shortcuts:")
-    print("   SPACE/S: Regenerate interpreters  |  O: Shift")
+    print(
+        "   SPACE: Regenerate all  |  S: Full shift lighting only  |  O: Full shift VJ only"
+    )
     print("   ENTER: Toggle overlay  |  \\: Toggle fixture/VJ mode")
     print(
         "   C/D: Navigate lighting modes (C=up towards rave, D=down towards blackout)"

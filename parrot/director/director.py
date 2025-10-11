@@ -60,7 +60,7 @@ class Director:
 
     def setup_patch(self):
         self.group_fixtures()
-        self.generate_interpreters()
+        self.generate_all()  # Initialize both lighting and VJ
 
     def group_fixtures(self):
         to_group = [
@@ -115,6 +115,7 @@ class Director:
         return fixture_str
 
     def generate_interpreters(self):
+        """Generate interpreters for lighting only (does not affect VJ)"""
         self.interpreters: List[InterpreterBase] = [
             get_interpreter(
                 self.state.mode,
@@ -141,6 +142,10 @@ class Director:
             )
 
         print()
+
+    def generate_all(self):
+        """Generate both lighting interpreters and VJ visuals"""
+        self.generate_interpreters()
 
         # Also shift VJ director with high threshold for "shift all" (complete regeneration)
         if self.vj_director:
@@ -203,6 +208,47 @@ class Director:
             if not any(i.responds_to.get(signal, False) for i in signal_switches):
                 random.choice(signal_switches).set_enabled(signal, True)
 
+    def shift_lighting_only(self):
+        """Full shift of DMX lighting only (no VJ changes) - regenerates all interpreters"""
+        self.generate_color_scheme()
+
+        # Regenerate all interpreters (similar to generate_interpreters but without VJ shift)
+        self.interpreters: List[InterpreterBase] = [
+            get_interpreter(
+                self.state.mode,
+                group,
+                InterpreterArgs(
+                    HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
+                    self.state.theme.allow_rainbows,
+                    0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
+                    (
+                        100
+                        if not self.state.hype_limiter
+                        else min(100, self.state.hype + 30)
+                    ),
+                ),
+            )
+            for idx, group in enumerate(self.fixture_groups)
+        ]
+
+        print(f"Shifted lighting for {self.state.mode}:")
+        for i in self.interpreters:
+            fixture_str = self.format_fixture_names(i.group)
+            print(
+                f"{Fore.BLUE}{fixture_str} {Style.RESET_ALL}{str(i)}{Style.RESET_ALL}"
+            )
+        print()
+
+        self.ensure_each_signal_is_enabled()
+
+        self.last_shift_time = time.time()
+        self.shift_count += 1
+
+    def shift_vj_only(self):
+        """Full shift of VJ visuals only (no lighting changes) - complete regeneration"""
+        if self.vj_director:
+            self.vj_director.shift(self.state.vj_mode, threshold=1.0)
+
     def shift(self):
         """Shift DMX lighting and VJ together"""
         self.shift_color_scheme()
@@ -261,5 +307,5 @@ class Director:
     def on_mode_change(self, mode):
         """Handle mode changes, including those from the web interface."""
         print(f"mode changed to: {mode.name}")
-        # Regenerate interpreters if needed (this also handles VJ shifts)
+        # Regenerate lighting interpreters only (VJ is independent)
         self.generate_interpreters()

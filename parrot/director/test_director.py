@@ -1,6 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
 import time
+import tempfile
+import shutil
+import os
 from parrot.director.director import Director
 from parrot.state import State
 from parrot.director.frame import Frame, FrameSignal
@@ -9,8 +12,32 @@ from parrot.director.mode import Mode
 
 class TestDirector(unittest.TestCase):
     def setUp(self):
+        # Create a temporary directory for test isolation
+        self.temp_dir = tempfile.mkdtemp()
+        self.original_cwd = os.getcwd()
+        os.chdir(self.temp_dir)
+
         self.state = State()
         self.director = Director(self.state)
+
+    def tearDown(self):
+        """Clean up after each test method."""
+        # Change back to original directory first
+        os.chdir(self.original_cwd)
+        # Clean up entire temp directory and all its contents
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+
+    def test_isolation_from_real_state_file(self):
+        """Test that tests run in isolated temp directory, not touching real state.json"""
+        # Verify we're in a temp directory (use realpath to resolve symlinks on macOS)
+        current_dir = os.path.realpath(os.getcwd())
+        temp_dir = os.path.realpath(self.temp_dir)
+        self.assertEqual(current_dir, temp_dir)
+        self.assertTrue("/tmp" in current_dir or "/var/folders" in current_dir)
+
+        # Verify we're NOT in the project directory
+        self.assertNotEqual(current_dir, os.path.realpath(self.original_cwd))
 
     def test_initialization(self):
         """Test that the director initializes correctly"""

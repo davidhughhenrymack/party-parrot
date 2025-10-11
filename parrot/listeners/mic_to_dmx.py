@@ -8,7 +8,6 @@ import numpy as np
 from scipy import signal
 import matplotlib
 import time
-import queue
 import threading
 
 import math
@@ -54,8 +53,6 @@ class MicToDmx(object):
         if args.profile:
             tracemalloc.start()
 
-        from parrot.gui_legacy.tkinter_gui.gui import Window
-
         self.pa = pyaudio.PyAudio()
         self.stream = self.open_mic_stream()
 
@@ -92,9 +89,6 @@ class MicToDmx(object):
 
         self.should_stop = False
 
-        # Queue for thread-safe GUI updates
-        self.gui_update_queue = queue.Queue()
-
         self.dmx = get_controller()
 
         # Initialize VJ system
@@ -103,15 +97,6 @@ class MicToDmx(object):
 
         # Initialize director with VJ director
         self.director = Director(self.state, self.vj_director)
-
-        # Initialize GUI with VJ director
-        self.window = Window(
-            self.state,
-            lambda: self.quit(),
-            self.director,
-            self.signal_states,
-            self.vj_director,
-        )
 
         # Start the web server if not disabled
         if not getattr(self.args, "no_web", False):
@@ -129,16 +114,11 @@ class MicToDmx(object):
         self.should_stop = True
 
         # Clean up VJ resources
-        if hasattr(self, "window") and self.window:
-            self.window.cleanup_vj()
-
-        # Quit the GUI main loop
-        if hasattr(self, "window") and self.window:
-            self.window.quit()  # This will exit the mainloop
-            self.window.destroy()  # This will destroy the window
+        if self.vj_director:
+            self.vj_director.cleanup()
 
     def run(self):
-        self._run_with_gui_and_vj()
+        self._run_audio_loop()
 
     def _run_audio_loop(self):
         """Run the main audio processing loop"""
@@ -156,42 +136,6 @@ class MicToDmx(object):
 
             except (KeyboardInterrupt, SystemExit) as e:
                 break
-
-    def _run_with_gui_and_vj(self):
-        """Run with GUI in main thread and integrated VJ window"""
-        import threading
-
-        # Start audio processing in background thread
-        audio_thread = threading.Thread(target=self._run_audio_loop, daemon=True)
-        audio_thread.start()
-
-        # Run GUI in main thread (VJ window will be opened automatically by GUI)
-        self._run_gui_loop()
-
-    def _run_gui_loop(self):
-        """Run GUI in main thread with frame updates from queue"""
-
-        def process_audio_frames():
-            """Process frames from audio thread"""
-            try:
-                while True:
-                    frame = self.gui_update_queue.get_nowait()
-                    self.window.step(frame)
-
-                    break  # Only process one frame per call
-            except queue.Empty:
-                pass
-            # Schedule next check
-            if not self.should_stop:
-                self.window.after(10, process_audio_frames)
-
-        # Start processing audio frames
-        process_audio_frames()
-
-        try:
-            self.window.mainloop()
-        except (KeyboardInterrupt, SystemExit):
-            self.quit()
 
     def find_input_device(self):
         device_index = None
@@ -361,13 +305,6 @@ class MicToDmx(object):
         self.director.step(frame)
 
         self.director.render(self.dmx)
-
-        # Send frame to GUI via queue (thread-safe)
-        try:
-            self.gui_update_queue.put_nowait(frame)
-        except queue.Full:
-            # Skip update if queue is full (prevents blocking)
-            pass
 
     def calc_bpm_spec(self, raw_timeseries):
 

@@ -49,7 +49,7 @@ class KeyboardHandler:
 
         # Keep current functionality
         elif symbol == pyglet.window.key.SPACE:
-            self.director.generate_interpreters()
+            self.director.generate_all()
             return True  # Event handled
         elif symbol == pyglet.window.key.RETURN or symbol == pyglet.window.key.ENTER:
             self.overlay.toggle()
@@ -109,10 +109,10 @@ class KeyboardHandler:
 
         # Director commands
         elif symbol == pyglet.window.key.S:
-            self.director.generate_interpreters()
+            self.director.shift_lighting_only()
             return True
         elif symbol == pyglet.window.key.O:
-            self.director.shift()
+            self.director.shift_vj_only()
             return True
 
         return False

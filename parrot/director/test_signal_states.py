@@ -1,5 +1,8 @@
 import unittest
 import numpy as np
+import tempfile
+import shutil
+import os
 from parrot.director.signal_states import SignalStates
 from parrot.director.frame import FrameSignal, Frame
 from parrot.listeners.mic_to_dmx import MicToDmx
@@ -8,6 +11,11 @@ from parrot.state import State
 
 class TestSignalStates(unittest.TestCase):
     def setUp(self):
+        # Create a temporary directory for test isolation
+        self.temp_dir = tempfile.mkdtemp()
+        self.original_cwd = os.getcwd()
+        os.chdir(self.temp_dir)
+
         self.signal_states = SignalStates()
         self.state = State()
 
@@ -20,6 +28,14 @@ class TestSignalStates(unittest.TestCase):
                 self.profile_interval = 30
 
         self.mic_to_dmx = MicToDmx(MockArgs())
+
+    def tearDown(self):
+        """Clean up after each test method."""
+        # Change back to original directory first
+        os.chdir(self.original_cwd)
+        # Clean up entire temp directory and all its contents
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
 
     def test_initial_states(self):
         """Test that all signals start at 0.0"""
