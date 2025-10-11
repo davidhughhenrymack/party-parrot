@@ -14,6 +14,7 @@ from parrot.director.color_schemes import scheme_halloween
 from parrot.patch_bay import venues
 from parrot.state import State
 from parrot.utils.colour import Color
+from parrot.fixtures.position_manager import FixturePositionManager
 
 
 class Test3DRoomRender:
@@ -39,10 +40,16 @@ class Test3DRoomRender:
         return state
 
     @pytest.fixture
-    def renderer(self, state):
+    def position_manager(self, state):
+        """Create position manager for fixtures"""
+        return FixturePositionManager(state)
+
+    @pytest.fixture
+    def renderer(self, state, position_manager):
         """Create 3D DMX fixture renderer"""
         return DMXFixtureRenderer(
             state=state,
+            position_manager=position_manager,
             width=1920,
             height=1080,
             canvas_width=1200,

@@ -238,8 +238,8 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         # Wrap in gentle brightness pulse for subtle breathing effect
         chill_video_with_pulse = BrightnessPulse(
             chill_video_with_sepia,
-            intensity=0.6,  # Gentle intensity (instead of default 0.8)
-            base_brightness=0.4,  # Higher base brightness (instead of default 0.2)
+            intensity=0.3,  # Very gentle intensity for minimal sound reactivity
+            base_brightness=0.55,  # Higher base brightness to keep it bright overall
             signal=FrameSignal.sustained_low,  # Use sustained low for gentle response
         )
 

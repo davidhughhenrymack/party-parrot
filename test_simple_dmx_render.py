@@ -11,35 +11,48 @@ from parrot.director.color_scheme import ColorScheme
 from parrot.director.color_schemes import scheme_halloween
 from parrot.patch_bay import venues
 from parrot.utils.colour import Color
+from parrot.state import State
+from parrot.fixtures.position_manager import FixturePositionManager
 
 # Create standalone ModernGL context
 ctx = mgl.create_context(standalone=True)
 
+# Create state with venue
+state = State()
+state.set_venue(venues.dmack)
+
+# Create position manager
+position_manager = FixturePositionManager(state)
+
 # Create renderer
 renderer = DMXFixtureRenderer(
+    state=state,
+    position_manager=position_manager,
     width=1920,
     height=1080,
-    venue=venues.dmack,
 )
 
 # Setup renderer
 renderer.enter(ctx)
 
 # Print fixture information
-print(f"Number of fixtures: {len(renderer.fixtures)}")
+print(f"Number of fixture renderers: {len(renderer.renderers)}")
 print(f"Canvas size: {renderer.canvas_width}x{renderer.canvas_height}")
 print(f"Render size: {renderer.width}x{renderer.height}")
 print()
 
-for i, fixture in enumerate(renderer.fixtures[:5]):
-    if fixture.id in renderer.fixture_positions:
-        x, y, w, h = renderer.fixture_positions[fixture.id]
-        print(f"Fixture {i} ({fixture.id}): pos=({x},{y}) size=({w}x{h})")
+for i, fixture_renderer in enumerate(renderer.renderers[:5]):
+    fixture = fixture_renderer.fixture
+    pos = position_manager.get_fixture_position(fixture)
+    if pos:
+        x, y, z = pos
+        print(f"Fixture {i} ({fixture.id}): pos=({x},{y},{z})")
     else:
         print(f"Fixture {i} ({fixture.id}): NO POSITION")
 
 # Set some DMX values on fixtures
-for fixture in renderer.fixtures[:3]:
+for fixture_renderer in renderer.renderers[:3]:
+    fixture = fixture_renderer.fixture
     try:
         fixture.set_dimmer(255)
         if hasattr(fixture, "set_color"):

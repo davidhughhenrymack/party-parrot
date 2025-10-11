@@ -62,17 +62,43 @@ class TestKeyboardHandler:
             FrameSignal.small_blinder, 0.0
         )
 
-    def test_mode_switch_chill(self):
-        """Test that F key switches to chill mode"""
-        result = self.handler.on_key_release(pyglet.window.key.F, 0)
-        assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.chill)
+    def test_mode_navigate_up(self):
+        """Test that C key navigates up lighting modes (towards rave)"""
+        # Start at chill
+        self.state.mode = Mode.chill
 
-    def test_mode_switch_rave(self):
-        """Test that C key switches to rave mode"""
         result = self.handler.on_key_release(pyglet.window.key.C, 0)
         assert result is True
         self.state.set_mode.assert_called_once_with(Mode.rave)
+
+    def test_mode_navigate_down(self):
+        """Test that D key navigates down lighting modes (towards blackout)"""
+        # Start at chill
+        self.state.mode = Mode.chill
+
+        result = self.handler.on_key_release(pyglet.window.key.D, 0)
+        assert result is True
+        self.state.set_mode.assert_called_once_with(Mode.blackout)
+
+    def test_mode_no_wrap_at_highest(self):
+        """Test that C doesn't wrap at highest lighting mode (rave)"""
+        # Start at rave
+        self.state.mode = Mode.rave
+
+        result = self.handler.on_key_release(pyglet.window.key.C, 0)
+        assert result is True
+        # Should not call set_mode since we're at the top
+        self.state.set_mode.assert_not_called()
+
+    def test_mode_no_wrap_at_lowest(self):
+        """Test that D doesn't wrap at lowest lighting mode (blackout)"""
+        # Start at blackout
+        self.state.mode = Mode.blackout
+
+        result = self.handler.on_key_release(pyglet.window.key.D, 0)
+        assert result is True
+        # Should not call set_mode since we're at the bottom
+        self.state.set_mode.assert_not_called()
 
     def test_director_shift(self):
         """Test that O key triggers director shift"""
@@ -141,5 +167,23 @@ class TestKeyboardHandler:
         # Navigate left from early_rave back to hiphop
         self.state.vj_mode = VJMode.early_rave
         result = self.handler.on_key_press(pyglet.window.key.LEFT, 0)
+        assert result is True
+        self.state.set_vj_mode.assert_called_once_with(VJMode.hiphop)
+
+    def test_vj_mode_navigate_with_f_key(self):
+        """Test that F key navigates up VJ modes (towards full_rave)"""
+        # Start at hiphop
+        self.state.vj_mode = VJMode.hiphop
+
+        result = self.handler.on_key_release(pyglet.window.key.F, 0)
+        assert result is True
+        self.state.set_vj_mode.assert_called_once_with(VJMode.early_rave)
+
+    def test_vj_mode_navigate_with_e_key(self):
+        """Test that E key navigates down VJ modes (towards blackout)"""
+        # Start at early_rave
+        self.state.vj_mode = VJMode.early_rave
+
+        result = self.handler.on_key_release(pyglet.window.key.E, 0)
         assert result is True
         self.state.set_vj_mode.assert_called_once_with(VJMode.hiphop)

@@ -41,13 +41,13 @@ def run_gl_window_app(args):
     state = State()
     signal_states = SignalStates()
 
-    # Set initial mode if specified via args
+    # Override mode if specified via args, otherwise use loaded/default mode
     if getattr(args, "rave", False):
         state.set_mode(Mode.rave)
-        print("🎉 Starting in RAVE mode")
+        print("🎉 Starting in RAVE mode (from command line)")
     else:
-        state.set_mode(Mode.chill)
-        print("🎉 Starting in CHILL mode")
+        # Use the mode loaded from state.json or default
+        print(f"🎉 Starting in {state.mode.name.upper()} mode")
 
     # Initialize audio analyzer
     audio_analyzer = AudioAnalyzer(signal_states)
@@ -56,18 +56,19 @@ def run_gl_window_app(args):
     vj_director = VJDirector(state)
     vj_director.setup(ctx)
 
-    # Initialize fixture renderer
+    # Initialize director first (creates position manager)
+    director = Director(state, vj_director)
+
+    # Initialize fixture renderer (uses director's position manager)
     from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
 
     fixture_renderer = DMXFixtureRenderer(
         state=state,
+        position_manager=director.position_manager,
         width=1920,
         height=1080,
     )
     fixture_renderer.enter(ctx)
-
-    # Initialize director
-    director = Director(state, vj_director)
 
     # Initialize DMX
     dmx = get_controller()
@@ -362,18 +363,6 @@ def run_gl_window_app(args):
             main_menu.addItem_(theme_menu_item)
             delegate.updateThemeCheckmarks()
 
-            print("📋 Menu bar created with:")
-            print(f"   • Mode: {', '.join(m.name.capitalize() for m in Mode)}")
-            print(
-                f"   • VJ Mode: {', '.join(v.value.replace('_', ' ').title() for v in VJMode)}"
-            )
-            print(
-                f"   • Venue: {', '.join(v.name.replace('_', ' ').title() for v in venues)}"
-            )
-            print(
-                f"   • Theme: {', '.join(t.name for t in themes)} (with Cmd+1-5 shortcuts)"
-            )
-
             # Store delegate reference to prevent garbage collection
             pyglet_window._settings_menu_delegate = delegate
 
@@ -394,12 +383,19 @@ def run_gl_window_app(args):
         screenshot_time = time.perf_counter() + 0.5
         print("📸 Screenshot mode: will capture after 0.5s and exit")
 
-    # Fixture mode toggle
-    show_fixture_mode = getattr(args, "fixture_mode", False)
+    # Override fixture mode if specified via args, otherwise use loaded/default
+    if getattr(args, "fixture_mode", False):
+        state.set_show_fixture_mode(True)
+        print("🔧 Starting in fixture mode (from command line)")
+    elif state.show_fixture_mode:
+        print("🔧 Starting in fixture mode (from saved state)")
+    else:
+        print("📺 Starting in VJ mode")
 
     def toggle_fixture_mode():
-        nonlocal show_fixture_mode
-        show_fixture_mode = not show_fixture_mode
+        state.set_show_fixture_mode(not state.show_fixture_mode)
+        mode_str = "fixture" if state.show_fixture_mode else "VJ"
+        print(f"🔀 Toggled to {mode_str} mode")
 
     # Setup keyboard handler on the underlying pyglet window
     keyboard_handler = KeyboardHandler(
@@ -441,10 +437,19 @@ def run_gl_window_app(args):
     for w in pyglet.app.windows:
         w.push_handlers(keyboard_handler)
         w.push_handlers(mouse_handler)
+
+    # Activate window to ensure it gets focus on macOS
+    if pyglet_window:
+        pyglet_window.activate()
+
     print("⌨️  Keyboard shortcuts:")
     print("   SPACE/S: Regenerate interpreters  |  O: Shift")
     print("   ENTER: Toggle overlay  |  \\: Toggle fixture/VJ mode")
-    print("   F: Chill  |  C: Rave  |  D: Blackout")
+    print(
+        "   C/D: Navigate lighting modes (C=up towards rave, D=down towards blackout)"
+    )
+    print("   E/F: Navigate VJ modes (E=down towards blackout, F=up towards full_rave)")
+    print("   LEFT/RIGHT: Navigate VJ modes (alternative)")
     print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
     print("🖱️  Mouse: Drag to rotate/tilt camera  |  Scroll to zoom (in fixture mode)")
 
@@ -508,7 +513,7 @@ def run_gl_window_app(args):
         window_width, window_height = window.size
 
         # Render based on mode (fixture or VJ)
-        if show_fixture_mode:
+        if state.show_fixture_mode:
             rendered_fbo = fixture_renderer.render(frame_data, scheme_data, ctx)
         else:
             rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)

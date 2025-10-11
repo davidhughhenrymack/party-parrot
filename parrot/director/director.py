@@ -24,6 +24,7 @@ from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
 from parrot.utils.color_utils import format_color_scheme
+from parrot.fixtures.position_manager import FixturePositionManager
 
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
@@ -43,6 +44,9 @@ class Director:
         self.start_time = time.time()
         self.state = state
         self.vj_director = vj_director
+
+        # Initialize position manager first (so fixtures have positions before interpreters are created)
+        self.position_manager = FixturePositionManager(state)
 
         self.setup_patch()
         self.generate_color_scheme()

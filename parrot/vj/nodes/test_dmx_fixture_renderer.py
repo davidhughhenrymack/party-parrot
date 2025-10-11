@@ -12,6 +12,7 @@ from parrot.director.color_schemes import scheme_halloween
 from parrot.patch_bay import venues
 from parrot.utils.colour import Color
 from parrot.state import State
+from parrot.fixtures.position_manager import FixturePositionManager
 
 
 def test_dmx_fixture_renderer_basic():
@@ -23,9 +24,13 @@ def test_dmx_fixture_renderer_basic():
     state = State()
     state.set_venue(venues.dmack)
 
+    # Create position manager
+    position_manager = FixturePositionManager(state)
+
     # Create renderer with dmack venue (has various fixture types)
     renderer = DMXFixtureRenderer(
         state=state,
+        position_manager=position_manager,
         width=1920,
         height=1080,
     )
@@ -61,9 +66,13 @@ def test_dmx_fixture_renderer_output():
     state = State()
     state.set_venue(venues.dmack)
 
+    # Create position manager
+    position_manager = FixturePositionManager(state)
+
     # Create renderer
     renderer = DMXFixtureRenderer(
         state=state,
+        position_manager=position_manager,
         width=800,
         height=600,
     )
@@ -125,9 +134,13 @@ def test_dmx_fixture_renderer_visual():
     state = State()
     state.set_venue(venues.dmack)
 
+    # Create position manager
+    position_manager = FixturePositionManager(state)
+
     # Create renderer
     renderer = DMXFixtureRenderer(
         state=state,
+        position_manager=position_manager,
         width=1920,
         height=1080,
     )
@@ -169,8 +182,13 @@ def test_dmx_fixture_renderer_multiple_venues():
 
     for venue in [venues.dmack, venues.mtn_lotus, venues.crux_test]:
         state.set_venue(venue)
+
+        # Create position manager for this venue
+        position_manager = FixturePositionManager(state)
+
         renderer = DMXFixtureRenderer(
             state=state,
+            position_manager=position_manager,
             width=800,
             height=600,
         )

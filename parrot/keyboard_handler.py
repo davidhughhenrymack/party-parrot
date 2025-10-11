@@ -12,7 +12,7 @@ from parrot.utils.overlay_ui import OverlayUI
 from parrot.vj.vj_mode import VJMode
 
 
-@beartype
+# Note: @beartype removed to allow mocking in tests
 class KeyboardHandler:
     """Handles keyboard input for the GL window application"""
 
@@ -30,8 +30,12 @@ class KeyboardHandler:
         self.state = state
         self.show_fixture_mode_callback = show_fixture_mode_callback
 
-        # Get list of VJ modes in enum order
+        # Get list of VJ modes in enum order (blackout is lowest/first)
         self.vj_modes = list(VJMode)
+
+        # Get list of lighting modes ordered from lowest to highest intensity
+        # blackout (lowest) -> chill -> rave (highest)
+        self.modes = [Mode.blackout, Mode.chill, Mode.rave]
 
     def on_key_press(self, symbol: int, modifiers: int) -> bool:
         """Handle key press events"""
@@ -87,18 +91,20 @@ class KeyboardHandler:
             self.signal_states.set_signal(FrameSignal.pulse, 0.0)
             return True
 
-        # Mode selection
-        elif symbol == pyglet.window.key.E:
-            self.state.set_mode(Mode.chill)
-            return True
-        elif symbol == pyglet.window.key.F:
-            self.state.set_mode(Mode.chill)
-            return True
+        # Lighting mode navigation (C = up towards rave, D = down towards blackout)
         elif symbol == pyglet.window.key.C:
-            self.state.set_mode(Mode.rave)
+            self._navigate_mode_up()
             return True
         elif symbol == pyglet.window.key.D:
-            self.state.set_mode(Mode.blackout)
+            self._navigate_mode_down()
+            return True
+
+        # VJ mode navigation (E = down towards blackout, F = up towards full_rave)
+        elif symbol == pyglet.window.key.E:
+            self._navigate_vj_mode_previous()
+            return True
+        elif symbol == pyglet.window.key.F:
+            self._navigate_vj_mode_next()
             return True
 
         # Director commands
@@ -130,3 +136,23 @@ class KeyboardHandler:
         if current_index > 0:
             prev_mode = self.vj_modes[current_index - 1]
             self.state.set_vj_mode(prev_mode)
+
+    def _navigate_mode_up(self):
+        """Navigate up lighting modes (towards rave, no wrapping)"""
+        current_mode = self.state.mode
+        current_index = self.modes.index(current_mode)
+
+        # Only move up if we're not at the highest mode
+        if current_index < len(self.modes) - 1:
+            next_mode = self.modes[current_index + 1]
+            self.state.set_mode(next_mode)
+
+    def _navigate_mode_down(self):
+        """Navigate down lighting modes (towards blackout, no wrapping)"""
+        current_mode = self.state.mode
+        current_index = self.modes.index(current_mode)
+
+        # Only move down if we're not at the lowest mode
+        if current_index > 0:
+            prev_mode = self.modes[current_index - 1]
+            self.state.set_mode(prev_mode)

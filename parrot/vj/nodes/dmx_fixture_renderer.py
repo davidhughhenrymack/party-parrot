@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import json
-import os
 from beartype import beartype
-import numpy as np
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.graph.BaseInterpretationNode import format_node_status
@@ -17,6 +14,7 @@ from parrot.vj.renderers.factory import create_renderer
 from parrot.vj.renderers.base import FixtureRenderer
 from parrot.vj.renderers.room_3d import Room3DRenderer
 from parrot.state import State
+from parrot.fixtures.position_manager import FixturePositionManager
 from typing import Optional
 import moderngl as mgl
 
@@ -32,6 +30,7 @@ class DMXFixtureRenderer(GenerativeEffectBase):
     def __init__(
         self,
         state: State,
+        position_manager: FixturePositionManager,
         width: int = 1920,
         height: int = 1080,
         canvas_width: int = 1200,
@@ -40,6 +39,7 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         """
         Args:
             state: Global state object (provides current venue)
+            position_manager: Manager for fixture positions (shared with director)
             width: Width of the effect (render resolution)
             height: Height of the effect (render resolution)
             canvas_width: Width of the fixture canvas (legacy GUI coordinate space)
@@ -47,6 +47,7 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         """
         super().__init__(width, height)
         self.state = state
+        self.position_manager = position_manager
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
 
@@ -59,7 +60,6 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         self.depth_texture: Optional[mgl.Texture] = None
 
         self._load_fixtures()
-        self._load_positions()
 
     def _setup_gl_resources(
         self, context: mgl.Context, width: int = 1920, height: int = 1080
@@ -83,9 +83,8 @@ class DMXFixtureRenderer(GenerativeEffectBase):
             self.quad_vao = self._create_fullscreen_quad(context)
 
     def _on_venue_change(self, venue):
-        """Reload fixtures when venue changes"""
+        """Reload fixtures when venue changes (position manager handles positions)"""
         self._load_fixtures()
-        self._load_positions()
 
     def _load_fixtures(self):
         """Load fixtures from the current venue's patch bay, create renderers, and flatten groups"""
@@ -105,64 +104,20 @@ class DMXFixtureRenderer(GenerativeEffectBase):
         self._fixtures = fixtures
         self.renderers = []
 
-    def _load_positions(self):
-        """Load fixture positions from JSON file (legacy GUI format)"""
-        filename = f"{self.state.venue.name}_gui.json"
-
-        if not os.path.exists(filename):
-            # Use default positions if no saved file
-            self._generate_default_positions()
-            return
-
-        try:
-            with open(filename, "r") as f:
-                data = json.load(f)
-
-            # Load positions from saved data
-            for renderer in self.renderers:
-                if renderer.fixture.id in data:
-                    pos_data = data[renderer.fixture.id]
-                    x = float(pos_data.get("x", 0))
-                    y = float(pos_data.get("y", 0))
-                    z = float(pos_data.get("z", 3))  # Default height of 3
-                    renderer.set_position(x, y, z)
-
-                    # Load orientation if present
-                    if "orientation" in pos_data:
-                        orientation = pos_data["orientation"]
-                        renderer.orientation = np.array(orientation, dtype=np.float32)
-                else:
-                    # Fixture not in saved data, use default
-                    self._set_default_position(renderer)
-        except Exception as e:
-            print(f"Error loading fixture positions: {e}")
-            self._generate_default_positions()
-
-    def _generate_default_positions(self):
-        """Generate default positions for fixtures (grid layout)"""
-        fixture_margin = 10.0
-        x = fixture_margin
-        y = fixture_margin
-        max_row_height = 0.0
-
+    def _apply_positions_to_renderers(self):
+        """Apply positions from fixture objects to renderers (positions were set by position manager)"""
         for renderer in self.renderers:
-            width, height = renderer.size
+            fixture = renderer.fixture
+            # Get position from fixture (set by position manager)
+            position = self.position_manager.get_fixture_position(fixture)
+            if position:
+                x, y, z = position
+                renderer.set_position(x, y, z)
 
-            # Check if we need to wrap to next row
-            if x + width > self.canvas_width - fixture_margin:
-                x = fixture_margin
-                y += max_row_height + fixture_margin
-                max_row_height = 0.0
-
-            renderer.set_position(x, y)
-
-            x += width + fixture_margin
-            max_row_height = max(max_row_height, height)
-
-    def _set_default_position(self, renderer: FixtureRenderer):
-        """Set default position for a single renderer"""
-        # Just place at origin for now
-        renderer.set_position(10.0, 10.0)
+            # Get orientation from fixture
+            orientation = self.position_manager.get_fixture_orientation(fixture)
+            if orientation is not None:
+                renderer.orientation = orientation
 
     def generate(self, vibe: Vibe):
         """Configure renderer based on vibe"""
@@ -207,8 +162,8 @@ class DMXFixtureRenderer(GenerativeEffectBase):
                     create_renderer(fixture, self.room_renderer)
                     for fixture in self._fixtures
                 ]
-                # Load positions for the newly created renderers
-                self._load_positions()
+                # Apply positions from fixtures (set by position manager) to renderers
+                self._apply_positions_to_renderers()
 
         # Update camera rotation based on frame time
         self.room_renderer.update_camera(frame.time)

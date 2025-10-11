@@ -15,7 +15,7 @@ class State:
         self.events = Events()
 
         # Default values
-        self._mode = None
+        self._mode = Mode.chill  # Default mode
         self._vj_mode = VJMode.full_rave  # Default VJ mode
         self._hype = 30
         self._theme = themes[0]
@@ -23,6 +23,7 @@ class State:
         self._manual_dimmer = 0  # New property for manual control
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
+        self._show_fixture_mode = False  # Default to VJ mode, not fixture mode
 
         # Queue for GUI updates from other threads
         self._gui_update_queue = queue.Queue()
@@ -45,6 +46,7 @@ class State:
 
         self._mode = value
         self.events.on_mode_change(self._mode)
+        self.save_state()
 
     def set_mode_thread_safe(self, value: Mode):
         """Set the mode (now safe since web server runs on main thread)."""
@@ -151,15 +153,29 @@ class State:
         self._show_waveform = value
         self.events.on_show_waveform_change(self._show_waveform)
 
+    @property
+    def show_fixture_mode(self):
+        return self._show_fixture_mode
+
+    def set_show_fixture_mode(self, value):
+        if self._show_fixture_mode == value:
+            return
+
+        self._show_fixture_mode = value
+        self.events.on_show_fixture_mode_change(self._show_fixture_mode)
+        self.save_state()
+
     def save_state(self):
         """Save the current state to a JSON file."""
         state_data = {
+            "mode": self._mode.name if self._mode else None,
             "hype": self._hype,
             "theme_name": self._theme.name if hasattr(self._theme, "name") else None,
             "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
             "manual_dimmer": 0,  # We do not want to restart the app with lights on
             "hype_limiter": self._hype_limiter,
             "show_waveform": self._show_waveform,
+            "show_fixture_mode": self._show_fixture_mode,
             "vj_mode": self._vj_mode.name if self._vj_mode else None,
         }
 
@@ -179,6 +195,12 @@ class State:
                 state_data = json.load(f)
 
             # Set values from loaded state
+            if "mode" in state_data and state_data["mode"]:
+                try:
+                    self._mode = Mode[state_data["mode"]]
+                except KeyError:
+                    print(f"Mode '{state_data['mode']}' not found, using default")
+
             if "hype" in state_data:
                 self._hype = state_data["hype"]
 
@@ -215,6 +237,9 @@ class State:
 
             if "show_waveform" in state_data:
                 self._show_waveform = state_data["show_waveform"]
+
+            if "show_fixture_mode" in state_data:
+                self._show_fixture_mode = state_data["show_fixture_mode"]
 
             if "vj_mode" in state_data and state_data["vj_mode"]:
                 try:
