@@ -193,3 +193,100 @@ class TestKeyboardHandler:
         result = self.handler.on_key_release(pyglet.window.key.E, 0)
         assert result is True
         self.state.set_vj_mode.assert_called_once_with(VJMode.hiphop)
+
+    def test_manual_dimmer_m_key_press_starts_fade_up(self):
+        """Test that M key starts fading up"""
+        result = self.handler.on_key_press(pyglet.window.key.M, 0)
+        assert result is True
+        assert self.handler.manual_fade_direction == 1
+
+    def test_manual_dimmer_k_key_press_starts_fade_down(self):
+        """Test that K key starts fading down"""
+        result = self.handler.on_key_press(pyglet.window.key.K, 0)
+        assert result is True
+        assert self.handler.manual_fade_direction == -1
+
+    def test_manual_dimmer_release_stops_fade(self):
+        """Test that releasing M or K stops the fade"""
+        # Start fade up
+        self.handler.on_key_press(pyglet.window.key.M, 0)
+        assert self.handler.manual_fade_direction == 1
+
+        # Release M
+        result = self.handler.on_key_release(pyglet.window.key.M, 0)
+        assert result is True
+        assert self.handler.manual_fade_direction == 0
+
+        # Start fade down
+        self.handler.on_key_press(pyglet.window.key.K, 0)
+        assert self.handler.manual_fade_direction == -1
+
+        # Release K
+        result = self.handler.on_key_release(pyglet.window.key.K, 0)
+        assert result is True
+        assert self.handler.manual_fade_direction == 0
+
+    def test_manual_dimmer_update_fades_up(self):
+        """Test that update_manual_dimmer progressively fades up when M is held"""
+        # Set initial dimmer to 0
+        self.state.manual_dimmer = 0.0
+
+        # Press M to start fade up
+        self.handler.on_key_press(pyglet.window.key.M, 0)
+
+        # Simulate 0.25 seconds passing (should reach 0.5 at speed 2.0)
+        self.handler.update_manual_dimmer(0.25)
+        self.state.set_manual_dimmer.assert_called_with(0.5)
+
+        # Update state
+        self.state.manual_dimmer = 0.5
+
+        # Simulate another 0.25 seconds (should reach 1.0)
+        self.handler.update_manual_dimmer(0.25)
+        self.state.set_manual_dimmer.assert_called_with(1.0)
+
+        # Update state
+        self.state.manual_dimmer = 1.0
+
+        # Simulate more time (should clamp at 1.0)
+        self.handler.update_manual_dimmer(0.25)
+        self.state.set_manual_dimmer.assert_called_with(1.0)
+
+    def test_manual_dimmer_update_fades_down(self):
+        """Test that update_manual_dimmer progressively fades down when K is held"""
+        # Set initial dimmer to 1.0
+        self.state.manual_dimmer = 1.0
+
+        # Press K to start fade down
+        self.handler.on_key_press(pyglet.window.key.K, 0)
+
+        # Simulate 0.25 seconds passing (should reach 0.5 at speed 2.0)
+        self.handler.update_manual_dimmer(0.25)
+        self.state.set_manual_dimmer.assert_called_with(0.5)
+
+        # Update state
+        self.state.manual_dimmer = 0.5
+
+        # Simulate another 0.25 seconds (should reach 0.0)
+        self.handler.update_manual_dimmer(0.25)
+        self.state.set_manual_dimmer.assert_called_with(0.0)
+
+        # Update state
+        self.state.manual_dimmer = 0.0
+
+        # Simulate more time (should clamp at 0.0)
+        self.handler.update_manual_dimmer(0.25)
+        self.state.set_manual_dimmer.assert_called_with(0.0)
+
+    def test_manual_dimmer_update_does_nothing_when_not_fading(self):
+        """Test that update_manual_dimmer does nothing when no key is held"""
+        self.state.manual_dimmer = 0.5
+
+        # No key pressed, so manual_fade_direction should be 0
+        assert self.handler.manual_fade_direction == 0
+
+        # Simulate time passing
+        self.handler.update_manual_dimmer(0.1)
+
+        # set_manual_dimmer should not be called
+        self.state.set_manual_dimmer.assert_not_called()

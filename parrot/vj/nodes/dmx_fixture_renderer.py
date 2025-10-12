@@ -8,7 +8,7 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
 from parrot.vj.nodes.canvas_effect_base import GenerativeEffectBase
-from parrot.patch_bay import venue_patches
+from parrot.patch_bay import venue_patches, get_manual_group
 from parrot.fixtures.base import FixtureBase, FixtureGroup
 from parrot.vj.renderers.factory import create_renderer
 from parrot.vj.renderers.base import FixtureRenderer
@@ -99,6 +99,12 @@ class DMXFixtureRenderer(GenerativeEffectBase):
             else:
                 # Individual fixture
                 fixtures.append(item)
+
+        # Also include manual fixtures (actor/performance lights)
+        manual_group = get_manual_group(self.state.venue)
+        if manual_group is not None:
+            for fixture in manual_group.fixtures:
+                fixtures.append(fixture)
 
         # Store fixtures temporarily - will create renderers after room_renderer is initialized
         self._fixtures = fixtures

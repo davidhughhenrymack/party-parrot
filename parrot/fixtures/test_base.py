@@ -235,6 +235,13 @@ class TestManualGroup:
         # Check that parent_group is set on fixtures
         assert self.fixture1.parent_group == self.group
         assert self.fixture2.parent_group == self.group
+        # Check that fixtures are initialized with white color for house lights
+        from parrot.utils.colour import Color
+
+        white = Color("white")
+        assert self.fixture1.color_value.red == white.red
+        assert self.fixture1.color_value.green == white.green
+        assert self.fixture1.color_value.blue == white.blue
 
     def test_initialization_with_custom_name(self):
         """Test initialization with custom name"""
@@ -245,15 +252,17 @@ class TestManualGroup:
         """Test that manual dimmer setting affects all fixtures"""
         self.group.set_manual_dimmer(0.5)
         assert self.group.manual_dimmer == 0.5
-        assert self.fixture1.get_dimmer() == 0.5
-        assert self.fixture2.get_dimmer() == 0.5
-        assert self.fixture1.values[0] == 127  # 0.5 * 255
+        # Fixtures store dimmer in 0-255 range
+        assert self.fixture1.get_dimmer() == 127.5  # 0.5 * 255
+        assert self.fixture2.get_dimmer() == 127.5
+        assert self.fixture1.values[0] == 127
         assert self.fixture2.values[0] == 127
 
     def test_get_dimmer_override(self):
-        """Test that get_dimmer returns manual dimmer value"""
+        """Test that get_dimmer returns manual dimmer value in 0-255 range"""
         self.group.set_manual_dimmer(0.8)
-        assert self.group.get_dimmer() == 0.8
+        # Group's get_dimmer returns 0-255 range for consistency with fixtures
+        assert self.group.get_dimmer() == 204.0  # 0.8 * 255
 
     def test_render_applies_manual_dimmer(self):
         """Test that render applies manual dimmer before rendering"""
@@ -261,11 +270,11 @@ class TestManualGroup:
         self.group.set_manual_dimmer(0.6)
         self.group.render(dmx)
 
-        # Check that dimmer values were applied
-        assert self.fixture1.dimmer_value == 0.6
-        assert self.fixture2.dimmer_value == 0.6
-        assert self.fixture1.values[0] == int(0.6 * 255)
-        assert self.fixture2.values[0] == int(0.6 * 255)
+        # Check that dimmer values were applied (in 0-255 range)
+        assert self.fixture1.dimmer_value == 153.0  # 0.6 * 255
+        assert self.fixture2.dimmer_value == 153.0
+        assert self.fixture1.values[0] == 153
+        assert self.fixture2.values[0] == 153
 
 
 class TestColorWheelEntry:

@@ -476,8 +476,16 @@ def run_gl_window_app(args):
         pyglet.clock.schedule_interval(handle_web_requests, 0.05)
         print("🌐 Web server integrated into main thread")
 
+    # Track time for delta time calculations
+    last_frame_time = time.perf_counter()
+
     while not window.is_closing:
         current_time = time.perf_counter()
+        dt = current_time - last_frame_time
+        last_frame_time = current_time
+
+        # Update manual dimmer fade (progressive fade when M/K held)
+        keyboard_handler.update_manual_dimmer(dt)
 
         # Check if we should take screenshot
         if screenshot_mode and screenshot_time and current_time >= screenshot_time:

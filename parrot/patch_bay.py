@@ -26,7 +26,7 @@ manual_groups = {
     ),
     venues.dmack: None,
     venues.mtn_lotus: ManualGroup(
-        [FixtureBase(1, "SR spot", 1), FixtureBase(2, "SR spot", 1)]
+        [FixtureBase(1, "SR spot", 1), FixtureBase(2, "SL spot", 1)]
     ),
     venues.crux_test: None,
 }

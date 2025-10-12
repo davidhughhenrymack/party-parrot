@@ -37,6 +37,8 @@ class FixturePositionManager:
 
     def _get_all_fixtures(self) -> list[FixtureBase]:
         """Get all fixtures from the current venue's patch bay, flattening groups"""
+        from parrot.patch_bay import get_manual_group
+
         fixtures = []
         for item in venue_patches[self.state.venue]:
             if isinstance(item, FixtureGroup):
@@ -46,6 +48,13 @@ class FixturePositionManager:
             else:
                 # Individual fixture
                 fixtures.append(item)
+
+        # Also include manual fixtures (actor/performance lights)
+        manual_group = get_manual_group(self.state.venue)
+        if manual_group is not None:
+            for fixture in manual_group.fixtures:
+                fixtures.append(fixture)
+
         return fixtures
 
     def _load_and_apply_positions(self):

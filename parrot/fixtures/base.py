@@ -213,35 +213,42 @@ class ManualGroup(FixtureGroup):
         super().__init__(fixtures, name)
         self.manual_dimmer = 0
 
-        # Set the parent_group attribute on all fixtures
+        # Set the parent_group attribute on all fixtures and default to white
         for fixture in self.fixtures:
             fixture.parent_group = self
+            # Set default color to white for house lights/manual fixtures
+            fixture.set_color(Color("white"))
 
     def set_manual_dimmer(self, value):
-        """Set the dimmer value for all fixtures in the group."""
+        """Set the dimmer value for all fixtures in the group.
+
+        Args:
+            value: Dimmer value in 0-1 range (will be converted to 0-255 for fixtures)
+        """
         self.manual_dimmer = value
-        # Update the dimmer value for the group itself
-        self.dimmer_value = value
+        # Convert 0-1 range to 0-255 range for fixtures
+        dimmer_255 = value * 255
+        self.dimmer_value = dimmer_255
 
         for fixture in self.fixtures:
-            # Set the dimmer value for each fixture
-            fixture.set_dimmer(value)
+            # Set the dimmer value for each fixture (0-255 range)
+            fixture.set_dimmer(dimmer_255)
             # For simple fixtures with just a dimmer channel, set the value directly
             if fixture.width == 1:
-                fixture.values[0] = int(value * 255)
-                fixture.dimmer_value = value  # Ensure the dimmer value is set
+                fixture.values[0] = int(dimmer_255)
 
     def get_dimmer(self):
-        """Override to return the manual dimmer value."""
-        return self.manual_dimmer
+        """Override to return the manual dimmer value in 0-255 range."""
+        return self.manual_dimmer * 255
 
     def render(self, dmx):
         """Override to ensure manual dimmer value is applied before rendering."""
-        # Apply the manual dimmer value to all fixtures
+        # Apply the manual dimmer value to all fixtures (convert 0-1 to 0-255)
+        dimmer_255 = self.manual_dimmer * 255
         for fixture in self.fixtures:
-            fixture.dimmer_value = self.manual_dimmer
+            fixture.dimmer_value = dimmer_255
             if fixture.width == 1:
-                fixture.values[0] = int(self.manual_dimmer * 255)
+                fixture.values[0] = int(dimmer_255)
 
         # Call the parent render method
         super().render(dmx)

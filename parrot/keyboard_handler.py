@@ -37,6 +37,10 @@ class KeyboardHandler:
         # blackout (lowest) -> chill -> rave (highest)
         self.modes = [Mode.blackout, Mode.chill, Mode.rave]
 
+        # Track manual dimmer fade state
+        self.manual_fade_direction = 0  # 0=none, 1=up (M), -1=down (K)
+        self.manual_fade_speed = 2.0  # Full fade in 0.5 seconds (2.0 per second)
+
     def on_key_press(self, symbol: int, modifiers: int) -> bool:
         """Handle key press events"""
         # VJ mode navigation
@@ -73,6 +77,14 @@ class KeyboardHandler:
             self.signal_states.set_signal(FrameSignal.pulse, 1.0)
             return True
 
+        # Manual dimmer controls (press and hold to fade up/down)
+        elif symbol == pyglet.window.key.M:
+            self.manual_fade_direction = 1  # Fade up
+            return True
+        elif symbol == pyglet.window.key.K:
+            self.manual_fade_direction = -1  # Fade down
+            return True
+
         return False
 
     def on_key_release(self, symbol: int, modifiers: int) -> bool:
@@ -89,6 +101,13 @@ class KeyboardHandler:
             return True
         elif symbol == pyglet.window.key.J:
             self.signal_states.set_signal(FrameSignal.pulse, 0.0)
+            return True
+
+        # Manual dimmer controls - stop fading when key released
+        if symbol == pyglet.window.key.M or symbol == pyglet.window.key.K:
+            self.manual_fade_direction = 0
+            # Return False so other handlers can run if needed
+            # (but we handled the M/K press, so the fade has stopped)
             return True
 
         # Lighting mode navigation (C = up towards rave, D = down towards blackout)
@@ -156,3 +175,21 @@ class KeyboardHandler:
         if current_index > 0:
             prev_mode = self.modes[current_index - 1]
             self.state.set_mode(prev_mode)
+
+    def update_manual_dimmer(self, dt: float):
+        """Update manual dimmer fade - call this each frame with delta time
+
+        Args:
+            dt: Delta time in seconds since last update
+        """
+        if self.manual_fade_direction != 0:
+            # Calculate new dimmer value
+            current = self.state.manual_dimmer
+            delta = self.manual_fade_direction * self.manual_fade_speed * dt
+            new_value = current + delta
+
+            # Clamp to 0-1 range
+            new_value = max(0.0, min(1.0, new_value))
+
+            # Update state
+            self.state.set_manual_dimmer(new_value)
