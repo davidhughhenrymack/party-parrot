@@ -7,6 +7,14 @@
 
 Think of it as your tireless lighting designer and VJ rolled into one, constantly adapting to the energy of your music, never repeating itself, always surprising you.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/BrSeoPGDYKU?si=2Co_zyQR-PJCjB17" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/2ODufohtt2Q?si=D6U2H1YnxMShpJAy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/SFWZ1K-UIow?si=hW3LeENWrob5ZWnD" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ---
 
 ## 🚀 Quick Start
