@@ -7,13 +7,13 @@
 
 Think of it as your tireless lighting designer and VJ rolled into one, constantly adapting to the energy of your music, never repeating itself, always surprising you.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/BrSeoPGDYKU?si=2Co_zyQR-PJCjB17" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+https://www.youtube.com/watch?v=BrSeoPGDYKU
 
+https://github.com/user-attachments/assets/80028f98-0602-4d91-86d1-8140eff4e39a
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/2ODufohtt2Q?si=D6U2H1YnxMShpJAy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+https://github.com/user-attachments/assets/abe38098-7e1c-4c25-be31-e967eed0709c
 
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/SFWZ1K-UIow?si=hW3LeENWrob5ZWnD" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+https://github.com/user-attachments/assets/3359f668-8472-4afb-a809-ddf2639c94cb
 
 ---
 
