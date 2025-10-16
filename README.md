@@ -1,5 +1,4 @@
-# 🦜 Party Parrot
-### Your AI Lighting Designer & VJ System
+# 🦜 Party Parrot AI Lighting Designer & VJ System
 
 <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXl1NGRjNzkxeHc1bnpkNjdybXRpOGRlbWk0c2s1aGgyaDZpNHJzaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2zVr6cu95nF6O4/giphy.gif" />
 
