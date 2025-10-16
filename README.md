@@ -7,7 +7,9 @@
 
 Think of it as your tireless lighting designer and VJ rolled into one, constantly adapting to the energy of your music, never repeating itself, always surprising you.
 
-https://www.youtube.com/watch?v=BrSeoPGDYKU
+https://github.com/user-attachments/assets/72ff89d6-7b12-43f1-8451-35beed2953bf
+
+https://github.com/user-attachments/assets/0b33b6e6-dcdd-497a-94ae-4c70f65ac35f
 
 https://github.com/user-attachments/assets/80028f98-0602-4d91-86d1-8140eff4e39a
 
