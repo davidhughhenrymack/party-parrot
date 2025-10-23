@@ -1,6 +1,7 @@
 from parrot.utils.colour import Color
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.fixtures.base import GoboWheelEntry, ColorWheelEntry
+from parrot.utils.dmx_utils import Universe
 
 
 # DMX layout:
@@ -56,6 +57,7 @@ class ChauvetSpot160_12Ch(ChauvetMoverBase):
         tilt_lower=0,
         tilt_upper=90,
         dimmer_upper=255,
+        universe=Universe.default,
     ):
         super().__init__(
             patch,
@@ -69,4 +71,5 @@ class ChauvetSpot160_12Ch(ChauvetMoverBase):
             tilt_lower,
             tilt_upper,
             dimmer_upper,
+            universe=universe,
         )

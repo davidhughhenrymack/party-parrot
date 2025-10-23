@@ -1,5 +1,6 @@
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 from ..base import ColorWheelEntry, GoboWheelEntry
 
 
@@ -52,6 +53,7 @@ class ChauvetSpot120_12Ch(ChauvetMoverBase):
         tilt_lower=0,
         tilt_upper=90,
         dimmer_upper=255,
+        universe=Universe.default,
     ):
         super().__init__(
             patch,
@@ -65,4 +67,5 @@ class ChauvetSpot120_12Ch(ChauvetMoverBase):
             tilt_lower,
             tilt_upper,
             dimmer_upper,
+            universe=universe,
         )

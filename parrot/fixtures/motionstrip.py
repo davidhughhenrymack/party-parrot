@@ -2,6 +2,7 @@ import math
 import time
 from parrot.utils.colour import Color
 from parrot.utils.color_extra import color_to_rgbw, dim_color
+from parrot.utils.dmx_utils import Universe
 from .base import FixtureBase, FixtureWithBulbs
 
 # DMX layout:
@@ -23,8 +24,8 @@ dmx_layout = [
 
 
 class MotionstripBulb(FixtureBase):
-    def __init__(self, address):
-        super().__init__(address, "motionstrip bulb", 4)
+    def __init__(self, address, universe=Universe.default):
+        super().__init__(address, "motionstrip bulb", 4, universe)
 
     def render_values(self, values):
         c = color_to_rgbw(dim_color(self.get_color(), self.get_dimmer() / 255))
@@ -37,9 +38,20 @@ class Motionstrip(FixtureWithBulbs):
 
 
 class Motionstrip38(Motionstrip):
-    def __init__(self, patch, pan_lower=0, pan_upper=255, invert_pan=False):
+    def __init__(
+        self,
+        patch,
+        pan_lower=0,
+        pan_upper=255,
+        invert_pan=False,
+        universe=Universe.default,
+    ):
         super().__init__(
-            patch, "motionstrip 38", 38, [MotionstripBulb(6 + i * 4) for i in range(8)]
+            patch,
+            "motionstrip 38",
+            38,
+            [MotionstripBulb(6 + i * 4, universe) for i in range(8)],
+            universe,
         )
         self.pan_lower = pan_lower
         self.pan_upper = pan_upper

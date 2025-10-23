@@ -1,6 +1,7 @@
 from beartype import beartype
 from parrot.utils.color_extra import color_to_rgbw, render_color_components
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 from .base import FixtureBase
 
 
@@ -13,8 +14,8 @@ class Par(FixtureBase):
 class ParRGB(Par):
     "David's Par RGB fixture"
 
-    def __init__(self, patch):
-        super().__init__(patch, "led par", 7)
+    def __init__(self, patch, universe=Universe.default):
+        super().__init__(patch, "led par", 7, universe)
 
     def set_dimmer(self, value):
         super().set_dimmer(value)
@@ -47,8 +48,8 @@ class ParRGBAWU(Par):
         Color("violet"),
     ]
 
-    def __init__(self, patch):
-        super().__init__(patch, "par rgbawu", 9)
+    def __init__(self, patch, universe=Universe.default):
+        super().__init__(patch, "par rgbawu", 9, universe)
 
     def set_dimmer(self, value):
         super().set_dimmer(value)

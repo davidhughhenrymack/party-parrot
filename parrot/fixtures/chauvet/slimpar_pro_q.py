@@ -1,6 +1,7 @@
 from parrot.fixtures.base import FixtureBase
 from parrot.utils.math import clamp
 from parrot.utils.color_extra import dim_color
+from parrot.utils.dmx_utils import Universe
 from parrot.fixtures.led_par import Par
 
 
@@ -16,8 +17,8 @@ class ChauvetSlimParProQ_5Ch(Par):
 
     """
 
-    def __init__(self, address):
-        super().__init__(address, "chauvet slimpar pro q", 5)
+    def __init__(self, address, universe=Universe.default):
+        super().__init__(address, "chauvet slimpar pro q", 5, universe)
 
     def set_color(self, color):
         super().set_color(color)

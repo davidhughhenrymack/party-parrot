@@ -2,6 +2,7 @@ from typing import List
 from parrot.fixtures.base import ColorWheelEntry, FixtureBase, GoboWheelEntry
 from parrot.utils.color_extra import color_distance
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 from parrot.fixtures.moving_head import MovingHead
 
 
@@ -25,8 +26,9 @@ class ChauvetMoverBase(MovingHead):
         strobe_shutter_lower=4,
         strobe_shutter_upper=76,
         disable_fine=False,
+        universe=Universe.default,
     ):
-        super().__init__(patch, name, width, gobo_wheel)
+        super().__init__(patch, name, width, gobo_wheel, universe)
         self.pan_lower = pan_lower / 540 * 255
         self.pan_upper = pan_upper / 540 * 255
         self.pan_range = self.pan_upper - self.pan_lower

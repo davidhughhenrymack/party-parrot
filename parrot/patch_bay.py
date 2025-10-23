@@ -11,6 +11,7 @@ import enum
 
 from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.uking.laser import FiveBeamLaser
+from parrot.utils.dmx_utils import Universe
 
 venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre", "crux_test"])
 
@@ -26,7 +27,10 @@ manual_groups = {
     ),
     venues.dmack: None,
     venues.mtn_lotus: ManualGroup(
-        [FixtureBase(1, "SR spot", 1), FixtureBase(2, "SL spot", 1)]
+        [
+            FixtureBase(1, "SR spot", 1, universe=Universe.art1),
+            FixtureBase(2, "SL spot", 1, universe=Universe.art1),
+        ]
     ),
     venues.crux_test: None,
 }
@@ -49,7 +53,7 @@ venue_patches = {
     venues.mtn_lotus: [
         # Address 1 and 2 are the front spots.
         *[
-            ParRGBAWU(i) for i in range(10, 90, 10)
+            ParRGBAWU(i, universe=Universe.art1) for i in range(10, 90, 10)
         ],  # 10-20-30-40 is back line of pars. 50-60-70-80 is front line of pars.
         # Stage left column
         Motionstrip38(90, 0, 256),  # Stage left column

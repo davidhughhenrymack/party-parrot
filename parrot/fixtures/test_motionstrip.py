@@ -156,6 +156,8 @@ class TestMotionstrip38:
 
     def test_render_without_strobe(self):
         """Test render method without strobe effect"""
+        from parrot.utils.dmx_utils import Universe
+
         self.motionstrip.set_strobe(0)
         self.motionstrip.set_dimmer(150)
 
@@ -166,7 +168,9 @@ class TestMotionstrip38:
 
         # Verify DMX calls
         for i in range(38):
-            self.dmx.set_channel.assert_any_call(1 + i, self.motionstrip.values[i])
+            self.dmx.set_channel.assert_any_call(
+                1 + i, self.motionstrip.values[i], universe=Universe.default
+            )
 
     def test_pan_range_calculation(self):
         """Test pan range calculation"""

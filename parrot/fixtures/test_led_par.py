@@ -56,11 +56,15 @@ class TestParRGB:
 
     def test_render(self):
         """Test render method"""
+        from parrot.utils.dmx_utils import Universe
+
         self.par.values = [10, 20, 30, 40, 50, 60, 70]
         self.par.render(self.dmx)
 
         for i in range(7):
-            self.dmx.set_channel.assert_any_call(1 + i, (i + 1) * 10)
+            self.dmx.set_channel.assert_any_call(
+                1 + i, (i + 1) * 10, universe=Universe.default
+            )
 
 
 class TestParRGBAWU:
@@ -130,8 +134,12 @@ class TestParRGBAWU:
 
     def test_render(self):
         """Test render method"""
+        from parrot.utils.dmx_utils import Universe
+
         self.par.values = [10, 20, 30, 40, 50, 60, 70, 80, 90]
         self.par.render(self.dmx)
 
         for i in range(9):
-            self.dmx.set_channel.assert_any_call(1 + i, (i + 1) * 10)
+            self.dmx.set_channel.assert_any_call(
+                1 + i, (i + 1) * 10, universe=Universe.default
+            )

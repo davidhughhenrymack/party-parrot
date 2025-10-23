@@ -1,6 +1,7 @@
 from parrot.utils.colour import Color
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.fixtures.base import GoboWheelEntry, ColorWheelEntry
+from parrot.utils.dmx_utils import Universe
 import time
 
 
@@ -82,6 +83,7 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
         tilt_lower=0,
         tilt_upper=90,
         dimmer_upper=200,
+        universe=Universe.default,
     ):
         super().__init__(
             patch=patch,
@@ -97,6 +99,7 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
             dimmer_upper=dimmer_upper,
             shutter_open=255,
             speed_value=0,
+            universe=universe,
             strobe_shutter_lower=16,
             strobe_shutter_upper=131,
             disable_fine=False,
