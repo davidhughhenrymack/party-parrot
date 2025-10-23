@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from beartype import beartype
 from parrot.utils.colour import Color
-from parrot.utils.dmx_utils import dmx_clamp
+from parrot.utils.dmx_utils import dmx_clamp, Universe
 from parrot.utils.string import kebab_case
 
 logger = logging.getLogger(__name__)
@@ -10,10 +10,11 @@ logger = logging.getLogger(__name__)
 
 @beartype
 class FixtureBase:
-    def __init__(self, address, name, width):
+    def __init__(self, address, name, width, universe=Universe.default):
         self.address = address
         self.name = name
         self.width = width
+        self.universe = universe
         self.values = [0 for i in range(width)]
         self.color_value = Color("black")
         self.dimmer_value = 0
@@ -70,7 +71,9 @@ class FixtureBase:
                     f"Fixture {self.name} @ {self.address} has too many channels, skipping {i} channels"
                 )
                 break
-            dmx.set_channel(self.address + i, dmx_clamp(self.values[i]))
+            dmx.set_channel(
+                self.address + i, dmx_clamp(self.values[i]), universe=self.universe
+            )
 
     def __str__(self) -> str:
         return f"{self.name} @ {self.address}"
@@ -82,8 +85,8 @@ class FixtureBase:
 
 @beartype
 class FixtureWithBulbs(FixtureBase):
-    def __init__(self, address, name, width, bulbs):
-        super().__init__(address, name, width)
+    def __init__(self, address, name, width, bulbs, universe=Universe.default):
+        super().__init__(address, name, width, universe)
         self.bulbs = bulbs
 
     def set_dimmer(self, value):
@@ -123,13 +126,14 @@ class GoboWheelEntry:
 class FixtureGroup(FixtureBase):
     """A group of fixtures that can be controlled together."""
 
-    def __init__(self, fixtures, name=None):
+    def __init__(self, fixtures, name=None, universe=Universe.default):
         """
         Initialize a fixture group with a list of fixtures.
 
         Args:
             fixtures: List of fixtures to include in the group
             name: Optional name for the group. If not provided, will be generated from fixture types
+            universe: Universe for the group (defaults to Universe.default)
         """
         if not fixtures:
             raise ValueError("FixtureGroup must contain at least one fixture")
@@ -148,7 +152,7 @@ class FixtureGroup(FixtureBase):
             else:
                 name = "Mixed Fixture Group"
 
-        super().__init__(address, name, width)
+        super().__init__(address, name, width, universe)
         self.fixtures = fixtures
 
     def set_color(self, color):
@@ -202,15 +206,18 @@ class FixtureGroup(FixtureBase):
 class ManualGroup(FixtureGroup):
     """A group of fixtures that are only controlled manually, not by automatic interpreters."""
 
-    def __init__(self, fixtures, name="Manual Control Group"):
+    def __init__(
+        self, fixtures, name="Manual Control Group", universe=Universe.default
+    ):
         """
         Initialize a manual control fixture group.
 
         Args:
             fixtures: List of fixtures to include in the group
             name: Optional name for the group
+            universe: Universe for the group (defaults to Universe.default)
         """
-        super().__init__(fixtures, name)
+        super().__init__(fixtures, name, universe)
         self.manual_dimmer = 0
 
         # Set the parent_group attribute on all fixtures and default to white

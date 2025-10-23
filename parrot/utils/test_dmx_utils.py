@@ -8,7 +8,8 @@ from parrot.utils.dmx_utils import (
     get_controller,
     get_entec_controller,
     ArtNetController,
-    MirrorController,
+    SwitchController,
+    Universe,
 )
 from parrot.utils.mock_controller import MockDmxController
 
@@ -211,46 +212,60 @@ class TestDmxUtils:
         assert len(controller.dmx_data) == 512
         assert all(v == 0 for v in controller.dmx_data)
 
-    def test_mirror_controller_set_channel(self):
-        """Test MirrorController broadcasts set_channel to all controllers."""
-        mock_controller1 = Mock()
-        mock_controller2 = Mock()
-        mock_controller3 = Mock()
+    def test_switch_controller_routes_by_universe(self):
+        """Test SwitchController routes to correct controller based on universe."""
+        mock_default = Mock()
+        mock_art1 = Mock()
 
-        mirror = MirrorController(
-            [mock_controller1, mock_controller2, mock_controller3]
+        switch = SwitchController(
+            {
+                Universe.default: mock_default,
+                Universe.art1: mock_art1,
+            }
         )
 
-        mirror.set_channel(10, 200)
+        # Send to default universe
+        switch.set_channel(10, 200, universe=Universe.default)
+        mock_default.set_channel.assert_called_once_with(10, 200)
+        mock_art1.set_channel.assert_not_called()
 
-        # All controllers should have received the call
-        mock_controller1.set_channel.assert_called_once_with(10, 200)
-        mock_controller2.set_channel.assert_called_once_with(10, 200)
-        mock_controller3.set_channel.assert_called_once_with(10, 200)
+        # Send to art1 universe
+        mock_default.reset_mock()
+        mock_art1.reset_mock()
+        switch.set_channel(15, 150, universe=Universe.art1)
+        mock_art1.set_channel.assert_called_once_with(15, 150)
+        mock_default.set_channel.assert_not_called()
 
-    def test_mirror_controller_submit(self):
-        """Test MirrorController broadcasts submit to all controllers."""
+    def test_switch_controller_submit_all(self):
+        """Test SwitchController submits all controllers."""
         mock_controller1 = Mock()
         mock_controller2 = Mock()
 
-        mirror = MirrorController([mock_controller1, mock_controller2])
+        switch = SwitchController(
+            {
+                Universe.default: mock_controller1,
+                Universe.art1: mock_controller2,
+            }
+        )
 
-        mirror.submit()
+        switch.submit()
 
-        # All controllers should have received the call
+        # Both controllers should have received submit
         mock_controller1.submit.assert_called_once()
         mock_controller2.submit.assert_called_once()
 
     @patch.dict(os.environ, {"MOCK_DMX": "true"})
     def test_get_controller_no_venue(self):
-        """Test get_controller without venue returns just mock controller."""
+        """Test get_controller without venue returns SwitchController with default universe only."""
         controller = get_controller()
-        assert isinstance(controller, MockDmxController)
+        assert isinstance(controller, SwitchController)
+        assert Universe.default in controller.controller_map
+        assert Universe.art1 not in controller.controller_map
 
     @patch.dict(os.environ, {"MOCK_DMX": "true"})
     @patch("parrot.utils.dmx_utils.StupidArtnet")
     def test_get_controller_with_configured_venue(self, mock_artnet_class):
-        """Test get_controller with configured venue returns MirrorController."""
+        """Test get_controller with configured venue returns SwitchController with both universes."""
         mock_artnet = Mock()
         mock_artnet_class.return_value = mock_artnet
 
@@ -260,9 +275,10 @@ class TestDmxUtils:
 
         controller = get_controller(mock_venue)
 
-        # Should return MirrorController since venue has Art-Net config
-        assert isinstance(controller, MirrorController)
-        assert len(controller.controllers) == 2
+        # Should return SwitchController with both universes
+        assert isinstance(controller, SwitchController)
+        assert Universe.default in controller.controller_map
+        assert Universe.art1 in controller.controller_map
 
         # Verify Art-Net was initialized with config from artnet_config
         mock_artnet_class.assert_called_once_with(
@@ -271,11 +287,13 @@ class TestDmxUtils:
 
     @patch.dict(os.environ, {"MOCK_DMX": "true"})
     def test_get_controller_with_unconfigured_venue(self):
-        """Test get_controller with unconfigured venue returns just controller (no Art-Net)."""
+        """Test get_controller with unconfigured venue returns SwitchController with default universe only."""
         mock_venue = Mock()
         mock_venue.name = "some_other_venue"
 
         controller = get_controller(mock_venue)
 
-        # Should return just mock controller since venue has no Art-Net config
-        assert isinstance(controller, MockDmxController)
+        # Should return SwitchController with only default universe
+        assert isinstance(controller, SwitchController)
+        assert Universe.default in controller.controller_map
+        assert Universe.art1 not in controller.controller_map
