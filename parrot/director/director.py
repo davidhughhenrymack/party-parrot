@@ -294,6 +294,7 @@ class Director:
         manual_group = get_manual_group(self.state.venue)
         if manual_group:
             manual_group.set_manual_dimmer(self.state.manual_dimmer)
+            manual_group.render(dmx)
 
         # Render all fixtures
         for i in venue_patches[self.state.venue]:
