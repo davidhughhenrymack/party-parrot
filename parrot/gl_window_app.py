@@ -70,8 +70,8 @@ def run_gl_window_app(args):
     )
     fixture_renderer.enter(ctx)
 
-    # Initialize DMX
-    dmx = get_controller()
+    # Initialize DMX with venue-specific configuration
+    dmx = get_controller(state.venue)
 
     # Setup display shader
     vertex_shader = """

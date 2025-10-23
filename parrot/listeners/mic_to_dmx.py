@@ -89,7 +89,7 @@ class MicToDmx(object):
 
         self.should_stop = False
 
-        self.dmx = get_controller()
+        self.dmx = get_controller(self.state.venue)
 
         # Initialize VJ system
 
