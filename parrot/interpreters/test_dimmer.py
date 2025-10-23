@@ -11,6 +11,7 @@ from parrot.interpreters.dimmer import (
     SequenceFadeDimmers,
     DimmersBeatChase,
     GentlePulse,
+    StabPulse,
     Twinkle,
 )
 from parrot.interpreters.base import InterpreterArgs
@@ -351,6 +352,49 @@ class TestGentlePulse:
 
             # Should decay (be less than first)
             assert second_dim < first_dim
+
+
+class TestStabPulse:
+    def setup_method(self):
+        """Setup for each test method"""
+        self.fixture1 = MagicMock(spec=FixtureBase)
+        self.fixture2 = MagicMock(spec=FixtureBase)
+        self.group = [self.fixture1, self.fixture2]
+        self.args = InterpreterArgs(
+            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
+        )
+
+    def test_stab_pulse_hype(self):
+        """Test StabPulse hype level"""
+        assert StabPulse.hype == 50
+
+    def test_stab_pulse_faster_decay_than_gentle(self):
+        """Test StabPulse decays faster than GentlePulse"""
+        with patch("random.randint") as mock_randint:
+            mock_randint.return_value = 0
+
+            gentle_interp = GentlePulse(self.group, self.args)
+            stab_interp = StabPulse(self.group, self.args)
+            scheme = MagicMock()
+
+            # First step with high signal for both
+            frame_values = {FrameSignal.freq_all: 0.8}
+            timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
+            frame = Frame(frame_values, timeseries)
+            gentle_interp.step(frame, scheme)
+            stab_interp.step(frame, scheme)
+
+            # Second step with low signal for both
+            frame_values = {FrameSignal.freq_all: 0.1}
+            frame = Frame(frame_values, timeseries)
+            gentle_interp.step(frame, scheme)
+            stab_interp.step(frame, scheme)
+
+            gentle_dim = self.fixture1.set_dimmer.call_args_list[-2][0][0]
+            stab_dim = self.fixture1.set_dimmer.call_args_list[-1][0][0]
+
+            # StabPulse should have decayed more (lower value)
+            assert stab_dim < gentle_dim
 
 
 class TestTwinkle:

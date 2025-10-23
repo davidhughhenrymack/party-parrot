@@ -41,6 +41,7 @@ from parrot.interpreters.dimmer import (
     GentlePulse,
     SequenceDimmers,
     SequenceFadeDimmers,
+    StabPulse,
     Twinkle,
 )
 from parrot.interpreters.combo import combo
@@ -147,8 +148,9 @@ mode_interpretations: Dict[
             combo(
                 signal_switch(
                     randomize(
-                        DimmersBeatChase,
-                        GentlePulse,
+                        # DimmersBeatChase,
+                        # GentlePulse,
+                        StabPulse,
                     ),
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
@@ -166,6 +168,7 @@ mode_interpretations: Dict[
                         DimmerFadeLatched,
                         SequenceDimmers,
                         SequenceFadeDimmers,
+                        StabPulse,
                     ),
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
@@ -183,6 +186,7 @@ mode_interpretations: Dict[
                         combo(Dimmer255, for_bulbs(Twinkle)),
                         combo(DimmersBeatChase, AllBulbs255),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                        combo(Dimmer255, for_bulbs(StabPulse)),
                     ),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),

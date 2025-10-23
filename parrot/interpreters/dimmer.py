@@ -147,6 +147,39 @@ class GentlePulse(InterpreterBase[T]):
 
 
 @beartype
+class StabPulse(InterpreterBase[T]):
+    hype = 50
+
+    def __init__(
+        self,
+        group: list[T],
+        args: InterpreterArgs,
+        signal=FrameSignal.freq_all,
+        trigger_level=0.2,
+    ):
+        super().__init__(group, args)
+        self.signal = signal
+        self.on = False
+        self.memory = [0] * len(self.group)
+        self.trigger_level = trigger_level
+
+    def step(self, frame, scheme):
+        if frame[self.signal] > self.trigger_level:
+            if self.on == False:
+                self.bulb = random.randint(0, len(self.group) - 1)
+                self.on = True
+
+            self.memory[self.bulb] = max(self.memory[self.bulb], frame[self.signal])
+
+        else:
+            self.on = False
+
+        for idx, fixture in enumerate(self.group):
+            fixture.set_dimmer(self.memory[idx] * 255)
+            self.memory[idx] *= 0.4
+
+
+@beartype
 class Twinkle(InterpreterBase[T]):
     hype = 5
 
