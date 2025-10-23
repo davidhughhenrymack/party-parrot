@@ -51,15 +51,20 @@ venue_patches = {
         *[
             ParRGBAWU(i) for i in range(10, 90, 10)
         ],  # 10-20-30-40 is back line of pars. 50-60-70-80 is front line of pars.
-        Motionstrip38(90, 0, 256),
-        Motionstrip38(130, 0, 256),
-        ParRGB(195),
-        ParRGB(205),
-        # GigbarMove ILS 50 channel
-        # *ChauvetGigBarMoveILS(100),
+        # Stage left column
+        Motionstrip38(90, 0, 256),  # Stage left column
+        ParRGB(195),  # Stage left top par
+        ParRGB(205),  # Stage left bottom par
+        ChauvetSpot160_12Ch(182),  # Stage left spot
+        # --------
         TwoBeamLaser(220),
-        ChauvetSpot120_12Ch(170),
-        ChauvetSpot160_12Ch(182),
+        # --------
+        # Stage right column
+        Motionstrip38(130, 0, 256),  # Stage right column
+        ParRGB(230),  # Stage right top par
+        ParRGB(238),  # Stage right bottom par
+        ChauvetSpot120_12Ch(170),  # Stage right spot
+        # --------
     ],
     venues.truckee_theatre: [
         # 6 COLORband PiX fixtures (36 channels each)

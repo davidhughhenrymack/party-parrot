@@ -6,6 +6,6 @@
   "manual_dimmer": 0,
   "hype_limiter": false,
   "show_waveform": true,
-  "show_fixture_mode": false,
+  "show_fixture_mode": true,
   "vj_mode": "full_rave"
 }

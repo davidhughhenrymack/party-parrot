@@ -290,3 +290,62 @@ class TestKeyboardHandler:
 
         # set_manual_dimmer should not be called
         self.state.set_manual_dimmer.assert_not_called()
+
+    def test_blackout_toggle_enters_blackout(self):
+        """Test that B key enters blackout mode and saves current modes"""
+        # Set current modes
+        self.state.mode = Mode.rave
+        self.state.vj_mode = VJMode.full_rave
+
+        # Press B to enter blackout
+        result = self.handler.on_key_press(pyglet.window.key.B, 0)
+        assert result is True
+
+        # Check that modes were saved and blackout was set
+        assert self.handler.previous_mode == Mode.rave
+        assert self.handler.previous_vj_mode == VJMode.full_rave
+        assert self.handler.blackout_active is True
+        self.state.set_mode.assert_called_once_with(Mode.blackout)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.blackout)
+
+    def test_blackout_toggle_exits_blackout(self):
+        """Test that B key exits blackout and restores previous modes"""
+        # Set up: already in blackout with saved modes
+        self.handler.blackout_active = True
+        self.handler.previous_mode = Mode.chill
+        self.handler.previous_vj_mode = VJMode.early_rave
+        self.state.mode = Mode.blackout
+        self.state.vj_mode = VJMode.blackout
+
+        # Press B to exit blackout
+        result = self.handler.on_key_press(pyglet.window.key.B, 0)
+        assert result is True
+
+        # Check that modes were restored
+        assert self.handler.blackout_active is False
+        self.state.set_mode.assert_called_once_with(Mode.chill)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.early_rave)
+
+    def test_blackout_toggle_full_cycle(self):
+        """Test a full blackout toggle cycle: enter then exit"""
+        # Start in rave mode
+        self.state.mode = Mode.rave
+        self.state.vj_mode = VJMode.music_vids
+
+        # First press: enter blackout
+        self.handler.on_key_press(pyglet.window.key.B, 0)
+        assert self.handler.blackout_active is True
+        assert self.handler.previous_mode == Mode.rave
+        assert self.handler.previous_vj_mode == VJMode.music_vids
+
+        # Update mock state to reflect blackout
+        self.state.mode = Mode.blackout
+        self.state.vj_mode = VJMode.blackout
+        self.state.set_mode.reset_mock()
+        self.state.set_vj_mode.reset_mock()
+
+        # Second press: exit blackout
+        self.handler.on_key_press(pyglet.window.key.B, 0)
+        assert self.handler.blackout_active is False
+        self.state.set_mode.assert_called_once_with(Mode.rave)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.music_vids)

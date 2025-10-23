@@ -41,6 +41,11 @@ class KeyboardHandler:
         self.manual_fade_direction = 0  # 0=none, 1=up (M), -1=down (K)
         self.manual_fade_speed = 2.0  # Full fade in 0.5 seconds (2.0 per second)
 
+        # Track blackout toggle state
+        self.blackout_active = False
+        self.previous_mode = None
+        self.previous_vj_mode = None
+
     def on_key_press(self, symbol: int, modifiers: int) -> bool:
         """Handle key press events"""
         # VJ mode navigation
@@ -83,6 +88,11 @@ class KeyboardHandler:
             return True
         elif symbol == pyglet.window.key.K:
             self.manual_fade_direction = -1  # Fade down
+            return True
+
+        # Blackout toggle
+        elif symbol == pyglet.window.key.B:
+            self._toggle_blackout()
             return True
 
         return False
@@ -193,3 +203,24 @@ class KeyboardHandler:
 
             # Update state
             self.state.set_manual_dimmer(new_value)
+
+    def _toggle_blackout(self):
+        """Toggle blackout mode - remember and restore previous modes"""
+        if not self.blackout_active:
+            # Entering blackout: remember current modes
+            self.previous_mode = self.state.mode
+            self.previous_vj_mode = self.state.vj_mode
+
+            # Set both to blackout
+            self.state.set_mode(Mode.blackout)
+            self.state.set_vj_mode(VJMode.blackout)
+
+            self.blackout_active = True
+        else:
+            # Exiting blackout: restore previous modes
+            if self.previous_mode is not None:
+                self.state.set_mode(self.previous_mode)
+            if self.previous_vj_mode is not None:
+                self.state.set_vj_mode(self.previous_vj_mode)
+
+            self.blackout_active = False

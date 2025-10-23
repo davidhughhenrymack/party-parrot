@@ -186,7 +186,7 @@ mode_interpretations: Dict[
                     ),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                randomize(PanLatched, MoveCircles),
+                randomize(PanLatched, MoveCircles, MoveFan),
             ),
         ],
         ChauvetColorBandPiX_36Ch: [
