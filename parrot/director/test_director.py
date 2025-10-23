@@ -64,6 +64,32 @@ class TestDirector(unittest.TestCase):
         new_scheme = self.director.scheme.render()
         self.assertNotEqual(original_scheme, new_scheme)
 
+    def test_manual_fixtures_rendered_to_dmx(self):
+        """Test that manual fixtures are rendered to DMX output when present"""
+        from parrot.patch_bay import venues, get_manual_group
+        
+        # Use mtn_lotus venue which has manual fixtures
+        self.state.venue = venues.mtn_lotus
+        self.state.manual_dimmer = 0.8
+        
+        # Mock the DMX controller
+        mock_dmx = MagicMock()
+        
+        # Get the manual group for verification
+        manual_group = get_manual_group(self.state.venue)
+        self.assertIsNotNone(manual_group, "mtn_lotus should have manual fixtures")
+        
+        # Spy on the manual group's render method
+        with patch.object(manual_group, 'render', wraps=manual_group.render) as mock_render:
+            # Render
+            self.director.render(mock_dmx)
+            
+            # Verify manual group render was called
+            mock_render.assert_called_once_with(mock_dmx)
+        
+        # Verify dmx.submit was called
+        mock_dmx.submit.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
