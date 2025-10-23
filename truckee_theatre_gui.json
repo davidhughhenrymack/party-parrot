@@ -1,153 +1,153 @@
 {
-    "chauvet-slimpar-pro-q@154": {
+    "chauvet-slimpar-pro-q@154:default": {
         "x": 46,
         "y": 135
     },
-    "chauvet-slimpar-pro-q@159": {
+    "chauvet-slimpar-pro-q@159:default": {
         "x": 46,
         "y": 180
     },
-    "chauvet-slimpar-pro-q@164": {
+    "chauvet-slimpar-pro-q@164:default": {
         "x": 48,
         "y": 223
     },
-    "chauvet-slimpar-pro-q@169": {
+    "chauvet-slimpar-pro-q@169:default": {
         "x": 47,
         "y": 264
     },
-    "chauvet-slimpar-pro-q@174": {
+    "chauvet-slimpar-pro-q@174:default": {
         "x": 710,
         "y": 112
     },
-    "chauvet-slimpar-pro-q@179": {
+    "chauvet-slimpar-pro-q@179:default": {
         "x": 710,
         "y": 153
     },
-    "chauvet-slimpar-pro-q@184": {
+    "chauvet-slimpar-pro-q@184:default": {
         "x": 710,
         "y": 194
     },
-    "chauvet-slimpar-pro-q@189": {
+    "chauvet-slimpar-pro-q@189:default": {
         "x": 709,
         "y": 238
     },
-    "chauvet-slimpar-pro-q@30": {
+    "chauvet-slimpar-pro-q@30:default": {
         "x": 265,
         "y": 453
     },
-    "chauvet-slimpar-pro-q@35": {
+    "chauvet-slimpar-pro-q@35:default": {
         "x": 305,
         "y": 453
     },
-    "chauvet-slimpar-pro-q@40": {
+    "chauvet-slimpar-pro-q@40:default": {
         "x": 345,
         "y": 453
     },
-    "chauvet-slimpar-pro-q@45": {
+    "chauvet-slimpar-pro-q@45:default": {
         "x": 385,
         "y": 453
     },
-    "chauvet-slimpar-pro-q@50": {
+    "chauvet-slimpar-pro-q@50:default": {
         "x": 425,
         "y": 453
     },
-    "chauvet-slimpar-pro-q@55": {
+    "chauvet-slimpar-pro-q@55:default": {
         "x": 465,
         "y": 453
     },
-    "chauvet-slimpar-pro-q@60": {
+    "chauvet-slimpar-pro-q@60:default": {
         "x": 505,
         "y": 453
     },
-    "chauvet-slimpar-pro-q@65": {
+    "chauvet-slimpar-pro-q@65:default": {
         "x": 545,
         "y": 453
     },
-    "chauvet-rogue-beam-r2@191": {
+    "chauvet-rogue-beam-r2@191:default": {
         "x": 188,
         "y": 225
     },
-    "chauvet-rogue-beam-r2@206": {
+    "chauvet-rogue-beam-r2@206:default": {
         "x": 277,
         "y": 144
     },
-    "chauvet-rogue-beam-r2@221": {
+    "chauvet-rogue-beam-r2@221:default": {
         "x": 369,
         "y": 88
     },
-    "chauvet-rogue-beam-r2@236": {
+    "chauvet-rogue-beam-r2@236:default": {
         "x": 431,
         "y": 89
     },
-    "chauvet-rogue-beam-r2@251": {
+    "chauvet-rogue-beam-r2@251:default": {
         "x": 537,
         "y": 145
     },
-    "chauvet-rogue-beam-r2@266": {
+    "chauvet-rogue-beam-r2@266:default": {
         "x": 600,
         "y": 231
     },
-    "led-par@67": {
+    "led-par@67:default": {
         "x": 196,
         "y": 280
     },
-    "led-par@74": {
+    "led-par@74:default": {
         "x": 282,
         "y": 197
     },
-    "led-par@81": {
+    "led-par@81:default": {
         "x": 373,
         "y": 139
     },
-    "led-par@88": {
+    "led-par@88:default": {
         "x": 440,
         "y": 136
     },
-    "led-par@95": {
+    "led-par@95:default": {
         "x": 540,
         "y": 193
     },
-    "led-par@102": {
+    "led-par@102:default": {
         "x": 605,
         "y": 279
     },
-    "chauvet-intimidator-160@1": {
+    "chauvet-intimidator-160@1:default": {
         "x": 703,
         "y": 436
     },
-    "chauvet-intimidator-120@13": {
+    "chauvet-intimidator-120@13:default": {
         "x": 44,
         "y": 421
     },
-    "led-par@450": {
+    "led-par@450:default": {
         "x": 709,
         "y": 496
     },
-    "led-par@460": {
+    "led-par@460:default": {
         "x": 50,
         "y": 477
     },
-    "motionstrip-38@300": {
+    "motionstrip-38@300:default": {
         "x": 118,
         "y": 337
     },
-    "motionstrip-38@338": {
+    "motionstrip-38@338:default": {
         "x": 651,
         "y": 322
     },
-    "led-par@400": {
+    "led-par@400:default": {
         "x": 308,
         "y": 551
     },
-    "led-par@407": {
+    "led-par@407:default": {
         "x": 346,
         "y": 551
     },
-    "led-par@414": {
+    "led-par@414:default": {
         "x": 386,
         "y": 551
     },
-    "led-par@421": {
+    "led-par@421:default": {
         "x": 426,
         "y": 551
     }

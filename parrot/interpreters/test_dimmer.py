@@ -11,6 +11,7 @@ from parrot.interpreters.dimmer import (
     SequenceFadeDimmers,
     DimmersBeatChase,
     GentlePulse,
+    LightingStab,
     StabPulse,
     Twinkle,
 )
@@ -395,6 +396,118 @@ class TestStabPulse:
 
             # StabPulse should have decayed more (lower value)
             assert stab_dim < gentle_dim
+
+
+class TestLightingStab:
+    def setup_method(self):
+        """Setup for each test method"""
+        self.fixture1 = MagicMock(spec=FixtureBase)
+        self.fixture2 = MagicMock(spec=FixtureBase)
+        self.group = [self.fixture1, self.fixture2]
+        self.args = InterpreterArgs(
+            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
+        )
+
+    def test_lighting_stab_hype(self):
+        """Test LightingStab hype level"""
+        assert LightingStab.hype == 60
+
+    def test_lighting_stab_initialization(self):
+        """Test LightingStab initialization"""
+        interpreter = LightingStab(self.group, self.args, trigger_level=0.3)
+        assert interpreter.trigger_level == 0.3
+        assert interpreter.on_low == False
+        assert interpreter.on_high == False
+        assert len(interpreter.memory) == 2
+        assert len(interpreter.strobe_memory) == 2
+
+    def test_lighting_stab_freq_low_trigger(self):
+        """Test LightingStab triggers on freq_low"""
+        with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
+            mock_randint.return_value = 0
+
+            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+
+            # Create frame with high freq_low signal
+            frame_values = {FrameSignal.freq_low: 0.8, FrameSignal.freq_high: 0.0}
+            timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
+            frame = Frame(frame_values, timeseries)
+            scheme = MagicMock()
+
+            interpreter.step(frame, scheme)
+
+            # Selected fixture should get the signal value
+            dim1 = self.fixture1.set_dimmer.call_args[0][0]
+            assert dim1 == 0.8 * 255
+
+    def test_lighting_stab_freq_high_white_strobe(self):
+        """Test LightingStab triggers white strobe on freq_high"""
+        with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
+            mock_randint.return_value = 1  # Select fixture 1
+
+            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+
+            # Create frame with high freq_high signal
+            frame_values = {FrameSignal.freq_low: 0.0, FrameSignal.freq_high: 0.9}
+            timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
+            frame = Frame(frame_values, timeseries)
+            scheme = MagicMock()
+
+            interpreter.step(frame, scheme)
+
+            # Fixture 1 should be set to white and brightness based on strobe_memory (1.0)
+            self.fixture2.set_color.assert_called_once()
+            color_arg = self.fixture2.set_color.call_args[0][0]
+            assert color_arg.hex_l == Color("white").hex_l
+            # Initial strobe_memory is 1.0, so dimmer should be 255
+            self.fixture2.set_dimmer.assert_called_with(1.0 * 255)
+
+    def test_lighting_stab_strobe_decay(self):
+        """Test LightingStab white strobe decays quickly"""
+        with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
+            mock_randint.return_value = 0
+
+            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+            scheme = MagicMock()
+
+            # First step with high freq_high to trigger strobe
+            frame_values = {FrameSignal.freq_low: 0.0, FrameSignal.freq_high: 0.9}
+            timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
+            frame = Frame(frame_values, timeseries)
+            interpreter.step(frame, scheme)
+            first_dim = self.fixture1.set_dimmer.call_args[0][0]
+            assert first_dim == 255  # 1.0 * 255
+
+            # Second step with no signal - should decay
+            frame_values = {FrameSignal.freq_low: 0.0, FrameSignal.freq_high: 0.0}
+            frame = Frame(frame_values, timeseries)
+            interpreter.step(frame, scheme)
+            second_dim = self.fixture1.set_dimmer.call_args[0][0]
+            assert second_dim == 0.3 * 255  # Decayed to 0.3
+
+            # Third step - should decay further
+            interpreter.step(frame, scheme)
+            third_dim = self.fixture1.set_dimmer.call_args[0][0]
+            assert third_dim == 0.3 * 0.3 * 255  # Decayed to 0.09
+
+    def test_lighting_stab_both_signals(self):
+        """Test LightingStab handles both freq_low and freq_high simultaneously"""
+        with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
+            mock_randint.side_effect = [0, 1]
+
+            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+
+            # Create frame with both signals high
+            frame_values = {FrameSignal.freq_low: 0.7, FrameSignal.freq_high: 0.8}
+            timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
+            frame = Frame(frame_values, timeseries)
+            scheme = MagicMock()
+
+            interpreter.step(frame, scheme)
+
+            # Both fixtures should be affected
+            assert self.fixture1.set_dimmer.called
+            assert self.fixture2.set_dimmer.called
 
 
 class TestTwinkle:

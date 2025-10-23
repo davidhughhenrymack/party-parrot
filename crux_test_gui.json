@@ -1,9 +1,9 @@
 {
-    "chauvet-rogue-beam-r2@1": {
+    "chauvet-rogue-beam-r2@1:default": {
         "x": 565,
         "y": 48
     },
-    "chauvet-rogue-beam-r2@16": {
+    "chauvet-rogue-beam-r2@16:default": {
         "x": 630,
         "y": 48
     }

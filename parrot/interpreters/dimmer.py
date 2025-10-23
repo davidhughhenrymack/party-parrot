@@ -180,6 +180,63 @@ class StabPulse(InterpreterBase[T]):
 
 
 @beartype
+class LightingStab(InterpreterBase[T]):
+    hype = 60
+
+    def __init__(
+        self,
+        group: list[T],
+        args: InterpreterArgs,
+        trigger_level=0.2,
+    ):
+        super().__init__(group, args)
+        from parrot.utils.colour import Color
+
+        self.white = Color("white")
+        self.on_low = False
+        self.on_high = False
+        self.memory = [0] * len(self.group)
+        self.trigger_level = trigger_level
+        self.strobe_memory = [0] * len(self.group)
+
+    def step(self, frame, scheme):
+        # Handle freq_low - existing stab behavior
+        if frame[FrameSignal.freq_low] > self.trigger_level:
+            if self.on_low == False:
+                self.bulb = random.randint(0, len(self.group) - 1)
+                self.on_low = True
+
+            self.memory[self.bulb] = max(
+                self.memory[self.bulb], frame[FrameSignal.freq_low]
+            )
+        else:
+            self.on_low = False
+
+        # Handle freq_high - white brief strobe
+        if frame[FrameSignal.freq_high] > self.trigger_level:
+            if self.on_high == False:
+                self.strobe_bulb = random.randint(0, len(self.group) - 1)
+                self.on_high = True
+
+            self.strobe_memory[self.strobe_bulb] = 1.0
+        else:
+            self.on_high = False
+
+        # Apply effects to fixtures
+        for idx, fixture in enumerate(self.group):
+            # If strobe is active, set white and brightness based on strobe_memory
+            if self.strobe_memory[idx] > 0:
+                fixture.set_color(self.white)
+                fixture.set_dimmer(self.strobe_memory[idx] * 255)
+                self.strobe_memory[idx] *= 0.3  # Fast decay for brief strobe
+            else:
+                # Otherwise use normal stab effect
+                fixture.set_dimmer(self.memory[idx] * 255)
+
+            self.memory[idx] *= 0.4
+
+
+@beartype
 class Twinkle(InterpreterBase[T]):
     hype = 5
 

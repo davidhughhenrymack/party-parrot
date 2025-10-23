@@ -1,5 +1,5 @@
 {
-    "sr-spot@1": {
+    "sr-spot@1:default": {
         "x": 50,
         "y": 390,
         "z": 5.5,
@@ -10,7 +10,7 @@
             0.766
         ]
     },
-    "sl-spot@2": {
+    "sl-spot@2:default": {
         "x": 400,
         "y": 390,
         "z": 5.5,
@@ -21,17 +21,17 @@
             0.766
         ]
     },
-    "chauvet-intimidator-120@170": {
+    "chauvet-intimidator-120@170:default": {
         "x": 400,
         "y": 80,
         "z": 3.2
     },
-    "chauvet-intimidator-160@182": {
+    "chauvet-intimidator-160@182:default": {
         "x": 50,
         "y": 80,
         "z": 3.2
     },
-    "led-par@195": {
+    "led-par@195:default": {
         "x": 20,
         "y": 80,
         "z": 2.5,
@@ -42,7 +42,7 @@
             1.0
         ]
     },
-    "led-par@205": {
+    "led-par@205:default": {
         "x": 80,
         "y": 80,
         "z": 2.5,
@@ -53,7 +53,7 @@
             1.0
         ]
     },
-    "led-par@230": {
+    "led-par@230:default": {
         "x": 370,
         "y": 80,
         "z": 2.5,
@@ -64,7 +64,7 @@
             1.0
         ]
     },
-    "led-par@238": {
+    "led-par@238:default": {
         "x": 430,
         "y": 80,
         "z": 2.5,
@@ -75,7 +75,7 @@
             1.0
         ]
     },
-    "motionstrip-38@130": {
+    "motionstrip-38@130:default": {
         "x": 400,
         "y": 80,
         "z": 1.0,
@@ -86,7 +86,7 @@
             0.707
         ]
     },
-    "motionstrip-38@90": {
+    "motionstrip-38@90:default": {
         "x": 50,
         "y": 80,
         "z": 1.0,
@@ -97,11 +97,11 @@
             0.707
         ]
     },
-    "oultia-2-beam-laser@220": {
+    "oultia-2-beam-laser@220:default": {
         "x": 214,
         "y": 30
     },
-    "par-rgbawu@10": {
+    "par-rgbawu@10:default": {
         "x": 90,
         "y": 370,
         "z": 5.5,
@@ -112,7 +112,7 @@
             0.643
         ]
     },
-    "par-rgbawu@20": {
+    "par-rgbawu@20:default": {
         "x": 173,
         "y": 370,
         "z": 5.5,
@@ -123,7 +123,7 @@
             0.643
         ]
     },
-    "par-rgbawu@30": {
+    "par-rgbawu@30:default": {
         "x": 276,
         "y": 370,
         "z": 5.5,
@@ -134,7 +134,7 @@
             0.643
         ]
     },
-    "par-rgbawu@40": {
+    "par-rgbawu@40:default": {
         "x": 377,
         "y": 370,
         "z": 5.5,
@@ -145,7 +145,7 @@
             0.643
         ]
     },
-    "par-rgbawu@50": {
+    "par-rgbawu@50:default": {
         "x": 95,
         "y": 20,
         "z": 5.5,
@@ -156,7 +156,7 @@
             0.766
         ]
     },
-    "par-rgbawu@60": {
+    "par-rgbawu@60:default": {
         "x": 180,
         "y": 20,
         "z": 5.5,
@@ -167,7 +167,7 @@
             0.766
         ]
     },
-    "par-rgbawu@70": {
+    "par-rgbawu@70:default": {
         "x": 272,
         "y": 20,
         "z": 5.5,
@@ -178,7 +178,7 @@
             0.766
         ]
     },
-    "par-rgbawu@80": {
+    "par-rgbawu@80:default": {
         "x": 379,
         "y": 20,
         "z": 5.5,

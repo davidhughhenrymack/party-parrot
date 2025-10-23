@@ -1,53 +1,53 @@
 {
-    "chauvet-intimidator-160@1": {
+    "chauvet-intimidator-160@1:default": {
         "x": 200,
         "y": 185
     },
-    "chauvet-intimidator-120@140": {
+    "chauvet-intimidator-120@140:default": {
         "x": 258,
         "y": 184
     },
-    "led-par@12": {
+    "led-par@12:default": {
         "x": 93,
         "y": 215
     },
-    "led-par@19": {
+    "led-par@19:default": {
         "x": 123,
         "y": 85
     },
-    "led-par@26": {
+    "led-par@26:default": {
         "x": 370,
         "y": 81
     },
-    "led-par@33": {
+    "led-par@33:default": {
         "x": 395,
         "y": 214
     },
-    "led-par@40": {
+    "led-par@40:default": {
         "x": 450,
         "y": 352
     },
-    "led-par@47": {
+    "led-par@47:default": {
         "x": 31,
         "y": 358
     },
-    "motionstrip-38@59": {
+    "motionstrip-38@59:default": {
         "x": 165,
         "y": 236
     },
-    "motionstrip-38@154": {
+    "motionstrip-38@154:default": {
         "x": 260,
         "y": 237
     },
-    "uking-5-beam-laser@100": {
+    "uking-5-beam-laser@100:default": {
         "x": 201,
         "y": 71
     },
-    "oultia-2-beam-laser@120": {
+    "oultia-2-beam-laser@120:default": {
         "x": 265,
         "y": 71
     },
-    "chauvet-rotosphere@164": {
+    "chauvet-rotosphere@164:default": {
         "x": 234,
         "y": 288
     }

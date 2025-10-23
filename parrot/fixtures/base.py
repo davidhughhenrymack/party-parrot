@@ -80,7 +80,7 @@ class FixtureBase:
 
     @property
     def id(self):
-        return f"{kebab_case(self.name)}@{self.address}"
+        return f"{kebab_case(self.name)}@{self.address}:{self.universe.value}"
 
 
 @beartype
