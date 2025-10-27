@@ -80,6 +80,24 @@ class TestKeyboardHandler:
         assert result is True
         self.state.set_mode.assert_called_once_with(Mode.blackout)
 
+    def test_mode_navigate_up_arrow(self):
+        """Test that UP arrow key navigates up lighting modes (towards rave)"""
+        # Start at chill
+        self.state.mode = Mode.chill
+
+        result = self.handler.on_key_press(pyglet.window.key.UP, 0)
+        assert result is True
+        self.state.set_mode.assert_called_once_with(Mode.rave)
+
+    def test_mode_navigate_down_arrow(self):
+        """Test that DOWN arrow key navigates down lighting modes (towards blackout)"""
+        # Start at chill
+        self.state.mode = Mode.chill
+
+        result = self.handler.on_key_press(pyglet.window.key.DOWN, 0)
+        assert result is True
+        self.state.set_mode.assert_called_once_with(Mode.blackout)
+
     def test_mode_no_wrap_at_highest(self):
         """Test that C doesn't wrap at highest lighting mode (rave)"""
         # Start at rave
@@ -96,6 +114,26 @@ class TestKeyboardHandler:
         self.state.mode = Mode.blackout
 
         result = self.handler.on_key_release(pyglet.window.key.D, 0)
+        assert result is True
+        # Should not call set_mode since we're at the bottom
+        self.state.set_mode.assert_not_called()
+
+    def test_mode_up_arrow_no_wrap_at_highest(self):
+        """Test that UP arrow doesn't wrap at highest lighting mode (rave)"""
+        # Start at rave
+        self.state.mode = Mode.rave
+
+        result = self.handler.on_key_press(pyglet.window.key.UP, 0)
+        assert result is True
+        # Should not call set_mode since we're at the top
+        self.state.set_mode.assert_not_called()
+
+    def test_mode_down_arrow_no_wrap_at_lowest(self):
+        """Test that DOWN arrow doesn't wrap at lowest lighting mode (blackout)"""
+        # Start at blackout
+        self.state.mode = Mode.blackout
+
+        result = self.handler.on_key_press(pyglet.window.key.DOWN, 0)
         assert result is True
         # Should not call set_mode since we're at the bottom
         self.state.set_mode.assert_not_called()

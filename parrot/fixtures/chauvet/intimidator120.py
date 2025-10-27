@@ -44,7 +44,7 @@ gobo_wheel = [
 ]
 
 
-class ChauvetSpot120_12Ch(ChauvetMoverBase):
+class ChauvetSpot110_12Ch(ChauvetMoverBase):
     def __init__(
         self,
         patch,

@@ -56,6 +56,14 @@ class KeyboardHandler:
             self._navigate_vj_mode_next()
             return True
 
+        # Lighting mode navigation (UP = towards rave, DOWN = towards blackout)
+        elif symbol == pyglet.window.key.UP:
+            self._navigate_mode_up()
+            return True
+        elif symbol == pyglet.window.key.DOWN:
+            self._navigate_mode_down()
+            return True
+
         # Keep current functionality
         elif symbol == pyglet.window.key.SPACE:
             self.director.generate_all()

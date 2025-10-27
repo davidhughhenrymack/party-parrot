@@ -94,6 +94,19 @@ class Room3DRenderer:
         self._text_font: Optional[ImageFont.ImageFont] = None
         self._load_text_font()
 
+        # Geometry cache for reusable shapes
+        self._cube_cache: dict[
+            float, tuple[mgl.Buffer, mgl.Buffer, mgl.Buffer, mgl.VertexArray, int]
+        ] = {}
+        self._circle_cache: dict[
+            tuple[float, int],
+            tuple[mgl.Buffer, mgl.Buffer, mgl.Buffer, mgl.VertexArray, int],
+        ] = {}
+        self._cone_cache: dict[
+            tuple[float, float, int],
+            tuple[mgl.Buffer, mgl.Buffer, mgl.VertexArray, int],
+        ] = {}
+
     def _setup_shaders(self):
         """Setup OpenGL shaders for 3D rendering with Blinn-Phong lighting"""
         self.shader = self.ctx.program(
@@ -624,91 +637,78 @@ class Room3DRenderer:
         # Render grey grid lines on top
         # self.grid_vao.render(mgl.LINES)
 
-    def render_cube(
-        self,
-        position: tuple[float, float, float],
-        color: tuple[float, float, float],
-        size: float = 0.5,
-    ):
-        """Render a 3D cube with normals and lighting in local coordinates
-
-        Args:
-            position: Local position (x, y, z) relative to current transform
-            color: RGB color tuple
-            size: Size of the cube
-        """
-        x, y, z = position
-        # Create cube vertices
+    def _create_cube_geometry(self, size: float):
+        """Create reusable cube geometry at origin"""
         half_size = size / 2.0
 
-        # Define cube faces with normals
-        # Front face (normal: 0, 0, -1)
-        front = [
-            [x - half_size, y, z - half_size],
-            [x + half_size, y, z - half_size],
-            [x - half_size, y + size, z - half_size],
-            [x + half_size, y, z - half_size],
-            [x + half_size, y + size, z - half_size],
-            [x - half_size, y + size, z - half_size],
-        ]
+        # Define cube faces with normals (at origin, no position offset)
         front_normal = [0.0, 0.0, -1.0]
-
-        # Back face (normal: 0, 0, 1)
-        back = [
-            [x - half_size, y, z + half_size],
-            [x - half_size, y + size, z + half_size],
-            [x + half_size, y, z + half_size],
-            [x + half_size, y, z + half_size],
-            [x - half_size, y + size, z + half_size],
-            [x + half_size, y + size, z + half_size],
-        ]
         back_normal = [0.0, 0.0, 1.0]
-
-        # Left face (normal: -1, 0, 0)
-        left = [
-            [x - half_size, y, z - half_size],
-            [x - half_size, y + size, z - half_size],
-            [x - half_size, y, z + half_size],
-            [x - half_size, y, z + half_size],
-            [x - half_size, y + size, z - half_size],
-            [x - half_size, y + size, z + half_size],
-        ]
         left_normal = [-1.0, 0.0, 0.0]
-
-        # Right face (normal: 1, 0, 0)
-        right = [
-            [x + half_size, y, z - half_size],
-            [x + half_size, y, z + half_size],
-            [x + half_size, y + size, z - half_size],
-            [x + half_size, y + size, z - half_size],
-            [x + half_size, y, z + half_size],
-            [x + half_size, y + size, z + half_size],
-        ]
         right_normal = [1.0, 0.0, 0.0]
-
-        # Top face (normal: 0, 1, 0)
-        top = [
-            [x - half_size, y + size, z - half_size],
-            [x + half_size, y + size, z - half_size],
-            [x - half_size, y + size, z + half_size],
-            [x + half_size, y + size, z - half_size],
-            [x + half_size, y + size, z + half_size],
-            [x - half_size, y + size, z + half_size],
-        ]
         top_normal = [0.0, 1.0, 0.0]
-
-        # Bottom face (normal: 0, -1, 0)
-        bottom = [
-            [x - half_size, y, z - half_size],
-            [x - half_size, y, z + half_size],
-            [x + half_size, y, z - half_size],
-            [x + half_size, y, z - half_size],
-            [x - half_size, y, z + half_size],
-            [x + half_size, y, z + half_size],
-        ]
         bottom_normal = [0.0, -1.0, 0.0]
 
-        # Combine all faces
+        # Front face
+        front = [
+            [-half_size, 0, -half_size],
+            [half_size, 0, -half_size],
+            [-half_size, size, -half_size],
+            [half_size, 0, -half_size],
+            [half_size, size, -half_size],
+            [-half_size, size, -half_size],
+        ]
+
+        # Back face
+        back = [
+            [-half_size, 0, half_size],
+            [-half_size, size, half_size],
+            [half_size, 0, half_size],
+            [half_size, 0, half_size],
+            [-half_size, size, half_size],
+            [half_size, size, half_size],
+        ]
+
+        # Left face
+        left = [
+            [-half_size, 0, -half_size],
+            [-half_size, size, -half_size],
+            [-half_size, 0, half_size],
+            [-half_size, 0, half_size],
+            [-half_size, size, -half_size],
+            [-half_size, size, half_size],
+        ]
+
+        # Right face
+        right = [
+            [half_size, 0, -half_size],
+            [half_size, 0, half_size],
+            [half_size, size, -half_size],
+            [half_size, size, -half_size],
+            [half_size, 0, half_size],
+            [half_size, size, half_size],
+        ]
+
+        # Top face
+        top = [
+            [-half_size, size, -half_size],
+            [half_size, size, -half_size],
+            [-half_size, size, half_size],
+            [half_size, size, -half_size],
+            [half_size, size, half_size],
+            [-half_size, size, half_size],
+        ]
+
+        # Bottom face
+        bottom = [
+            [-half_size, 0, -half_size],
+            [-half_size, 0, half_size],
+            [half_size, 0, -half_size],
+            [half_size, 0, -half_size],
+            [-half_size, 0, half_size],
+            [half_size, 0, half_size],
+        ]
+
         cube_vertices = []
         cube_normals = []
         for face, normal in [
@@ -723,20 +723,17 @@ class Room3DRenderer:
                 cube_vertices.extend(vertex)
                 cube_normals.extend(normal)
 
-        # Create colors (same color for all vertices) with alpha=1.0
-        num_vertices = len(cube_vertices) // 3
-        cube_colors = []
-        for _ in range(num_vertices):
-            cube_colors.extend([color[0], color[1], color[2], 1.0])
-
-        # Create VBOs
         vertices_array = np.array(cube_vertices, dtype=np.float32)
         normals_array = np.array(cube_normals, dtype=np.float32)
-        colors_array = np.array(cube_colors, dtype=np.float32)
 
         vbo = self.ctx.buffer(vertices_array.tobytes())
         normal_vbo = self.ctx.buffer(normals_array.tobytes())
-        color_vbo = self.ctx.buffer(colors_array.tobytes())
+
+        # Create a per-vertex color VBO that will be updated per render
+        num_vertices = len(cube_vertices) // 3
+        color_vbo = self.ctx.buffer(
+            reserve=num_vertices * 4 * 4
+        )  # 4 floats (RGBA) per vertex
 
         vao = self.ctx.vertex_array(
             self.shader,
@@ -747,9 +744,43 @@ class Room3DRenderer:
             ],
         )
 
-        # Set uniforms using current model matrix from transform stack
-        mvp = self._get_mvp_matrix()
-        model = self._get_current_model_matrix()
+        return vbo, normal_vbo, color_vbo, vao, num_vertices
+
+    def render_cube(
+        self,
+        position: tuple[float, float, float],
+        color: tuple[float, float, float],
+        size: float = 0.5,
+    ):
+        """Render a 3D cube with normals and lighting in local coordinates
+
+        Args:
+            position: Local position (x, y, z) relative to current transform
+            color: RGB color tuple
+            size: Size of the cube
+        """
+        # Get or create cached geometry
+        if size not in self._cube_cache:
+            self._cube_cache[size] = self._create_cube_geometry(size)
+
+        vbo, normal_vbo, color_vbo, vao, num_vertices = self._cube_cache[size]
+
+        # Update color buffer with current color
+        cube_colors = []
+        for _ in range(num_vertices):
+            cube_colors.extend([color[0], color[1], color[2], 1.0])
+        colors_array = np.array(cube_colors, dtype=np.float32)
+        color_vbo.write(colors_array.tobytes())
+
+        # Create translation matrix for position
+        x, y, z = position
+        local_model = np.array(
+            [[1, 0, 0, x], [0, 1, 0, y], [0, 0, 1, z], [0, 0, 0, 1]],
+            dtype=np.float32,
+        )
+
+        # Combine with current transform stack
+        model = self._get_current_model_matrix() @ local_model
 
         horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
         cam_x = horizontal_distance * math.sin(self.camera_angle)
@@ -765,14 +796,8 @@ class Room3DRenderer:
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["emission"] = 0.0  # Fixture bodies use normal lighting
 
-        # Render cube
+        # Render cube (no cleanup - buffers are cached)
         vao.render(mgl.TRIANGLES)
-
-        # Cleanup
-        vbo.release()
-        normal_vbo.release()
-        color_vbo.release()
-        vao.release()
 
     # Backward compatibility alias
     def render_fixture_cube(
@@ -932,6 +957,60 @@ class Room3DRenderer:
         color_vbo.release()
         vao.release()
 
+    def _create_circle_geometry(self, radius: float, segments: int):
+        """Create reusable circle geometry at origin facing +Z"""
+        circle_vertices = []
+        circle_normals = []
+
+        # Center point at origin
+        center = [0.0, 0.0, 0.0]
+        normal = [0.0, 0.0, 1.0]  # Facing +Z
+
+        # Generate circle points and triangles
+        for i in range(segments):
+            angle1 = 2.0 * math.pi * i / segments
+            angle2 = 2.0 * math.pi * ((i + 1) % segments) / segments
+
+            cos1, sin1 = math.cos(angle1), math.sin(angle1)
+            cos2, sin2 = math.cos(angle2), math.sin(angle2)
+
+            # Point 1 on circle (in XY plane)
+            point1 = [cos1 * radius, sin1 * radius, 0.0]
+            # Point 2 on circle
+            point2 = [cos2 * radius, sin2 * radius, 0.0]
+
+            # Triangle: center -> point1 -> point2
+            circle_vertices.extend(center)
+            circle_vertices.extend(point1)
+            circle_vertices.extend(point2)
+
+            # All normals point in +Z direction
+            for _ in range(3):
+                circle_normals.extend(normal)
+
+        vertices_array = np.array(circle_vertices, dtype=np.float32)
+        normals_array = np.array(circle_normals, dtype=np.float32)
+
+        vbo = self.ctx.buffer(vertices_array.tobytes())
+        normal_vbo = self.ctx.buffer(normals_array.tobytes())
+
+        # Create a per-vertex color VBO that will be updated per render
+        num_vertices = len(circle_vertices) // 3
+        color_vbo = self.ctx.buffer(
+            reserve=num_vertices * 4 * 4
+        )  # 4 floats (RGBA) per vertex
+
+        vao = self.ctx.vertex_array(
+            self.shader,
+            [
+                (vbo, "3f", "position"),
+                (color_vbo, "4f", "color"),
+                (normal_vbo, "3f", "normal"),
+            ],
+        )
+
+        return vbo, normal_vbo, color_vbo, vao, num_vertices
+
     def render_circle(
         self,
         position: tuple[float, float, float],
@@ -951,8 +1030,23 @@ class Room3DRenderer:
             alpha: Alpha transparency (0.0 = fully transparent, 1.0 = fully opaque)
             segments: Number of segments around the circle
         """
-        import math
+        # Get or create cached geometry
+        cache_key = (radius, segments)
+        if cache_key not in self._circle_cache:
+            self._circle_cache[cache_key] = self._create_circle_geometry(
+                radius, segments
+            )
 
+        vbo, normal_vbo, color_vbo, vao, num_vertices = self._circle_cache[cache_key]
+
+        # Update color buffer with current color and alpha
+        circle_colors = []
+        for _ in range(num_vertices):
+            circle_colors.extend([color[0], color[1], color[2], alpha])
+        colors_array = np.array(circle_colors, dtype=np.float32)
+        color_vbo.write(colors_array.tobytes())
+
+        # Create transform to orient circle to face the desired normal
         x, y, z = position
         nx, ny, nz = normal
 
@@ -963,83 +1057,47 @@ class Room3DRenderer:
         else:
             nx, ny, nz = nx / normal_length, ny / normal_length, nz / normal_length
 
-        # Create perpendicular vectors for the circle plane
-        # Find a vector perpendicular to normal
-        if abs(nx) < 0.9:
-            perp1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        # Build rotation matrix to align +Z to desired normal
+        # Simple approach: if normal is close to +Z, use identity
+        if abs(nz - 1.0) < 0.001:
+            # Already facing +Z
+            rotation = np.eye(4, dtype=np.float32)
         else:
-            perp1 = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+            # Create perpendicular vectors
+            if abs(nx) < 0.9:
+                perp1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+            else:
+                perp1 = np.array([0.0, 1.0, 0.0], dtype=np.float32)
 
-        normal_vec = np.array([nx, ny, nz], dtype=np.float32)
-        perp1 = perp1 - normal_vec * np.dot(perp1, normal_vec)
-        perp1 = perp1 / np.linalg.norm(perp1)
+            normal_vec = np.array([nx, ny, nz], dtype=np.float32)
+            perp1 = perp1 - normal_vec * np.dot(perp1, normal_vec)
+            perp1 = perp1 / np.linalg.norm(perp1)
 
-        # Second perpendicular vector (cross product)
-        perp2 = np.cross(normal_vec, perp1)
-        perp2 = perp2 / np.linalg.norm(perp2)
+            perp2 = np.cross(normal_vec, perp1)
+            perp2 = perp2 / np.linalg.norm(perp2)
 
-        # Build circle geometry as a triangle fan
-        circle_vertices = []
-        circle_normals = []
-        circle_colors = []
+            # Build rotation matrix from basis vectors
+            rotation = np.array(
+                [
+                    [perp1[0], perp2[0], nx, 0],
+                    [perp1[1], perp2[1], ny, 0],
+                    [perp1[2], perp2[2], nz, 0],
+                    [0, 0, 0, 1],
+                ],
+                dtype=np.float32,
+            )
 
-        # Center point
-        center = [x, y, z]
-
-        # Generate circle points and triangles
-        for i in range(segments):
-            angle1 = 2.0 * math.pi * i / segments
-            angle2 = 2.0 * math.pi * ((i + 1) % segments) / segments
-
-            cos1, sin1 = math.cos(angle1), math.sin(angle1)
-            cos2, sin2 = math.cos(angle2), math.sin(angle2)
-
-            # Point 1 on circle
-            offset1 = perp1 * cos1 * radius + perp2 * sin1 * radius
-            point1 = [
-                center[0] + offset1[0],
-                center[1] + offset1[1],
-                center[2] + offset1[2],
-            ]
-
-            # Point 2 on circle
-            offset2 = perp1 * cos2 * radius + perp2 * sin2 * radius
-            point2 = [
-                center[0] + offset2[0],
-                center[1] + offset2[1],
-                center[2] + offset2[2],
-            ]
-
-            # Triangle: center -> point1 -> point2
-            circle_vertices.extend(center)
-            circle_vertices.extend(point1)
-            circle_vertices.extend(point2)
-
-            # All normals point in the normal direction
-            for _ in range(3):
-                circle_normals.extend([nx, ny, nz])
-                circle_colors.extend([color[0], color[1], color[2], alpha])
-
-        # Create VBOs
-        vertices_array = np.array(circle_vertices, dtype=np.float32)
-        normals_array = np.array(circle_normals, dtype=np.float32)
-        colors_array = np.array(circle_colors, dtype=np.float32)
-
-        vbo = self.ctx.buffer(vertices_array.tobytes())
-        color_vbo = self.ctx.buffer(colors_array.tobytes())
-        normal_vbo = self.ctx.buffer(normals_array.tobytes())
-
-        vao = self.ctx.vertex_array(
-            self.shader,
-            [
-                (vbo, "3f", "position"),
-                (color_vbo, "4f", "color"),
-                (normal_vbo, "3f", "normal"),
-            ],
+        # Create translation matrix
+        translation = np.array(
+            [[1, 0, 0, x], [0, 1, 0, y], [0, 0, 1, z], [0, 0, 0, 1]],
+            dtype=np.float32,
         )
 
+        # Combine transforms
+        local_model = translation @ rotation
+        model = self._get_current_model_matrix() @ local_model
+
         # Render circle with emission (bulbs glow independently)
-        model = self._get_current_model_matrix()
         mvp_with_model = self._get_mvp_matrix() @ model
 
         self.shader["mvp"] = mvp_with_model.T.flatten()
@@ -1056,12 +1114,6 @@ class Room3DRenderer:
         # Disable blending
         if alpha < 1.0:
             self.ctx.disable(mgl.BLEND)
-
-        # Cleanup
-        vbo.release()
-        color_vbo.release()
-        normal_vbo.release()
-        vao.release()
 
     def render_sphere(
         self,
@@ -1239,6 +1291,63 @@ class Room3DRenderer:
                 alpha=beam_alpha * alpha,  # Scale beam alpha with bulb alpha
             )
 
+    def _create_cone_geometry(
+        self, start_radius: float, end_radius: float, segments: int
+    ):
+        """Create reusable cone geometry along +Z axis from origin to (0, 0, 1)"""
+        cone_vertices = []
+
+        # Generate circle points at start (z=0) and end (z=1)
+        start_circle = []
+        end_circle = []
+
+        for i in range(segments):
+            angle = 2.0 * math.pi * i / segments
+            cos_a = math.cos(angle)
+            sin_a = math.sin(angle)
+
+            # Start circle point (at z=0)
+            start_point = [cos_a * start_radius, sin_a * start_radius, 0.0]
+            start_circle.append(start_point)
+
+            # End circle point (at z=1, will be scaled by length later)
+            end_point = [cos_a * end_radius, sin_a * end_radius, 1.0]
+            end_circle.append(end_point)
+
+        # Build triangles for cone surface
+        for i in range(segments):
+            next_i = (i + 1) % segments
+
+            # Two triangles per segment
+            # Triangle 1: start[i], end[i], start[next_i]
+            cone_vertices.extend(start_circle[i])
+            cone_vertices.extend(end_circle[i])
+            cone_vertices.extend(start_circle[next_i])
+
+            # Triangle 2: start[next_i], end[i], end[next_i]
+            cone_vertices.extend(start_circle[next_i])
+            cone_vertices.extend(end_circle[i])
+            cone_vertices.extend(end_circle[next_i])
+
+        vertices_array = np.array(cone_vertices, dtype=np.float32)
+        vbo = self.ctx.buffer(vertices_array.tobytes())
+
+        # Create a per-vertex color VBO that will be updated per render
+        num_vertices = len(cone_vertices) // 3
+        color_vbo = self.ctx.buffer(
+            reserve=num_vertices * 4 * 4
+        )  # 4 floats (RGBA) per vertex
+
+        vao = self.ctx.vertex_array(
+            self.emission_shader,
+            [
+                (vbo, "3f", "position"),
+                (color_vbo, "4f", "color"),
+            ],
+        )
+
+        return vbo, color_vbo, vao, num_vertices
+
     def render_cone_beam(
         self,
         start_x: float,
@@ -1271,13 +1380,24 @@ class Room3DRenderer:
             return  # Invalid direction
         dx, dy, dz = dx / dir_length, dy / dir_length, dz / dir_length
 
-        # Calculate end position
-        end_x = start_x + dx * length
-        end_y = start_y + dy * length
-        end_z = start_z + dz * length
+        # Get or create cached geometry
+        cache_key = (start_radius, end_radius, segments)
+        if cache_key not in self._cone_cache:
+            self._cone_cache[cache_key] = self._create_cone_geometry(
+                start_radius, end_radius, segments
+            )
 
-        # Create perpendicular vectors for the cone circle
-        # Find a vector perpendicular to direction
+        vbo, color_vbo, vao, num_vertices = self._cone_cache[cache_key]
+
+        # Update color buffer with current color and alpha
+        cone_colors = []
+        for _ in range(num_vertices):
+            cone_colors.extend([color[0], color[1], color[2], alpha])
+        colors_array = np.array(cone_colors, dtype=np.float32)
+        color_vbo.write(colors_array.tobytes())
+
+        # Build transform to orient cone from origin along +Z to desired position/direction
+        # Create perpendicular vectors for the cone orientation
         if abs(dx) < 0.9:
             perp1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
         else:
@@ -1287,90 +1407,37 @@ class Room3DRenderer:
         perp1 = perp1 - direction_vec * np.dot(perp1, direction_vec)
         perp1 = perp1 / np.linalg.norm(perp1)
 
-        # Second perpendicular vector (cross product)
         perp2 = np.cross(direction_vec, perp1)
         perp2 = perp2 / np.linalg.norm(perp2)
 
-        # Build cone geometry
-        cone_vertices = []
-        cone_normals = []
-
-        # Generate circle points at start and end
-        start_circle = []
-        end_circle = []
-
-        for i in range(segments):
-            angle = 2.0 * math.pi * i / segments
-            cos_a = math.cos(angle)
-            sin_a = math.sin(angle)
-
-            # Start circle point
-            start_offset = perp1 * cos_a * start_radius + perp2 * sin_a * start_radius
-            start_point = [
-                start_x + start_offset[0],
-                start_y + start_offset[1],
-                start_z + start_offset[2],
-            ]
-            start_circle.append(start_point)
-
-            # End circle point
-            end_offset = perp1 * cos_a * end_radius + perp2 * sin_a * end_radius
-            end_point = [
-                end_x + end_offset[0],
-                end_y + end_offset[1],
-                end_z + end_offset[2],
-            ]
-            end_circle.append(end_point)
-
-        # Build triangles for cone surface
-        for i in range(segments):
-            next_i = (i + 1) % segments
-
-            # Two triangles per segment
-            # Triangle 1: start[i], end[i], start[next_i]
-            cone_vertices.extend(start_circle[i])
-            cone_vertices.extend(end_circle[i])
-            cone_vertices.extend(start_circle[next_i])
-
-            # Normals (approximate - pointing outward from cone axis)
-            for _ in range(3):
-                cone_normals.extend([0.0, 1.0, 0.0])  # Simple normal
-
-            # Triangle 2: start[next_i], end[i], end[next_i]
-            cone_vertices.extend(start_circle[next_i])
-            cone_vertices.extend(end_circle[i])
-            cone_vertices.extend(end_circle[next_i])
-
-            for _ in range(3):
-                cone_normals.extend([0.0, 1.0, 0.0])  # Simple normal
-
-        # Create colors with alpha (RGBA for transparency)
-        num_vertices = len(cone_vertices) // 3
-        cone_colors = []
-        for _ in range(num_vertices):
-            cone_colors.extend([color[0], color[1], color[2], alpha])
-
-        # Create VBOs
-        vertices_array = np.array(cone_vertices, dtype=np.float32)
-        normals_array = np.array(cone_normals, dtype=np.float32)
-        colors_array = np.array(cone_colors, dtype=np.float32)
-
-        vbo = self.ctx.buffer(vertices_array.tobytes())
-        normal_vbo = self.ctx.buffer(normals_array.tobytes())
-        color_vbo = self.ctx.buffer(colors_array.tobytes())
-
-        # Use emission shader for beams (no lighting)
-        # Don't bind normals - emission shader doesn't need them
-        vao = self.ctx.vertex_array(
-            self.emission_shader,
+        # Build rotation matrix to align +Z to beam direction
+        rotation = np.array(
             [
-                (vbo, "3f", "position"),
-                (color_vbo, "4f", "color"),
+                [perp1[0], perp2[0], dx, 0],
+                [perp1[1], perp2[1], dy, 0],
+                [perp1[2], perp2[2], dz, 0],
+                [0, 0, 0, 1],
             ],
+            dtype=np.float32,
         )
 
+        # Scale matrix for length
+        scale = np.array(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, length, 0], [0, 0, 0, 1]],
+            dtype=np.float32,
+        )
+
+        # Translation matrix
+        translation = np.array(
+            [[1, 0, 0, start_x], [0, 1, 0, start_y], [0, 0, 1, start_z], [0, 0, 0, 1]],
+            dtype=np.float32,
+        )
+
+        # Combine transforms: translate * rotate * scale
+        local_model = translation @ rotation @ scale
+        model = self._get_current_model_matrix() @ local_model
+
         # Set uniforms using current model matrix from transform stack
-        model = self._get_current_model_matrix()
         mvp_with_model = self._get_mvp_matrix() @ model
 
         # Only need MVP for emission shader (no lighting, no model matrix needed)
@@ -1385,18 +1452,12 @@ class Room3DRenderer:
         # But keep depth testing so beams don't render in front of solid objects
         self.ctx.depth_mask = False
 
-        # Render cone
+        # Render cone (no cleanup - buffers are cached)
         vao.render(mgl.TRIANGLES)
 
         # Restore depth writes and disable blending
         self.ctx.depth_mask = True
         self.ctx.disable(mgl.BLEND)
-
-        # Cleanup
-        vbo.release()
-        normal_vbo.release()
-        color_vbo.release()
-        vao.release()
 
     def render_text_label(
         self,
@@ -1548,6 +1609,27 @@ class Room3DRenderer:
         for texture in self._text_texture_cache.values():
             texture.release()
         self._text_texture_cache.clear()
+
+        # Cleanup geometry caches
+        for vbo, normal_vbo, color_vbo, vao, _ in self._cube_cache.values():
+            vbo.release()
+            normal_vbo.release()
+            color_vbo.release()
+            vao.release()
+        self._cube_cache.clear()
+
+        for vbo, normal_vbo, color_vbo, vao, _ in self._circle_cache.values():
+            vbo.release()
+            normal_vbo.release()
+            color_vbo.release()
+            vao.release()
+        self._circle_cache.clear()
+
+        for vbo, color_vbo, vao, _ in self._cone_cache.values():
+            vbo.release()
+            color_vbo.release()
+            vao.release()
+        self._cone_cache.clear()
 
         # Only cleanup floor resources if they were created
         if self.show_floor:

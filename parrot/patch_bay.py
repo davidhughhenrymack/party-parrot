@@ -2,7 +2,7 @@ from parrot.fixtures.led_par import ParRGB, ParRGBAWU
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
-from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot120_12Ch
+from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS
@@ -40,7 +40,7 @@ venue_patches = {
         ChauvetSpot160_12Ch(
             patch=1,
         ),
-        ChauvetSpot120_12Ch(
+        ChauvetSpot110_12Ch(
             patch=140,
         ),
         *[ParRGB(i) for i in range(12, 48, 7)],
@@ -67,7 +67,7 @@ venue_patches = {
         Motionstrip38(130, 0, 256),  # Stage right column
         ParRGB(230),  # Stage right top par
         ParRGB(238),  # Stage right bottom par
-        ChauvetSpot120_12Ch(170),  # Stage right spot
+        ChauvetSpot110_12Ch(170),  # Stage right spot
         # --------
     ],
     venues.truckee_theatre: [
@@ -106,7 +106,7 @@ venue_patches = {
                 ChauvetSpot160_12Ch(
                     1,
                 ),
-                ChauvetSpot120_12Ch(
+                ChauvetSpot110_12Ch(
                     13,
                 ),
                 ParRGB(450),
