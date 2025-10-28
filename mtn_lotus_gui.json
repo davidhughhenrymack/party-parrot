@@ -1,40 +1,40 @@
 {
     "sr-spot@1:art1": {
-        "x": 50,
+        "x": 10,
         "y": 200,
-        "z": 7.5,
+        "z": 3.5,
         "orientation": [
-            0.3,
+            0.5,
             0.0,
             0.0,
-            0.954
+            0.866
         ]
     },
     "sl-spot@2:art1": {
-        "x": 400,
+        "x": 440,
         "y": 200,
-        "z": 7.5,
+        "z": 3.5,
         "orientation": [
-            0.3,
+            0.5,
             0.0,
             0.0,
-            0.954
+            0.866
         ]
     },
     "chauvet-intimidator-120@170:default": {
         "x": 400,
         "y": 80,
-        "z": 3.2
+        "z": 4.5
     },
     "chauvet-intimidator-160@182:default": {
         "x": 50,
         "y": 80,
-        "z": 3.2
+        "z": 4.5
     },
     "led-par@195:default": {
         "x": 20,
         "y": 80,
-        "z": 2.5,
+        "z": 4.5,
         "orientation": [
             0.0,
             0.0,
@@ -45,7 +45,7 @@
     "led-par@205:default": {
         "x": 80,
         "y": 80,
-        "z": 2.5,
+        "z": 4.5,
         "orientation": [
             0.0,
             0.0,
@@ -56,7 +56,7 @@
     "led-par@230:default": {
         "x": 370,
         "y": 80,
-        "z": 2.5,
+        "z": 4.5,
         "orientation": [
             0.0,
             0.0,
@@ -67,7 +67,7 @@
     "led-par@238:default": {
         "x": 430,
         "y": 80,
-        "z": 2.5,
+        "z": 4.5,
         "orientation": [
             0.0,
             0.0,
@@ -78,7 +78,7 @@
     "motionstrip-38@130:default": {
         "x": 400,
         "y": 80,
-        "z": 1.0,
+        "z": 3.3,
         "orientation": [
             0.0,
             0.0,
@@ -89,7 +89,7 @@
     "motionstrip-38@90:default": {
         "x": 50,
         "y": 80,
-        "z": 1.0,
+        "z": 3.3,
         "orientation": [
             0.0,
             0.0,

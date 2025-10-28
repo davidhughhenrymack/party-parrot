@@ -526,6 +526,11 @@ class Room3DRenderer:
             min(self.max_camera_distance, self.camera_distance),
         )
 
+    def set_global_light_color(self, color: tuple[float, float, float]):
+        """Set the global lighting color (affects both directional and point lights)"""
+        self.directional_light_color = np.array(color, dtype=np.float32)
+        self.point_light_color = np.array(color, dtype=np.float32)
+
     def update_camera(self, time: float):
         """Update camera - no longer auto-rotates, controlled by mouse"""
         # Camera angle is now controlled by mouse drag

@@ -36,8 +36,8 @@ class MovingHeadRenderer(FixtureRenderer):
         # Render with local transforms
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
-                # Render gray body cube
-                body_size = self.cube_size * 0.7
+                # Render gray body cube (smaller)
+                body_size = self.cube_size * 0.4
                 body_color = (0.3, 0.3, 0.3)
 
                 # Body sits on floor (y=0 to y=body_size)
@@ -59,7 +59,7 @@ class MovingHeadRenderer(FixtureRenderer):
         # Render with local transforms
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
-                body_size = self.cube_size * 0.7
+                body_size = self.cube_size * 0.4
                 bulb_radius = body_size * 0.4
                 bulb_distance = body_size * 0.8
                 bulb_color = self.get_color()

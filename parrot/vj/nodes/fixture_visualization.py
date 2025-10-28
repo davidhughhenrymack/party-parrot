@@ -250,6 +250,23 @@ class FixtureVisualization(GenerativeEffectBase):
             vj_fbo.color_attachments[0] if vj_fbo and vj_fbo.color_attachments else None
         )
 
+        # Extract average color from VJ texture for global lighting
+        global_light_color = (0.15, 0.15, 0.15)  # Default dim white
+        if vj_texture:
+            try:
+                # Read texture data and compute average
+                raw_data = vj_texture.read()
+                pixels = np.frombuffer(raw_data, dtype=np.uint8).reshape(
+                    (vj_texture.height, vj_texture.width, 3)
+                )
+                # Downsample for performance (every 16th pixel)
+                sampled = pixels[::16, ::16, :]
+                avg_color = np.mean(sampled, axis=(0, 1)) / 255.0
+                # Scale down for subtle lighting effect
+                global_light_color = tuple(avg_color * 0.3)
+            except Exception:
+                pass  # Fall back to default if reading fails
+
         # Initialize room renderer if needed
         if self.room_renderer is None:
             self.room_renderer = Room3DRenderer(
@@ -267,6 +284,9 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Update camera rotation based on frame time
         self.room_renderer.update_camera(frame.time)
+
+        # Set global lighting based on VJ content
+        self.room_renderer.set_global_light_color(global_light_color)
 
         canvas_size = (float(self.canvas_width), float(self.canvas_height))
 
