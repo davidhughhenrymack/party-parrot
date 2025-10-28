@@ -393,10 +393,17 @@ def run_gl_window_app(args):
     else:
         print("📺 Starting in VJ mode")
 
+    def update_cursor_visibility():
+        """Update cursor visibility based on fixture mode"""
+        if pyglet_window:
+            # Show cursor in fixture mode, hide in VJ mode
+            pyglet_window.set_mouse_visible(state.show_fixture_mode)
+
     def toggle_fixture_mode():
         state.set_show_fixture_mode(not state.show_fixture_mode)
         mode_str = "fixture" if state.show_fixture_mode else "VJ"
         print(f"🔀 Toggled to {mode_str} mode")
+        update_cursor_visibility()
 
     # Setup keyboard handler on the underlying pyglet window
     keyboard_handler = KeyboardHandler(
@@ -443,6 +450,14 @@ def run_gl_window_app(args):
     if pyglet_window:
         pyglet_window.activate()
 
+    # Set initial cursor visibility based on fixture mode
+    update_cursor_visibility()
+
+    # Subscribe to fixture mode changes to update cursor
+    state.events.on_show_fixture_mode_change += (
+        lambda show_fixture: update_cursor_visibility()
+    )
+
     print("⌨️  Keyboard shortcuts:")
     print(
         "   SPACE: Regenerate all  |  S: Full shift lighting only  |  O: Full shift VJ only"
@@ -455,6 +470,7 @@ def run_gl_window_app(args):
     print("   LEFT/RIGHT: Navigate VJ modes (alternative)")
     print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
     print("🖱️  Mouse: Drag to rotate/tilt camera  |  Scroll to zoom (in fixture mode)")
+    print("🖱️  Cursor: Hidden in VJ mode, visible in fixture mode")
 
     frame_counter = 0
 
