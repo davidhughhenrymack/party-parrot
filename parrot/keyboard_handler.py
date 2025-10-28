@@ -68,25 +68,22 @@ class KeyboardHandler:
         elif symbol == pyglet.window.key.SPACE:
             self.director.generate_all()
             return True  # Event handled
-        elif symbol == pyglet.window.key.RETURN or symbol == pyglet.window.key.ENTER:
-            self.overlay.toggle()
-            return True  # Event handled
         elif symbol == pyglet.window.key.BACKSLASH:
             if self.show_fixture_mode_callback:
                 self.show_fixture_mode_callback()
             return True  # Event handled
 
         # Signal buttons (press and hold)
-        elif symbol == pyglet.window.key.I:
+        elif symbol == pyglet.window.key.I or symbol == pyglet.window.key._1:
             self.signal_states.set_signal(FrameSignal.small_blinder, 1.0)
             return True
-        elif symbol == pyglet.window.key.G:
+        elif symbol == pyglet.window.key.G or symbol == pyglet.window.key._2:
             self.signal_states.set_signal(FrameSignal.big_blinder, 1.0)
             return True
-        elif symbol == pyglet.window.key.H:
+        elif symbol == pyglet.window.key.H or symbol == pyglet.window.key._3:
             self.signal_states.set_signal(FrameSignal.strobe, 1.0)
             return True
-        elif symbol == pyglet.window.key.J:
+        elif symbol == pyglet.window.key.J or symbol == pyglet.window.key._4:
             self.signal_states.set_signal(FrameSignal.pulse, 1.0)
             return True
 
@@ -108,16 +105,16 @@ class KeyboardHandler:
     def on_key_release(self, symbol: int, modifiers: int) -> bool:
         """Handle key release events"""
         # Signal buttons (release)
-        if symbol == pyglet.window.key.I:
+        if symbol == pyglet.window.key.I or symbol == pyglet.window.key._1:
             self.signal_states.set_signal(FrameSignal.small_blinder, 0.0)
             return True
-        elif symbol == pyglet.window.key.G:
+        elif symbol == pyglet.window.key.G or symbol == pyglet.window.key._2:
             self.signal_states.set_signal(FrameSignal.big_blinder, 0.0)
             return True
-        elif symbol == pyglet.window.key.H:
+        elif symbol == pyglet.window.key.H or symbol == pyglet.window.key._3:
             self.signal_states.set_signal(FrameSignal.strobe, 0.0)
             return True
-        elif symbol == pyglet.window.key.J:
+        elif symbol == pyglet.window.key.J or symbol == pyglet.window.key._4:
             self.signal_states.set_signal(FrameSignal.pulse, 0.0)
             return True
 
