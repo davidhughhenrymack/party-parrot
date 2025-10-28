@@ -9,7 +9,7 @@ import os
 import tempfile
 import shutil
 
-from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
+from parrot.vj.nodes.fixture_visualization import FixtureVisualization
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.color_schemes import scheme_halloween
@@ -61,7 +61,7 @@ class Test3DRoomRender:
     @pytest.fixture
     def renderer(self, state, position_manager):
         """Create 3D DMX fixture renderer"""
-        return DMXFixtureRenderer(
+        return FixtureVisualization(
             state=state,
             position_manager=position_manager,
             width=1920,

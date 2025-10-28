@@ -79,6 +79,7 @@ class Room3DRenderer:
 
         self._setup_shaders()
         self._setup_emission_shader()  # Separate shader for pure emission (no lighting)
+        self._setup_billboard_shader()  # Shader for textured billboards
         self._setup_text_shader()  # Shader for text rendering with texture
 
         # Only setup floor geometry if enabled
@@ -102,6 +103,10 @@ class Room3DRenderer:
             tuple[float, int],
             tuple[mgl.Buffer, mgl.Buffer, mgl.Buffer, mgl.VertexArray, int],
         ] = {}
+        self._emission_circle_cache: dict[
+            tuple[float, int],
+            tuple[mgl.Buffer, mgl.Buffer, mgl.VertexArray, int],
+        ] = {}  # Circles for emission shader (no normals)
         self._cone_cache: dict[
             tuple[float, float, int],
             tuple[mgl.Buffer, mgl.Buffer, mgl.VertexArray, int],
@@ -220,6 +225,39 @@ class Room3DRenderer:
                 void main() {
                     // Pure emission - just output the color directly, no lighting
                     color = frag_color;
+                }
+            """,
+        )
+
+    def _setup_billboard_shader(self):
+        """Setup shader for textured billboard rendering"""
+        self.billboard_shader = self.ctx.program(
+            vertex_shader="""
+                #version 330 core
+                in vec3 position;
+                in vec2 texcoord;
+                
+                uniform mat4 mvp;
+                
+                out vec2 uv;
+                
+                void main() {
+                    vec4 pos = mvp * vec4(position, 1.0);
+                    pos.y = -pos.y;  // Flip Y axis
+                    gl_Position = pos;
+                    uv = vec2(texcoord.x, 1.0 - texcoord.y);  // Flip V coordinate
+                }
+            """,
+            fragment_shader="""
+                #version 330 core
+                in vec2 uv;
+                out vec4 color;
+                
+                uniform sampler2D billboard_texture;
+                
+                void main() {
+                    // Sample texture and output directly (emissive)
+                    color = vec4(texture(billboard_texture, uv).rgb, 1.0);
                 }
             """,
         )
@@ -958,7 +996,7 @@ class Room3DRenderer:
         vao.release()
 
     def _create_circle_geometry(self, radius: float, segments: int):
-        """Create reusable circle geometry at origin facing +Z"""
+        """Create reusable circle geometry at origin facing +Z (for Blinn-Phong shader)"""
         circle_vertices = []
         circle_normals = []
 
@@ -1010,6 +1048,50 @@ class Room3DRenderer:
         )
 
         return vbo, normal_vbo, color_vbo, vao, num_vertices
+
+    def _create_emission_circle_geometry(self, radius: float, segments: int):
+        """Create reusable circle geometry at origin facing +Z (for emission shader, no normals)"""
+        circle_vertices = []
+
+        # Center point at origin
+        center = [0.0, 0.0, 0.0]
+
+        # Generate circle points and triangles
+        for i in range(segments):
+            angle1 = 2.0 * math.pi * i / segments
+            angle2 = 2.0 * math.pi * ((i + 1) % segments) / segments
+
+            cos1, sin1 = math.cos(angle1), math.sin(angle1)
+            cos2, sin2 = math.cos(angle2), math.sin(angle2)
+
+            # Point 1 on circle (in XY plane)
+            point1 = [cos1 * radius, sin1 * radius, 0.0]
+            # Point 2 on circle
+            point2 = [cos2 * radius, sin2 * radius, 0.0]
+
+            # Triangle: center -> point1 -> point2
+            circle_vertices.extend(center)
+            circle_vertices.extend(point1)
+            circle_vertices.extend(point2)
+
+        vertices_array = np.array(circle_vertices, dtype=np.float32)
+        vbo = self.ctx.buffer(vertices_array.tobytes())
+
+        # Create a per-vertex color VBO that will be updated per render
+        num_vertices = len(circle_vertices) // 3
+        color_vbo = self.ctx.buffer(
+            reserve=num_vertices * 4 * 4
+        )  # 4 floats (RGBA) per vertex
+
+        vao = self.ctx.vertex_array(
+            self.emission_shader,
+            [
+                (vbo, "3f", "position"),
+                (color_vbo, "4f", "color"),
+            ],
+        )
+
+        return vbo, color_vbo, vao, num_vertices
 
     def render_circle(
         self,
@@ -1103,6 +1185,110 @@ class Room3DRenderer:
         self.shader["mvp"] = mvp_with_model.T.flatten()
         self.shader["model"] = model.T.flatten()
         self.shader["emission"] = 1.0  # Bulbs are emissive - not affected by lighting
+
+        # Enable blending for transparency if alpha < 1.0
+        if alpha < 1.0:
+            self.ctx.enable(mgl.BLEND)
+            self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+
+        vao.render(mgl.TRIANGLES)
+
+        # Disable blending
+        if alpha < 1.0:
+            self.ctx.disable(mgl.BLEND)
+
+    def render_emission_circle(
+        self,
+        position: tuple[float, float, float],
+        color: tuple[float, float, float],
+        radius: float = 0.3,
+        normal: tuple[float, float, float] = (0.0, 0.0, 1.0),
+        alpha: float = 1.0,
+        segments: int = 24,
+    ):
+        """Render a flat circular disc with pure emission (NO lighting calculations)
+
+        Use this for emissive materials like light bulbs in the emissive rendering pass.
+
+        Args:
+            position: Local position (x, y, z) relative to current transform
+            color: RGB color tuple
+            radius: Radius of the circle
+            normal: Normal direction the circle faces (default: +Z, toward audience)
+            alpha: Alpha transparency (0.0 = fully transparent, 1.0 = fully opaque)
+            segments: Number of segments around the circle
+        """
+        # Get or create cached geometry (emission version, no normals)
+        cache_key = (radius, segments)
+        if cache_key not in self._emission_circle_cache:
+            self._emission_circle_cache[cache_key] = (
+                self._create_emission_circle_geometry(radius, segments)
+            )
+
+        vbo, color_vbo, vao, num_vertices = self._emission_circle_cache[cache_key]
+
+        # Update color buffer with current color and alpha
+        circle_colors = []
+        for _ in range(num_vertices):
+            circle_colors.extend([color[0], color[1], color[2], alpha])
+        colors_array = np.array(circle_colors, dtype=np.float32)
+        color_vbo.write(colors_array.tobytes())
+
+        # Create transform to orient circle to face the desired normal
+        x, y, z = position
+        nx, ny, nz = normal
+
+        # Normalize the normal vector
+        normal_length = math.sqrt(nx * nx + ny * ny + nz * nz)
+        if normal_length < 0.001:
+            nx, ny, nz = 0.0, 0.0, 1.0
+        else:
+            nx, ny, nz = nx / normal_length, ny / normal_length, nz / normal_length
+
+        # Build rotation matrix to align +Z to desired normal
+        # Simple approach: if normal is close to +Z, use identity
+        if abs(nz - 1.0) < 0.001:
+            # Already facing +Z
+            rotation = np.eye(4, dtype=np.float32)
+        else:
+            # Create perpendicular vectors
+            if abs(nx) < 0.9:
+                perp1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+            else:
+                perp1 = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+
+            normal_vec = np.array([nx, ny, nz], dtype=np.float32)
+            perp1 = perp1 - normal_vec * np.dot(perp1, normal_vec)
+            perp1 = perp1 / np.linalg.norm(perp1)
+
+            perp2 = np.cross(normal_vec, perp1)
+            perp2 = perp2 / np.linalg.norm(perp2)
+
+            # Build rotation matrix from basis vectors
+            rotation = np.array(
+                [
+                    [perp1[0], perp2[0], nx, 0],
+                    [perp1[1], perp2[1], ny, 0],
+                    [perp1[2], perp2[2], nz, 0],
+                    [0, 0, 0, 1],
+                ],
+                dtype=np.float32,
+            )
+
+        # Create translation matrix
+        translation = np.array(
+            [[1, 0, 0, x], [0, 1, 0, y], [0, 0, 1, z], [0, 0, 0, 1]],
+            dtype=np.float32,
+        )
+
+        # Combine transforms
+        local_model = translation @ rotation
+        model = self._get_current_model_matrix() @ local_model
+
+        # Render with pure emission shader (no lighting)
+        mvp_with_model = self._get_mvp_matrix() @ model
+
+        self.emission_shader["mvp"] = mvp_with_model.T.flatten()
 
         # Enable blending for transparency if alpha < 1.0
         if alpha < 1.0:
@@ -1396,6 +1582,10 @@ class Room3DRenderer:
         colors_array = np.array(cone_colors, dtype=np.float32)
         color_vbo.write(colors_array.tobytes())
 
+        # DEBUG: Verify all vertices have the same color
+        # unique_colors = np.unique(colors_array.reshape(-1, 4), axis=0)
+        # print(f"DEBUG render_cone_beam: Setting {num_vertices} vertices to RGBA={color + (alpha,)}, unique colors: {len(unique_colors)}")
+
         # Build transform to orient cone from origin along +Z to desired position/direction
         # Create perpendicular vectors for the cone orientation
         if abs(dx) < 0.9:
@@ -1443,6 +1633,11 @@ class Room3DRenderer:
         # Only need MVP for emission shader (no lighting, no model matrix needed)
         self.emission_shader["mvp"] = mvp_with_model.T.flatten()
 
+        # Enable face culling to avoid rendering back-faces (prevents double-rendering at edges)
+        self.ctx.enable(mgl.CULL_FACE)
+        self.ctx.front_face = "ccw"  # Counter-clockwise front faces
+        self.ctx.cull_face = "back"  # Cull back faces
+
         # Enable blending for semi-transparent beams
         self.ctx.enable(mgl.BLEND)
         # Use additive blending so overlapping beams brighten each other
@@ -1455,9 +1650,27 @@ class Room3DRenderer:
         # Render cone (no cleanup - buffers are cached)
         vao.render(mgl.TRIANGLES)
 
-        # Restore depth writes and disable blending
+        # Add end cap circle at the far end of the beam
+        # Calculate end position
+        end_x = start_x + dx * length
+        end_y = start_y + dy * length
+        end_z = start_z + dz * length
+
+        # Render circle cap at the end, facing BACKWARD (toward viewer/light source)
+        # This ensures it's visible when looking down into the cone
+        self.render_emission_circle(
+            position=(end_x, end_y, end_z),
+            color=color,
+            radius=end_radius,
+            normal=(-dx, -dy, -dz),  # Face backward toward the light source
+            alpha=alpha,
+            segments=segments,
+        )
+
+        # Restore state
         self.ctx.depth_mask = True
         self.ctx.disable(mgl.BLEND)
+        self.ctx.disable(mgl.CULL_FACE)
 
     def render_text_label(
         self,
@@ -1571,6 +1784,134 @@ class Room3DRenderer:
         # Cleanup
         vbo.release()
         texcoord_vbo.release()
+        vao.release()
+
+    def render_billboard(
+        self,
+        texture: mgl.Texture,
+        position: tuple[float, float, float],
+        width: float,
+        height: float,
+        normal: tuple[float, float, float] = (0.0, 0.0, 1.0),
+    ):
+        """Render a textured billboard (like a screen) in 3D space
+
+        Args:
+            texture: OpenGL texture to display on the billboard
+            position: Center position (x, y, z) of the billboard
+            width: Width of the billboard
+            height: Height of the billboard
+            normal: Normal direction the billboard faces (default: +Z, toward audience)
+        """
+        x, y, z = position
+        nx, ny, nz = normal
+
+        # Normalize the normal vector
+        normal_length = math.sqrt(nx * nx + ny * ny + nz * nz)
+        if normal_length < 0.001:
+            nx, ny, nz = 0.0, 0.0, 1.0
+        else:
+            nx, ny, nz = nx / normal_length, ny / normal_length, nz / normal_length
+
+        # Build rotation matrix to align billboard to face the desired normal
+        if abs(nz - 1.0) < 0.001:
+            # Already facing +Z
+            rotation = np.eye(4, dtype=np.float32)
+        else:
+            # Create perpendicular vectors
+            if abs(nx) < 0.9:
+                perp1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+            else:
+                perp1 = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+
+            normal_vec = np.array([nx, ny, nz], dtype=np.float32)
+            perp1 = perp1 - normal_vec * np.dot(perp1, normal_vec)
+            perp1 = perp1 / np.linalg.norm(perp1)
+
+            perp2 = np.cross(normal_vec, perp1)
+            perp2 = perp2 / np.linalg.norm(perp2)
+
+            # Build rotation matrix from basis vectors
+            rotation = np.array(
+                [
+                    [perp1[0], perp2[0], nx, 0],
+                    [perp1[1], perp2[1], ny, 0],
+                    [perp1[2], perp2[2], nz, 0],
+                    [0, 0, 0, 1],
+                ],
+                dtype=np.float32,
+            )
+
+        # Create quad vertices centered at origin
+        half_width = width / 2.0
+        half_height = height / 2.0
+
+        vertices = np.array(
+            [
+                # Position (x, y, z)         # TexCoord (u, v)
+                -half_width,
+                -half_height,
+                0.0,
+                0.0,
+                0.0,  # Bottom-left
+                half_width,
+                -half_height,
+                0.0,
+                1.0,
+                0.0,  # Bottom-right
+                -half_width,
+                half_height,
+                0.0,
+                0.0,
+                1.0,  # Top-left
+                half_width,
+                -half_height,
+                0.0,
+                1.0,
+                0.0,  # Bottom-right (repeated for strip)
+                half_width,
+                half_height,
+                0.0,
+                1.0,
+                1.0,  # Top-right
+                -half_width,
+                half_height,
+                0.0,
+                0.0,
+                1.0,  # Top-left (repeated for strip)
+            ],
+            dtype=np.float32,
+        )
+
+        vbo = self.ctx.buffer(vertices.tobytes())
+        vao = self.ctx.vertex_array(
+            self.billboard_shader, [(vbo, "3f 2f", "position", "texcoord")]
+        )
+
+        # Create translation matrix
+        translation = np.array(
+            [[1, 0, 0, x], [0, 1, 0, y], [0, 0, 1, z], [0, 0, 0, 1]],
+            dtype=np.float32,
+        )
+
+        # Combine transforms
+        local_model = translation @ rotation
+        model = self._get_current_model_matrix() @ local_model
+
+        # Render with billboard shader
+        mvp_with_model = self._get_mvp_matrix() @ model
+
+        self.billboard_shader["mvp"] = mvp_with_model.T.flatten()
+
+        # Bind texture
+        texture.use(0)
+        self.billboard_shader["billboard_texture"] = 0
+
+        # Render quad
+        vao.render(mgl.TRIANGLES)
+
+        # Cleanup
+        vbo.release()
         vao.release()
 
     def convert_2d_to_3d(

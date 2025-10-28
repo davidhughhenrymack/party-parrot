@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 import time
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
-from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot110_12Ch
+from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
 from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2

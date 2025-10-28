@@ -18,14 +18,8 @@ class BulbRenderer(FixtureRenderer):
     def _get_default_size(self) -> tuple[float, float]:
         return (30.0, 30.0)
 
-    def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render bulb in 3D: gray cube body + colored sphere on audience side"""
-        # Default implementation calls both passes
-        self.render_opaque(context, canvas_size, frame)
-        self.render_transparent(context, canvas_size, frame)
-
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render only the opaque parts (cube body and bulb circle)"""
+        """Render only the opaque Blinn-Phong parts (cube body)"""
         if self.room_renderer is None:
             return
 
@@ -44,27 +38,11 @@ class BulbRenderer(FixtureRenderer):
                     (0.0, body_size / 2, 0.0), body_color, body_size
                 )
 
-                # Render colored bulb circle (without beam)
-                bulb_radius = body_size * 0.5
-                bulb_distance = body_size * 0.7
-                bulb_color = self.get_color()
-                dimmer = self.get_effective_dimmer(frame)
-
-                self.room_renderer.render_circle(
-                    (0.0, body_size, bulb_distance),
-                    bulb_color,
-                    bulb_radius,
-                    normal=(0.0, 0.0, 1.0),  # Face forward
-                    alpha=dimmer,
-                )
-
         # Render DMX address
         self.render_dmx_address(canvas_size)
 
-    def render_transparent(
-        self, context, canvas_size: tuple[float, float], frame: Frame
-    ):
-        """Render only the transparent parts (beam)"""
+    def render_emissive(self, context, canvas_size: tuple[float, float], frame: Frame):
+        """Render only the emissive parts (bulb and beam)"""
         if self.room_renderer is None:
             return
 
@@ -80,10 +58,23 @@ class BulbRenderer(FixtureRenderer):
                 bulb_color = self.get_color()
                 dimmer = self.get_effective_dimmer(frame)
 
-                # Render only the beam if dimmer is significant
+                # Cap alpha at 0.8 maximum - use same alpha for bulb and beam for consistency
+                capped_alpha = min(dimmer * 0.4, 0.8)
+
+                # Render colored bulb circle (pure emission, no lighting)
+                self.room_renderer.render_emission_circle(
+                    (0.0, body_size, bulb_distance),
+                    bulb_color,
+                    bulb_radius,
+                    normal=(0.0, 0.0, 1.0),  # Face forward
+                    alpha=capped_alpha,
+                )
+
+                # Render beam if dimmer is significant
                 if dimmer > 0.05:
                     beam_direction = (0.0, 0.0, 1.0)  # Forward in local space
                     beam_length = 8.0
+                    beam_alpha = capped_alpha  # Use same alpha as bulb
                     self.room_renderer.render_cone_beam(
                         0.0,
                         body_size,
@@ -94,5 +85,5 @@ class BulbRenderer(FixtureRenderer):
                         start_radius=bulb_radius * 0.3,
                         end_radius=bulb_radius * 3.0,
                         segments=16,
-                        alpha=dimmer * 0.4,  # Match moving head alpha calculation
+                        alpha=beam_alpha,
                     )

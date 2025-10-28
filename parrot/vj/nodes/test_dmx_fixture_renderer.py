@@ -6,7 +6,7 @@ import tempfile
 import shutil
 import os
 
-from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
+from parrot.vj.nodes.fixture_visualization import FixtureVisualization
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.utils.colour import Color
@@ -14,6 +14,7 @@ from parrot.graph.BaseInterpretationNode import Vibe
 from parrot.state import State
 from parrot.fixtures.position_manager import FixturePositionManager
 from parrot.patch_bay import venues
+from parrot.vj.vj_director import VJDirector
 
 
 class TestDMXFixtureRenderer:
@@ -55,17 +56,27 @@ class TestDMXFixtureRenderer:
         return FixturePositionManager(state)
 
     @pytest.fixture
+    def vj_director(self, state, gl_context):
+        """Create a VJ director"""
+        director = VJDirector(state)
+        director.setup(gl_context)
+        return director
+
+    @pytest.fixture
     def color_scheme(self):
         """Create a color scheme"""
         return ColorScheme(
             fg=Color("red"), bg=Color("black"), bg_contrast=Color("white")
         )
 
-    def test_fixture_renderer_initial_load(self, gl_context, state, position_manager):
+    def test_fixture_renderer_initial_load(
+        self, gl_context, state, position_manager, vj_director
+    ):
         """Test that fixtures are loaded on init"""
-        renderer = DMXFixtureRenderer(
+        renderer = FixtureVisualization(
             state=state,
             position_manager=position_manager,
+            vj_director=vj_director,
             width=256,
             height=256,
         )
@@ -75,15 +86,16 @@ class TestDMXFixtureRenderer:
         assert len(renderer._fixtures) > 0
 
     def test_venue_change_recreates_renderers(
-        self, gl_context, state, position_manager, color_scheme
+        self, gl_context, state, position_manager, vj_director, color_scheme
     ):
         """Test that changing venue recreates renderers properly"""
         # Set initial venue to dmack
         state.set_venue(venues.dmack)
 
-        renderer = DMXFixtureRenderer(
+        renderer = FixtureVisualization(
             state=state,
             position_manager=position_manager,
+            vj_director=vj_director,
             width=256,
             height=256,
         )
@@ -113,16 +125,71 @@ class TestDMXFixtureRenderer:
             len(renderer.renderers) == new_fixture_count
         ), "Renderer count should match fixture count"
 
+    def test_fixture_renderer_resize(
+        self, gl_context, state, position_manager, vj_director, color_scheme
+    ):
+        """Test that renderer properly resizes its framebuffers"""
+        renderer = FixtureVisualization(
+            state=state,
+            position_manager=position_manager,
+            vj_director=vj_director,
+            width=1920,
+            height=1080,
+        )
+        renderer.enter(gl_context)
+
+        frame = Frame(values={})
+
+        # Initial render
+        fb = renderer.render(frame, color_scheme, gl_context)
+        assert fb.width == 1920, "Initial width should be 1920"
+        assert fb.height == 1080, "Initial height should be 1080"
+
+        # Resize to larger - just verify framebuffers are resized
+        renderer.resize(gl_context, 2560, 1440)
+        assert renderer.width == 2560, "Renderer width should be 2560"
+        assert renderer.height == 1440, "Renderer height should be 1440"
+        assert renderer.framebuffer.width == 2560, "Framebuffer width should be 2560"
+        assert renderer.framebuffer.height == 1440, "Framebuffer height should be 1440"
+
+        # Resize to smaller
+        renderer.resize(gl_context, 1280, 720)
+        assert renderer.width == 1280, "Renderer width should be 1280"
+        assert renderer.height == 720, "Renderer height should be 720"
+        assert renderer.framebuffer.width == 1280, "Framebuffer width should be 1280"
+        assert renderer.framebuffer.height == 720, "Framebuffer height should be 720"
+
+    def test_fixture_renderer_with_vj_billboard(
+        self, gl_context, state, position_manager, vj_director, color_scheme
+    ):
+        """Test that renderer renders VJ content on billboard via vj_director"""
+        renderer = FixtureVisualization(
+            state=state,
+            position_manager=position_manager,
+            vj_director=vj_director,
+            width=1920,
+            height=1080,
+        )
+        renderer.enter(gl_context)
+
+        frame = Frame(values={})
+
+        # Render - VJ director will be called internally to get VJ texture
+        fb = renderer.render(frame, color_scheme, gl_context)
+        assert fb.width == 1920, "Should render at expected resolution"
+        assert fb.height == 1080, "Should render at expected resolution"
+
     def test_multiple_venue_changes(
-        self, gl_context, state, position_manager, color_scheme
+        self, gl_context, state, position_manager, vj_director, color_scheme
     ):
         """Test multiple venue changes work correctly"""
         # Set initial venue
         state.set_venue(venues.dmack)
 
-        renderer = DMXFixtureRenderer(
+        renderer = FixtureVisualization(
             state=state,
             position_manager=position_manager,
+            vj_director=vj_director,
             width=256,
             height=256,
         )

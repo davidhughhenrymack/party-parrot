@@ -7,7 +7,7 @@ import moderngl as mgl
 import numpy as np
 from PIL import Image
 
-from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
+from parrot.vj.nodes.fixture_visualization import FixtureVisualization
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.color_schemes import scheme_halloween
@@ -33,7 +33,7 @@ try:
     position_manager = FixturePositionManager(state)
 
     # Create renderer
-    renderer = DMXFixtureRenderer(
+    renderer = FixtureVisualization(
         state=state,
         position_manager=position_manager,
         width=1920,

@@ -19,12 +19,6 @@ class LaserRenderer(FixtureRenderer):
     def _get_default_size(self) -> tuple[float, float]:
         return (50.0, 50.0)
 
-    def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render laser in 3D: gray box body + 12 fanning white beams"""
-        # Default implementation calls both passes
-        self.render_opaque(context, canvas_size, frame)
-        self.render_transparent(context, canvas_size, frame)
-
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
         """Render only the opaque parts (cube body)"""
         if self.room_renderer is None:
@@ -48,10 +42,8 @@ class LaserRenderer(FixtureRenderer):
         # Render DMX address
         self.render_dmx_address(canvas_size)
 
-    def render_transparent(
-        self, context, canvas_size: tuple[float, float], frame: Frame
-    ):
-        """Render only the transparent parts (12 fanning beams)"""
+    def render_emissive(self, context, canvas_size: tuple[float, float], frame: Frame):
+        """Render only the emissive parts (12 fanning beams)"""
         if self.room_renderer is None:
             return
 
@@ -105,6 +97,9 @@ class LaserRenderer(FixtureRenderer):
                     # Beam starts from top of fixture body
                     beam_start_y = body_size
 
+                    # Cap alpha at 0.8
+                    beam_alpha = min(dimmer * 0.5, 0.8)
+
                     # Render narrow white beam
                     self.room_renderer.render_cone_beam(
                         0.0,
@@ -116,5 +111,5 @@ class LaserRenderer(FixtureRenderer):
                         start_radius=beam_radius,
                         end_radius=beam_radius * 1.5,  # Slight expansion
                         segments=8,  # Fewer segments for narrow beams
-                        alpha=dimmer * 0.5,  # Visible beams
+                        alpha=beam_alpha,
                     )

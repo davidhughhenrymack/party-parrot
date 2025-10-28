@@ -25,14 +25,8 @@ class MovingHeadRenderer(FixtureRenderer):
         tilt_rad = math.radians(self.fixture.get_tilt_angle())
         return pan_rad, tilt_rad
 
-    def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render moving head in 3D: gray body + colored sphere bulb + beam"""
-        # Default implementation calls both passes
-        self.render_opaque(context, canvas_size, frame)
-        self.render_transparent(context, canvas_size, frame)
-
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render only the opaque parts (cube body and bulb circle)"""
+        """Render only the opaque Blinn-Phong parts (cube body)"""
         if self.room_renderer is None:
             return
 
@@ -51,45 +45,11 @@ class MovingHeadRenderer(FixtureRenderer):
                     (0.0, body_size / 2, 0.0), body_color, body_size
                 )
 
-                # Render colored light circle bulb
-                bulb_radius = body_size * 0.4
-                bulb_distance = body_size * 0.8
-                bulb_color = self.get_color()
-                dimmer = self.get_effective_dimmer(frame)
-
-                # Calculate beam direction based on pan/tilt
-                pan_rad, tilt_rad = self.get_angles()
-                pan_rad *= 0.5
-                tilt_rad *= 0.5
-                pan_rad += math.pi
-
-                # Calculate beam direction vector
-                cos_tilt = math.cos(tilt_rad)
-                sin_tilt = math.sin(tilt_rad)
-                cos_pan = math.cos(pan_rad)
-                sin_pan = math.sin(pan_rad)
-
-                beam_dir_x = sin_pan * cos_tilt
-                beam_dir_y = -sin_tilt
-                beam_dir_z = cos_pan * cos_tilt
-                beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
-
-                # Render bulb circle facing the beam direction
-                self.room_renderer.render_circle(
-                    (0.0, body_size, bulb_distance),
-                    bulb_color,
-                    bulb_radius,
-                    normal=beam_direction,
-                    alpha=dimmer,
-                )
-
         # Render DMX address
         self.render_dmx_address(canvas_size)
 
-    def render_transparent(
-        self, context, canvas_size: tuple[float, float], frame: Frame
-    ):
-        """Render only the transparent parts (beam)"""
+    def render_emissive(self, context, canvas_size: tuple[float, float], frame: Frame):
+        """Render only the emissive parts (bulb and beam)"""
         if self.room_renderer is None:
             return
 
@@ -122,9 +82,22 @@ class MovingHeadRenderer(FixtureRenderer):
                 beam_dir_z = cos_pan * cos_tilt
                 beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
 
+                # Cap alpha at 0.8 maximum - use same alpha for bulb and beam for consistency
+                capped_alpha = min(dimmer * 0.4, 0.8)
+
+                # Render bulb circle facing the beam direction (pure emission, no lighting)
+                self.room_renderer.render_emission_circle(
+                    (0.0, body_size, bulb_distance),
+                    bulb_color,
+                    bulb_radius,
+                    normal=beam_direction,
+                    alpha=capped_alpha,
+                )
+
                 # Render cone beam if dimmer is significant
                 if dimmer > 0.05:
                     beam_length = 15.0
+                    beam_alpha = capped_alpha  # Use same alpha as bulb
                     self.room_renderer.render_cone_beam(
                         0.0,
                         body_size,
@@ -135,5 +108,5 @@ class MovingHeadRenderer(FixtureRenderer):
                         start_radius=bulb_radius * 0.3,
                         end_radius=bulb_radius * 1.2,
                         segments=16,
-                        alpha=dimmer * 0.4,
+                        alpha=beam_alpha,
                     )

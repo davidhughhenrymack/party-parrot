@@ -2,7 +2,7 @@ from parrot.fixtures.led_par import ParRGB, ParRGBAWU
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
-from parrot.fixtures.chauvet.intimidator120 import ChauvetSpot110_12Ch
+from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS

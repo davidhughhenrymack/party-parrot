@@ -95,7 +95,7 @@ def test_renderer_get_dimmer():
 
 
 def test_renderer_render_bulb():
-    """Test that BulbRenderer.render() executes without error"""
+    """Test that BulbRenderer.render_opaque() executes without error"""
     ctx = mgl.create_context(standalone=True)
 
     fixture = ParRGB(1)
@@ -114,7 +114,7 @@ def test_renderer_render_bulb():
     frame.time = 0.0
 
     # Should not crash
-    renderer.render(ctx, (1200.0, 1200.0), frame)
+    renderer.render_opaque(ctx, (1200.0, 1200.0), frame)
 
     # Cleanup
     fbo.release()
@@ -122,7 +122,7 @@ def test_renderer_render_bulb():
 
 
 def test_renderer_render_moving_head():
-    """Test that MovingHeadRenderer.render() executes without error"""
+    """Test that MovingHeadRenderer.render_opaque() executes without error"""
     ctx = mgl.create_context(standalone=True)
 
     fixture = ChauvetSpot160_12Ch(1)
@@ -141,7 +141,7 @@ def test_renderer_render_moving_head():
     frame.time = 0.0
 
     # Should not crash
-    renderer.render(ctx, (1200.0, 1200.0), frame)
+    renderer.render_opaque(ctx, (1200.0, 1200.0), frame)
 
     # Cleanup
     fbo.release()
@@ -175,12 +175,14 @@ def test_moving_head_beam_with_room_renderer():
     frame = Frame({signal: 0.0 for signal in FrameSignal})
     frame.time = 0.0
 
-    # Should render beam without crashing
-    renderer.render(ctx, (500.0, 500.0), frame)
+    # Render both opaque and emissive passes
+    renderer.render_opaque(ctx, (500.0, 500.0), frame)
+    renderer.render_emissive(ctx, (500.0, 500.0), frame)
 
     # Test with low dimmer (should not render beam)
     fixture.set_dimmer(10)  # Very low dimmer
-    renderer.render(ctx, (500.0, 500.0), frame)
+    renderer.render_opaque(ctx, (500.0, 500.0), frame)
+    renderer.render_emissive(ctx, (500.0, 500.0), frame)
 
     # Cleanup
     room.cleanup()

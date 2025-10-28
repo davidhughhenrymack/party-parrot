@@ -1,11 +1,11 @@
 {
-  "mode": "rave",
+  "mode": "chill",
   "hype": 30,
   "theme_name": "Halloween",
   "venue_name": "mtn_lotus",
   "manual_dimmer": 0,
   "hype_limiter": false,
   "show_waveform": true,
-  "show_fixture_mode": false,
-  "vj_mode": "early_rave"
+  "show_fixture_mode": true,
+  "vj_mode": "full_rave"
 }

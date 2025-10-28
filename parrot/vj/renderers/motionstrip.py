@@ -30,12 +30,6 @@ class MotionstripRenderer(FixtureRenderer):
         height = BULB_MARGIN * 2 + BULB_DIA
         return (width, height)
 
-    def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render motionstrip in 3D: gray body + row of colored sphere bulbs on audience side"""
-        # Default implementation calls both passes
-        self.render_opaque(context, canvas_size, frame)
-        self.render_transparent(context, canvas_size, frame)
-
     def _get_pan_rotation(self) -> float:
         """Calculate pan rotation angle in degrees based on fixture's pan value.
         Pan 0 -> +90°, Pan 255 -> -90° (flipped)
@@ -67,7 +61,7 @@ class MotionstripRenderer(FixtureRenderer):
         return rotation_deg
 
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """Render only the opaque parts (box body and bulb circles)"""
+        """Render only the opaque Blinn-Phong parts (box body)"""
         if self.room_renderer is None:
             return
 
@@ -102,59 +96,11 @@ class MotionstripRenderer(FixtureRenderer):
                         body_depth,
                     )
 
-                    # Render all bulb circles
-                    bulb_spacing = 0.22
-                    start_offset_x = -(self._num_bulbs - 1) * bulb_spacing / 2
-                    bulb_radius = 0.1
-                    bulb_forward_distance = body_depth * 0.7
-
-                    bulbs = self.fixture.get_bulbs()
-
-                    for i, bulb in enumerate(bulbs):
-                        try:
-                            bulb_color_obj = bulb.get_color()
-                            if hasattr(bulb_color_obj, "red"):
-                                r, g, b = (
-                                    bulb_color_obj.red,
-                                    bulb_color_obj.green,
-                                    bulb_color_obj.blue,
-                                )
-                            elif hasattr(bulb_color_obj, "r"):
-                                r, g, b = (
-                                    bulb_color_obj.r / 255.0,
-                                    bulb_color_obj.g / 255.0,
-                                    bulb_color_obj.b / 255.0,
-                                )
-                            else:
-                                r, g, b = (1.0, 1.0, 1.0)
-
-                            bulb_dimmer = bulb.get_dimmer() / 255.0
-                            fixture_dimmer = self.get_dimmer()
-                            effective_alpha = bulb_dimmer * fixture_dimmer
-                            bulb_color = (r, g, b)
-
-                            bulb_x_local = start_offset_x + i * bulb_spacing
-                            bulb_y_local = body_height / 2
-                            bulb_z_local = bulb_forward_distance
-
-                            # Render just the bulb circle (no beam)
-                            self.room_renderer.render_circle(
-                                (bulb_x_local, bulb_y_local, bulb_z_local),
-                                bulb_color,
-                                bulb_radius,
-                                normal=(0.0, 0.0, 1.0),
-                                alpha=effective_alpha,
-                            )
-                        except:
-                            pass
-
         # Render DMX address
         self.render_dmx_address(canvas_size)
 
-    def render_transparent(
-        self, context, canvas_size: tuple[float, float], frame: Frame
-    ):
-        """Render only the transparent parts (beams)"""
+    def render_emissive(self, context, canvas_size: tuple[float, float], frame: Frame):
+        """Render only the emissive parts (bulbs and beams)"""
         if self.room_renderer is None:
             return
 
@@ -208,7 +154,19 @@ class MotionstripRenderer(FixtureRenderer):
                             bulb_y_local = body_height / 2
                             bulb_z_local = bulb_forward_distance
 
-                            # Render only the beam if dimmer is significant
+                            # Cap alpha at 0.8 maximum - use same alpha for bulb and beam for consistency
+                            capped_alpha = min(effective_alpha * 0.4, 0.8)
+
+                            # Render bulb circle (pure emission, no lighting)
+                            self.room_renderer.render_emission_circle(
+                                (bulb_x_local, bulb_y_local, bulb_z_local),
+                                bulb_color,
+                                bulb_radius,
+                                normal=(0.0, 0.0, 1.0),
+                                alpha=capped_alpha,
+                            )
+
+                            # Render beam if dimmer is significant
                             if effective_alpha > 0.05:
                                 beam_direction = (
                                     0.0,
@@ -216,6 +174,7 @@ class MotionstripRenderer(FixtureRenderer):
                                     1.0,
                                 )  # Forward in local space
                                 beam_length = 6.0
+                                beam_alpha = capped_alpha  # Use same alpha as bulb
                                 self.room_renderer.render_cone_beam(
                                     bulb_x_local,
                                     bulb_y_local,
@@ -226,8 +185,7 @@ class MotionstripRenderer(FixtureRenderer):
                                     start_radius=bulb_radius * 0.3,
                                     end_radius=bulb_radius * 3.0,
                                     segments=16,
-                                    alpha=effective_alpha
-                                    * 0.4,  # Match moving head alpha calculation
+                                    alpha=beam_alpha,
                                 )
                         except:
                             pass

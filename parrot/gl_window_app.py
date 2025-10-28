@@ -60,11 +60,12 @@ def run_gl_window_app(args):
     director = Director(state, vj_director)
 
     # Initialize fixture renderer (uses director's position manager)
-    from parrot.vj.nodes.dmx_fixture_renderer import DMXFixtureRenderer
+    from parrot.vj.nodes.fixture_visualization import FixtureVisualization
 
-    fixture_renderer = DMXFixtureRenderer(
+    fixture_renderer = FixtureVisualization(
         state=state,
         position_manager=director.position_manager,
+        vj_director=vj_director,
         width=1920,
         height=1080,
     )
@@ -479,6 +480,9 @@ def run_gl_window_app(args):
     # Track time for delta time calculations
     last_frame_time = time.perf_counter()
 
+    # Track window size for resize detection
+    last_window_size = window.size
+
     while not window.is_closing:
         current_time = time.perf_counter()
         dt = current_time - last_frame_time
@@ -522,10 +526,18 @@ def run_gl_window_app(args):
         # Get current window size
         window_width, window_height = window.size
 
-        # Render based on mode (fixture or VJ)
+        # Check if window was resized and update renderers
+        if (window_width, window_height) != last_window_size:
+            print(f"🖼️  Window resized to {window_width}x{window_height}")
+            fixture_renderer.resize(ctx, window_width, window_height)
+            last_window_size = (window_width, window_height)
+
+        # Render based on mode
         if state.show_fixture_mode:
+            # In fixture mode, fixture renderer calls VJ director internally
             rendered_fbo = fixture_renderer.render(frame_data, scheme_data, ctx)
         else:
+            # In VJ mode, show VJ output directly
             rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)
 
         # Bind the window's default framebuffer (screen) and render to it

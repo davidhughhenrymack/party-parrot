@@ -175,47 +175,31 @@ class FixtureRenderer:
 
             return (color[0] * brightness, color[1] * brightness, color[2] * brightness)
 
-    @abstractmethod
-    def render(self, context, canvas_size: tuple[float, float], frame: Frame):
-        """
-        Render this fixture to the current framebuffer in 3D.
-
-        Args:
-            context: ModernGL context
-            canvas_size: (width, height) of the canvas
-            frame: Current frame with timing and signal data
-        """
-        pass
-
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
         """
-        Render only the opaque parts of this fixture (cubes, boxes, etc).
-        Override this for two-pass rendering. Default: render everything.
+        Render only the opaque Blinn-Phong parts of this fixture (cubes, boxes, etc).
+        This is called during the opaque rendering pass.
 
         Args:
             context: ModernGL context
             canvas_size: (width, height) of the canvas
             frame: Current frame with timing and signal data
         """
-        # Default: call full render
-        self.render(context, canvas_size, frame)
-
         # Automatically render DMX address after rendering the fixture
         self.render_dmx_address(canvas_size)
 
-    def render_transparent(
-        self, context, canvas_size: tuple[float, float], frame: Frame
-    ):
+    def render_emissive(self, context, canvas_size: tuple[float, float], frame: Frame):
         """
-        Render only the transparent parts of this fixture (beams).
-        Override this for two-pass rendering. Default: do nothing.
+        Render only the emissive parts of this fixture (bulbs and beams).
+        These are materials that emit light and should receive bloom effect.
+        Override this for proper emissive rendering. Default: do nothing.
 
         Args:
             context: ModernGL context
             canvas_size: (width, height) of the canvas
             frame: Current frame with timing and signal data
         """
-        # Default: do nothing (beams already rendered in render_opaque)
+        # Default: do nothing
         pass
 
     def render_dmx_address(self, canvas_size: tuple[float, float]):
