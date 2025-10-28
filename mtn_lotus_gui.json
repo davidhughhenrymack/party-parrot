@@ -1,24 +1,24 @@
 {
-    "sr-spot@1:default": {
+    "sr-spot@1:art1": {
         "x": 50,
-        "y": 390,
+        "y": 200,
         "z": 5.5,
         "orientation": [
-            0.643,
+            -0.3,
             0.0,
             0.0,
-            0.766
+            0.954
         ]
     },
-    "sl-spot@2:default": {
+    "sl-spot@2:art1": {
         "x": 400,
-        "y": 390,
+        "y": 200,
         "z": 5.5,
         "orientation": [
-            0.643,
+            -0.3,
             0.0,
             0.0,
-            0.766
+            0.954
         ]
     },
     "chauvet-intimidator-120@170:default": {
@@ -101,7 +101,7 @@
         "x": 214,
         "y": 30
     },
-    "par-rgbawu@10:default": {
+    "par-rgbawu@10:art1": {
         "x": 90,
         "y": 370,
         "z": 5.5,
@@ -112,7 +112,7 @@
             0.643
         ]
     },
-    "par-rgbawu@20:default": {
+    "par-rgbawu@20:art1": {
         "x": 173,
         "y": 370,
         "z": 5.5,
@@ -123,7 +123,7 @@
             0.643
         ]
     },
-    "par-rgbawu@30:default": {
+    "par-rgbawu@30:art1": {
         "x": 276,
         "y": 370,
         "z": 5.5,
@@ -134,7 +134,7 @@
             0.643
         ]
     },
-    "par-rgbawu@40:default": {
+    "par-rgbawu@40:art1": {
         "x": 377,
         "y": 370,
         "z": 5.5,
@@ -145,7 +145,7 @@
             0.643
         ]
     },
-    "par-rgbawu@50:default": {
+    "par-rgbawu@50:art1": {
         "x": 95,
         "y": 20,
         "z": 5.5,
@@ -156,7 +156,7 @@
             0.766
         ]
     },
-    "par-rgbawu@60:default": {
+    "par-rgbawu@60:art1": {
         "x": 180,
         "y": 20,
         "z": 5.5,
@@ -167,7 +167,7 @@
             0.766
         ]
     },
-    "par-rgbawu@70:default": {
+    "par-rgbawu@70:art1": {
         "x": 272,
         "y": 20,
         "z": 5.5,
@@ -178,7 +178,7 @@
             0.766
         ]
     },
-    "par-rgbawu@80:default": {
+    "par-rgbawu@80:art1": {
         "x": 379,
         "y": 20,
         "z": 5.5,
