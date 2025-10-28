@@ -66,7 +66,7 @@ class FixtureVisualization(GenerativeEffectBase):
         self.depth_texture: Optional[mgl.Texture] = None
 
         # Bloom effect parameters
-        self.bloom_alpha = 0.6  # Bloom contribution (increased for visibility)
+        self.bloom_alpha = 1.2  # Bloom contribution (increased for visibility)
         self.kawase_iterations = 5  # Number of blur passes
 
         # Additional framebuffers for multi-pass rendering
@@ -436,7 +436,7 @@ class FixtureVisualization(GenerativeEffectBase):
             self.kawase_shader["texelSize"] = texel_size
             # Offset increases with each iteration for wider blur spread
             # Larger multiplier = wider, softer bloom
-            self.kawase_shader["offset"] = 2.0 + i * 4.0
+            self.kawase_shader["offset"] = 3.0 + i * 5.0
 
             # Render fullscreen quad
             self.kawase_quad_vao.render(mgl.TRIANGLE_STRIP)
