@@ -71,6 +71,9 @@ class Room3DRenderer:
         self.point_light_pos = np.array([0.0, 2.0, 0.0], dtype=np.float32)
         self.point_light_color = np.array([0.8, 0.8, 0.8], dtype=np.float32)
 
+        # Ambient light color (will be set from VJ billboard)
+        self.ambient_light_color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+
         # Material properties
         self.ambient_strength = 0.3
         self.specular_strength = 0.5
@@ -151,6 +154,7 @@ class Room3DRenderer:
                 uniform vec3 dirLightColor;
                 uniform vec3 pointLightPos;
                 uniform vec3 pointLightColor;
+                uniform vec3 ambientColor;  // Added: ambient light color from VJ billboard
                 uniform float ambientStrength;
                 uniform float specularStrength;
                 uniform float shininess;
@@ -167,8 +171,8 @@ class Room3DRenderer:
                         vec3 norm = normalize(frag_normal);
                         vec3 viewDir = normalize(viewPos - frag_pos);
                         
-                        // Ambient
-                        vec3 ambient = ambientStrength * frag_color.rgb;
+                        // Ambient - now affected by VJ billboard color
+                        vec3 ambient = ambientStrength * ambientColor * frag_color.rgb;
                         
                         // Directional light (Blinn-Phong)
                         vec3 lightDir = normalize(-dirLightDir);
@@ -527,9 +531,16 @@ class Room3DRenderer:
         )
 
     def set_global_light_color(self, color: tuple[float, float, float]):
-        """Set the global lighting color (affects both directional and point lights)"""
-        self.directional_light_color = np.array(color, dtype=np.float32)
-        self.point_light_color = np.array(color, dtype=np.float32)
+        """Set the global lighting color (affects directional, point, and ambient lights)"""
+        # Boost the color slightly for directional and point lights
+        boosted_color = np.array(color, dtype=np.float32) * 1.5
+        boosted_color = np.clip(boosted_color, 0.0, 1.0)
+
+        self.directional_light_color = boosted_color
+        self.point_light_color = boosted_color
+        # Ambient uses full color strength for consistent tinting
+        self.ambient_light_color = np.array(color, dtype=np.float32) * 3.0
+        self.ambient_light_color = np.clip(self.ambient_light_color, 0.0, 1.0)
 
     def update_camera(self, time: float):
         """Update camera - no longer auto-rotates, controlled by mouse"""
@@ -667,6 +678,7 @@ class Room3DRenderer:
         self.shader["dirLightColor"] = tuple(self.directional_light_color)
         self.shader["pointLightPos"] = tuple(self.point_light_pos)
         self.shader["pointLightColor"] = tuple(self.point_light_color)
+        self.shader["ambientColor"] = tuple(self.ambient_light_color)
         self.shader["ambientStrength"] = self.ambient_strength
         self.shader["specularStrength"] = (
             self.floor_specular_strength
@@ -837,6 +849,14 @@ class Room3DRenderer:
         self.shader["mvp"] = mvp_with_model.T.flatten()
         self.shader["model"] = model.T.flatten()
         self.shader["viewPos"] = tuple(view_pos)
+        self.shader["dirLightDir"] = tuple(self.directional_light_dir)
+        self.shader["dirLightColor"] = tuple(self.directional_light_color)
+        self.shader["pointLightPos"] = tuple(self.point_light_pos)
+        self.shader["pointLightColor"] = tuple(self.point_light_color)
+        self.shader["ambientColor"] = tuple(self.ambient_light_color)
+        self.shader["ambientStrength"] = self.ambient_strength
+        self.shader["specularStrength"] = self.specular_strength
+        self.shader["shininess"] = self.shininess
         self.shader["emission"] = 0.0  # Fixture bodies use normal lighting
 
         # Render cube (no cleanup - buffers are cached)
@@ -989,6 +1009,14 @@ class Room3DRenderer:
         self.shader["mvp"] = mvp_with_model.T.flatten()
         self.shader["model"] = model.T.flatten()
         self.shader["viewPos"] = tuple(view_pos)
+        self.shader["dirLightDir"] = tuple(self.directional_light_dir)
+        self.shader["dirLightColor"] = tuple(self.directional_light_color)
+        self.shader["pointLightPos"] = tuple(self.point_light_pos)
+        self.shader["pointLightColor"] = tuple(self.point_light_color)
+        self.shader["ambientColor"] = tuple(self.ambient_light_color)
+        self.shader["ambientStrength"] = self.ambient_strength
+        self.shader["specularStrength"] = self.specular_strength
+        self.shader["shininess"] = self.shininess
         self.shader["emission"] = 0.0  # Rectangular boxes use normal lighting
 
         # Render box
