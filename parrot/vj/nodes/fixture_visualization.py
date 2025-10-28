@@ -17,6 +17,8 @@ from parrot.state import State
 from parrot.fixtures.position_manager import FixturePositionManager
 from parrot.vj.shaders import kawase_blur, composite
 from parrot.vj.vj_director import VJDirector
+from parrot.vj.fixture_selection import FixtureSelection
+from parrot.utils.input_events import InputEvents
 from typing import Optional
 import moderngl as mgl
 import numpy as np
@@ -82,6 +84,24 @@ class FixtureVisualization(GenerativeEffectBase):
         # Shader programs for post-processing
         self.kawase_shader: Optional[mgl.Program] = None
         self.composite_shader: Optional[mgl.Program] = None
+
+        # Fixture selection system
+        self.fixture_selection = FixtureSelection(position_manager, state)
+
+        # Register mouse event handlers - we'll manage camera vs fixture events
+        self.input_events = InputEvents.get_instance()
+        self.input_events.register_mouse_press_callback(self._on_mouse_press)
+        self.input_events.register_mouse_release_callback(self._on_mouse_release)
+        self.input_events.register_mouse_drag_callback(self._on_mouse_drag)
+        self.input_events.register_mouse_scroll_callback(self._on_mouse_scroll)
+
+        # Room renderer will be created later, and it registers its own mouse handlers
+        # We need to unregister those and control them ourselves
+        self._room_renderer_handlers_removed = False
+
+        # Store window dimensions for mouse raycasting
+        self.window_width = width
+        self.window_height = height
 
         self._load_fixtures()
 
@@ -383,6 +403,12 @@ class FixtureVisualization(GenerativeEffectBase):
         for renderer in self.renderers:
             renderer.render_opaque(context, canvas_size, frame)
 
+        # Render selection highlight if a fixture is selected
+        if self.state.show_fixture_mode:
+            self.fixture_selection.render_selection_highlight(
+                self.room_renderer, canvas_size
+            )
+
         # === PASS 2: Render emissive materials (bulbs and beams) ===
         self.emissive_framebuffer.use()
         context.clear(0.0, 0.0, 0.0)
@@ -398,6 +424,12 @@ class FixtureVisualization(GenerativeEffectBase):
         # Render emissive materials (bulbs and beams)
         for renderer in self.renderers:
             renderer.render_emissive(context, canvas_size, frame)
+
+        # Render manipulation axes if a fixture is selected
+        if self.state.show_fixture_mode:
+            self.fixture_selection.render_manipulation_axes(
+                self.room_renderer, canvas_size
+            )
 
         # Restore depth writes
         context.depth_mask = True
@@ -510,6 +542,62 @@ class FixtureVisualization(GenerativeEffectBase):
         """Not used - rendering is done in custom render() method"""
         pass
 
+    def _on_mouse_press(self, mouse_x: float, mouse_y: float):
+        """Handle mouse press for fixture selection"""
+        # Only handle in fixture mode
+        if not self.state.show_fixture_mode:
+            return
+
+        self.fixture_selection.handle_mouse_press(
+            mouse_x,
+            mouse_y,
+            self.window_width,
+            self.window_height,
+            self.renderers,
+            self.room_renderer,
+            (float(self.canvas_width), float(self.canvas_height)),
+        )
+
+    def _on_mouse_release(self, mouse_x: float, mouse_y: float):
+        """Handle mouse release to save fixture positions"""
+        if not self.state.show_fixture_mode:
+            return
+
+        self.fixture_selection.handle_mouse_release()
+
+    def _on_mouse_drag(self, dx: float, dy: float):
+        """Handle mouse drag for axis manipulation or camera control
+
+        When in fixture mode and dragging an axis, handle fixture manipulation.
+        Otherwise, forward to camera control.
+        """
+        # In fixture mode, check if we're dragging a fixture axis
+        if self.state.show_fixture_mode and self.fixture_selection.is_dragging:
+            # Dragging a fixture axis - handle it and don't forward to camera
+            mouse_x = self.input_events.mouse_x
+            mouse_y = self.input_events.mouse_y
+
+            self.fixture_selection.handle_mouse_drag(
+                mouse_x,
+                mouse_y,
+                self.window_width,
+                self.window_height,
+                self.room_renderer,
+                (float(self.canvas_width), float(self.canvas_height)),
+            )
+            # Don't forward to camera - we're dragging a fixture!
+            return
+
+        # Otherwise, forward to camera control (only if in fixture mode OR room_renderer wants it)
+        if self.room_renderer is not None:
+            self.room_renderer._on_mouse_drag(dx, dy)
+
+    def _on_mouse_scroll(self, scroll_x: float, scroll_y: float):
+        """Handle mouse scroll for camera zoom"""
+        # Always forward scroll to camera zoom (works in both VJ and fixture mode)
+        if self.room_renderer is not None:
+            self.room_renderer._on_mouse_scroll(scroll_x, scroll_y)
+
     def resize(self, context: mgl.Context, width: int, height: int):
         """Resize all framebuffers to match new dimensions"""
         # Don't resize if dimensions haven't changed
@@ -523,6 +611,8 @@ class FixtureVisualization(GenerativeEffectBase):
         # Update dimensions
         self.width = width
         self.height = height
+        self.window_width = width
+        self.window_height = height
 
         # Clean up existing framebuffers
         if self.opaque_framebuffer:
