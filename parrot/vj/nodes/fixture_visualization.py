@@ -196,6 +196,38 @@ class FixtureVisualization(GenerativeEffectBase):
             if orientation is not None:
                 renderer.orientation = orientation
 
+    def _collect_fixture_lights(
+        self, frame: Frame
+    ) -> list[tuple[tuple[float, float, float], tuple[float, float, float, float]]]:
+        """Collect light data from all fixtures for dynamic lighting
+
+        Returns:
+            List of (position, color_rgba) tuples where:
+            - position is (x, y, z) in world space
+            - color_rgba is (r, g, b, intensity) in 0-1 range
+        """
+        lights = []
+        canvas_size = (float(self.canvas_width), float(self.canvas_height))
+
+        for renderer in self.renderers:
+            # Get effective dimmer (includes strobe effect)
+            dimmer = renderer.get_effective_dimmer(frame)
+
+            # Skip if light is off or very dim
+            if dimmer < 0.01:
+                continue
+
+            # Get color (RGB 0-1)
+            color = renderer.get_color()
+
+            # Get 3D position in world space
+            world_pos = renderer.get_3d_position(canvas_size)
+
+            # Create light entry: position, (r, g, b, intensity)
+            lights.append((world_pos, (color[0], color[1], color[2], dimmer)))
+
+        return lights
+
     def generate(self, vibe: Vibe):
         """Configure renderer based on vibe"""
         # This renderer doesn't change behavior based on vibe
@@ -250,8 +282,10 @@ class FixtureVisualization(GenerativeEffectBase):
             vj_fbo.color_attachments[0] if vj_fbo and vj_fbo.color_attachments else None
         )
 
-        # Extract average color from VJ texture for global lighting
+        # Extract average color from VJ texture for global lighting and video wall light
         global_light_color = (0.15, 0.15, 0.15)  # Default dim white
+        video_wall_color = None  # Will be (r, g, b, intensity) or None
+
         if vj_texture:
             try:
                 # Read texture data and compute average
@@ -264,6 +298,18 @@ class FixtureVisualization(GenerativeEffectBase):
                 avg_color = np.mean(sampled, axis=(0, 1)) / 255.0
                 # Scale down for subtle lighting effect
                 global_light_color = tuple(avg_color * 0.3)
+
+                # Calculate video wall light (stronger than ambient)
+                # Intensity based on brightness (luminance)
+                brightness = (
+                    0.299 * avg_color[0] + 0.587 * avg_color[1] + 0.114 * avg_color[2]
+                )
+                video_wall_color = (
+                    avg_color[0],
+                    avg_color[1],
+                    avg_color[2],
+                    brightness,
+                )
             except Exception:
                 pass  # Fall back to default if reading fails
 
@@ -287,6 +333,18 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Set global lighting based on VJ content
         self.room_renderer.set_global_light_color(global_light_color)
+
+        # Collect and set dynamic lights from fixtures
+        fixture_lights = self._collect_fixture_lights(frame)
+
+        # Add video wall as a light source if it's active
+        if video_wall_color is not None:
+            # Video wall position (center of billboard at back of room)
+            billboard_height = 6.0
+            video_wall_pos = (0.0, billboard_height / 2.0, -4.5)
+            fixture_lights.append((video_wall_pos, video_wall_color))
+
+        self.room_renderer.set_dynamic_lights(fixture_lights)
 
         canvas_size = (float(self.canvas_width), float(self.canvas_height))
 

@@ -80,6 +80,11 @@ class Room3DRenderer:
         self.floor_specular_strength = 0.1  # Lower specular for floor
         self.shininess = 32.0
 
+        # Dynamic lights from fixtures (position, RGBA)
+        self.dynamic_lights: list[
+            tuple[tuple[float, float, float], tuple[float, float, float, float]]
+        ] = []
+
         self._setup_shaders()
         self._setup_emission_shader()  # Separate shader for pure emission (no lighting)
         self._setup_billboard_shader()  # Shader for textured billboards
@@ -152,21 +157,25 @@ class Room3DRenderer:
                 
                 out vec4 color;
                 
+                #define MAX_LIGHTS 64
+                
                 // Lighting uniforms
                 uniform vec3 viewPos;
                 uniform vec3 dirLightDir;
                 uniform vec3 dirLightColor;
-                uniform vec3 pointLightPos;
-                uniform vec3 pointLightColor;
-                uniform vec3 ambientColor;  // Added: ambient light color from VJ billboard
+                uniform vec3 ambientColor;
                 uniform float ambientStrength;
                 uniform float specularStrength;
                 uniform float shininess;
                 uniform float emission;  // 0.0 = normal lighting, 1.0 = full emission
                 
+                // Dynamic point lights from fixtures
+                uniform int numLights;
+                uniform vec3 lightPositions[MAX_LIGHTS];
+                uniform vec4 lightColors[MAX_LIGHTS];  // RGB + intensity
+                
                 void main() {
                     // If emission is high, just use the color directly (emissive)
-                    // Use >= to be more robust
                     if (emission >= 0.99) {
                         // Pure emission - use color directly without any lighting
                         color = frag_color;
@@ -175,10 +184,10 @@ class Room3DRenderer:
                         vec3 norm = normalize(frag_normal);
                         vec3 viewDir = normalize(viewPos - frag_pos);
                         
-                        // Ambient - now affected by VJ billboard color
+                        // Ambient - affected by VJ billboard color
                         vec3 ambient = ambientStrength * ambientColor * frag_color.rgb;
                         
-                        // Directional light (Blinn-Phong)
+                        // Directional light (Blinn-Phong) - subtle fill light
                         vec3 lightDir = normalize(-dirLightDir);
                         float diff = max(dot(norm, lightDir), 0.0);
                         vec3 diffuse = diff * dirLightColor * frag_color.rgb;
@@ -187,20 +196,37 @@ class Room3DRenderer:
                         float spec = pow(max(dot(norm, halfwayDir), 0.0), shininess);
                         vec3 specular = specularStrength * spec * dirLightColor;
                         
-                        // Point light (Blinn-Phong)
-                        vec3 pointLightDir = normalize(pointLightPos - frag_pos);
-                        float pointDiff = max(dot(norm, pointLightDir), 0.0);
-                        float distance = length(pointLightPos - frag_pos);
-                        float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-                        vec3 pointDiffuse = pointDiff * pointLightColor * frag_color.rgb * attenuation;
+                        // Dynamic point lights from fixtures
+                        vec3 dynamicDiffuse = vec3(0.0);
+                        vec3 dynamicSpecular = vec3(0.0);
                         
-                        vec3 pointHalfway = normalize(pointLightDir + viewDir);
-                        float pointSpec = pow(max(dot(norm, pointHalfway), 0.0), shininess);
-                        vec3 pointSpecular = specularStrength * pointSpec * pointLightColor * attenuation;
+                        for (int i = 0; i < numLights && i < MAX_LIGHTS; i++) {
+                            vec3 lightPos = lightPositions[i];
+                            vec3 lightColor = lightColors[i].rgb;
+                            float intensity = lightColors[i].a;
+                            
+                            // Skip if intensity is too low
+                            if (intensity < 0.01) continue;
+                            
+                            vec3 lightDir = normalize(lightPos - frag_pos);
+                            float distance = length(lightPos - frag_pos);
+                            
+                            // Attenuation - slightly stronger falloff for more dramatic lighting
+                            float attenuation = intensity / (1.0 + 0.15 * distance + 0.05 * distance * distance);
+                            
+                            // Diffuse
+                            float lightDiff = max(dot(norm, lightDir), 0.0);
+                            dynamicDiffuse += lightDiff * lightColor * frag_color.rgb * attenuation;
+                            
+                            // Specular
+                            vec3 lightHalfway = normalize(lightDir + viewDir);
+                            float lightSpec = pow(max(dot(norm, lightHalfway), 0.0), shininess);
+                            dynamicSpecular += specularStrength * lightSpec * lightColor * attenuation;
+                        }
                         
-                        // Combine lighting
-                        vec3 result = ambient + diffuse + specular + pointDiffuse + pointSpecular;
-                        color = vec4(result, frag_color.a);  // Preserve alpha from input
+                        // Combine all lighting
+                        vec3 result = ambient + diffuse + specular + dynamicDiffuse + dynamicSpecular;
+                        color = vec4(result, frag_color.a);
                     }
                 }
             """,
@@ -580,10 +606,58 @@ class Room3DRenderer:
         self.ambient_light_color = np.array(color, dtype=np.float32) * 3.0
         self.ambient_light_color = np.clip(self.ambient_light_color, 0.0, 1.0)
 
+    def set_dynamic_lights(
+        self,
+        lights: list[
+            tuple[tuple[float, float, float], tuple[float, float, float, float]]
+        ],
+    ):
+        """Set dynamic point lights from fixtures
+
+        Args:
+            lights: List of (position, color_rgba) tuples where:
+                - position is (x, y, z) in world space
+                - color_rgba is (r, g, b, intensity) where intensity is 0-1
+        """
+        self.dynamic_lights = lights
+
     def update_camera(self, time: float):
         """Update camera - no longer auto-rotates, controlled by mouse"""
         # Camera angle is now controlled by mouse drag
         pass
+
+    def _set_dynamic_lights_uniforms(self):
+        """Set dynamic light uniforms in the shader"""
+        num_lights = min(len(self.dynamic_lights), 64)  # Max 64 lights
+
+        if num_lights > 0:
+            # Prepare arrays for positions and colors
+            positions = []
+            colors = []
+
+            for i in range(num_lights):
+                pos, color_rgba = self.dynamic_lights[i]
+                positions.extend(pos)
+                colors.extend(color_rgba)
+
+            # Pad with zeros if needed (shader expects arrays of size MAX_LIGHTS)
+            for i in range(num_lights, 64):
+                positions.extend([0.0, 0.0, 0.0])
+                colors.extend([0.0, 0.0, 0.0, 0.0])
+
+            # Set uniforms
+            self.shader["numLights"] = num_lights
+
+            # Set arrays as flat arrays
+            positions_array = np.array(positions, dtype=np.float32)
+            colors_array = np.array(colors, dtype=np.float32)
+
+            # Write the entire array at once using tuple conversion
+            self.shader["lightPositions"].write(positions_array.tobytes())
+            self.shader["lightColors"].write(colors_array.tobytes())
+        else:
+            # No lights
+            self.shader["numLights"] = 0
 
     # Transform stack methods
 
@@ -765,8 +839,6 @@ class Room3DRenderer:
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["dirLightDir"] = tuple(self.directional_light_dir)
         self.shader["dirLightColor"] = tuple(self.directional_light_color)
-        self.shader["pointLightPos"] = tuple(self.point_light_pos)
-        self.shader["pointLightColor"] = tuple(self.point_light_color)
         self.shader["ambientColor"] = tuple(self.ambient_light_color)
         self.shader["ambientStrength"] = self.ambient_strength
         self.shader["specularStrength"] = (
@@ -774,6 +846,9 @@ class Room3DRenderer:
         )  # Lower specular for floor
         self.shader["shininess"] = self.shininess
         self.shader["emission"] = 0.0  # Floor uses normal lighting
+
+        # Set dynamic lights
+        self._set_dynamic_lights_uniforms()
 
         # Render dark floor quad
         self.floor_vao.render(mgl.TRIANGLES)
@@ -940,13 +1015,14 @@ class Room3DRenderer:
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["dirLightDir"] = tuple(self.directional_light_dir)
         self.shader["dirLightColor"] = tuple(self.directional_light_color)
-        self.shader["pointLightPos"] = tuple(self.point_light_pos)
-        self.shader["pointLightColor"] = tuple(self.point_light_color)
         self.shader["ambientColor"] = tuple(self.ambient_light_color)
         self.shader["ambientStrength"] = self.ambient_strength
         self.shader["specularStrength"] = self.specular_strength
         self.shader["shininess"] = self.shininess
         self.shader["emission"] = 0.0  # Fixture bodies use normal lighting
+
+        # Set dynamic lights
+        self._set_dynamic_lights_uniforms()
 
         # Render cube (no cleanup - buffers are cached)
         vao.render(mgl.TRIANGLES)
@@ -1100,13 +1176,14 @@ class Room3DRenderer:
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["dirLightDir"] = tuple(self.directional_light_dir)
         self.shader["dirLightColor"] = tuple(self.directional_light_color)
-        self.shader["pointLightPos"] = tuple(self.point_light_pos)
-        self.shader["pointLightColor"] = tuple(self.point_light_color)
         self.shader["ambientColor"] = tuple(self.ambient_light_color)
         self.shader["ambientStrength"] = self.ambient_strength
         self.shader["specularStrength"] = self.specular_strength
         self.shader["shininess"] = self.shininess
         self.shader["emission"] = 0.0  # Rectangular boxes use normal lighting
+
+        # Set dynamic lights
+        self._set_dynamic_lights_uniforms()
 
         # Render box
         vao.render(mgl.TRIANGLES)

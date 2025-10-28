@@ -15,6 +15,7 @@ from parrot.patch_bay import venues
 from parrot.utils.colour import Color
 from parrot.state import State
 from parrot.fixtures.position_manager import FixturePositionManager
+from parrot.vj.vj_director import VJDirector
 
 # Create temp directory to isolate state.json
 temp_dir = tempfile.mkdtemp()
@@ -32,10 +33,14 @@ try:
     # Create position manager
     position_manager = FixturePositionManager(state)
 
+    # Create VJ director
+    vj_director = VJDirector(state)
+
     # Create renderer
     renderer = FixtureVisualization(
         state=state,
         position_manager=position_manager,
+        vj_director=vj_director,
         width=1920,
         height=1080,
     )

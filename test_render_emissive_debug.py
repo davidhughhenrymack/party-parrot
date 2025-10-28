@@ -10,6 +10,7 @@ from parrot.patch_bay import venues
 from parrot.state import State
 from parrot.utils.colour import Color
 from parrot.fixtures.position_manager import FixturePositionManager
+from parrot.vj.vj_director import VJDirector
 
 # Create context
 try:
@@ -22,10 +23,14 @@ state = State()
 state.set_venue(venues.mtn_lotus)
 position_manager = FixturePositionManager(state)
 
+# Create VJ director
+vj_director = VJDirector(state)
+
 # Create renderer
 renderer = FixtureVisualization(
     state=state,
     position_manager=position_manager,
+    vj_director=vj_director,
     width=1920,
     height=1080,
     canvas_width=1200,
