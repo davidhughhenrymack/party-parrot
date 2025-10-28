@@ -98,6 +98,10 @@ class Room3DRenderer:
         self._text_font: Optional[ImageFont.ImageFont] = None
         self._load_text_font()
 
+        # DJ silhouette texture
+        self._dj_texture: Optional[mgl.Texture] = None
+        self._load_dj_texture()
+
         # Geometry cache for reusable shapes
         self._cube_cache: dict[
             float, tuple[mgl.Buffer, mgl.Buffer, mgl.Buffer, mgl.VertexArray, int]
@@ -258,10 +262,19 @@ class Room3DRenderer:
                 out vec4 color;
                 
                 uniform sampler2D billboard_texture;
+                uniform bool use_alpha;  // Whether to use texture alpha channel
                 
                 void main() {
-                    // Sample texture and output directly (emissive)
-                    color = vec4(texture(billboard_texture, uv).rgb, 1.0);
+                    vec4 texColor = texture(billboard_texture, uv);
+                    if (use_alpha) {
+                        // Use texture alpha for transparency
+                        color = texColor;
+                        // Discard fully transparent pixels
+                        if (color.a < 0.01) discard;
+                    } else {
+                        // Ignore alpha, output as opaque
+                        color = vec4(texColor.rgb, 1.0);
+                    }
                 }
             """,
         )
@@ -327,6 +340,31 @@ class Room3DRenderer:
             except Exception:
                 # Final fallback
                 self._text_font = ImageFont.load_default()
+
+    def _load_dj_texture(self):
+        """Load DJ silhouette texture from assets"""
+        import os
+        from PIL import Image
+
+        try:
+            # Get the project root (3 levels up from this file)
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(
+                os.path.dirname(os.path.dirname(current_dir))
+            )
+            dj_image_path = os.path.join(project_root, "assets", "dj.png")
+
+            if os.path.exists(dj_image_path):
+                img = Image.open(dj_image_path).convert("RGBA")
+                img_data = img.tobytes()
+
+                self._dj_texture = self.ctx.texture(
+                    size=img.size, components=4, data=img_data  # RGBA
+                )
+                self._dj_texture.build_mipmaps()
+        except Exception as e:
+            print(f"Warning: Could not load DJ texture: {e}")
+            self._dj_texture = None
 
     def _setup_floor_geometry(self):
         """Create floor grid geometry with normals"""
@@ -654,6 +692,57 @@ class Room3DRenderer:
         finally:
             # Pop rotation from stack
             self.rotation_stack.pop()
+
+    def render_dj_booth(self):
+        """Render DJ table and figure in front of video wall
+
+        Coordinate system:
+        - X: left-right (0 = center)
+        - Y: up-down (0 = floor)
+        - Z: forward-back depth (negative = toward back wall, wall is at Z=-4.5)
+        """
+        # DJ table dimensions (6ft wide x 4ft tall x 2ft deep)
+        table_width = 2.0
+        table_height = 1.2
+        table_depth = 0.6
+
+        # Position in front of video wall (wall at Z=-4.5)
+        # Table sits on floor, centered, in front of the wall
+        table_x = 0.0  # Centered left-right
+        table_y = 0.0  # Height: bottom edge at floor (y=0)
+        table_z = -3.5  # Depth: in front of wall, visible from camera
+
+        # Render DJ table (dark wood color)
+        table_color = (0.15, 0.1, 0.08)  # Dark wood brown
+        self.render_rectangular_box(
+            table_x,
+            table_y,
+            table_z,
+            table_color,
+            table_width,
+            table_height,
+            table_depth,
+        )
+
+        # Render DJ silhouette billboard behind the table
+        if self._dj_texture:
+            # DJ billboard dimensions (keep aspect ratio from 600x600 image)
+            dj_width = 1.5
+            dj_height = 1.5
+
+            # Position: centered horizontally, bottom edge slightly above table
+            dj_x = table_x  # Same x as table (centered)
+            dj_y = table_height + (dj_height / 2.0) - 0.2  # Lower, closer to table
+            dj_z = table_z - (table_depth / 2.0)  # At back edge of table
+
+            self.render_billboard(
+                texture=self._dj_texture,
+                position=(dj_x, dj_y, dj_z),
+                width=dj_width,
+                height=dj_height,
+                normal=(0.0, 0.0, 1.0),  # Face forward toward audience
+                use_alpha=True,  # Use transparency from texture
+            )
 
     def render_floor(self):
         """Render the floor quad and grid lines with lighting"""
@@ -1826,6 +1915,7 @@ class Room3DRenderer:
         width: float,
         height: float,
         normal: tuple[float, float, float] = (0.0, 0.0, 1.0),
+        use_alpha: bool = False,
     ):
         """Render a textured billboard (like a screen) in 3D space
 
@@ -1835,6 +1925,7 @@ class Room3DRenderer:
             width: Width of the billboard
             height: Height of the billboard
             normal: Normal direction the billboard faces (default: +Z, toward audience)
+            use_alpha: Whether to use the texture's alpha channel for transparency
         """
         x, y, z = position
         nx, ny, nz = normal
@@ -1935,6 +2026,7 @@ class Room3DRenderer:
         mvp_with_model = self._get_mvp_matrix() @ model
 
         self.billboard_shader["mvp"] = mvp_with_model.T.flatten()
+        self.billboard_shader["use_alpha"] = use_alpha
 
         # Bind texture
         texture.use(0)

@@ -302,6 +302,9 @@ class FixtureVisualization(GenerativeEffectBase):
         # Render floor grid
         self.room_renderer.render_floor()
 
+        # Render DJ booth (table and figure)
+        self.room_renderer.render_dj_booth()
+
         # Render VJ output on billboard at back of room (upstage behind DJ)
         if vj_texture:
             # Large billboard at back of room, floor to ceiling
