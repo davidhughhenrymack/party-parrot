@@ -1,0 +1,355 @@
+{
+    "chauvet-intimidator-160@10:default": {
+        "x": 50,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@20:default": {
+        "x": 130,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@30:default": {
+        "x": 210,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@40:default": {
+        "x": 290,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@50:default": {
+        "x": 370,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@60:default": {
+        "x": 450,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@70:default": {
+        "x": 530,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@80:default": {
+        "x": 610,
+        "y": 380,
+        "z": 7.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@100:default": {
+        "x": 50,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@110:default": {
+        "x": 130,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@120:default": {
+        "x": 210,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@130:default": {
+        "x": 290,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@140:default": {
+        "x": 370,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@150:default": {
+        "x": 450,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@160:default": {
+        "x": 530,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@170:default": {
+        "x": 610,
+        "y": 380,
+        "z": 0.5,
+        "orientation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    },
+    "chauvet-intimidator-160@200:default": {
+        "x": 120,
+        "y": 100,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@212:default": {
+        "x": 240,
+        "y": 100,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@224:default": {
+        "x": 360,
+        "y": 100,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@236:default": {
+        "x": 480,
+        "y": 100,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@248:default": {
+        "x": 120,
+        "y": 180,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@260:default": {
+        "x": 240,
+        "y": 180,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@272:default": {
+        "x": 360,
+        "y": 180,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@284:default": {
+        "x": 480,
+        "y": 180,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@296:default": {
+        "x": 120,
+        "y": 260,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@308:default": {
+        "x": 240,
+        "y": 260,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@320:default": {
+        "x": 360,
+        "y": 260,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@332:default": {
+        "x": 480,
+        "y": 260,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@344:default": {
+        "x": 120,
+        "y": 340,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@356:default": {
+        "x": 240,
+        "y": 340,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@368:default": {
+        "x": 360,
+        "y": 340,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    },
+    "chauvet-intimidator-160@380:default": {
+        "x": 480,
+        "y": 340,
+        "z": 6.5,
+        "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ]
+    }
+}
+

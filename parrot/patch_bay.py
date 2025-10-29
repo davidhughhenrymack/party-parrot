@@ -13,7 +13,9 @@ from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.uking.laser import FiveBeamLaser
 from parrot.utils.dmx_utils import Universe
 
-venues = enum.Enum("Venues", ["dmack", "mtn_lotus", "truckee_theatre", "crux_test"])
+venues = enum.Enum(
+    "Venues", ["dmack", "mtn_lotus", "truckee_theatre", "crux_test", "big"]
+)
 
 # Create manual control fixtures for each venue
 truckee_manual_fixtures = [
@@ -33,6 +35,7 @@ manual_groups = {
         ]
     ),
     venues.crux_test: None,
+    venues.big: None,
 }
 
 venue_patches = {
@@ -128,6 +131,20 @@ venue_patches = {
             [ChauvetRogueBeamR2(1), ChauvetRogueBeamR2(16)],
             "Rogue Beams",
         ),
+    ],
+    venues.big: [
+        # 8 moving lights along top of video wall (back wall, high)
+        *[
+            ChauvetSpot160_12Ch(i) for i in range(10, 90, 10)
+        ],  # 10, 20, 30, 40, 50, 60, 70, 80
+        # 8 moving lights along base of video wall (audience side, low)
+        *[
+            ChauvetSpot160_12Ch(i) for i in range(100, 180, 10)
+        ],  # 100, 110, 120, 130, 140, 150, 160, 170
+        # 4x4 grid of moving lights in ceiling (upside down, pointing down)
+        *[
+            ChauvetSpot160_12Ch(i) for i in range(200, 400, 12)
+        ],  # 200, 212, 224, 236, 248, 260, 272, 284, 296, 308, 320, 332, 344, 356, 368, 380
     ],
 }
 
