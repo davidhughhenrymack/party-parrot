@@ -257,6 +257,12 @@ class Room3DRenderer:
                 out vec4 color;
                 
                 void main() {
+                    // Discard fragments with very low alpha to prevent dark occluding beams
+                    // This prevents depth testing from rejecting objects behind fading beams
+                    if (frag_color.a < 0.01) {
+                        discard;
+                    }
+                    
                     // Pure emission - just output the color directly, no lighting
                     color = frag_color;
                 }
@@ -1876,14 +1882,15 @@ class Room3DRenderer:
         # Use additive blending so overlapping beams brighten each other
         self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE
 
-        # Disable depth writes so beams don't occlude anything behind them
-        # But keep depth testing so beams don't render in front of solid objects
+        # Disable depth testing and writes so beams don't occlude each other
+        # All beams should blend additively regardless of their relative positions
+        self.ctx.disable(mgl.DEPTH_TEST)
         self.ctx.depth_mask = False
 
         # Render cone (no cleanup - buffers are cached)
         vao.render(mgl.TRIANGLES)
 
-        # Restore state
+        # Restore state (don't restore depth test - let caller manage it)
         self.ctx.depth_mask = True
         self.ctx.disable(mgl.BLEND)
         self.ctx.disable(mgl.CULL_FACE)

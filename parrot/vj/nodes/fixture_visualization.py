@@ -503,7 +503,10 @@ class FixtureVisualization(GenerativeEffectBase):
         context.clear(0.0, 0.0, 0.0)
         # Don't clear depth - use depth from opaque pass for occlusion
 
-        # Keep depth test enabled but disable depth writes
+        # Disable depth testing entirely for beams so they blend additively
+        # Depth writes are already disabled, but we also disable depth testing
+        # so beams don't occlude each other - they should all blend additively
+        context.disable(context.DEPTH_TEST)
         context.depth_mask = False
 
         # Enable additive blending for emissive materials
@@ -518,7 +521,6 @@ class FixtureVisualization(GenerativeEffectBase):
         # Restore depth writes
         context.depth_mask = True
         context.disable(context.BLEND)
-        context.disable(context.DEPTH_TEST)
 
         # === PASS 3: Apply Kawase blur to create bloom ===
         self._apply_kawase_blur(context)
