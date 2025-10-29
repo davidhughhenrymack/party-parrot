@@ -60,7 +60,7 @@ class MovingHeadRenderer(FixtureRenderer):
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
                 body_size = self.cube_size * 0.4
-                bulb_radius = body_size * 0.4
+                bulb_radius = body_size * 0.3  # Increased size for visibility
                 bulb_distance = body_size * 0.8
                 bulb_color = self.get_color()
                 dimmer = self.get_effective_dimmer(frame)

@@ -154,8 +154,8 @@ class MotionstripRenderer(FixtureRenderer):
                             bulb_y_local = body_height / 2
                             bulb_z_local = bulb_forward_distance
 
-                            # Cap alpha at 0.8 maximum - use same alpha for bulb and beam for consistency
-                            capped_alpha = min(effective_alpha * 0.4, 0.8)
+                            # Increased alpha for better visibility
+                            capped_alpha = min(effective_alpha * 0.8, 1.0)
 
                             # Render bulb circle (pure emission, no lighting)
                             self.room_renderer.render_emission_circle(

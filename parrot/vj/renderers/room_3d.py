@@ -121,7 +121,7 @@ class Room3DRenderer:
         ] = {}  # Circles for emission shader (no normals)
         self._cone_cache: dict[
             tuple[float, float, int],
-            tuple[mgl.Buffer, mgl.Buffer, mgl.VertexArray, int],
+            tuple[mgl.Buffer, mgl.Buffer, mgl.VertexArray, int, np.ndarray],
         ] = {}
 
     def _setup_shaders(self):
@@ -1723,6 +1723,9 @@ class Room3DRenderer:
             reserve=num_vertices * 4 * 4
         )  # 4 floats (RGBA) per vertex
 
+        # Extract z-coordinates for gradient calculation (normalized 0.0 to 1.0)
+        vertex_z_coords = vertices_array[2::3].copy()  # Extract z-coordinates
+
         vao = self.ctx.vertex_array(
             self.emission_shader,
             [
@@ -1731,7 +1734,7 @@ class Room3DRenderer:
             ],
         )
 
-        return vbo, color_vbo, vao, num_vertices
+        return vbo, color_vbo, vao, num_vertices, vertex_z_coords
 
     def render_cone_beam(
         self,
@@ -1772,12 +1775,43 @@ class Room3DRenderer:
                 start_radius, end_radius, segments
             )
 
-        vbo, color_vbo, vao, num_vertices = self._cone_cache[cache_key]
+        vbo, color_vbo, vao, num_vertices, vertex_z_coords = self._cone_cache[cache_key]
 
-        # Update color buffer with current color and alpha
+        # Update color buffer with gradient colors based on vertex position
+        # z=0.0 is start (full brightness/alpha), z=1.0 is end (reduced brightness/alpha)
         cone_colors = []
-        for _ in range(num_vertices):
-            cone_colors.extend([color[0], color[1], color[2], alpha])
+        for i in range(num_vertices):
+            z_normalized = vertex_z_coords[i]  # 0.0 at start, 1.0 at end
+            
+            # Interpolate brightness: start=1.0, end=0.3
+            brightness_factor = 1.0 - z_normalized * 0.7  # 1.0 to 0.3
+            
+            # Interpolate alpha: start=alpha, end=alpha*0.1
+            alpha_factor = 1.0 - z_normalized * 0.9  # 1.0 to 0.1
+            
+            # White clipping at source: mix towards white only in first third of beam
+            # First third (z=0.0 to z=0.33): white_clip fades from 0.8 to 0.0
+            # Rest of beam (z>0.33): no white clipping
+            if z_normalized < 0.33:
+                # Fade from 0.8 at start to 0.0 at 1/3 point
+                white_clip_amount = (1.0 - z_normalized / 0.33) * 0.8
+            else:
+                white_clip_amount = 0.0
+            
+            # Apply brightness to color first
+            r = color[0] * brightness_factor
+            g = color[1] * brightness_factor
+            b = color[2] * brightness_factor
+            
+            # Mix towards white at source (clipping effect)
+            r = r + (1.0 - r) * white_clip_amount
+            g = g + (1.0 - g) * white_clip_amount
+            b = b + (1.0 - b) * white_clip_amount
+            
+            # Apply alpha gradient
+            vertex_alpha = alpha * alpha_factor
+            
+            cone_colors.extend([r, g, b, vertex_alpha])
         colors_array = np.array(cone_colors, dtype=np.float32)
         color_vbo.write(colors_array.tobytes())
 
@@ -1848,23 +1882,6 @@ class Room3DRenderer:
 
         # Render cone (no cleanup - buffers are cached)
         vao.render(mgl.TRIANGLES)
-
-        # Add end cap circle at the far end of the beam
-        # Calculate end position
-        end_x = start_x + dx * length
-        end_y = start_y + dy * length
-        end_z = start_z + dz * length
-
-        # Render circle cap at the end, facing BACKWARD (toward viewer/light source)
-        # This ensures it's visible when looking down into the cone
-        self.render_emission_circle(
-            position=(end_x, end_y, end_z),
-            color=color,
-            radius=end_radius,
-            normal=(-dx, -dy, -dz),  # Face backward toward the light source
-            alpha=alpha,
-            segments=segments,
-        )
 
         # Restore state
         self.ctx.depth_mask = True
@@ -2168,7 +2185,7 @@ class Room3DRenderer:
             vao.release()
         self._circle_cache.clear()
 
-        for vbo, color_vbo, vao, _ in self._cone_cache.values():
+        for vbo, color_vbo, vao, _, _ in self._cone_cache.values():
             vbo.release()
             color_vbo.release()
             vao.release()

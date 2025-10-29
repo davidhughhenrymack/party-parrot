@@ -11,8 +11,14 @@ from parrot.vj.nodes.canvas_effect_base import GenerativeEffectBase
 from parrot.patch_bay import venue_patches, get_manual_group
 from parrot.fixtures.base import FixtureBase, FixtureGroup
 from parrot.vj.renderers.factory import create_renderer
-from parrot.vj.renderers.base import FixtureRenderer
+from parrot.vj.renderers.base import (
+    FixtureRenderer,
+    quaternion_from_axis_angle,
+    quaternion_rotate_vector,
+)
 from parrot.vj.renderers.room_3d import Room3DRenderer
+from parrot.vj.renderers.motionstrip import MotionstripRenderer
+from parrot.vj.renderers.laser import LaserRenderer
 from parrot.state import State
 from parrot.fixtures.position_manager import FixturePositionManager
 from parrot.vj.shaders import kawase_blur, composite
@@ -20,6 +26,7 @@ from parrot.vj.vj_director import VJDirector
 from typing import Optional
 import moderngl as mgl
 import numpy as np
+import math
 
 
 @beartype
@@ -66,7 +73,9 @@ class FixtureVisualization(GenerativeEffectBase):
         self.depth_texture: Optional[mgl.Texture] = None
 
         # Bloom effect parameters
-        self.bloom_alpha = 1.2  # Bloom contribution (increased for visibility)
+        self.bloom_alpha = (
+            4.0  # Bloom contribution (increased for visibility, emissive removed)
+        )
         self.kawase_iterations = 5  # Number of blur passes
 
         # Additional framebuffers for multi-pass rendering
@@ -210,6 +219,13 @@ class FixtureVisualization(GenerativeEffectBase):
         canvas_size = (float(self.canvas_width), float(self.canvas_height))
 
         for renderer in self.renderers:
+            # Special handling for motionstrip fixtures - each bulb is a separate light source
+            if isinstance(renderer, MotionstripRenderer):
+                lights.extend(
+                    self._collect_motionstrip_lights(renderer, frame, canvas_size)
+                )
+                continue
+
             # Get effective dimmer (includes strobe effect)
             dimmer = renderer.get_effective_dimmer(frame)
 
@@ -225,6 +241,105 @@ class FixtureVisualization(GenerativeEffectBase):
 
             # Create light entry: position, (r, g, b, intensity)
             lights.append((world_pos, (color[0], color[1], color[2], dimmer)))
+
+        return lights
+
+    def _collect_motionstrip_lights(
+        self,
+        renderer: MotionstripRenderer,
+        frame: Frame,
+        canvas_size: tuple[float, float],
+    ) -> list[tuple[tuple[float, float, float], tuple[float, float, float, float]]]:
+        """Collect light data from each bulb in a motionstrip fixture
+
+        Returns:
+            List of (position, color_rgba) tuples for each bulb
+        """
+        lights = []
+        fixture = renderer.fixture
+
+        # Get fixture base position in world space
+        fixture_world_pos = renderer.get_3d_position(canvas_size)
+
+        # Calculate pan rotation (same logic as MotionstripRenderer)
+        pan_rotation_deg = renderer._get_pan_rotation()
+        pan_rotation_rad = math.radians(pan_rotation_deg)
+        x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        pan_quaternion = quaternion_from_axis_angle(x_axis, pan_rotation_rad)
+
+        # Motionstrip geometry parameters (matching render_emissive)
+        body_height = renderer.cube_size * 0.2
+        body_depth = renderer.cube_size * 0.3
+        bulb_spacing = 0.22
+        num_bulbs = renderer._num_bulbs
+        start_offset_x = -(num_bulbs - 1) * bulb_spacing / 2
+        bulb_forward_distance = body_depth * 0.7
+
+        # Get all bulbs from fixture
+        bulbs = fixture.get_bulbs()
+
+        for i, bulb in enumerate(bulbs):
+            try:
+                # Get bulb color
+                bulb_color_obj = bulb.get_color()
+                if hasattr(bulb_color_obj, "red"):
+                    r, g, b = (
+                        bulb_color_obj.red,
+                        bulb_color_obj.green,
+                        bulb_color_obj.blue,
+                    )
+                elif hasattr(bulb_color_obj, "r"):
+                    r, g, b = (
+                        bulb_color_obj.r / 255.0,
+                        bulb_color_obj.g / 255.0,
+                        bulb_color_obj.b / 255.0,
+                    )
+                else:
+                    r, g, b = (1.0, 1.0, 1.0)
+
+                # Get bulb dimmer
+                bulb_dimmer = bulb.get_dimmer() / 255.0
+                fixture_dimmer = renderer.get_dimmer()
+                effective_intensity = bulb_dimmer * fixture_dimmer
+
+                # Skip if bulb is off or very dim
+                if effective_intensity < 0.01:
+                    continue
+
+                # Calculate bulb position in local space (matching render_emissive)
+                bulb_x_local = start_offset_x + i * bulb_spacing
+                bulb_y_local = body_height / 2
+                bulb_z_local = bulb_forward_distance
+                bulb_local_pos = np.array(
+                    [bulb_x_local, bulb_y_local, bulb_z_local], dtype=np.float32
+                )
+
+                # Transform to world space:
+                # 1. Apply pan rotation (around X-axis)
+                # 2. Apply fixture orientation
+                # 3. Add fixture world position
+
+                # Apply pan rotation
+                bulb_pos_rotated = quaternion_rotate_vector(
+                    pan_quaternion, bulb_local_pos
+                )
+
+                # Apply fixture orientation
+                bulb_pos_oriented = quaternion_rotate_vector(
+                    renderer.orientation, bulb_pos_rotated
+                )
+
+                # Add fixture world position
+                bulb_world_pos = (
+                    fixture_world_pos[0] + bulb_pos_oriented[0],
+                    fixture_world_pos[1] + bulb_pos_oriented[1],
+                    fixture_world_pos[2] + bulb_pos_oriented[2],
+                )
+
+                # Create light entry: position, (r, g, b, intensity)
+                lights.append((bulb_world_pos, (r, g, b, effective_intensity)))
+            except Exception:
+                pass  # Skip bulbs that can't be processed
 
         return lights
 
@@ -383,7 +498,7 @@ class FixtureVisualization(GenerativeEffectBase):
         for renderer in self.renderers:
             renderer.render_opaque(context, canvas_size, frame)
 
-        # === PASS 2: Render emissive materials (bulbs and beams) ===
+        # === PASS 2: Render emissive materials (bulbs and beams, excluding lasers) ===
         self.emissive_framebuffer.use()
         context.clear(0.0, 0.0, 0.0)
         # Don't clear depth - use depth from opaque pass for occlusion
@@ -395,9 +510,10 @@ class FixtureVisualization(GenerativeEffectBase):
         context.enable(context.BLEND)
         context.blend_func = context.SRC_ALPHA, context.ONE
 
-        # Render emissive materials (bulbs and beams)
+        # Render emissive materials (bulbs and beams, but skip lasers - they render sharp)
         for renderer in self.renderers:
-            renderer.render_emissive(context, canvas_size, frame)
+            if not isinstance(renderer, LaserRenderer):
+                renderer.render_emissive(context, canvas_size, frame)
 
         # Restore depth writes
         context.depth_mask = True
@@ -409,6 +525,25 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # === PASS 4: Composite final image ===
         self._composite_final_image(context)
+
+        # === PASS 5: Render sharp laser beams directly to final framebuffer (no blur) ===
+        self.framebuffer.use()
+        # Re-enable depth test and blending for lasers
+        context.enable(context.DEPTH_TEST)
+        context.depth_func = "<"
+        context.depth_mask = False  # Don't write depth for lasers
+        context.enable(context.BLEND)
+        context.blend_func = context.SRC_ALPHA, context.ONE
+
+        # Render lasers directly to final framebuffer (sharp, no blur)
+        for renderer in self.renderers:
+            if isinstance(renderer, LaserRenderer):
+                renderer.render_emissive(context, canvas_size, frame)
+
+        # Restore state
+        context.depth_mask = True
+        context.disable(context.BLEND)
+        context.disable(context.DEPTH_TEST)
 
         return self.framebuffer
 
@@ -434,9 +569,9 @@ class FixtureVisualization(GenerativeEffectBase):
             # Set uniforms
             self.kawase_shader["inputTexture"] = 0
             self.kawase_shader["texelSize"] = texel_size
-            # Offset increases with each iteration for wider blur spread
-            # Larger multiplier = wider, softer bloom
-            self.kawase_shader["offset"] = 3.0 + i * 5.0
+            # Offset increases more gradually with each iteration for smoother blur
+            # Start smaller and increase more gradually to avoid streaks
+            self.kawase_shader["offset"] = 1.0 + i * 2.0
 
             # Render fullscreen quad
             self.kawase_quad_vao.render(mgl.TRIANGLE_STRIP)
@@ -461,15 +596,13 @@ class FixtureVisualization(GenerativeEffectBase):
         self.framebuffer.use()
         context.clear(0.0, 0.0, 0.0)
 
-        # Bind all three textures
+        # Bind textures for composite
         self.opaque_texture.use(0)  # Opaque (Blinn-Phong)
-        self.emissive_texture.use(1)  # Emissive
-        self.bloom_texture.use(2)  # Bloom
+        self.bloom_texture.use(1)  # Bloom
 
         # Set uniforms
         self.composite_shader["opaqueTexture"] = 0
-        self.composite_shader["emissiveTexture"] = 1
-        self.composite_shader["bloomTexture"] = 2
+        self.composite_shader["bloomTexture"] = 1
         self.composite_shader["bloomAlpha"] = self.bloom_alpha
 
         # Render fullscreen quad

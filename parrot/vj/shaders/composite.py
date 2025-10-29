@@ -38,11 +38,10 @@ def get_fragment_shader() -> str:
     
     void main() {
         vec3 opaque = texture(opaqueTexture, uv).rgb;
-        vec3 emissive = texture(emissiveTexture, uv).rgb;
         vec3 bloom = texture(bloomTexture, uv).rgb;
         
-        // Composite: opaque + emissive + bloom contribution
-        vec3 final = opaque + emissive + (bloom * bloomAlpha);
+        // Composite: opaque + bloom contribution (no emissive - only bloom makes it to final)
+        vec3 final = opaque + (bloom * bloomAlpha);
         
         fragColor = vec4(final, 1.0);
     }

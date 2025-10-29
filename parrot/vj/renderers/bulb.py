@@ -53,13 +53,13 @@ class BulbRenderer(FixtureRenderer):
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
                 body_size = self.cube_size * 0.6
-                bulb_radius = body_size * 0.5
+                bulb_radius = body_size * 0.3  # Increased size for visibility
                 bulb_distance = body_size * 0.7
                 bulb_color = self.get_color()
                 dimmer = self.get_effective_dimmer(frame)
 
-                # Cap alpha at 0.8 maximum - use same alpha for bulb and beam for consistency
-                capped_alpha = min(dimmer * 0.4, 0.8)
+                # Increased alpha for better visibility
+                capped_alpha = min(dimmer * 0.8, 1.0)
 
                 # Render colored bulb circle (pure emission, no lighting)
                 self.room_renderer.render_emission_circle(
