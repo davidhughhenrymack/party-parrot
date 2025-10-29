@@ -36,11 +36,11 @@ class Room3DRenderer:
         self.stage_depth = 3.0  # How deep the stage is
 
         # Camera setup - looking from audience towards stage
-        self.camera_distance = 10  # Distance from center
-        self.camera_height = 2.0  # Height above floor
+        self.camera_distance = 6.5  # Distance from center (closer for more zoom)
+        self.camera_height = 0.8  # Height above floor (lower, audience perspective)
         self.camera_angle = 0.0  # Current rotation angle (radians) - horizontal
         self.camera_tilt = (
-            0.3  # Tilt angle (radians) - vertical (0 = level, positive = looking down)
+            -0.05  # Tilt angle (radians) - slightly negative = looking slightly up (audience viewpoint)
         )
         self.camera_rotation_sensitivity = 0.005  # Radians per pixel of mouse drag
         self.camera_tilt_sensitivity = 0.005  # Radians per pixel of vertical drag
@@ -498,8 +498,8 @@ class Room3DRenderer:
 
     def _get_mvp_matrix(self):
         """Calculate Model-View-Projection matrix for camera perspective"""
-        # Use proper perspective projection
-        fov = 60.0  # Field of view in degrees
+        # Use proper perspective projection with narrower FOV for more zoom
+        fov = 52.0  # Field of view in degrees (reduced from 60 for more zoom)
         aspect = self.width / self.height  # Aspect ratio
         near = 0.1
         far = 100.0
@@ -531,7 +531,7 @@ class Room3DRenderer:
         # Camera position
         eye = np.array([cam_x, cam_y, cam_z])
         # Look at center of room (slightly above floor for better view)
-        center = np.array([0.0, self.camera_height * 0.5, 0.0])
+        center = np.array([0.0, 1.5, 0.0])  # Look slightly higher for audience perspective
         # Up vector
         up = np.array([0.0, 1.0, 0.0])
 
