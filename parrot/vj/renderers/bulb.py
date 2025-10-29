@@ -29,13 +29,16 @@ class BulbRenderer(FixtureRenderer):
         # Render with local transforms
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
-                # Render gray body cube (small, compact fixture)
-                body_size = self.cube_size * 0.6
+                # Render gray body as rectangular box (shallow depth, non-cubic)
+                body_size = self.cube_size * 0.4
+                body_width = body_size
+                body_height = body_size
+                body_depth = body_size * 0.3  # Shallow depth - shorter behind bulb/beam
                 body_color = (0.3, 0.3, 0.3)  # Dark gray
 
-                # Body sits on floor (y=0 to y=body_size)
-                self.room_renderer.render_cube(
-                    (0.0, body_size / 2, 0.0), body_color, body_size
+                # Body sits on floor, centered
+                self.room_renderer.render_rectangular_box(
+                    0.0, body_height / 2, 0.0, body_color, body_width, body_height, body_depth
                 )
 
         # Render DMX address
@@ -52,7 +55,7 @@ class BulbRenderer(FixtureRenderer):
         # Render with local transforms
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
-                body_size = self.cube_size * 0.6
+                body_size = self.cube_size * 0.4
                 bulb_radius = body_size * 0.3  # Increased size for visibility
                 bulb_distance = body_size * 0.7
                 bulb_color = self.get_color()
