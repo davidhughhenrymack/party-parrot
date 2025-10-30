@@ -114,6 +114,31 @@ class Director:
             fixture_str = fixtures[0]
         return fixture_str
 
+    def print_lighting_tree(self, context: str = ""):
+        """Print a tree representation of the lighting interpreters"""
+        result = "DMX Lighting Tree"
+        if context:
+            result += f" ({context})"
+        result += ":\n"
+        
+        if not hasattr(self, 'interpreters') or not self.interpreters:
+            result += "└── (no interpreters)\n"
+            return result
+        
+        result += "└── LightingInterpreters\n"
+        
+        for idx, interpreter in enumerate(self.interpreters):
+            is_last = idx == len(self.interpreters) - 1
+            connector = "└── " if is_last else "├── "
+            indent = "    " if is_last else "│   "
+            
+            fixture_str = self.format_fixture_names(interpreter.group)
+            interpreter_str = str(interpreter).replace(Fore.YELLOW, "").replace(Style.RESET_ALL, "")
+            
+            result += f"{indent}{connector}{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
+        
+        return result
+
     def generate_interpreters(self):
         """Generate interpreters for lighting only (does not affect VJ)"""
         self.interpreters: List[InterpreterBase] = [
@@ -134,14 +159,7 @@ class Director:
             for idx, group in enumerate(self.fixture_groups)
         ]
 
-        print(f"Generated interpretation for {self.state.mode}:")
-        for i in self.interpreters:
-            fixture_str = self.format_fixture_names(i.group)
-            print(
-                f"{Fore.BLUE}{fixture_str} {Style.RESET_ALL}{str(i)}{Style.RESET_ALL}"
-            )
-
-        print()
+        print(self.print_lighting_tree(f"after initialization to {self.state.mode.name}"))
 
     def generate_all(self):
         """Generate both lighting interpreters and VJ visuals"""
@@ -186,12 +204,6 @@ class Director:
             ),
         )
 
-        fixture_str = self.format_fixture_names(eviction_group)
-        print(f"Shifted interpretation for {self.state.mode}:{Style.RESET_ALL}")
-        print(
-            f"{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {str(self.interpreters[eviction_index])}{Style.RESET_ALL}"
-        )
-
     def ensure_each_signal_is_enabled(self):
         """Makes a list of every interpreter that is a SignalSwitch. Then for each signal they handle, ensures
         at least one interpreter handles it. If not, a randomly selected SignalSwitch has the un-handled signal enabled.
@@ -231,18 +243,13 @@ class Director:
             for idx, group in enumerate(self.fixture_groups)
         ]
 
-        print(f"Shifted lighting for {self.state.mode}:")
-        for i in self.interpreters:
-            fixture_str = self.format_fixture_names(i.group)
-            print(
-                f"{Fore.BLUE}{fixture_str} {Style.RESET_ALL}{str(i)}{Style.RESET_ALL}"
-            )
-        print()
-
         self.ensure_each_signal_is_enabled()
 
         self.last_shift_time = time.time()
         self.shift_count += 1
+
+        # Print the tree structure after shift
+        print(self.print_lighting_tree(f"after shift #{self.shift_count} to {self.state.mode.name}"))
 
     def shift_vj_only(self):
         """Full shift of VJ visuals only (no lighting changes) - complete regeneration"""
@@ -261,6 +268,9 @@ class Director:
 
         self.last_shift_time = time.time()
         self.shift_count += 1
+
+        # Print the tree structure after shift
+        print(self.print_lighting_tree(f"after shift #{self.shift_count} to {self.state.mode.name}"))
 
     def step(self, frame: Frame):
         self.last_frame = frame
@@ -310,3 +320,4 @@ class Director:
         print(f"mode changed to: {mode.name}")
         # Regenerate lighting interpreters only (VJ is independent)
         self.generate_interpreters()
+        print(self.print_lighting_tree(f"after mode change to {mode.name}"))
