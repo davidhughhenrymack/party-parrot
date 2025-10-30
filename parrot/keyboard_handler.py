@@ -34,8 +34,8 @@ class KeyboardHandler:
         self.vj_modes = list(VJMode)
 
         # Get list of lighting modes ordered from lowest to highest intensity
-        # blackout (lowest) -> chill -> rave (highest)
-        self.modes = [Mode.blackout, Mode.chill, Mode.rave]
+        # blackout (lowest) -> chill -> rave_gentle -> rave (highest)
+        self.modes = [Mode.blackout, Mode.chill, Mode.rave_gentle, Mode.rave]
 
         # Track manual dimmer fade state
         self.manual_fade_direction = 0  # 0=none, 1=up (M), -1=down (K)

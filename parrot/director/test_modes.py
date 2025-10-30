@@ -85,7 +85,7 @@ class TestModes(unittest.TestCase):
 
     def test_all_modes_have_interpreters(self):
         """Test that all modes return valid interpreters for common fixtures"""
-        for mode in [Mode.rave, Mode.chill, Mode.blackout]:
+        for mode in [Mode.rave, Mode.chill, Mode.rave_gentle, Mode.blackout]:
             # Test with Par fixtures
             interpreter = get_interpreter(mode, self.pars, self.args)
             self.assertIsNotNone(interpreter)
