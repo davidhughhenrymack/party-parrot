@@ -147,13 +147,22 @@ class MovingHeadRenderer(FixtureRenderer):
                     bulb_y = base_height + moving_body_height / 2 + body_size * 0.3 + body_size * 0.05
                     bulb_z = body_size * 0.6  # Position at front face (positive Z = forward)
                     
-                    # Cap alpha at 0.8 maximum - use same alpha for bulb and beam for consistency
-                    capped_alpha = min(dimmer * 0.4, 0.8)
+                    # Boost brightness and saturate towards white at high dimmer
+                    # Brightness multiplier increases with dimmer to saturate towards white
+                    brightness_multiplier = 1.0 + dimmer * 2.0  # 1.0 at 0%, up to 3.0 at 100%
+                    boosted_bulb_color = (
+                        min(bulb_color[0] * brightness_multiplier, 1.0),
+                        min(bulb_color[1] * brightness_multiplier, 1.0),
+                        min(bulb_color[2] * brightness_multiplier, 1.0),
+                    )
+                    
+                    # Increased alpha for better visibility - boost significantly
+                    capped_alpha = min(dimmer * 1.5, 1.0)
 
                     # Render bulb circle facing the beam direction (pure emission, no lighting)
                     self.room_renderer.render_emission_circle(
                         (0.0, bulb_y, bulb_z),
-                        bulb_color,
+                        boosted_bulb_color,
                         bulb_radius,
                         normal=beam_direction,
                         alpha=capped_alpha,
@@ -168,7 +177,7 @@ class MovingHeadRenderer(FixtureRenderer):
                             bulb_y,
                             bulb_z,
                             beam_direction,
-                            bulb_color,
+                            boosted_bulb_color,
                             length=beam_length,
                             start_radius=bulb_radius * 0.3,
                             end_radius=bulb_radius * 1.2,

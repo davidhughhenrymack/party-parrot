@@ -142,8 +142,11 @@ class KeyboardHandler:
             return True
 
         # Director commands
-        elif symbol == pyglet.window.key.S:
+        elif symbol == pyglet.window.key.N:
             self.director.shift_lighting_only()
+            return True
+        elif symbol == pyglet.window.key.S:
+            self.director.shift_color_scheme()
             return True
         elif symbol == pyglet.window.key.O:
             self.director.shift_vj_only()

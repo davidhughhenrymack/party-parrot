@@ -112,13 +112,22 @@ class FixtureRenderer:
             return 0.0
 
     def get_effective_dimmer(self, frame: Frame) -> float:
-        """Get effective dimmer including strobe effect"""
+        """Get effective dimmer including strobe effect
+        
+        If dimmer > 0 and strobe > 0, applies a true strobe effect (on/off toggle).
+        Otherwise returns the base dimmer value.
+        """
         dimmer = self.get_dimmer()
         strobe = self.get_strobe()
 
-        if strobe > 0.04:  # strobe > 10/255
-            # Strobe effect from legacy code
-            dimmer = dimmer * (1.0 + math.sin(frame.time * 30 * strobe * 4) / 2)
+        # Apply strobe effect: if dimmer > 0 and strobe > 0, toggle beam on/off
+        if dimmer > 0.0 and strobe > 0.0:
+            # Strobe speed: higher strobe values = faster strobe
+            # Scale strobe (0-1) to reasonable strobe speed range (5-30 Hz)
+            strobe_speed = 5.0 + strobe * 25.0
+            # Use integer division to create discrete on/off toggle
+            is_on = int(frame.time * strobe_speed) % 2 == 1
+            return dimmer if is_on else 0.0
 
         return dimmer
 

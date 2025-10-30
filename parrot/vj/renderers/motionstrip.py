@@ -146,16 +146,25 @@ class MotionstripRenderer(FixtureRenderer):
                                 r, g, b = (1.0, 1.0, 1.0)
 
                             bulb_dimmer = bulb.get_dimmer() / 255.0
-                            fixture_dimmer = self.get_dimmer()
+                            fixture_dimmer = self.get_effective_dimmer(frame)
                             effective_alpha = bulb_dimmer * fixture_dimmer
-                            bulb_color = (r, g, b)
+                            base_color = (r, g, b)
+
+                            # Boost brightness and saturate towards white at high dimmer
+                            # Brightness multiplier increases with effective_alpha to saturate towards white
+                            brightness_multiplier = 1.0 + effective_alpha * 2.0  # 1.0 at 0%, up to 3.0 at 100%
+                            bulb_color = (
+                                min(base_color[0] * brightness_multiplier, 1.0),
+                                min(base_color[1] * brightness_multiplier, 1.0),
+                                min(base_color[2] * brightness_multiplier, 1.0),
+                            )
 
                             bulb_x_local = start_offset_x + i * bulb_spacing
                             bulb_y_local = body_height / 2
                             bulb_z_local = bulb_forward_distance
 
-                            # Increased alpha for better visibility
-                            capped_alpha = min(effective_alpha * 0.8, 1.0)
+                            # Increased alpha for better visibility - boost significantly
+                            capped_alpha = min(effective_alpha * 1.5, 1.0)
 
                             # Render bulb circle (pure emission, no lighting)
                             self.room_renderer.render_emission_circle(

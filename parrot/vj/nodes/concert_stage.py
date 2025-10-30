@@ -447,7 +447,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             num_blinders=10,
             attack_time=0.03,
             decay_time=0.25,
-            opacity_multiplier=0.8,
+            opacity_multiplier=0.6,
         )
         stage_blinders_gentle = StageBlinders(
             num_blinders=6,

@@ -58,11 +58,20 @@ class BulbRenderer(FixtureRenderer):
                 body_size = self.cube_size * 0.4
                 bulb_radius = body_size * 0.3  # Increased size for visibility
                 bulb_distance = body_size * 0.7
-                bulb_color = self.get_color()
+                base_color = self.get_color()
                 dimmer = self.get_effective_dimmer(frame)
 
-                # Increased alpha for better visibility
-                capped_alpha = min(dimmer * 0.8, 1.0)
+                # Boost brightness and saturate towards white at high dimmer
+                # Brightness multiplier increases with dimmer to saturate towards white
+                brightness_multiplier = 1.0 + dimmer * 2.0  # 1.0 at 0%, up to 3.0 at 100%
+                bulb_color = (
+                    min(base_color[0] * brightness_multiplier, 1.0),
+                    min(base_color[1] * brightness_multiplier, 1.0),
+                    min(base_color[2] * brightness_multiplier, 1.0),
+                )
+
+                # Increased alpha for better visibility - boost significantly
+                capped_alpha = min(dimmer * 1.5, 1.0)
 
                 # Render colored bulb circle (pure emission, no lighting)
                 self.room_renderer.render_emission_circle(

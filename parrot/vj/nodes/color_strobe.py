@@ -173,7 +173,6 @@ class ColorStrobe(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
         # Get signal values
         strobe_value = frame[FrameSignal.strobe]
-        big_blinder_value = frame[FrameSignal.big_blinder]
         primary_signal_value = frame[self.signal]
 
         # Determine color and opacity based on signals
@@ -187,11 +186,6 @@ class ColorStrobe(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             flash_cycle = (current_time * self.strobe_frequency * 2.0) % 1.0
             opacity = 1.0 if flash_cycle < 0.5 else 0.0
             opacity *= strobe_value  # Scale by signal strength
-
-        # BIG BLINDER: Solid white flash
-        elif big_blinder_value > 0.5:
-            color = (1.0, 1.0, 1.0)  # Pure white
-            opacity = big_blinder_value
 
         # Primary signal: Subtle color presence
         elif primary_signal_value > 0.3:
