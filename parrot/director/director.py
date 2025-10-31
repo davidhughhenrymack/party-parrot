@@ -132,18 +132,15 @@ class Director:
             result += "└── (no interpreters)\n"
             return result
         
-        result += "└── LightingInterpreters\n"
-        
         for idx, interpreter in enumerate(self.interpreters):
             is_last = idx == len(self.interpreters) - 1
             connector = "└── " if is_last else "├── "
-            indent = "    " if is_last else "│   "
             
             fixture_str = self.format_fixture_names(interpreter.group)
             # Strip all ANSI escape sequences from interpreter string
             interpreter_str = re.sub(r'\x1b\[[0-9;]*m', '', str(interpreter))
             
-            result += f"{indent}{connector}{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
+            result += f"{connector}{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
         
         return result
 
