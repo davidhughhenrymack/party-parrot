@@ -5,7 +5,7 @@ from parrot.utils.color_extra import color_to_rgbw, dim_color
 from parrot.utils.dmx_utils import Universe
 from .base import FixtureBase, FixtureWithBulbs
 
-# DMX layout:
+# DMX layout for 9 channel mode:
 dmx_layout = [
     "pan",
     "pan_speed",
@@ -78,6 +78,10 @@ class Motionstrip38(Motionstrip):
 
     def set_strobe(self, value):
         super().set_strobe(value)
+        # 0-5 = strobe off
+        # 6-255 = strobe speed
+        # Even speed 255 is pretty slow, so we render our own strobe in the dimmer
+        # self.values[5] = super().get_strobe()
 
     def render(self, dmx):
         if self.get_strobe() > 0:

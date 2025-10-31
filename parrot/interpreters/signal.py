@@ -73,6 +73,11 @@ def signal_switch(
                     for fixture in self.group:
                         fixture.set_strobe(220)
                         fixture.set_dimmer(225)  # Set dimmer high during strobe
+                        if isinstance(fixture, FixtureWithBulbs):
+                            for bulb in fixture.get_bulbs():
+                                bulb.set_strobe(220)
+                                bulb.set_dimmer(225)
+
                 else:
                     for fixture in self.group:
                         fixture.set_strobe(0)
