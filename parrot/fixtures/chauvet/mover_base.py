@@ -101,14 +101,16 @@ class ChauvetMoverBase(MovingHead):
 
     def set_strobe(self, value):
         super().set_strobe(value)
+        # Use accumulated strobe_value for DMX output and logic
+        strobe = self.strobe_value
 
-        if value < 10:
+        if strobe < 10:
             self.set_shutter_open()
             return
 
         lower = self.strobe_shutter_lower
         upper = self.strobe_shutter_upper
-        scaled = lower + (upper - lower) * value / 255
+        scaled = lower + (upper - lower) * strobe / 255
         self.set("shutter", scaled)
 
     def set_shutter_open(self):

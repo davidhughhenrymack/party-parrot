@@ -193,7 +193,7 @@ mode_interpretations: Dict[
                     ),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                randomize(PanLatched, MoveCircles),
+                randomize(MoveCircles, MoveFan),
             ),
         ],
         ChauvetColorBandPiX_36Ch: [
@@ -221,8 +221,6 @@ mode_interpretations: Dict[
             combo(
                 signal_switch(
                     randomize(
-                        # DimmersBeatChase,
-                        # GentlePulse,
                         StabPulse,
                         LightingStab,
                     ),
@@ -262,11 +260,11 @@ mode_interpretations: Dict[
                         combo(DimmersBeatChase, AllBulbs255),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                         combo(Dimmer255, for_bulbs(StabPulse)),
-                        combo(Dimmer255, for_bulbs(LightingStab)),
+                        combo(LightingStab, for_bulbs(LightingStab)),
                     ),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                randomize(PanLatched, MoveCircles, MoveFan),
+                randomize(MoveCircles, MoveFan),
             ),
         ],
         ChauvetColorBandPiX_36Ch: [

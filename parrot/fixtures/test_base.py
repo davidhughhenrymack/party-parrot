@@ -45,6 +45,28 @@ class TestFixtureBase:
         self.fixture.set_strobe(200)
         assert self.fixture.get_strobe() == 200
 
+    def test_strobe_max_behavior(self):
+        """Test that strobe uses max(existing, new) for highest-takes-precedence"""
+        # Reset strobe first
+        self.fixture.begin()
+        assert self.fixture.get_strobe() == 0
+        
+        # Set a lower value first
+        self.fixture.set_strobe(100)
+        assert self.fixture.get_strobe() == 100
+        
+        # Set a higher value - should take precedence
+        self.fixture.set_strobe(200)
+        assert self.fixture.get_strobe() == 200
+        
+        # Set a lower value - should not override
+        self.fixture.set_strobe(150)
+        assert self.fixture.get_strobe() == 200
+        
+        # Reset and verify
+        self.fixture.begin()
+        assert self.fixture.get_strobe() == 0
+
     def test_speed_setting(self):
         """Test speed setting and getting"""
         self.fixture.set_speed(150)

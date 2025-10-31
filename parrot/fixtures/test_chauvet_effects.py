@@ -43,11 +43,15 @@ class TestChauvetDerby:
 
     def test_set_strobe_clamping(self):
         """Test strobe value clamping to 0-250 range"""
+        # Reset strobe first (simulating begin() call)
+        self.derby.begin()
+        
         # Test over max
         self.derby.set_strobe(300)
         assert self.derby.values[4] == 250
 
-        # Test under min
+        # Test under min - need to reset first due to max behavior
+        self.derby.begin()
         self.derby.set_strobe(-10)
         assert self.derby.values[4] == 0
 

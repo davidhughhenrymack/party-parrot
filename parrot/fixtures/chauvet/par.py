@@ -20,4 +20,5 @@ class ChauvetParRGBAWU(Par):
 
     def set_strobe(self, value):
         super().set_strobe(value)
-        self.values[6] = clamp(value, 0, 250)
+        # Use accumulated strobe_value for DMX output
+        self.values[6] = clamp(self.strobe_value, 0, 250)

@@ -22,8 +22,9 @@ class ParRGB(Par):
         self.values[0] = value
 
     def set_strobe(self, value):
-        self.values[4] = value
         super().set_strobe(value)
+        # Use accumulated strobe_value for DMX output
+        self.values[4] = self.strobe_value
 
     def set_color(self, color):
         super().set_color(color)
@@ -56,8 +57,9 @@ class ParRGBAWU(Par):
         self.values[0] = value
 
     def set_strobe(self, value):
-        self.values[7] = value
         super().set_strobe(value)
+        # Use accumulated strobe_value for DMX output
+        self.values[7] = self.strobe_value
 
     def set_color(self, color):
         super().set_color(color)

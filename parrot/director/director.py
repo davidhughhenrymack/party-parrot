@@ -1,6 +1,8 @@
 import random
+import re
 import time
 import os
+from collections import defaultdict
 from typing import List
 from colorama import Fore, Style, init
 from parrot.director.frame import Frame, FrameSignal
@@ -99,20 +101,25 @@ class Director:
     def format_fixture_names(self, fixtures):
         # Format fixtures
         fixtures = [str(j) for j in fixtures]
-        if len(fixtures) > 1:
-            # Check if all fixtures have same name
-            base_names = [f.split(" @ ")[0] for f in fixtures]
-            if len(set(base_names)) == 1:
-                # Get all addresses
-                addresses = [int(f.split(" @ ")[1]) for f in fixtures]
-                min_addr = min(addresses)
-                max_addr = max(addresses)
-                fixture_str = f"{base_names[0]} @ {min_addr}-{max_addr}"
-            else:
-                fixture_str = ", ".join(fixtures)
-        else:
-            fixture_str = fixtures[0]
-        return fixture_str
+        if len(fixtures) == 1:
+            return fixtures[0]
+        
+        # Group fixtures by type (base name)
+        grouped = defaultdict(list)
+        for f in fixtures:
+            parts = f.split(" @ ")
+            base_name = parts[0]
+            address = int(parts[1])
+            grouped[base_name].append(address)
+        
+        # Format each group: "type @ addr1, addr2, addr3"
+        parts = []
+        for base_name in sorted(grouped.keys()):
+            addresses = sorted(grouped[base_name])
+            addr_str = ", ".join(str(addr) for addr in addresses)
+            parts.append(f"{base_name} @ {addr_str}")
+        
+        return "; ".join(parts)
 
     def print_lighting_tree(self, context: str = ""):
         """Print a tree representation of the lighting interpreters"""
@@ -133,7 +140,8 @@ class Director:
             indent = "    " if is_last else "│   "
             
             fixture_str = self.format_fixture_names(interpreter.group)
-            interpreter_str = str(interpreter).replace(Fore.YELLOW, "").replace(Style.RESET_ALL, "")
+            # Strip all ANSI escape sequences from interpreter string
+            interpreter_str = re.sub(r'\x1b\[[0-9;]*m', '', str(interpreter))
             
             result += f"{indent}{connector}{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
         
@@ -283,6 +291,11 @@ class Director:
             self.warmup_complete = True
 
         frame = frame * warmup_phase
+
+        # Reset fixture state before interpreter step() calls
+        # This ensures strobe values accumulate using max(existing, new)
+        for fixture in venue_patches[self.state.venue]:
+            fixture.begin()
 
         for i in self.interpreters:
             i.step(frame, scheme)

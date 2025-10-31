@@ -176,7 +176,7 @@ class StabPulse(InterpreterBase[T]):
 
         for idx, fixture in enumerate(self.group):
             fixture.set_dimmer(self.memory[idx] * 255)
-            self.memory[idx] *= 0.4
+            self.memory[idx] *= 0.5
 
 
 @beartype
@@ -228,12 +228,14 @@ class LightingStab(InterpreterBase[T]):
             if self.strobe_memory[idx] > 0:
                 fixture.set_color(self.white)
                 fixture.set_dimmer(self.strobe_memory[idx] * 255)
-                self.strobe_memory[idx] *= 0.3  # Fast decay for brief strobe
+                fixture.set_strobe(220)
+                self.strobe_memory[idx] *= 0.5  # Fast decay for brief strobe
             else:
                 # Otherwise use normal stab effect
                 fixture.set_dimmer(self.memory[idx] * 255)
+                fixture.set_strobe(0)
 
-            self.memory[idx] *= 0.4
+            self.memory[idx] *= 0.5
 
 
 @beartype

@@ -44,8 +44,13 @@ class FixtureBase:
     def get_dimmer(self):
         return self.dimmer_value
 
+    def begin(self):
+        """Reset fixture state before rendering (called before interpreter step() calls)"""
+        self.strobe_value = 0
+
     def set_strobe(self, value):
-        self.strobe_value = value
+        """Set strobe value - uses max(existing, new) for highest-takes-precedence behavior"""
+        self.strobe_value = max(self.strobe_value, value)
 
     def get_strobe(self):
         return self.strobe_value
@@ -98,6 +103,12 @@ class FixtureWithBulbs(FixtureBase):
         super().set_color(color)
         for bulb in self.bulbs:
             bulb.set_color(color)
+
+    def begin(self):
+        """Reset fixture state before rendering"""
+        super().begin()
+        for bulb in self.bulbs:
+            bulb.begin()
 
     def get_bulbs(self):
         return self.bulbs
@@ -164,6 +175,12 @@ class FixtureGroup(FixtureBase):
         super().set_dimmer(value)
         for fixture in self.fixtures:
             fixture.set_dimmer(value)
+
+    def begin(self):
+        """Reset fixture state before rendering"""
+        super().begin()
+        for fixture in self.fixtures:
+            fixture.begin()
 
     def set_strobe(self, value):
         super().set_strobe(value)

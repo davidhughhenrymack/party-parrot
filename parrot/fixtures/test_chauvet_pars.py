@@ -48,9 +48,14 @@ class TestChauvetParRGBAWU:
 
     def test_set_strobe_clamping(self):
         """Test strobe value clamping"""
+        # Reset strobe first (simulating begin() call)
+        self.par.begin()
+        
         self.par.set_strobe(300)  # Over max
         assert self.par.values[6] == 250  # Should be clamped to 250
 
+        # Test under min - need to reset first due to max behavior
+        self.par.begin()
         self.par.set_strobe(-10)  # Under min
         assert self.par.values[6] == 0  # Should be clamped to 0
 

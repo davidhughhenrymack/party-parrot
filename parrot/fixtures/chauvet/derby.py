@@ -15,7 +15,8 @@ class ChauvetDerby(FixtureBase):
 
     def set_strobe(self, value):
         super().set_strobe(value)
-        self.values[4] = clamp(value, 0, 250)
+        # Use accumulated strobe_value for DMX output
+        self.values[4] = clamp(self.strobe_value, 0, 250)
 
     def set_speed(self, value):
         self.values[5] = value

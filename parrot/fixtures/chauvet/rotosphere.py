@@ -42,7 +42,9 @@ class ChauvetRotosphere_28Ch(FixtureWithBulbs):
         )
 
     def set_strobe(self, value):
-        self.values[24] = value
+        super().set_strobe(value)
+        # Use accumulated strobe_value for DMX output
+        self.values[24] = self.strobe_value
 
     def set_speed(self, value):
         if value == 0:
