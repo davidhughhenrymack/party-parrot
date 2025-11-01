@@ -125,7 +125,7 @@ HardSpatialPulse = with_args(
     "HardSpatialPulse",
     SpatialDownwardsPulse,
     new_hype=90,
-    edge_hardness=4.0,
+    edge_hardness=2.0,
     pulse_width=0.2,
     speed=2.0,
 )

@@ -11,7 +11,7 @@ from parrot.interpreters.dimmer import (
     SequenceFadeDimmers,
     DimmersBeatChase,
     GentlePulse,
-    LightingStab,
+    LightningStab,
     StabPulse,
     Twinkle,
 )
@@ -410,11 +410,11 @@ class TestLightingStab:
 
     def test_lighting_stab_hype(self):
         """Test LightingStab hype level"""
-        assert LightingStab.hype == 60
+        assert LightningStab.hype == 60
 
     def test_lighting_stab_initialization(self):
         """Test LightingStab initialization"""
-        interpreter = LightingStab(self.group, self.args, trigger_level=0.3)
+        interpreter = LightningStab(self.group, self.args, trigger_level=0.3)
         assert interpreter.trigger_level == 0.3
         assert interpreter.on_low == False
         assert interpreter.on_high == False
@@ -426,7 +426,7 @@ class TestLightingStab:
         with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
             mock_randint.return_value = 0
 
-            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+            interpreter = LightningStab(self.group, self.args, trigger_level=0.2)
 
             # Create frame with high freq_low signal
             frame_values = {FrameSignal.freq_low: 0.8, FrameSignal.freq_high: 0.0}
@@ -445,7 +445,7 @@ class TestLightingStab:
         with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
             mock_randint.return_value = 1  # Select fixture 1
 
-            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+            interpreter = LightningStab(self.group, self.args, trigger_level=0.2)
 
             # Create frame with high freq_high signal
             frame_values = {FrameSignal.freq_low: 0.0, FrameSignal.freq_high: 0.9}
@@ -467,7 +467,7 @@ class TestLightingStab:
         with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
             mock_randint.return_value = 0
 
-            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+            interpreter = LightningStab(self.group, self.args, trigger_level=0.2)
             scheme = MagicMock()
 
             # First step with high freq_high to trigger strobe
@@ -495,7 +495,7 @@ class TestLightingStab:
         with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
             mock_randint.side_effect = [0, 1]
 
-            interpreter = LightingStab(self.group, self.args, trigger_level=0.2)
+            interpreter = LightningStab(self.group, self.args, trigger_level=0.2)
 
             # Create frame with both signals high
             frame_values = {FrameSignal.freq_low: 0.7, FrameSignal.freq_high: 0.8}

@@ -39,7 +39,7 @@ from parrot.interpreters.dimmer import (
     DimmerFadeIn,
     DimmersBeatChase,
     GentlePulse,
-    LightingStab,
+    LightningStab,
     SequenceDimmers,
     SequenceFadeDimmers,
     StabPulse,
@@ -176,20 +176,24 @@ mode_interpretations: Dict[
             combo(
                 signal_switch(
                     randomize(
-                        combo(Dimmer255, for_bulbs(Twinkle)),
-                        combo(DimmersBeatChase, AllBulbs255),
-                        combo(SlowDecay, AllBulbs255),
+                        combo(
+                            randomize(
+                                SequenceFadeDimmers,
+                                GentlePulse,
+                                Twinkle,
+                            ),
+                            AllBulbs255,
+                        ),
                         combo(
                             Dimmer255,
                             for_bulbs(
-                                with_args(
-                                    "GentlePulseTrigger0.1",
+                                randomize(
+                                    SequenceFadeDimmers,
                                     GentlePulse,
-                                    trigger_level=0.1,
+                                    Twinkle,
                                 )
                             ),
                         ),
-                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                     ),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
@@ -222,7 +226,7 @@ mode_interpretations: Dict[
                 signal_switch(
                     randomize(
                         StabPulse,
-                        LightingStab,
+                        LightningStab,
                     ),
                 ),
                 randomize(ColorAlternateBg, ColorBg, ColorRainbow),
@@ -241,7 +245,7 @@ mode_interpretations: Dict[
                         SequenceDimmers,
                         SequenceFadeDimmers,
                         StabPulse,
-                        LightingStab,
+                        LightningStab,
                     ),
                 ),
                 weighted_randomize((95, ColorFg), (5, ColorRainbow)),
@@ -260,7 +264,7 @@ mode_interpretations: Dict[
                         combo(DimmersBeatChase, AllBulbs255),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                         combo(Dimmer255, for_bulbs(StabPulse)),
-                        combo(LightingStab, for_bulbs(LightingStab)),
+                        combo(LightningStab, for_bulbs(LightningStab)),
                     ),
                 ),
                 randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),

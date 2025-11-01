@@ -180,7 +180,7 @@ class StabPulse(InterpreterBase[T]):
 
 
 @beartype
-class LightingStab(InterpreterBase[T]):
+class LightningStab(InterpreterBase[T]):
     hype = 60
 
     def __init__(
@@ -225,7 +225,7 @@ class LightingStab(InterpreterBase[T]):
         # Apply effects to fixtures
         for idx, fixture in enumerate(self.group):
             # If strobe is active, set white and brightness based on strobe_memory
-            if self.strobe_memory[idx] > 0:
+            if self.strobe_memory[idx] > 0.1:
                 fixture.set_color(self.white)
                 fixture.set_dimmer(self.strobe_memory[idx] * 255)
                 fixture.set_strobe(220)
