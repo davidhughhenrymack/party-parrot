@@ -272,6 +272,10 @@ class GenerativeEffectBase(CanvasEffectBase):
         self.width = width
         self.height = height
 
+    def enter(self, context: mgl.Context):
+        """Initialize OpenGL resources at the configured dimensions."""
+        self._setup_gl_resources(context, self.width, self.height)
+
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> mgl.Framebuffer:

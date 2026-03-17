@@ -23,6 +23,12 @@ The following must be set before running the app or tests:
 | `MPLBACKEND` | `Agg` | Non-interactive matplotlib |
 | `SDL_VIDEODRIVER` | `dummy` | SDL dummy video |
 | `QT_QPA_PLATFORM` | `offscreen` | Qt offscreen |
+| `PARROT_WIDTH` | `640` | Window width — low for CPU-only rendering |
+| `PARROT_HEIGHT` | `360` | Window height — low for CPU-only rendering |
+| `PARROT_CONTENT_WIDTH` | `640` | VJ content width — low for CPU-only rendering |
+| `PARROT_CONTENT_HEIGHT` | `360` | VJ content height — low for CPU-only rendering |
+
+The `PARROT_*` resolution variables are read by `gl_window_app.py` and `vj/constants.py`. On a real GPU machine, unset them to get the default 1920x1080 / 1280x720.
 
 ### Starting services before running
 

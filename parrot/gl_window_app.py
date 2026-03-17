@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import time
 import moderngl_window as mglw
 import moderngl as mgl
@@ -24,11 +25,14 @@ from parrot.patch_bay import venues
 
 def run_gl_window_app(args):
     """Run Party Parrot with modern GL window"""
+    win_w = int(os.environ.get("PARROT_WIDTH", "1920"))
+    win_h = int(os.environ.get("PARROT_HEIGHT", "1080"))
+
     # Create window using moderngl_window
     window_cls = mglw.get_local_window_cls("pyglet")
     window = window_cls(
         title="Party Parrot",
-        size=(1920, 1080),
+        size=(win_w, win_h),
         resizable=True,
         vsync=True,
         fullscreen=getattr(args, "vj_fullscreen", False),
@@ -66,8 +70,8 @@ def run_gl_window_app(args):
         state=state,
         position_manager=director.position_manager,
         vj_director=vj_director,
-        width=1920,
-        height=1080,
+        width=win_w,
+        height=win_h,
     )
     fixture_renderer.enter(ctx)
 

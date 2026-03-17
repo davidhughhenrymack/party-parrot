@@ -4,9 +4,11 @@
 Constants for the VJ system.
 """
 
-# Standard canvas dimensions for VJ content
-DEFAULT_WIDTH = 1280
-DEFAULT_HEIGHT = 720
+import os
+
+# Standard canvas dimensions for VJ content (overridable via env vars)
+DEFAULT_WIDTH = int(os.environ.get("PARROT_CONTENT_WIDTH", "1280"))
+DEFAULT_HEIGHT = int(os.environ.get("PARROT_CONTENT_HEIGHT", "720"))
 
 # Common aspect ratios
 ASPECT_16_9 = (1920, 1080)
