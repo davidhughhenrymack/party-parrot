@@ -3,6 +3,7 @@
 import time
 import moderngl_window as mglw
 import moderngl as mgl
+import imgui
 from beartype import beartype
 import numpy as np
 
@@ -179,7 +180,10 @@ def run_gl_window_app(args):
         break
 
     # Initialize overlay UI
-    overlay = OverlayUI(pyglet_window, state)
+    overlay = OverlayUI(pyglet_window, state, fixture_renderer.editor)
+    fixture_renderer.editor.set_patch_change_callback(
+        lambda: (director.setup_patch(), fixture_renderer.reload_fixtures())
+    )
 
     # Check for start-with-overlay flag
     if getattr(args, "start_with_overlay", False):
@@ -422,21 +426,29 @@ def run_gl_window_app(args):
 
         def on_mouse_press(self, x, y, button, modifiers):
             # Only handle left mouse button
+            if overlay.visible and imgui.get_io().want_capture_mouse:
+                return
             if button == pyglet.window.mouse.LEFT:
                 input_events.handle_mouse_press(float(x), float(y))
 
         def on_mouse_release(self, x, y, button, modifiers):
             # Only handle left mouse button
+            if overlay.visible and imgui.get_io().want_capture_mouse:
+                return
             if button == pyglet.window.mouse.LEFT:
                 input_events.handle_mouse_release(float(x), float(y))
 
         def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
             # Only handle left mouse button drag
+            if overlay.visible and imgui.get_io().want_capture_mouse:
+                return
             if buttons & pyglet.window.mouse.LEFT:
                 input_events.handle_mouse_drag(float(x), float(y))
 
         def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
             # Forward scroll events for camera zoom
+            if overlay.visible and imgui.get_io().want_capture_mouse:
+                return
             input_events.handle_mouse_scroll(float(scroll_x), float(scroll_y))
 
     mouse_handler = MouseHandler()

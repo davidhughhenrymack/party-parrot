@@ -23,7 +23,12 @@ class Room3DRenderer:
     """3D room renderer with floor grid and 3D fixture cubes"""
 
     def __init__(
-        self, context: mgl.Context, width: int, height: int, show_floor: bool = False
+        self,
+        context: mgl.Context,
+        width: int,
+        height: int,
+        show_floor: bool = False,
+        floor_size_feet: float = 10.0,
     ):
         self.ctx = context
         self.width = width
@@ -59,6 +64,7 @@ class Room3DRenderer:
 
         # Floor grid parameters
         self.grid_size = 1.0  # Size of each grid square
+        self.floor_size_feet = float(floor_size_feet)
         self.floor_color = (0.1, 0.1, 0.1)  # Dark floor
         self.grid_color = (0.25, 0.25, 0.25)  # Darker grey gridlines
 
@@ -400,11 +406,13 @@ class Room3DRenderer:
 
     def _setup_floor_geometry(self):
         """Create floor grid geometry with normals"""
+        half_floor = self.floor_size_feet / 2.0
+
         # Floor quad vertices (dark)
-        back_left = (-5.0, 0.0, -5.0)
-        back_right = (5.0, 0.0, -5.0)
-        front_left = (-5.0, 0.0, 5.0)
-        front_right = (5.0, 0.0, 5.0)
+        back_left = (-half_floor, 0.0, -half_floor)
+        back_right = (half_floor, 0.0, -half_floor)
+        front_left = (-half_floor, 0.0, half_floor)
+        front_right = (half_floor, 0.0, half_floor)
 
         # Floor normal (pointing up)
         floor_normal = (0.0, 1.0, 0.0)
@@ -490,15 +498,17 @@ class Room3DRenderer:
     def _create_grid_lines(self):
         """Create grid lines for the floor"""
         lines = []
+        half_floor = self.floor_size_feet / 2.0
+        line_count = int(math.floor(half_floor))
 
         # Simple grid lines in visible range
         # Horizontal lines (across the floor)
-        for i in range(-5, 6):
-            lines.append([-5.0, 0.001, i, 5.0, 0.001, i])
+        for i in range(-line_count, line_count + 1):
+            lines.append([-half_floor, 0.001, float(i), half_floor, 0.001, float(i)])
 
         # Vertical lines (along the floor)
-        for i in range(-5, 6):
-            lines.append([i, 0.001, -5.0, i, 0.001, 5.0])
+        for i in range(-line_count, line_count + 1):
+            lines.append([float(i), 0.001, -half_floor, float(i), 0.001, half_floor])
 
         return lines
 
@@ -588,6 +598,7 @@ class Room3DRenderer:
         self.camera_tilt = max(
             self.min_camera_tilt, min(self.max_camera_tilt, self.camera_tilt)
         )
+        return False
 
     def _on_mouse_scroll(self, scroll_x: float, scroll_y: float):
         """Handle mouse scroll to zoom camera in/out"""
@@ -599,6 +610,126 @@ class Room3DRenderer:
             self.min_camera_distance,
             min(self.max_camera_distance, self.camera_distance),
         )
+        return False
+
+    def set_floor_size_feet(self, floor_size_feet: float):
+        next_floor_size = float(floor_size_feet)
+        if abs(self.floor_size_feet - next_floor_size) < 1e-5:
+            return
+        self.floor_size_feet = next_floor_size
+        if not self.show_floor:
+            return
+
+        for attribute_name in (
+            "floor_vbo",
+            "floor_normal_vbo",
+            "floor_color_vbo",
+            "floor_vao",
+            "grid_vbo",
+            "grid_normal_vbo",
+            "grid_color_vbo",
+            "grid_vao",
+        ):
+            resource = getattr(self, attribute_name, None)
+            if resource is not None:
+                resource.release()
+                delattr(self, attribute_name)
+        self._setup_floor_geometry()
+
+    def project_world_to_screen(
+        self, position: tuple[float, float, float]
+    ) -> Optional[tuple[float, float]]:
+        x, y, z = position
+        world = np.array([x, y, z, 1.0], dtype=np.float32)
+        clip = self._get_mvp_matrix() @ world
+        w = float(clip[3])
+        if abs(w) < 1e-5:
+            return None
+        ndc = clip[:3] / w
+        screen_x = float((ndc[0] * 0.5 + 0.5) * self.width)
+        screen_y = float(((-ndc[1]) * 0.5 + 0.5) * self.height)
+        return (screen_x, screen_y)
+
+    def render_axis_gizmo(
+        self,
+        origin: tuple[float, float, float],
+        active_axis: Optional[str] = None,
+        axis_length: float = 1.0,
+        line_thickness: float = 0.05,
+        handle_size: float = 0.16,
+    ):
+        x, y, z = origin
+        axis_colors = {
+            "x": (1.0, 0.2, 0.2),
+            "y": (0.2, 1.0, 0.2),
+            "z": (0.2, 0.5, 1.0),
+        }
+
+        for axis_name, color in axis_colors.items():
+            axis_color = color if active_axis != axis_name else (1.0, 1.0, 0.2)
+            if axis_name == "x":
+                self.render_rectangular_box(
+                    x + axis_length / 2.0,
+                    y - line_thickness / 2.0,
+                    z,
+                    axis_color,
+                    axis_length,
+                    line_thickness,
+                    line_thickness,
+                )
+                self.render_rectangular_box(
+                    x - axis_length / 2.0,
+                    y - line_thickness / 2.0,
+                    z,
+                    axis_color,
+                    axis_length,
+                    line_thickness,
+                    line_thickness,
+                )
+                self.render_cube((x + axis_length, y, z), axis_color, handle_size)
+                self.render_cube((x - axis_length, y, z), axis_color, handle_size)
+            elif axis_name == "y":
+                self.render_rectangular_box(
+                    x,
+                    y,
+                    z,
+                    axis_color,
+                    line_thickness,
+                    axis_length,
+                    line_thickness,
+                )
+                self.render_rectangular_box(
+                    x,
+                    y - axis_length,
+                    z,
+                    axis_color,
+                    line_thickness,
+                    axis_length,
+                    line_thickness,
+                )
+                self.render_cube((x, y + axis_length, z), axis_color, handle_size)
+                self.render_cube((x, y - axis_length, z), axis_color, handle_size)
+            else:
+                self.render_rectangular_box(
+                    x,
+                    y - line_thickness / 2.0,
+                    z + axis_length / 2.0,
+                    axis_color,
+                    line_thickness,
+                    line_thickness,
+                    axis_length,
+                )
+                self.render_rectangular_box(
+                    x,
+                    y - line_thickness / 2.0,
+                    z - axis_length / 2.0,
+                    axis_color,
+                    line_thickness,
+                    line_thickness,
+                    axis_length,
+                )
+                self.render_cube((x, y, z + axis_length), axis_color, handle_size)
+                self.render_cube((x, y, z - axis_length), axis_color, handle_size)
 
     def set_global_light_color(self, color: tuple[float, float, float]):
         """Set the global lighting color (affects directional, point, and ambient lights)"""
@@ -2151,7 +2282,7 @@ class Room3DRenderer:
         # Assume fixtures are positioned in a [0-500] coordinate system
         # Map to floor space which is [-5 to 5] in both X and Z
         fixture_coord_range = 500.0
-        floor_size = 10.0  # Floor goes from -5 to 5
+        floor_size = self.floor_size_feet
 
         # Normalize to [0-1] range assuming [0-500] input
         norm_x = x / fixture_coord_range
@@ -2169,6 +2300,17 @@ class Room3DRenderer:
         room_y = z
 
         return room_x, room_y, room_z
+
+    def convert_3d_to_2d(
+        self, room_x: float, room_y: float, room_z: float
+    ) -> tuple[float, float, float]:
+        fixture_coord_range = 500.0
+        floor_size = self.floor_size_feet
+        norm_x = (room_x / floor_size) + 0.5
+        norm_y = (room_z / floor_size) + 0.5
+        x = norm_x * fixture_coord_range
+        y = norm_y * fixture_coord_range
+        return x, y, room_y
 
     def cleanup(self):
         """Clean up OpenGL resources"""
