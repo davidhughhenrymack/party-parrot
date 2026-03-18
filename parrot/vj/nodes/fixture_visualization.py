@@ -21,6 +21,7 @@ from parrot.vj.renderers.motionstrip import MotionstripRenderer
 from parrot.vj.renderers.laser import LaserRenderer
 from parrot.state import State
 from parrot.fixtures.position_manager import FixturePositionManager
+from parrot.venue_editor import VenueEditorController
 from parrot.vj.shaders import kawase_blur, composite
 from parrot.vj.vj_director import VJDirector
 from typing import Optional
@@ -63,6 +64,7 @@ class FixtureVisualization(GenerativeEffectBase):
         self.vj_director = vj_director
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
+        self.editor = VenueEditorController(state, position_manager)
 
         # Subscribe to venue changes to reload fixtures
         self.state.events.on_venue_change += self._on_venue_change
@@ -164,6 +166,10 @@ class FixtureVisualization(GenerativeEffectBase):
 
     def _on_venue_change(self, venue):
         """Reload fixtures when venue changes (position manager handles positions)"""
+        self._load_fixtures()
+
+    def reload_fixtures(self) -> None:
+        self.position_manager.reload_current_venue_layout()
         self._load_fixtures()
 
     def _load_fixtures(self):
@@ -331,13 +337,13 @@ class FixtureVisualization(GenerativeEffectBase):
 
                 # Add fixture world position
                 bulb_world_pos = (
-                    fixture_world_pos[0] + bulb_pos_oriented[0],
-                    fixture_world_pos[1] + bulb_pos_oriented[1],
-                    fixture_world_pos[2] + bulb_pos_oriented[2],
+                    float(fixture_world_pos[0] + bulb_pos_oriented[0]),
+                    float(fixture_world_pos[1] + bulb_pos_oriented[1]),
+                    float(fixture_world_pos[2] + bulb_pos_oriented[2]),
                 )
 
                 # Create light entry: position, (r, g, b, intensity)
-                lights.append((bulb_world_pos, (r, g, b, effective_intensity)))
+                lights.append((bulb_world_pos, (float(r), float(g), float(b), float(effective_intensity))))
             except Exception:
                 pass  # Skip bulbs that can't be processed
 
@@ -431,7 +437,15 @@ class FixtureVisualization(GenerativeEffectBase):
         # Initialize room renderer if needed
         if self.room_renderer is None:
             self.room_renderer = Room3DRenderer(
-                context, self.width, self.height, show_floor=True
+                context,
+                self.width,
+                self.height,
+                show_floor=True,
+                floor_size_feet=self.position_manager.get_floor_size_feet(),
+            )
+        else:
+            self.room_renderer.set_floor_size_feet(
+                self.position_manager.get_floor_size_feet()
             )
 
         # Create or recreate renderers if fixtures changed (venue change)
@@ -448,20 +462,26 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Set global lighting based on VJ content
         self.room_renderer.set_global_light_color(global_light_color)
+        video_wall = self.position_manager.get_video_wall_config()
 
         # Collect and set dynamic lights from fixtures
         fixture_lights = self._collect_fixture_lights(frame)
 
         # Add video wall as a light source if it's active
         if video_wall_color is not None:
-            # Video wall position (center of billboard at back of room)
-            billboard_height = 6.0
-            video_wall_pos = (0.0, billboard_height / 2.0, -4.5)
+            video_wall_pos = (
+                float(video_wall["x"]),
+                float(video_wall["y"]),
+                float(video_wall["z"]),
+            )
             fixture_lights.append((video_wall_pos, video_wall_color))
 
         self.room_renderer.set_dynamic_lights(fixture_lights)
 
         canvas_size = (float(self.canvas_width), float(self.canvas_height))
+        self.editor.update_scene(
+            self.room_renderer, self.renderers, canvas_size, video_wall
+        )
 
         # === PASS 1: Render opaque Blinn-Phong geometry ===
         self.opaque_framebuffer.use()
@@ -480,23 +500,23 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Render VJ output on billboard at back of room (upstage behind DJ)
         if vj_texture:
-            # Large billboard at back of room, floor to ceiling
-            billboard_width = 10.0  # Wide screen
-            billboard_height = 6.0  # Floor to near-ceiling
-            # Position: centered horizontally (x=0), bottom at floor + half height
-            y_pos = billboard_height / 2.0
-
             self.room_renderer.render_billboard(
                 texture=vj_texture,
-                position=(0.0, y_pos, -4.5),  # Back of room, centered, floor to ceiling
-                width=billboard_width,
-                height=billboard_height,
+                position=(
+                    float(video_wall["x"]),
+                    float(video_wall["y"]),
+                    float(video_wall["z"]),
+                ),
+                width=float(video_wall["width"]),
+                height=float(video_wall["height"]),
                 normal=(0.0, 0.0, 1.0),  # Face forward toward audience
             )
 
         # Render fixture bodies (Blinn-Phong materials)
         for renderer in self.renderers:
             renderer.render_opaque(context, canvas_size, frame)
+
+        self.editor.render_gizmo()
 
         # === PASS 2: Render emissive materials (bulbs and beams, excluding lasers) ===
         self.emissive_framebuffer.use()

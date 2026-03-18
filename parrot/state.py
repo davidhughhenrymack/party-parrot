@@ -6,7 +6,7 @@ from beartype import beartype
 from parrot.director.mode import Mode
 from parrot.vj.vj_mode import VJMode
 from parrot.director.themes import themes, get_theme_by_name
-from parrot.patch_bay import venues
+from parrot.patch_bay import venues, resolve_venue
 
 
 @beartype
@@ -220,14 +220,9 @@ class State:
                 self._theme = themes[state_data["theme_index"]]
 
             if "venue_name" in state_data and state_data["venue_name"]:
-                # Find venue by name
-                for venue in venues.__dict__.values():
-                    if (
-                        hasattr(venue, "name")
-                        and venue.name == state_data["venue_name"]
-                    ):
-                        self._venue = venue
-                        break
+                loaded_venue = resolve_venue(state_data["venue_name"])
+                if loaded_venue is not None:
+                    self._venue = loaded_venue
 
             if "manual_dimmer" in state_data:
                 self._manual_dimmer = state_data["manual_dimmer"]

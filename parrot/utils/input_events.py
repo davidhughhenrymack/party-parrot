@@ -5,7 +5,7 @@ Allows 3D renderers and other components to receive input events.
 """
 
 from beartype import beartype
-from beartype.typing import Optional, Callable
+from beartype.typing import Callable, Optional
 
 
 @beartype
@@ -33,11 +33,11 @@ class InputEvents:
         self.mouse_drag_start_x = 0.0
         self.mouse_drag_start_y = 0.0
 
-        # Registered callbacks
-        self.on_mouse_drag: Optional[Callable[[float, float], None]] = None
-        self.on_mouse_press: Optional[Callable[[float, float], None]] = None
-        self.on_mouse_release: Optional[Callable[[float, float], None]] = None
-        self.on_mouse_scroll: Optional[Callable[[float, float], None]] = None
+        # Registered callbacks. Returning True consumes the event.
+        self.on_mouse_drag: list[Callable[[float, float], bool | None]] = []
+        self.on_mouse_press: list[Callable[[float, float], bool | None]] = []
+        self.on_mouse_release: list[Callable[[float, float], bool | None]] = []
+        self.on_mouse_scroll: list[Callable[[float, float], bool | None]] = []
 
     def handle_mouse_press(self, x: float, y: float):
         """Called when mouse button is pressed"""
@@ -47,8 +47,9 @@ class InputEvents:
         self.mouse_x = x
         self.mouse_y = y
 
-        if self.on_mouse_press:
-            self.on_mouse_press(x, y)
+        for callback in list(self.on_mouse_press):
+            if callback(x, y):
+                break
 
     def handle_mouse_release(self, x: float, y: float):
         """Called when mouse button is released"""
@@ -56,8 +57,9 @@ class InputEvents:
         self.mouse_x = x
         self.mouse_y = y
 
-        if self.on_mouse_release:
-            self.on_mouse_release(x, y)
+        for callback in list(self.on_mouse_release):
+            if callback(x, y):
+                break
 
     def handle_mouse_drag(self, x: float, y: float):
         """Called when mouse is dragged"""
@@ -71,29 +73,39 @@ class InputEvents:
         self.mouse_x = x
         self.mouse_y = y
 
-        if self.on_mouse_drag:
-            self.on_mouse_drag(dx, dy)
+        for callback in list(self.on_mouse_drag):
+            if callback(dx, dy):
+                break
 
-    def register_mouse_drag_callback(self, callback: Callable[[float, float], None]):
+    def register_mouse_drag_callback(
+        self, callback: Callable[[float, float], bool | None]
+    ):
         """Register a callback for mouse drag events"""
-        self.on_mouse_drag = callback
+        self.on_mouse_drag.append(callback)
 
-    def register_mouse_press_callback(self, callback: Callable[[float, float], None]):
+    def register_mouse_press_callback(
+        self, callback: Callable[[float, float], bool | None]
+    ):
         """Register a callback for mouse press events"""
-        self.on_mouse_press = callback
+        self.on_mouse_press.append(callback)
 
-    def register_mouse_release_callback(self, callback: Callable[[float, float], None]):
+    def register_mouse_release_callback(
+        self, callback: Callable[[float, float], bool | None]
+    ):
         """Register a callback for mouse release events"""
-        self.on_mouse_release = callback
+        self.on_mouse_release.append(callback)
 
     def handle_mouse_scroll(self, scroll_x: float, scroll_y: float):
         """Called when mouse wheel is scrolled"""
-        if self.on_mouse_scroll:
-            self.on_mouse_scroll(scroll_x, scroll_y)
+        for callback in list(self.on_mouse_scroll):
+            if callback(scroll_x, scroll_y):
+                break
 
-    def register_mouse_scroll_callback(self, callback: Callable[[float, float], None]):
+    def register_mouse_scroll_callback(
+        self, callback: Callable[[float, float], bool | None]
+    ):
         """Register a callback for mouse scroll events"""
-        self.on_mouse_scroll = callback
+        self.on_mouse_scroll.append(callback)
 
     @classmethod
     def get_instance(cls) -> "InputEvents":
