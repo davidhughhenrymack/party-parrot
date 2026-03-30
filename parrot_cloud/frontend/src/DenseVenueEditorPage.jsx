@@ -17,7 +17,7 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [venueSnapshot, setVenueSnapshot] = useState(null);
   const [fixtureTypes, setFixtureTypes] = useState([]);
   const [supportedUniverses, setSupportedUniverses] = useState([]);
-  const [currentView, setCurrentView] = useState('top');
+  const [currentView, setCurrentView] = useState('perspective');
   const [interactionMode, setInteractionMode] = useState('select');
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [selectedKind, setSelectedKind] = useState(null);

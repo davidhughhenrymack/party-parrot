@@ -115,8 +115,6 @@ def test_headless_browser_basic_editor_flow(parrot_cloud_server):
 
         page.wait_for_selector("#venue-name-input")
         assert page.input_value("#venue-name-input") == "Browser Test Venue"
-        expect_text = page.locator("#venue-stats")
-        expect_text.wait_for()
         assert "No lights yet" in page.locator("#fixture-list").text_content()
 
         venue_id = page.url.rsplit("/", 1)[-1].split("?", 1)[0]
@@ -164,5 +162,43 @@ def test_headless_browser_basic_editor_flow(parrot_cloud_server):
                 return data.fixtures.some((fixture) => fixture.address === 322 && fixture.universe === 'art1');
             }}"""
         )
+
+        browser.close()
+
+
+def test_headless_browser_real_editor_loads_without_runtime_errors(parrot_cloud_server):
+    base_url = parrot_cloud_server["base_url"]
+    browser_path = parrot_cloud_server["browser_path"]
+    page_errors: list[str] = []
+    console_errors: list[str] = []
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(
+            headless=True,
+            executable_path=browser_path,
+            args=["--disable-gpu", "--no-sandbox"],
+        )
+        page = browser.new_page()
+        page.on("pageerror", lambda error: page_errors.append(str(error)))
+        page.on(
+            "console",
+            lambda message: (
+                console_errors.append(message.text)
+                if message.type == "error"
+                else None
+            ),
+        )
+
+        bootstrap = requests.get(f"{base_url}/api/bootstrap", timeout=5).json()
+        venue_id = bootstrap["active_venue"]["summary"]["id"]
+
+        page.goto(f"{base_url}/venues/{venue_id}", wait_until="networkidle")
+        page.wait_for_function("document.body.dataset.appReady === 'true'")
+        page.wait_for_selector("#venue-name-input")
+        page.wait_for_selector("#viewport canvas")
+
+        assert page_errors == []
+        assert console_errors == []
+        assert page.locator("#viewport canvas").is_visible()
 
         browser.close()

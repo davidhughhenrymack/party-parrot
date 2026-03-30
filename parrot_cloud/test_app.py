@@ -41,6 +41,13 @@ def test_fixture_types_endpoint(client):
     assert any(item["key"] == "par_rgb" for item in data["fixture_types"])
 
 
+def test_asset_endpoint_serves_dj_silhouette(client):
+    response = client.get("/api/assets/dj.png")
+
+    assert response.status_code == 200
+    assert response.mimetype == "image/png"
+
+
 def test_config_endpoint_lists_supported_universes(client):
     response = client.get("/api/config")
 

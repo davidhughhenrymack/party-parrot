@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 from flask_sock import Sock
 
+from parrot_cloud.database import get_repo_root
 from parrot_cloud.fixture_catalog import list_fixture_types
 from parrot_cloud.repository import VenueRepository
 from parrot_cloud.ws_hub import VenueUpdateHub
@@ -56,6 +57,10 @@ def create_app() -> Flask:
     @app.get("/api/health")
     def health():
         return jsonify({"ok": True})
+
+    @app.get("/api/assets/<path:filename>")
+    def asset_file(filename: str):
+        return send_from_directory(get_repo_root() / "assets", filename)
 
     @app.get("/api/config")
     def config():

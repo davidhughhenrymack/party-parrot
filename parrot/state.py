@@ -162,6 +162,15 @@ class State:
     def queue_runtime_bootstrap(self, bootstrap: RuntimeBootstrap):
         self._gui_update_queue.put(("runtime_bootstrap", bootstrap))
 
+    def queue_runtime_venues(self, venues: list[VenueSummary]):
+        self._gui_update_queue.put(("runtime_venues", venues))
+
+    def queue_runtime_snapshot(self, snapshot: VenueSnapshot):
+        self._gui_update_queue.put(("runtime_snapshot", snapshot))
+
+    def queue_runtime_control_state(self, control_state: ControlState):
+        self._gui_update_queue.put(("runtime_control_state", control_state))
+
     def queue_runtime_effect(self, effect: str):
         self._gui_update_queue.put(("runtime_effect", effect))
 
@@ -211,6 +220,11 @@ class State:
             self.events.on_theme_change(self._theme)
 
     def _apply_runtime_snapshot(self, snapshot: VenueSnapshot):
+        previous_snapshot = self._runtime_venue_snapshot
+        venue_changed = (
+            previous_snapshot is None
+            or previous_snapshot.summary.id != snapshot.summary.id
+        )
         self._runtime_venue_snapshot = snapshot
         self._venue = snapshot.summary
         self._runtime_patch, self._runtime_manual_group = build_runtime_fixture_groups(
@@ -219,7 +233,10 @@ class State:
         self._manual_dimmer_supported_override = any(
             fixture.is_manual for fixture in snapshot.fixtures
         )
-        self.events.on_venue_change(self._venue)
+        if venue_changed:
+            self.events.on_venue_change(self._venue)
+        else:
+            self.events.on_runtime_scene_change(snapshot)
         self.save_state()
 
     @property
@@ -394,6 +411,12 @@ class State:
 
                 elif update_type == "runtime_bootstrap":
                     self.apply_runtime_bootstrap(value)
+                elif update_type == "runtime_venues":
+                    self._available_venues = list(value)
+                elif update_type == "runtime_snapshot":
+                    self._apply_runtime_snapshot(value)
+                elif update_type == "runtime_control_state":
+                    self._apply_control_state(value)
                 elif update_type == "runtime_effect":
                     self.set_effect_thread_safe(value)
 

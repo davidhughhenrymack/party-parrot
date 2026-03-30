@@ -71,7 +71,7 @@ function createThreeSceneController({
   };
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x090d13);
+  scene.background = new THREE.Color(0x1b2430);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -83,13 +83,17 @@ function createThreeSceneController({
 
   const orbitControls = new OrbitControls(localState.activeCamera, renderer.domElement);
   orbitControls.enableDamping = true;
-  orbitControls.screenSpacePanning = true;
+  orbitControls.enableZoom = true;
+  orbitControls.rotateSpeed = 0.9;
+  orbitControls.panSpeed = 0.9;
+  orbitControls.minPolarAngle = 0.12;
+  orbitControls.maxPolarAngle = Math.PI - 0.12;
 
   const transformControls = new TransformControls(localState.activeCamera, renderer.domElement);
   transformControls.setMode('translate');
   transformControls.setSpace('world');
   transformControls.size = 0.8;
-  scene.add(transformControls);
+  scene.add(transformControls.getHelper());
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.9));
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -108,13 +112,11 @@ function createThreeSceneController({
   floorMesh.position.set(0, 0, -0.04);
   scene.add(floorMesh);
 
-  const gridHelper = new THREE.GridHelper(12, 12, 0x335577, 0x223344);
-  scene.add(gridHelper);
-
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
 
   const videoWallTexture = createVideoWallTexture();
+  const djSilhouetteTexture = createDjSilhouetteTexture();
 
   function resizeRenderer() {
     const width = viewportEl.clientWidth;
@@ -157,6 +159,14 @@ function createThreeSceneController({
     return venueSnapshot?.scene_objects?.find((sceneObject) => sceneObject.kind === kind) ?? null;
   }
 
+  function getFloorCenterTarget() {
+    const floorObject = getSceneObject(localState.venueSnapshot, 'floor');
+    if (!floorObject || !localState.venueScale) {
+      return new THREE.Vector3(0, 0, 0);
+    }
+    return toScenePosition(floorObject.x, floorObject.y, 0);
+  }
+
   function createVideoWallTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 32;
@@ -195,6 +205,12 @@ function createThreeSceneController({
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
+    return texture;
+  }
+
+  function createDjSilhouetteTexture() {
+    const texture = new THREE.TextureLoader().load('/api/assets/dj.png');
+    texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   }
 
@@ -280,13 +296,17 @@ function createThreeSceneController({
 
   function syncInteractionMode() {
     if (localState.interactionMode === 'rotate') {
+      const floorCenterTarget = getFloorCenterTarget();
       orbitControls.enabled = true;
-      orbitControls.enableRotate = true;
+      orbitControls.enableRotate = localState.currentView === 'perspective';
       orbitControls.enablePan = false;
+      orbitControls.screenSpacePanning = false;
+      orbitControls.target.copy(floorCenterTarget);
       orbitControls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
       orbitControls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
       renderer.domElement.style.cursor = 'grab';
       transformControls.enabled = false;
+      orbitControls.update();
       return;
     }
 
@@ -294,6 +314,7 @@ function createThreeSceneController({
       orbitControls.enabled = true;
       orbitControls.enableRotate = false;
       orbitControls.enablePan = true;
+      orbitControls.screenSpacePanning = true;
       orbitControls.mouseButtons.LEFT = THREE.MOUSE.PAN;
       orbitControls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
       renderer.domElement.style.cursor = 'move';
@@ -365,33 +386,36 @@ function createThreeSceneController({
       heightFocus: 10,
       maxDimension: 12,
     };
+    const floorCenterTarget = getFloorCenterTarget();
+    const flatTarget = floorCenterTarget.clone();
+    flatTarget.z = scale.heightFocus * 0.5;
     if (viewName === 'perspective') {
       localState.activeCamera = perspectiveCamera;
-      perspectiveCamera.position.set(scale.worldWidth, -scale.worldDepth * 1.15, scale.heightFocus * 1.45);
+      perspectiveCamera.position.set(0, scale.worldDepth * 1.35, scale.heightFocus * 0.95);
       perspectiveCamera.up.set(0, 0, 1);
-      perspectiveCamera.lookAt(0, 0, scale.heightFocus * 0.45);
+      perspectiveCamera.lookAt(floorCenterTarget);
       orbitControls.enableRotate = true;
     } else if (viewName === 'front') {
       localState.activeCamera = orthoCamera;
-      orthoCamera.position.set(0, -scale.worldDepth * 1.6, scale.heightFocus);
+      orthoCamera.position.set(0, -scale.worldDepth * 1.6, flatTarget.z);
       orthoCamera.up.set(0, 0, 1);
-      orthoCamera.lookAt(0, 0, scale.heightFocus);
+      orthoCamera.lookAt(flatTarget);
       orbitControls.enableRotate = false;
     } else if (viewName === 'side') {
       localState.activeCamera = orthoCamera;
-      orthoCamera.position.set(scale.worldWidth * 1.6, 0, scale.heightFocus);
+      orthoCamera.position.set(scale.worldWidth * 1.6, 0, flatTarget.z);
       orthoCamera.up.set(0, 0, 1);
-      orthoCamera.lookAt(0, 0, scale.heightFocus);
+      orthoCamera.lookAt(flatTarget);
       orbitControls.enableRotate = false;
     } else {
       localState.activeCamera = orthoCamera;
       orthoCamera.position.set(0, 0, scale.maxDimension * 3.2);
       orthoCamera.up.set(0, 1, 0);
-      orthoCamera.lookAt(0, 0, 0);
+      orthoCamera.lookAt(floorCenterTarget);
       orbitControls.enableRotate = false;
     }
     orbitControls.object = localState.activeCamera;
-    orbitControls.enableZoom = true;
+    orbitControls.target.copy(viewName === 'perspective' ? floorCenterTarget : flatTarget);
     orbitControls.update();
     transformControls.camera = localState.activeCamera;
     syncInteractionMode();
@@ -514,6 +538,7 @@ function createThreeSceneController({
       new THREE.PlaneGeometry(wallWidth * 0.94, wallHeight * 0.94),
       screenMaterial
     );
+    screen.rotation.x = -Math.PI / 2;
     screen.position.set(0, wallDepth / 2 + 0.01, 0);
     screen.userData = { entityKey: 'video_wall' };
     group.add(screen);
@@ -555,9 +580,9 @@ function createThreeSceneController({
     if (sceneObject.kind === 'dj_table') {
       const table = new THREE.Mesh(
         new THREE.BoxGeometry(
-          Math.max(sceneObject.width * localState.venueScale.planarScale, 0.25),
-          Math.max(sceneObject.depth * localState.venueScale.planarScale, 0.12),
-          Math.max(sceneObject.height, 0.2)
+          2.0,
+          0.6,
+          1.2
         ),
         new THREE.MeshStandardMaterial({
           color: 0x2d1b16,
@@ -568,17 +593,17 @@ function createThreeSceneController({
       group.add(table);
     } else if (sceneObject.kind === 'dj_cutout') {
       const cutout = new THREE.Mesh(
-        new THREE.PlaneGeometry(
-          Math.max(sceneObject.width * localState.venueScale.planarScale, 0.2),
-          Math.max(sceneObject.height, 0.2)
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x111111,
+        new THREE.PlaneGeometry(1.5, 1.5),
+        new THREE.MeshBasicMaterial({
+          map: djSilhouetteTexture,
+          color: 0xffffff,
           transparent: true,
-          opacity: 0.88,
+          opacity: 1,
+          alphaTest: 0.02,
           side: THREE.DoubleSide,
         })
       );
+      cutout.rotation.x = -Math.PI / 2;
       group.add(cutout);
     }
 
@@ -605,22 +630,11 @@ function createThreeSceneController({
         floorObject.rotation_y || 0,
         floorObject.rotation_z || 0
       );
-      gridHelper.position.copy(toScenePosition(floorObject.x, floorObject.y, 0));
-      gridHelper.rotation.set(
-        floorObject.rotation_x || 0,
-        floorObject.rotation_y || 0,
-        floorObject.rotation_z || 0
-      );
     }
 
     floorMesh.scale.set(
       localState.venueScale.worldWidth / 10,
       localState.venueScale.worldDepth / 10,
-      1
-    );
-    gridHelper.scale.set(
-      localState.venueScale.worldWidth / 12,
-      localState.venueScale.worldDepth / 12,
       1
     );
 
@@ -634,7 +648,12 @@ function createThreeSceneController({
   }
 
   transformControls.addEventListener('dragging-changed', (event) => {
-    orbitControls.enabled = !event.value;
+    if (event.value) {
+      orbitControls.enabled = false;
+      renderer.domElement.style.cursor = 'grabbing';
+      return;
+    }
+    syncInteractionMode();
   });
 
   transformControls.addEventListener('mouseUp', async () => {
@@ -672,7 +691,7 @@ function createThreeSceneController({
   window.addEventListener('resize', resizeRenderer);
 
   resizeRenderer();
-  setView('top');
+  setView('perspective');
   setInteractionMode('select');
 
   function animate() {
