@@ -32,12 +32,18 @@ pyobjc-framework-cocoa = { version = "^11.1", markers = "sys_platform == 'darwin
 stupidartnet = "^1.4.0"
 setuptools = "^80.0.0"
 packaging = "^25.0"
+sqlalchemy = "^2.0.48"
+alembic = "^1.18.4"
+requests = "^2.33.1"
+websocket-client = "^1.9.0"
+flask-sock = "^0.7.0"
 
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.18.1"
 coverage = "^7.10.6"
 ipykernel = "^7.0.1"
+playwright = "^1.58.0"
 
 [build-system]
 requires = ["poetry-core"]

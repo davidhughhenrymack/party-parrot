@@ -12,6 +12,11 @@ def parse_arguments():
     )
     parser.add_argument("--plot", action="store_true", help="Enable plotting")
     parser.add_argument("--web-port", type=int, default=4040, help="Web server port")
+    parser.add_argument(
+        "--venue-service-url",
+        default="http://127.0.0.1:4041",
+        help="Venue editor service base URL",
+    )
     parser.add_argument("--no-web", action="store_true", help="Disable web server")
     parser.add_argument(
         "--vj-fullscreen", action="store_true", help="Run VJ in fullscreen mode"

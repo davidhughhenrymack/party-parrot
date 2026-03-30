@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get current mode and VJ mode on page load
     fetchCurrentmode();
     fetchCurrentVJMode();
+    configureVenueEditorLink();
     
     // Add event listeners to mode buttons
     const modeButtons = document.querySelectorAll('.mode-button');
@@ -302,5 +303,18 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error setting manual dimmer:', error);
         });
+    }
+
+    function configureVenueEditorLink() {
+        fetch('/api/config')
+            .then(response => response.json())
+            .then(data => {
+                const link = document.getElementById('venue-editor-link');
+                const editorPort = data.editor_port || 4041;
+                link.href = `${window.location.protocol}//${window.location.hostname}:${editorPort}/`;
+            })
+            .catch(error => {
+                console.error('Error configuring venue editor link:', error);
+            });
     }
 });

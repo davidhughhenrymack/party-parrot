@@ -7,7 +7,6 @@ from typing import List
 from colorama import Fore, Style, init
 from parrot.director.frame import Frame, FrameSignal
 
-from parrot.patch_bay import venue_patches, get_manual_group
 from parrot.fixtures.led_par import Par
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.fixtures.base import FixtureGroup, ManualGroup
@@ -27,6 +26,7 @@ from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
 from parrot.utils.color_utils import format_color_scheme
 from parrot.fixtures.position_manager import FixturePositionManager
+from parrot.venue_runtime import get_runtime_fixtures, get_runtime_manual_group
 
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
@@ -76,7 +76,7 @@ class Director:
         self.fixture_groups = []
 
         # Get all fixtures from the venue patch
-        all_fixtures = venue_patches[self.state.venue]
+        all_fixtures = get_runtime_fixtures(self.state)
 
         # First, collect any existing FixtureGroup instances
         grouped_fixtures = []
@@ -291,7 +291,7 @@ class Director:
 
         # Reset fixture state before interpreter step() calls
         # This ensures strobe values accumulate using max(existing, new)
-        for fixture in venue_patches[self.state.venue]:
+        for fixture in get_runtime_fixtures(self.state):
             fixture.begin()
 
         for i in self.interpreters:
@@ -311,13 +311,13 @@ class Director:
 
     def render(self, dmx):
         # Get manual group and set its dimmer value
-        manual_group = get_manual_group(self.state.venue)
+        manual_group = get_runtime_manual_group(self.state)
         if manual_group:
             manual_group.set_manual_dimmer(self.state.manual_dimmer)
             manual_group.render(dmx)
 
         # Render all fixtures
-        for i in venue_patches[self.state.venue]:
+        for i in get_runtime_fixtures(self.state):
             i.render(dmx)
 
         dmx.submit()

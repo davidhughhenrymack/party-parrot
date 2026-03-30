@@ -210,6 +210,21 @@ body {
     margin-top: 5px;
 }
 
+.footer-link {
+    margin-top: 32px;
+    text-align: center;
+}
+
+.footer-link a {
+    color: #8ec5ff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.footer-link a:hover {
+    text-decoration: underline;
+}
+
 @keyframes pulse {
     0% {
         box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);

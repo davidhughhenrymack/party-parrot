@@ -29,6 +29,7 @@ class Room3DRenderer:
         self.width = width
         self.height = height
         self.show_floor = show_floor
+        self.scene_layout = self._build_default_scene_layout()
 
         # Room dimensions (in arbitrary units)
         self.room_width = 20.0  # Stage to back wall
@@ -123,6 +124,59 @@ class Room3DRenderer:
             tuple[float, float, int],
             tuple[mgl.Buffer, mgl.Buffer, mgl.VertexArray, int, np.ndarray],
         ] = {}
+
+    def _build_default_scene_layout(self) -> dict[str, dict[str, float | tuple[float, float, float]]]:
+        return {
+            "floor": {
+                "center_x": 0.0,
+                "center_z": 0.0,
+                "width": 10.0,
+                "depth": 10.0,
+                "thickness": 0.08,
+                "rotation_x": 0.0,
+                "rotation_y": 0.0,
+                "rotation_z": 0.0,
+                "source_width": 500.0,
+                "source_depth": 500.0,
+                "room_height": 10.0,
+            },
+            "video_wall": {
+                "position": (0.0, 3.0, -4.5),
+                "width": 10.0,
+                "height": 6.0,
+                "depth": 0.25,
+                "rotation_x": 0.0,
+                "rotation_y": 0.0,
+                "rotation_z": 0.0,
+            },
+            "dj_table": {
+                "position": (0.0, 0.0, -3.5),
+                "width": 2.0,
+                "height": 1.2,
+                "depth": 0.6,
+                "rotation_x": 0.0,
+                "rotation_y": 0.0,
+                "rotation_z": 0.0,
+            },
+            "dj_cutout": {
+                "position": (0.0, 1.75, -3.8),
+                "width": 1.5,
+                "height": 1.5,
+                "depth": 0.05,
+                "rotation_x": 0.0,
+                "rotation_y": 0.0,
+                "rotation_z": 0.0,
+            },
+        }
+
+    def set_scene_layout(self, scene_layout: dict[str, dict[str, float | tuple[float, float, float]]]) -> None:
+        self.scene_layout = {
+            **self._build_default_scene_layout(),
+            **scene_layout,
+        }
+
+    def get_scene_object(self, kind: str) -> dict[str, float | tuple[float, float, float]]:
+        return dict(self.scene_layout.get(kind, {}))
 
     def _setup_shaders(self):
         """Setup OpenGL shaders for 3D rendering with Blinn-Phong lighting"""
@@ -699,6 +753,39 @@ class Room3DRenderer:
             dtype=np.float32,
         )
 
+    def _quaternion_from_euler_xyz(
+        self, rotation_x: float, rotation_y: float, rotation_z: float
+    ) -> np.ndarray:
+        half_x = rotation_x * 0.5
+        half_y = rotation_y * 0.5
+        half_z = rotation_z * 0.5
+        sin_x, cos_x = math.sin(half_x), math.cos(half_x)
+        sin_y, cos_y = math.sin(half_y), math.cos(half_y)
+        sin_z, cos_z = math.sin(half_z), math.cos(half_z)
+        return np.array(
+            [
+                sin_x * cos_y * cos_z - cos_x * sin_y * sin_z,
+                cos_x * sin_y * cos_z + sin_x * cos_y * sin_z,
+                cos_x * cos_y * sin_z - sin_x * sin_y * cos_z,
+                cos_x * cos_y * cos_z + sin_x * sin_y * sin_z,
+            ],
+            dtype=np.float32,
+        )
+
+    def _rotate_vector(
+        self, vector: tuple[float, float, float], quaternion: np.ndarray
+    ) -> tuple[float, float, float]:
+        vector_q = np.array([vector[0], vector[1], vector[2], 0.0], dtype=np.float32)
+        quaternion_conjugate = np.array(
+            [-quaternion[0], -quaternion[1], -quaternion[2], quaternion[3]],
+            dtype=np.float32,
+        )
+        rotated = self._quaternion_multiply(
+            self._quaternion_multiply(quaternion, vector_q),
+            quaternion_conjugate,
+        )
+        return (float(rotated[0]), float(rotated[1]), float(rotated[2]))
+
     def _get_current_model_matrix(self) -> np.ndarray:
         """Get the current model matrix from transform stacks"""
         # Start with identity
@@ -774,63 +861,78 @@ class Room3DRenderer:
             self.rotation_stack.pop()
 
     def render_dj_booth(self):
-        """Render DJ table and figure in front of video wall
-
-        Coordinate system:
-        - X: left-right (0 = center)
-        - Y: up-down (0 = floor)
-        - Z: forward-back depth (negative = toward back wall, wall is at Z=-4.5)
-        """
-        # DJ table dimensions (6ft wide x 4ft tall x 2ft deep)
-        table_width = 2.0
-        table_height = 1.2
-        table_depth = 0.6
-
-        # Position in front of video wall (wall at Z=-4.5)
-        # Table sits on floor, centered, in front of the wall
-        table_x = 0.0  # Centered left-right
-        table_y = 0.0  # Height: bottom edge at floor (y=0)
-        table_z = -3.5  # Depth: in front of wall, visible from camera
-
-        # Render DJ table (dark wood color)
-        table_color = (0.15, 0.1, 0.08)  # Dark wood brown
-        self.render_rectangular_box(
-            table_x,
-            table_y,
-            table_z,
-            table_color,
-            table_width,
-            table_height,
-            table_depth,
+        """Render DJ table and figure using the active scene layout."""
+        table = self.scene_layout["dj_table"]
+        table_x, table_y, table_z = table["position"]
+        table_rotation = self._quaternion_from_euler_xyz(
+            float(table.get("rotation_x", 0.0)),
+            float(table.get("rotation_y", 0.0)),
+            float(table.get("rotation_z", 0.0)),
         )
+        table_color = (0.15, 0.1, 0.08)
+        with self.local_position((table_x, table_y, table_z)):
+            with self.local_rotation(table_rotation):
+                self.render_rectangular_box(
+                    0.0,
+                    0.0,
+                    0.0,
+                    table_color,
+                    float(table["width"]),
+                    float(table["height"]),
+                    float(table["depth"]),
+                )
 
-        # Render DJ silhouette billboard behind the table
         if self._dj_texture:
-            # DJ billboard dimensions (keep aspect ratio from 600x600 image)
-            dj_width = 1.5
-            dj_height = 1.5
-
-            # Position: centered horizontally, bottom edge slightly above table
-            dj_x = table_x  # Same x as table (centered)
-            dj_y = table_height + (dj_height / 2.0) - 0.2  # Lower, closer to table
-            dj_z = table_z - (table_depth / 2.0)  # At back edge of table
+            dj_cutout = self.scene_layout["dj_cutout"]
+            dj_rotation = self._quaternion_from_euler_xyz(
+                float(dj_cutout.get("rotation_x", 0.0)),
+                float(dj_cutout.get("rotation_y", 0.0)),
+                float(dj_cutout.get("rotation_z", 0.0)),
+            )
+            normal = self._rotate_vector((0.0, 0.0, 1.0), dj_rotation)
 
             self.render_billboard(
                 texture=self._dj_texture,
-                position=(dj_x, dj_y, dj_z),
-                width=dj_width,
-                height=dj_height,
-                normal=(0.0, 0.0, 1.0),  # Face forward toward audience
-                use_alpha=True,  # Use transparency from texture
+                position=tuple(dj_cutout["position"]),
+                width=float(dj_cutout["width"]),
+                height=float(dj_cutout["height"]),
+                normal=normal,
+                use_alpha=True,
             )
 
     def render_floor(self):
-        """Render the floor quad and grid lines with lighting"""
+        """Render the floor quad and grid lines with lighting."""
         if not self.show_floor:
             return
 
         mvp = self._get_mvp_matrix()
-        model = np.eye(4, dtype=np.float32)
+        floor = self.scene_layout["floor"]
+        scale = np.array(
+            [
+                [float(floor["width"]) / 10.0, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, float(floor["depth"]) / 10.0, 0],
+                [0, 0, 0, 1],
+            ],
+            dtype=np.float32,
+        )
+        rotation = self._quaternion_to_matrix(
+            self._quaternion_from_euler_xyz(
+                float(floor.get("rotation_x", 0.0)),
+                float(floor.get("rotation_y", 0.0)),
+                float(floor.get("rotation_z", 0.0)),
+            )
+        )
+        translation = np.array(
+            [
+                [1, 0, 0, float(floor["center_x"])],
+                [0, 1, 0, 0.0],
+                [0, 0, 1, float(floor["center_z"])],
+                [0, 0, 0, 1],
+            ],
+            dtype=np.float32,
+        )
+        model = translation @ rotation @ scale
 
         # Calculate camera position for lighting (same as in _get_mvp_matrix)
         horizontal_distance = self.camera_distance * math.cos(self.camera_tilt)
@@ -2145,29 +2247,22 @@ class Room3DRenderer:
     ):
         """Convert 2D canvas coordinates to 3D room coordinates
 
-        Maps fixture positions from [0-500] range to floor space [-5 to 5]
-        z parameter controls height above floor
+        Maps fixture positions from venue-space coordinates onto the configured floor.
         """
-        # Assume fixtures are positioned in a [0-500] coordinate system
-        # Map to floor space which is [-5 to 5] in both X and Z
-        fixture_coord_range = 500.0
-        floor_size = 10.0  # Floor goes from -5 to 5
+        floor = self.scene_layout.get("floor", {})
+        source_width = float(floor.get("source_width", canvas_width or 500.0))
+        source_depth = float(floor.get("source_depth", canvas_height or 500.0))
+        world_width = float(floor.get("width", 10.0))
+        world_depth = float(floor.get("depth", 10.0))
+        center_x = float(floor.get("center_x", 0.0))
+        center_z = float(floor.get("center_z", 0.0))
 
-        # Normalize to [0-1] range assuming [0-500] input
-        norm_x = x / fixture_coord_range
-        norm_y = y / fixture_coord_range
+        norm_x = 0.0 if source_width <= 0 else x / source_width
+        norm_y = 0.0 if source_depth <= 0 else y / source_depth
 
-        # Convert to room coordinates in visible range
-        # X: left-right in room (-5 to 5)
-        room_x = (norm_x - 0.5) * floor_size
-
-        # Z: depth in room (-5 to 5)
-        # Y coordinate from canvas becomes Z depth (forward/back)
-        room_z = (norm_y - 0.5) * floor_size
-
-        # Y: height above floor (from z parameter)
+        room_x = center_x + (norm_x - 0.5) * world_width
+        room_z = center_z + (norm_y - 0.5) * world_depth
         room_y = z
-
         return room_x, room_y, room_z
 
     def cleanup(self):

@@ -6,8 +6,8 @@ import numpy as np
 from beartype import beartype
 from typing import Optional
 from parrot.state import State
-from parrot.patch_bay import venue_patches
 from parrot.fixtures.base import FixtureBase, FixtureGroup
+from parrot.venue_runtime import get_runtime_fixtures, get_runtime_manual_group
 
 
 @beartype
@@ -37,10 +37,8 @@ class FixturePositionManager:
 
     def _get_all_fixtures(self) -> list[FixtureBase]:
         """Get all fixtures from the current venue's patch bay, flattening groups"""
-        from parrot.patch_bay import get_manual_group
-
         fixtures = []
-        for item in venue_patches[self.state.venue]:
+        for item in get_runtime_fixtures(self.state):
             if isinstance(item, FixtureGroup):
                 # Add all fixtures from the group
                 for fixture in item.fixtures:
@@ -50,7 +48,7 @@ class FixturePositionManager:
                 fixtures.append(item)
 
         # Also include manual fixtures (actor/performance lights)
-        manual_group = get_manual_group(self.state.venue)
+        manual_group = get_runtime_manual_group(self.state)
         if manual_group is not None:
             for fixture in manual_group.fixtures:
                 fixtures.append(fixture)
@@ -59,6 +57,8 @@ class FixturePositionManager:
 
     def _load_and_apply_positions(self):
         """Load fixture positions from JSON file and apply them to fixture objects"""
+        if self.state.runtime_venue_snapshot is not None:
+            return
         filename = f"{self.state.venue.name}_gui.json"
 
         # Get all fixtures from patch bay (golden source)

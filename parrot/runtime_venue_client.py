@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+import json
+import threading
+import time
+from urllib.parse import urlparse
+
+import requests
+import websocket
+from beartype import beartype
+
+from parrot.state import State
+from parrot_cloud.domain import RuntimeBootstrap
+
+
+def _to_websocket_url(base_url: str) -> str:
+    parsed = urlparse(base_url)
+    scheme = "wss" if parsed.scheme == "https" else "ws"
+    return f"{scheme}://{parsed.netloc}/ws/venue-updates"
+
+
+@beartype
+class RuntimeVenueClient:
+    def __init__(self, state: State, base_url: str):
+        self.state = state
+        self.base_url = base_url.rstrip("/")
+        self.ws_url = _to_websocket_url(self.base_url)
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+        self.state.disable_local_state_persistence()
+        self.state.set_remote_venue_selector(self.set_active_venue)
+
+    def start(self) -> None:
+        if self._thread is not None:
+            return
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop_event.set()
+
+    def bootstrap(self) -> None:
+        response = requests.get(f"{self.base_url}/api/runtime/bootstrap", timeout=5)
+        response.raise_for_status()
+        bootstrap = RuntimeBootstrap.from_dict(response.json())
+        self.state.queue_runtime_bootstrap(bootstrap)
+
+    def set_active_venue(self, venue_id: str) -> None:
+        try:
+            requests.post(
+                f"{self.base_url}/api/venues/{venue_id}/activate",
+                timeout=5,
+            ).raise_for_status()
+        except Exception as exc:
+            print(f"Failed to select venue {venue_id}: {exc}")
+
+    def _run(self) -> None:
+        while not self._stop_event.is_set():
+            try:
+                self.bootstrap()
+                self._run_websocket_loop()
+            except Exception as exc:
+                print(f"Venue service sync unavailable: {exc}")
+                time.sleep(2.0)
+
+    def _run_websocket_loop(self) -> None:
+        def on_message(_, message: str):
+            payload = json.loads(message)
+            message_type = payload.get("type")
+            if message_type == "bootstrap":
+                bootstrap = RuntimeBootstrap.from_dict(payload["data"])
+                self.state.queue_runtime_bootstrap(bootstrap)
+            elif message_type == "effect":
+                effect = str(payload.get("data", {}).get("effect", ""))
+                if effect:
+                    self.state.queue_runtime_effect(effect)
+
+        def on_error(_, error):
+            print(f"Venue websocket error: {error}")
+
+        def on_close(_, __, ___):
+            pass
+
+        ws_app = websocket.WebSocketApp(
+            self.ws_url,
+            on_message=on_message,
+            on_error=on_error,
+            on_close=on_close,
+        )
+        while not self._stop_event.is_set():
+            ws_app.run_forever(ping_interval=20, ping_timeout=10)
+            if not self._stop_event.is_set():
+                time.sleep(1.0)

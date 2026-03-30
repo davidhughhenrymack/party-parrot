@@ -7,7 +7,6 @@ from flask import Flask, jsonify, request, send_from_directory
 from parrot.director.mode import Mode
 from parrot.vj.vj_mode import VJMode
 from parrot.state import State
-from parrot.patch_bay import has_manual_dimmer
 
 # Create Flask app
 app = Flask(__name__)
@@ -16,6 +15,7 @@ app = Flask(__name__)
 state_instance = None
 # Global reference to the director object
 director_instance = None
+editor_port_value = 4041
 # Track when hype was last deployed
 last_hype_time = 0
 # How long hype lasts (in seconds)
@@ -134,8 +134,9 @@ def get_hype_status():
 def get_manual_dimmer():
     """Get the current manual dimmer value."""
     if state_instance:
-        venue = state_instance.venue
-        has_dimmer = has_manual_dimmer(venue)
+        from parrot.venue_runtime import runtime_has_manual_dimmer
+
+        has_dimmer = runtime_has_manual_dimmer(state_instance)
         return jsonify({"value": state_instance.manual_dimmer, "supported": has_dimmer})
     return jsonify({"value": 0, "supported": False})
 
@@ -224,11 +225,24 @@ def set_vj_mode():
         )
 
 
-def start_web_server(state, director=None, host="0.0.0.0", port=5000, threaded=True):
+@app.route("/api/config", methods=["GET"])
+def get_config():
+    return jsonify({"editor_port": editor_port_value})
+
+
+def start_web_server(
+    state,
+    director=None,
+    host="0.0.0.0",
+    port=5000,
+    threaded=True,
+    editor_port=4041,
+):
     """Start the web server in a separate thread or return the app for main thread integration."""
-    global state_instance, director_instance
+    global state_instance, director_instance, editor_port_value
     state_instance = state
     director_instance = director
+    editor_port_value = editor_port
 
     # Suppress Flask/Werkzeug logs
     log = logging.getLogger("werkzeug")
@@ -238,6 +252,7 @@ def start_web_server(state, director=None, host="0.0.0.0", port=5000, threaded=T
     # Get local IP address
     local_ip = get_local_ip()
     print(f"\n🌐 Web interface available at: http://{local_ip}:{port}/")
+    print(f"🏛️  Venue editor available at: http://{local_ip}:{editor_port}/")
     print(f"📱 Connect from your mobile device using the above URL\n")
 
     if threaded:

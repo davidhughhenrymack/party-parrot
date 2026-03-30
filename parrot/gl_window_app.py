@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+from urllib.parse import urlparse
 import moderngl_window as mglw
 import moderngl as mgl
 from beartype import beartype
@@ -19,7 +20,8 @@ from parrot.keyboard_handler import KeyboardHandler
 from parrot.utils.input_events import InputEvents
 from parrot.director.themes import themes
 from parrot.vj.vj_mode import VJMode
-from parrot.patch_bay import venues
+from parrot.runtime_venue_client import RuntimeVenueClient
+from parrot.venue_runtime import get_runtime_venues
 
 
 def run_gl_window_app(args):
@@ -40,6 +42,17 @@ def run_gl_window_app(args):
     # Initialize state and components
     state = State()
     signal_states = SignalStates()
+
+    runtime_client = None
+    venue_service_url = getattr(args, "venue_service_url", None)
+    if venue_service_url:
+        runtime_client = RuntimeVenueClient(state, venue_service_url)
+        try:
+            runtime_client.bootstrap()
+            state.process_gui_updates()
+        except Exception as exc:
+            print(f"⚠️  Venue editor bootstrap unavailable, using local fallback: {exc}")
+        runtime_client.start()
 
     # Override mode if specified via args, otherwise use loaded/default mode
     if getattr(args, "rave", False):
@@ -72,7 +85,12 @@ def run_gl_window_app(args):
     fixture_renderer.enter(ctx)
 
     # Initialize DMX with venue-specific configuration
-    dmx = get_controller(state.venue)
+    dmx_ref = {"controller": get_controller(state.venue)}
+
+    def refresh_dmx_controller(_):
+        dmx_ref["controller"] = get_controller(state.venue)
+
+    state.events.on_venue_change += refresh_dmx_controller
 
     # Setup display shader
     vertex_shader = """
@@ -155,11 +173,13 @@ def run_gl_window_app(args):
     if not getattr(args, "no_web", False):
         from parrot.api import start_web_server
 
+        editor_port = urlparse(venue_service_url).port if venue_service_url else 4041
         web_server = start_web_server(
             state,
             director=director,
             port=getattr(args, "web_port", 4040),
             threaded=False,  # Run in main thread
+            editor_port=editor_port or 4041,
         )
 
     # Timing
@@ -213,7 +233,7 @@ def run_gl_window_app(args):
                     self.state = state_obj
                     self.modes = list(Mode)
                     self.vj_modes = list(VJMode)
-                    self.venues_list = list(venues)
+                    self.venues_list = list(get_runtime_venues(self.state))
                     self.themes = themes
                     # Store menu items for updating checkmarks
                     self.mode_items = []
@@ -324,7 +344,8 @@ def run_gl_window_app(args):
 
             # Create Venue menu
             venue_menu = NSMenu.alloc().initWithTitle_("Venue")
-            for idx, venue in enumerate(venues):
+            runtime_venues = list(get_runtime_venues(state))
+            for idx, venue in enumerate(runtime_venues):
                 display_name = venue.name.replace("_", " ").title()
                 menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
                     display_name,
@@ -530,7 +551,7 @@ def run_gl_window_app(args):
             if frame:
                 state.process_gui_updates()
                 director.step(frame)
-                director.render(dmx)
+                director.render(dmx_ref["controller"])
             last_audio_update = time.perf_counter()
 
         # Get VJ frame data

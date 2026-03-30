@@ -1,12 +1,15 @@
 import json
 import os
 import queue
+from typing import Callable, Optional
 from events import Events
 from beartype import beartype
 from parrot.director.mode import Mode
 from parrot.vj.vj_mode import VJMode
 from parrot.director.themes import themes, get_theme_by_name
 from parrot.patch_bay import venues
+from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
+from parrot_cloud.fixture_catalog import build_runtime_fixture_groups
 
 
 @beartype
@@ -24,6 +27,13 @@ class State:
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
         self._show_fixture_mode = False  # Default to VJ mode, not fixture mode
+        self._available_venues = []
+        self._runtime_venue_snapshot: Optional[VenueSnapshot] = None
+        self._runtime_patch = None
+        self._runtime_manual_group = None
+        self._manual_dimmer_supported_override: Optional[bool] = None
+        self._remote_venue_selector: Optional[Callable[[str], None]] = None
+        self._use_local_state_persistence = True
 
         # Queue for GUI updates from other threads
         self._gui_update_queue = queue.Queue()
@@ -117,6 +127,98 @@ class State:
             return
 
         self._venue = value
+        venue_id = getattr(value, "id", None)
+        if venue_id and self._remote_venue_selector is not None:
+            self._remote_venue_selector(venue_id)
+        self.events.on_venue_change(self._venue)
+        self.save_state()
+
+    @property
+    def available_venues(self):
+        return self._available_venues
+
+    @property
+    def runtime_venue_snapshot(self) -> Optional[VenueSnapshot]:
+        return self._runtime_venue_snapshot
+
+    @property
+    def runtime_patch(self):
+        return self._runtime_patch
+
+    @property
+    def runtime_manual_group(self):
+        return self._runtime_manual_group
+
+    @property
+    def manual_dimmer_supported_override(self) -> Optional[bool]:
+        return self._manual_dimmer_supported_override
+
+    def set_remote_venue_selector(self, handler: Callable[[str], None]):
+        self._remote_venue_selector = handler
+
+    def disable_local_state_persistence(self):
+        self._use_local_state_persistence = False
+
+    def queue_runtime_bootstrap(self, bootstrap: RuntimeBootstrap):
+        self._gui_update_queue.put(("runtime_bootstrap", bootstrap))
+
+    def queue_runtime_effect(self, effect: str):
+        self._gui_update_queue.put(("runtime_effect", effect))
+
+    def apply_runtime_bootstrap(self, bootstrap: RuntimeBootstrap):
+        self._apply_control_state(bootstrap.control_state)
+        self._available_venues = list(bootstrap.venues)
+        if bootstrap.active_venue is not None:
+            self._apply_runtime_snapshot(bootstrap.active_venue)
+
+    def _apply_control_state(self, control_state: ControlState):
+        next_mode = Mode[control_state.mode]
+        if self._mode != next_mode:
+            self._mode = next_mode
+            self.events.on_mode_change(self._mode)
+
+        next_vj_mode = VJMode(control_state.vj_mode)
+        if self._vj_mode != next_vj_mode:
+            self._vj_mode = next_vj_mode
+            self.events.on_vj_mode_change(self._vj_mode)
+
+        next_manual_dimmer = float(control_state.manual_dimmer)
+        if self._manual_dimmer != next_manual_dimmer:
+            self._manual_dimmer = next_manual_dimmer
+            self.events.on_manual_dimmer_change(self._manual_dimmer)
+
+        next_hype_limiter = bool(control_state.hype_limiter)
+        if self._hype_limiter != next_hype_limiter:
+            self._hype_limiter = next_hype_limiter
+            self.events.on_hype_limiter_change(self._hype_limiter)
+
+        next_show_waveform = bool(control_state.show_waveform)
+        if self._show_waveform != next_show_waveform:
+            self._show_waveform = next_show_waveform
+            self.events.on_show_waveform_change(self._show_waveform)
+
+        next_show_fixture_mode = bool(control_state.show_fixture_mode)
+        if self._show_fixture_mode != next_show_fixture_mode:
+            self._show_fixture_mode = next_show_fixture_mode
+            self.events.on_show_fixture_mode_change(self._show_fixture_mode)
+
+        try:
+            next_theme = get_theme_by_name(control_state.theme_name)
+        except ValueError:
+            next_theme = self._theme
+        if self._theme != next_theme:
+            self._theme = next_theme
+            self.events.on_theme_change(self._theme)
+
+    def _apply_runtime_snapshot(self, snapshot: VenueSnapshot):
+        self._runtime_venue_snapshot = snapshot
+        self._venue = snapshot.summary
+        self._runtime_patch, self._runtime_manual_group = build_runtime_fixture_groups(
+            snapshot
+        )
+        self._manual_dimmer_supported_override = any(
+            fixture.is_manual for fixture in snapshot.fixtures
+        )
         self.events.on_venue_change(self._venue)
         self.save_state()
 
@@ -167,11 +269,14 @@ class State:
 
     def save_state(self):
         """Save the current state to a JSON file."""
+        if not self._use_local_state_persistence:
+            return
         state_data = {
             "mode": self._mode.name if self._mode else None,
             "hype": self._hype,
             "theme_name": self._theme.name if hasattr(self._theme, "name") else None,
             "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
+            "venue_slug": self._venue.slug if hasattr(self._venue, "slug") else None,
             "manual_dimmer": 0,  # We do not want to restart the app with lights on
             "hype_limiter": self._hype_limiter,
             "show_waveform": self._show_waveform,
@@ -286,6 +391,11 @@ class State:
                                     handler(value)
                                 except Exception as e:
                                     print(f"Error in VJ mode event handler: {e}")
+
+                elif update_type == "runtime_bootstrap":
+                    self.apply_runtime_bootstrap(value)
+                elif update_type == "runtime_effect":
+                    self.set_effect_thread_safe(value)
 
                 # Mark the task as done
                 self._gui_update_queue.task_done()

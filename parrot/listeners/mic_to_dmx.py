@@ -3,6 +3,7 @@
 import os
 import sys
 import tracemalloc
+from urllib.parse import urlparse
 import pyaudio
 import numpy as np
 from scipy import signal
@@ -24,6 +25,7 @@ from parrot.utils.tracemalloc import display_top
 from parrot.api import start_web_server
 from parrot.director.signal_states import SignalStates
 from parrot.vj.vj_director import VJDirector
+from parrot.runtime_venue_client import RuntimeVenueClient
 
 THRESHOLD = 0  # dB
 RATE = 44100
@@ -81,6 +83,17 @@ class MicToDmx(object):
 
         self.state = State()
         self.signal_states = SignalStates()
+        self.runtime_client = None
+
+        venue_service_url = getattr(args, "venue_service_url", None)
+        if venue_service_url:
+            self.runtime_client = RuntimeVenueClient(self.state, venue_service_url)
+            try:
+                self.runtime_client.bootstrap()
+                self.state.process_gui_updates()
+            except Exception as exc:
+                print(f"⚠️  Venue editor bootstrap unavailable, using local fallback: {exc}")
+            self.runtime_client.start()
 
         # Set initial mode if specified via args
         if getattr(args, "rave", False):
@@ -90,6 +103,7 @@ class MicToDmx(object):
         self.should_stop = False
 
         self.dmx = get_controller(self.state.venue)
+        self.state.events.on_venue_change += lambda _venue: self._refresh_dmx_controller()
 
         # Initialize VJ system
 
@@ -104,6 +118,11 @@ class MicToDmx(object):
                 self.state,
                 director=self.director,
                 port=getattr(self.args, "web_port", 4040),
+                editor_port=(
+                    urlparse(venue_service_url).port
+                    if venue_service_url
+                    else 4041
+                ),
             )
 
         self.frame_count = 0
@@ -113,9 +132,15 @@ class MicToDmx(object):
         self.state.save_state()
         self.should_stop = True
 
+        if self.runtime_client is not None:
+            self.runtime_client.stop()
+
         # Clean up VJ resources
         if self.vj_director:
             self.vj_director.cleanup()
+
+    def _refresh_dmx_controller(self):
+        self.dmx = get_controller(self.state.venue)
 
     def run(self):
         self._run_audio_loop()

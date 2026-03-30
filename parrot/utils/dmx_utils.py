@@ -257,7 +257,12 @@ def get_controller(venue=None):
 
     # Add Art-Net if configured for this venue
     if venue is not None:
-        venue_name = venue.name if hasattr(venue, "name") else str(venue)
+        if hasattr(venue, "slug"):
+            venue_name = venue.slug
+        elif hasattr(venue, "name"):
+            venue_name = venue.name
+        else:
+            venue_name = str(venue)
         config = artnet_config.get(venue_name)
 
         if config:

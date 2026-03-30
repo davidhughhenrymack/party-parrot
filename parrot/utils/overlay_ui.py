@@ -6,8 +6,8 @@ from beartype import beartype
 from parrot.director.mode import Mode
 from parrot.vj.vj_mode import VJMode
 from parrot.state import State
-from parrot.patch_bay import venues
 from parrot.director.themes import themes
+from parrot.venue_runtime import get_runtime_venues
 
 
 @beartype
@@ -143,13 +143,18 @@ class OverlayUI:
 
             # Venue selection
             imgui.text("Venue")
-            venue_names = [v.name for v in venues]
-            current_venue_idx = list(venues).index(self.state.venue)
+            runtime_venues = list(get_runtime_venues(self.state))
+            venue_names = [v.name for v in runtime_venues]
+            current_venue_idx = 0
+            for idx, venue in enumerate(runtime_venues):
+                if venue == self.state.venue:
+                    current_venue_idx = idx
+                    break
             clicked, new_venue_idx = imgui.combo(
                 "##venue", current_venue_idx, venue_names
             )
             if clicked and new_venue_idx != current_venue_idx:
-                self.state.set_venue(list(venues)[new_venue_idx])
+                self.state.set_venue(runtime_venues[new_venue_idx])
                 print(f"🏛️  Venue changed to: {venue_names[new_venue_idx]}")
 
             imgui.spacing()

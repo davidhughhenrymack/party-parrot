@@ -217,7 +217,7 @@ class TestWebServer:
         mock_state.venue = Mock()
         web_server_module.state_instance = mock_state
 
-        with patch("parrot.api.web_server.has_manual_dimmer", return_value=True):
+        with patch("parrot.venue_runtime.runtime_has_manual_dimmer", return_value=True):
             response = self.client.get("/api/manual_dimmer")
             assert response.status_code == 200
 
@@ -350,6 +350,12 @@ class TestWebServer:
             assert response.status_code == 200
             mock_send.assert_called_once()
 
+    def test_config_route(self):
+        response = self.client.get("/api/config")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["editor_port"] == 4041
+
     @patch("threading.Thread")
     @patch("builtins.print")
     def test_start_web_server(self, mock_print, mock_thread):
@@ -373,6 +379,9 @@ class TestWebServer:
         # Check that IP address was printed
         mock_print.assert_any_call(
             "\n🌐 Web interface available at: http://192.168.1.100:8080/"
+        )
+        mock_print.assert_any_call(
+            "🏛️  Venue editor available at: http://192.168.1.100:4041/"
         )
 
     def test_app_configuration(self):

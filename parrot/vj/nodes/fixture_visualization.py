@@ -8,7 +8,6 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
 from parrot.vj.nodes.canvas_effect_base import GenerativeEffectBase
-from parrot.patch_bay import venue_patches, get_manual_group
 from parrot.fixtures.base import FixtureBase, FixtureGroup
 from parrot.vj.renderers.factory import create_renderer
 from parrot.vj.renderers.base import (
@@ -27,6 +26,7 @@ from typing import Optional
 import moderngl as mgl
 import numpy as np
 import math
+from parrot.venue_runtime import get_runtime_fixtures, get_runtime_manual_group
 
 
 @beartype
@@ -162,6 +162,82 @@ class FixtureVisualization(GenerativeEffectBase):
                 context, self.composite_shader
             )
 
+    def _build_room_scene_layout(self) -> dict[str, dict[str, float | tuple[float, float, float]]]:
+        snapshot = self.state.runtime_venue_snapshot
+        if snapshot is None:
+            return {}
+
+        floor = snapshot.scene_object("floor")
+        video_wall = snapshot.scene_object("video_wall")
+        dj_table = snapshot.scene_object("dj_table")
+        dj_cutout = snapshot.scene_object("dj_cutout")
+        if floor is None:
+            return {}
+
+        planar_scale = 1.0 / 50.0
+
+        def to_room_position(x: float, y: float, z: float) -> tuple[float, float, float]:
+            return (
+                (x - floor.width / 2.0) * planar_scale,
+                z,
+                (y - floor.height / 2.0) * planar_scale,
+            )
+
+        layout: dict[str, dict[str, float | tuple[float, float, float]]] = {
+            "floor": {
+                "center_x": 0.0,
+                "center_z": 0.0,
+                "width": max(floor.width * planar_scale, 0.5),
+                "depth": max(floor.height * planar_scale, 0.5),
+                "thickness": max(floor.depth, 0.02),
+                "rotation_x": floor.rotation_x,
+                "rotation_y": floor.rotation_y,
+                "rotation_z": floor.rotation_z,
+                "source_width": max(floor.width, 1.0),
+                "source_depth": max(floor.height, 1.0),
+                "room_height": float(floor.options.get("room_height", snapshot.floor_height)),
+            }
+        }
+
+        if video_wall is not None:
+            layout["video_wall"] = {
+                "position": to_room_position(video_wall.x, video_wall.y, video_wall.z),
+                "width": max(video_wall.width * planar_scale, 0.2),
+                "height": max(video_wall.height, 0.2),
+                "depth": max(video_wall.depth * planar_scale, 0.02),
+                "rotation_x": video_wall.rotation_x,
+                "rotation_y": video_wall.rotation_y,
+                "rotation_z": video_wall.rotation_z,
+            }
+
+        if dj_table is not None:
+            layout["dj_table"] = {
+                "position": to_room_position(
+                    dj_table.x,
+                    dj_table.y,
+                    max(dj_table.z - (dj_table.height / 2.0), 0.0),
+                ),
+                "width": max(dj_table.width * planar_scale, 0.1),
+                "height": max(dj_table.height, 0.1),
+                "depth": max(dj_table.depth * planar_scale, 0.02),
+                "rotation_x": dj_table.rotation_x,
+                "rotation_y": dj_table.rotation_y,
+                "rotation_z": dj_table.rotation_z,
+            }
+
+        if dj_cutout is not None:
+            layout["dj_cutout"] = {
+                "position": to_room_position(dj_cutout.x, dj_cutout.y, dj_cutout.z),
+                "width": max(dj_cutout.width * planar_scale, 0.1),
+                "height": max(dj_cutout.height, 0.1),
+                "depth": max(dj_cutout.depth * planar_scale, 0.01),
+                "rotation_x": dj_cutout.rotation_x,
+                "rotation_y": dj_cutout.rotation_y,
+                "rotation_z": dj_cutout.rotation_z,
+            }
+
+        return layout
+
     def _on_venue_change(self, venue):
         """Reload fixtures when venue changes (position manager handles positions)"""
         self._load_fixtures()
@@ -171,7 +247,7 @@ class FixtureVisualization(GenerativeEffectBase):
         fixtures = []
         print(f"loading fixtures for {self.state.venue}")
         # Get fixtures from current venue in state (live fixtures)
-        for item in venue_patches[self.state.venue]:
+        for item in get_runtime_fixtures(self.state):
             if isinstance(item, FixtureGroup):
                 # Add all fixtures from the group
                 for fixture in item.fixtures:
@@ -181,7 +257,7 @@ class FixtureVisualization(GenerativeEffectBase):
                 fixtures.append(item)
 
         # Also include manual fixtures (actor/performance lights)
-        manual_group = get_manual_group(self.state.venue)
+        manual_group = get_runtime_manual_group(self.state)
         if manual_group is not None:
             for fixture in manual_group.fixtures:
                 fixtures.append(fixture)
@@ -433,6 +509,7 @@ class FixtureVisualization(GenerativeEffectBase):
             self.room_renderer = Room3DRenderer(
                 context, self.width, self.height, show_floor=True
             )
+        self.room_renderer.set_scene_layout(self._build_room_scene_layout())
 
         # Create or recreate renderers if fixtures changed (venue change)
         if hasattr(self, "_fixtures") and len(self.renderers) != len(self._fixtures):
@@ -454,9 +531,10 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Add video wall as a light source if it's active
         if video_wall_color is not None:
-            # Video wall position (center of billboard at back of room)
-            billboard_height = 6.0
-            video_wall_pos = (0.0, billboard_height / 2.0, -4.5)
+            video_wall_layout = self.room_renderer.get_scene_object("video_wall")
+            video_wall_pos = tuple(
+                video_wall_layout.get("position", (0.0, 3.0, -4.5))
+            )
             fixture_lights.append((video_wall_pos, video_wall_color))
 
         self.room_renderer.set_dynamic_lights(fixture_lights)
@@ -480,18 +558,20 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Render VJ output on billboard at back of room (upstage behind DJ)
         if vj_texture:
-            # Large billboard at back of room, floor to ceiling
-            billboard_width = 10.0  # Wide screen
-            billboard_height = 6.0  # Floor to near-ceiling
-            # Position: centered horizontally (x=0), bottom at floor + half height
-            y_pos = billboard_height / 2.0
+            video_wall_layout = self.room_renderer.get_scene_object("video_wall")
+            wall_rotation = self.room_renderer._quaternion_from_euler_xyz(
+                float(video_wall_layout.get("rotation_x", 0.0)),
+                float(video_wall_layout.get("rotation_y", 0.0)),
+                float(video_wall_layout.get("rotation_z", 0.0)),
+            )
+            wall_normal = self.room_renderer._rotate_vector((0.0, 0.0, 1.0), wall_rotation)
 
             self.room_renderer.render_billboard(
                 texture=vj_texture,
-                position=(0.0, y_pos, -4.5),  # Back of room, centered, floor to ceiling
-                width=billboard_width,
-                height=billboard_height,
-                normal=(0.0, 0.0, 1.0),  # Face forward toward audience
+                position=tuple(video_wall_layout.get("position", (0.0, 3.0, -4.5))),
+                width=float(video_wall_layout.get("width", 10.0)),
+                height=float(video_wall_layout.get("height", 6.0)),
+                normal=wall_normal,
             )
 
         # Render fixture bodies (Blinn-Phong materials)
