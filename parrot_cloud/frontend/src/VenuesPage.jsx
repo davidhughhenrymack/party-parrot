@@ -20,6 +20,8 @@ export default function VenuesPage() {
         const payload = JSON.parse(event.data);
         if (payload.type === 'bootstrap') {
           setVenues(payload.data.venues || []);
+        } else if (payload.type === 'venues') {
+          setVenues(payload.data?.venues || []);
         }
       };
       ws.onclose = () => {

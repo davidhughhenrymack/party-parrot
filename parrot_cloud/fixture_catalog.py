@@ -74,6 +74,10 @@ def _apply_transform(fixture: FixtureBase, spec: FixtureSpec) -> FixtureBase:
     fixture.orientation = _rotation_to_quaternion(
         spec.rotation_x, spec.rotation_y, spec.rotation_z
     )
+    fixture.cloud_spec_id = spec.id
+    fixture.cloud_fixture_type = spec.fixture_type
+    fixture.cloud_group_name = spec.group_name
+    fixture.cloud_is_manual = spec.is_manual
     return fixture
 
 
@@ -279,6 +283,53 @@ def build_runtime_fixture_groups(snapshot: VenueSnapshot) -> tuple[list[FixtureB
         manual_group = ManualGroup(manual_fixtures, f"{snapshot.summary.name} Manual Control")
 
     return runtime_fixtures, manual_group
+
+
+def update_runtime_fixture_transforms(
+    runtime_fixtures: list[FixtureBase],
+    manual_group: ManualGroup | None,
+    snapshot: VenueSnapshot,
+) -> bool:
+    current_fixtures: list[FixtureBase] = []
+    for fixture in runtime_fixtures:
+        if isinstance(fixture, FixtureGroup):
+            current_fixtures.extend(list(fixture.fixtures))
+        else:
+            current_fixtures.append(fixture)
+    if manual_group is not None:
+        current_fixtures.extend(list(manual_group.fixtures))
+
+    current_by_id = {
+        getattr(fixture, "cloud_spec_id", None): fixture for fixture in current_fixtures
+    }
+    if None in current_by_id:
+        return False
+
+    if len(current_by_id) != len(snapshot.fixtures):
+        return False
+
+    for spec in snapshot.fixtures:
+        fixture = current_by_id.get(spec.id)
+        if fixture is None:
+            return False
+        if getattr(fixture, "cloud_fixture_type", None) != spec.fixture_type:
+            return False
+        if getattr(fixture, "cloud_group_name", None) != spec.group_name:
+            return False
+        if getattr(fixture, "cloud_is_manual", None) != spec.is_manual:
+            return False
+        if fixture.address != spec.address:
+            return False
+        if fixture.universe != _parse_universe(spec.universe):
+            return False
+
+    for spec in snapshot.fixtures:
+        fixture = current_by_id[spec.id]
+        _apply_transform(fixture, spec)
+        if spec.name:
+            fixture.name = spec.name
+
+    return True
 
 
 def degrees(value: float) -> float:

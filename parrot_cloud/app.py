@@ -34,6 +34,36 @@ def create_app() -> Flask:
             }
         )
 
+    def broadcast_venues() -> None:
+        hub.broadcast(
+            {
+                "type": "venues",
+                "data": {
+                    "venues": [
+                        summary.to_dict()
+                        for summary in repository.list_venue_summaries()
+                    ]
+                },
+            }
+        )
+
+    def broadcast_active_venue() -> None:
+        venue = repository.get_active_venue_snapshot()
+        if venue is None:
+            return
+        hub.broadcast({"type": "venue_snapshot", "data": venue.to_dict()})
+
+    def broadcast_venue_snapshot(snapshot) -> None:
+        hub.broadcast({"type": "venue_snapshot", "data": snapshot.to_dict()})
+
+    def broadcast_control_state() -> None:
+        hub.broadcast(
+            {
+                "type": "control_state",
+                "data": repository.get_control_state().to_dict(),
+            }
+        )
+
     def broadcast_command(command_type: str, data: dict[str, object]) -> None:
         hub.broadcast({"type": command_type, "data": data})
 
@@ -104,7 +134,7 @@ def create_app() -> Flask:
     @app.patch("/api/control-state")
     def patch_control_state():
         control_state = repository.update_control_state(request.get_json(force=True))
-        broadcast_bootstrap()
+        broadcast_control_state()
         return jsonify(control_state.to_dict())
 
     @app.get("/api/mode")
@@ -121,7 +151,7 @@ def create_app() -> Flask:
     def set_mode():
         data = request.get_json(force=True)
         control_state = repository.update_control_state({"mode": data.get("mode")})
-        broadcast_bootstrap()
+        broadcast_control_state()
         return jsonify({"success": True, "mode": control_state.mode})
 
     @app.get("/api/vj_mode")
@@ -138,7 +168,7 @@ def create_app() -> Flask:
     def set_vj_mode():
         data = request.get_json(force=True)
         control_state = repository.update_control_state({"vj_mode": data.get("vj_mode")})
-        broadcast_bootstrap()
+        broadcast_control_state()
         return jsonify({"success": True, "vj_mode": control_state.vj_mode})
 
     @app.get("/api/manual_dimmer")
@@ -157,7 +187,7 @@ def create_app() -> Flask:
         control_state = repository.update_control_state(
             {"manual_dimmer": data.get("value", 0.0)}
         )
-        broadcast_bootstrap()
+        broadcast_control_state()
         return jsonify({"success": True, "value": control_state.manual_dimmer})
 
     @app.post("/api/effect")
@@ -170,7 +200,8 @@ def create_app() -> Flask:
     @app.post("/api/seed")
     def seed():
         payload = repository.ensure_seed_data().to_dict()
-        broadcast_bootstrap()
+        broadcast_venues()
+        broadcast_active_venue()
         return jsonify(payload)
 
     @app.get("/api/fixture-types")
@@ -187,7 +218,8 @@ def create_app() -> Flask:
     def create_venue():
         data = request.get_json(force=True)
         snapshot = repository.create_venue(str(data.get("name", "New Venue")))
-        broadcast_bootstrap()
+        broadcast_venues()
+        broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 
     @app.get("/api/venues/<venue_id>")
@@ -197,13 +229,15 @@ def create_app() -> Flask:
     @app.patch("/api/venues/<venue_id>")
     def patch_venue(venue_id: str):
         snapshot = repository.update_venue(venue_id, request.get_json(force=True))
-        broadcast_bootstrap()
+        broadcast_venues()
+        broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 
     @app.post("/api/venues/<venue_id>/activate")
     def activate_venue(venue_id: str):
         snapshot = repository.set_active_venue(venue_id)
-        broadcast_bootstrap()
+        broadcast_venues()
+        broadcast_active_venue()
         return jsonify(snapshot.to_dict())
 
     @app.patch("/api/venues/<venue_id>/video-wall")
@@ -221,13 +255,23 @@ def create_app() -> Flask:
                 "video_wall_locked": payload.get("locked"),
             },
         )
-        broadcast_bootstrap()
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.patch("/api/venues/<venue_id>/scene-objects/<scene_object_kind>")
+    def patch_scene_object(venue_id: str, scene_object_kind: str):
+        snapshot = repository.update_scene_object(
+            venue_id,
+            scene_object_kind,
+            request.get_json(force=True),
+        )
+        broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 
     @app.post("/api/venues/<venue_id>/fixtures")
     def create_fixture(venue_id: str):
         snapshot = repository.add_fixture(venue_id, request.get_json(force=True))
-        broadcast_bootstrap()
+        broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 
     @app.patch("/api/venues/<venue_id>/fixtures/<fixture_id>")
@@ -235,13 +279,13 @@ def create_app() -> Flask:
         snapshot = repository.update_fixture(
             venue_id, fixture_id, request.get_json(force=True)
         )
-        broadcast_bootstrap()
+        broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 
     @app.delete("/api/venues/<venue_id>/fixtures/<fixture_id>")
     def remove_fixture(venue_id: str, fixture_id: str):
         snapshot = repository.delete_fixture(venue_id, fixture_id)
-        broadcast_bootstrap()
+        broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 
     @sock.route("/ws/venue-updates")

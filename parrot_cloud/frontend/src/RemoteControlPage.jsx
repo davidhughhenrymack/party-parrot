@@ -47,6 +47,15 @@ export default function RemoteControlPage() {
         const payload = JSON.parse(event.data);
         if (payload.type === 'bootstrap') {
           applyBootstrap(payload.data);
+        } else if (payload.type === 'control_state') {
+          setControlState((current) => ({
+            ...current,
+            ...payload.data,
+          }));
+        } else if (payload.type === 'venue_snapshot' && payload.data?.summary?.active) {
+          setManualDimmerSupported(
+            Boolean(payload.data?.fixtures?.some((fixture) => fixture.is_manual)),
+          );
         }
       };
       ws.onclose = () => {

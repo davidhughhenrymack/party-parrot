@@ -66,6 +66,7 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Subscribe to venue changes to reload fixtures
         self.state.events.on_venue_change += self._on_venue_change
+        self.state.events.on_runtime_scene_change += self._on_runtime_scene_change
 
         # Load fixtures and create renderers for each
         self.renderers: list[FixtureRenderer] = []
@@ -174,27 +175,26 @@ class FixtureVisualization(GenerativeEffectBase):
         if floor is None:
             return {}
 
-        planar_scale = 1.0 / 50.0
-
         def to_room_position(x: float, y: float, z: float) -> tuple[float, float, float]:
             return (
-                (x - floor.width / 2.0) * planar_scale,
+                x,
                 z,
-                (y - floor.height / 2.0) * planar_scale,
+                y,
             )
 
         layout: dict[str, dict[str, float | tuple[float, float, float]]] = {
             "floor": {
                 "center_x": 0.0,
                 "center_z": 0.0,
-                "width": max(floor.width * planar_scale, 0.5),
-                "depth": max(floor.height * planar_scale, 0.5),
+                "width": max(floor.width, 0.5),
+                "depth": max(floor.height, 0.5),
                 "thickness": max(floor.depth, 0.02),
                 "rotation_x": floor.rotation_x,
                 "rotation_y": floor.rotation_y,
                 "rotation_z": floor.rotation_z,
                 "source_width": max(floor.width, 1.0),
                 "source_depth": max(floor.height, 1.0),
+                "source_centered": True,
                 "room_height": float(floor.options.get("room_height", snapshot.floor_height)),
             }
         }
@@ -202,9 +202,9 @@ class FixtureVisualization(GenerativeEffectBase):
         if video_wall is not None:
             layout["video_wall"] = {
                 "position": to_room_position(video_wall.x, video_wall.y, video_wall.z),
-                "width": max(video_wall.width * planar_scale, 0.2),
+                "width": max(video_wall.width, 0.2),
                 "height": max(video_wall.height, 0.2),
-                "depth": max(video_wall.depth * planar_scale, 0.02),
+                "depth": max(video_wall.depth, 0.02),
                 "rotation_x": video_wall.rotation_x,
                 "rotation_y": video_wall.rotation_y,
                 "rotation_z": video_wall.rotation_z,
@@ -217,9 +217,9 @@ class FixtureVisualization(GenerativeEffectBase):
                     dj_table.y,
                     max(dj_table.z - (dj_table.height / 2.0), 0.0),
                 ),
-                "width": max(dj_table.width * planar_scale, 0.1),
+                "width": max(dj_table.width, 0.1),
                 "height": max(dj_table.height, 0.1),
-                "depth": max(dj_table.depth * planar_scale, 0.02),
+                "depth": max(dj_table.depth, 0.02),
                 "rotation_x": dj_table.rotation_x,
                 "rotation_y": dj_table.rotation_y,
                 "rotation_z": dj_table.rotation_z,
@@ -228,9 +228,9 @@ class FixtureVisualization(GenerativeEffectBase):
         if dj_cutout is not None:
             layout["dj_cutout"] = {
                 "position": to_room_position(dj_cutout.x, dj_cutout.y, dj_cutout.z),
-                "width": max(dj_cutout.width * planar_scale, 0.1),
+                "width": max(dj_cutout.width, 0.1),
                 "height": max(dj_cutout.height, 0.1),
-                "depth": max(dj_cutout.depth * planar_scale, 0.01),
+                "depth": max(dj_cutout.depth, 0.01),
                 "rotation_x": dj_cutout.rotation_x,
                 "rotation_y": dj_cutout.rotation_y,
                 "rotation_z": dj_cutout.rotation_z,
@@ -240,6 +240,10 @@ class FixtureVisualization(GenerativeEffectBase):
 
     def _on_venue_change(self, venue):
         """Reload fixtures when venue changes (position manager handles positions)"""
+        self._load_fixtures()
+
+    def _on_runtime_scene_change(self, _snapshot):
+        """Reload fixtures for live runtime venue layout updates."""
         self._load_fixtures()
 
     def _load_fixtures(self):

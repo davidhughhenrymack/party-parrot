@@ -4,6 +4,7 @@ export function createNoopSceneController(viewportEl) {
   }
   return {
     applyBootstrap() {},
+    updateFloorPreview() {},
     setView() {},
     setSelection() {},
     setInteractionMode() {},
@@ -18,6 +19,8 @@ export async function createSceneController({
   onFixtureContextMenu,
   onFixtureTransform,
   onVideoWallTransform,
+  onSceneObjectTransform,
+  onTransformDragStateChange,
 }) {
   if (isTestMode) {
     return createNoopSceneController(viewportEl);
@@ -39,6 +42,8 @@ export async function createSceneController({
       onFixtureContextMenu,
       onFixtureTransform,
       onVideoWallTransform,
+      onSceneObjectTransform,
+      onTransformDragStateChange,
     });
   } catch (error) {
     console.error('Failed to initialize 3D viewport:', error);
@@ -58,6 +63,8 @@ function createThreeSceneController({
   onFixtureContextMenu,
   onFixtureTransform,
   onVideoWallTransform,
+  onSceneObjectTransform,
+  onTransformDragStateChange,
 }) {
   const localState = {
     venueSnapshot: null,
@@ -67,8 +74,12 @@ function createThreeSceneController({
     activeCamera: null,
     selectedEntityKey: null,
     entityMap: new Map(),
+    dragSyncTimeoutId: null,
+    lastFixtureDragSyncAt: 0,
+    isTransformDragging: false,
     destroyed: false,
   };
+  const fixtureDragSyncIntervalMs = 100;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1b2430);
@@ -118,6 +129,15 @@ function createThreeSceneController({
   const videoWallTexture = createVideoWallTexture();
   const djSilhouetteTexture = createDjSilhouetteTexture();
 
+  function setMaterialDimmed(material, dimmed) {
+    if (!material) {
+      return;
+    }
+    material.transparent = dimmed;
+    material.opacity = dimmed ? 0.7 : 1.0;
+    material.needsUpdate = true;
+  }
+
   function resizeRenderer() {
     const width = viewportEl.clientWidth;
     const height = viewportEl.clientHeight;
@@ -141,22 +161,73 @@ function createThreeSceneController({
     const floorObject = getSceneObject(venueSnapshot, 'floor');
     const width = Math.max(floorObject?.width || venueSnapshot.floor_width || 1, 1);
     const depth = Math.max(floorObject?.height || venueSnapshot.floor_depth || 1, 1);
-    const planarScale = 0.02;
     return {
       width,
       depth,
-      planarScale,
-      worldWidth: width * planarScale,
-      worldDepth: depth * planarScale,
-      orthoWidth: 16,
-      orthoDepth: 16,
+      worldWidth: width,
+      worldDepth: depth,
+      orthoWidth: Math.max(width * 1.5, 8),
+      orthoDepth: Math.max(depth * 1.5, 8),
       heightFocus: Math.max(8, venueSnapshot.floor_height || 10),
-      maxDimension: Math.max(width, depth) * planarScale,
+      maxDimension: Math.max(width, depth),
     };
   }
 
   function getSceneObject(venueSnapshot, kind) {
     return venueSnapshot?.scene_objects?.find((sceneObject) => sceneObject.kind === kind) ?? null;
+  }
+
+  function syncFloorMeshFromSnapshot() {
+    if (!localState.venueSnapshot || !localState.venueScale) {
+      return;
+    }
+    const floorObject = getSceneObject(localState.venueSnapshot, 'floor');
+    if (floorObject) {
+      floorMesh.position.copy(toScenePosition(floorObject.x, floorObject.y, floorObject.z));
+      floorMesh.rotation.set(
+        floorObject.rotation_x || 0,
+        floorObject.rotation_y || 0,
+        floorObject.rotation_z || 0
+      );
+    }
+    floorMesh.scale.set(
+      localState.venueScale.worldWidth / 10,
+      localState.venueScale.worldDepth / 10,
+      1
+    );
+  }
+
+  function updateFloorPreview({ width, depth }) {
+    if (!localState.venueSnapshot) {
+      return;
+    }
+    const floorObject = getSceneObject(localState.venueSnapshot, 'floor');
+    if (!floorObject) {
+      return;
+    }
+
+    if (Number.isFinite(width) && width > 0) {
+      floorObject.width = width;
+      floorObject.x = 0;
+      localState.venueSnapshot.floor_width = width;
+    }
+    if (Number.isFinite(depth) && depth > 0) {
+      floorObject.height = depth;
+      floorObject.y = 0;
+      localState.venueSnapshot.floor_depth = depth;
+    }
+
+    localState.venueScale = computeVenueScale(localState.venueSnapshot);
+    syncFloorMeshFromSnapshot();
+    resizeRenderer();
+    orbitControls.target.copy(
+      localState.currentView === 'perspective' ? getFloorCenterTarget() : (() => {
+        const flatTarget = getFloorCenterTarget();
+        flatTarget.z = localState.venueScale.heightFocus * 0.5;
+        return flatTarget;
+      })()
+    );
+    orbitControls.update();
   }
 
   function getFloorCenterTarget() {
@@ -215,19 +286,13 @@ function createThreeSceneController({
   }
 
   function toScenePosition(x, y, z) {
-    const scale = localState.venueScale;
-    return new THREE.Vector3(
-      (x - scale.width / 2) * scale.planarScale,
-      (y - scale.depth / 2) * scale.planarScale,
-      z
-    );
+    return new THREE.Vector3(x, y, z);
   }
 
   function fromScenePosition(vector) {
-    const scale = localState.venueScale;
     return {
-      x: vector.x / scale.planarScale + scale.width / 2,
-      y: vector.y / scale.planarScale + scale.depth / 2,
+      x: vector.x,
+      y: vector.y,
       z: vector.z,
     };
   }
@@ -244,15 +309,27 @@ function createThreeSceneController({
   }
 
   function applySelectionVisuals() {
+    const fixtureFocusedSelection =
+      localState.selectedEntityKey &&
+      localState.entityMap.get(localState.selectedEntityKey)?.type === 'fixture';
+
+    setMaterialDimmed(floorMaterial, fixtureFocusedSelection);
     localState.entityMap.forEach((entity, entityKey) => {
       const isSelected = entityKey === localState.selectedEntityKey;
       entity.bodyMaterial.emissive?.setHex(isSelected ? 0x2563eb : 0x000000);
       entity.bodyMaterial.emissiveIntensity = isSelected ? 0.85 : 0.0;
+      setMaterialDimmed(entity.bodyMaterial, fixtureFocusedSelection && !isSelected);
+      (entity.secondaryMaterials || []).forEach((material) => {
+        setMaterialDimmed(material, fixtureFocusedSelection && !isSelected);
+      });
       if (entity.helperMaterial) {
-        entity.helperMaterial.opacity = isSelected ? 0.22 : 0.08;
+        entity.helperMaterial.opacity = isSelected ? 0.22 : fixtureFocusedSelection ? 0.056 : 0.08;
       }
       if (entity.coneMaterial) {
-        entity.coneMaterial.opacity = isSelected ? 0.34 : entity.baseConeOpacity;
+        const baseOpacity = fixtureFocusedSelection && !isSelected
+          ? entity.baseConeOpacity * 0.7
+          : entity.baseConeOpacity;
+        entity.coneMaterial.opacity = isSelected ? 0.34 : baseOpacity;
       }
     });
   }
@@ -270,7 +347,12 @@ function createThreeSceneController({
       return;
     }
 
-    const entityKey = selection.type === 'fixture' ? selection.fixtureId : 'video_wall';
+    const entityKey =
+      selection.type === 'fixture'
+        ? selection.fixtureId
+        : selection.type === 'dj_booth'
+          ? 'dj_booth'
+          : 'video_wall';
     const entity = localState.entityMap.get(entityKey);
     if (!entity) {
       clearSelection();
@@ -282,6 +364,8 @@ function createThreeSceneController({
     applySelectionVisuals();
     if (entity.type === 'fixture') {
       onSelectionChange({ type: 'fixture', fixture: entity.fixture });
+    } else if (entity.type === 'dj_booth') {
+      onSelectionChange({ type: 'dj_booth' });
     } else {
       onSelectionChange({ type: 'video_wall' });
     }
@@ -322,13 +406,59 @@ function createThreeSceneController({
       return;
     }
 
-    orbitControls.enabled = false;
+    orbitControls.enabled = true;
     orbitControls.enableRotate = false;
     orbitControls.enablePan = false;
     orbitControls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
     orbitControls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
     renderer.domElement.style.cursor = 'default';
     transformControls.enabled = true;
+  }
+
+  function buildFixtureTransformPayload(entity) {
+    const domainPosition = fromScenePosition(entity.group.position);
+    const rotation = entity.group.rotation;
+    return {
+      fixtureId: entity.fixture.id,
+      x: domainPosition.x,
+      y: domainPosition.y,
+      z: domainPosition.z,
+      rotation_x: rotation.x,
+      rotation_y: rotation.y,
+      rotation_z: rotation.z,
+    };
+  }
+
+  function scheduleFixtureDragSync() {
+    if (!localState.isTransformDragging) {
+      return;
+    }
+    const entity = localState.entityMap.get(localState.selectedEntityKey);
+    if (!entity || entity.type !== 'fixture') {
+      return;
+    }
+
+    const flush = () => {
+      localState.dragSyncTimeoutId = null;
+      const activeEntity = localState.entityMap.get(localState.selectedEntityKey);
+      if (!activeEntity || activeEntity.type !== 'fixture') {
+        return;
+      }
+      localState.lastFixtureDragSyncAt = Date.now();
+      void onFixtureTransform(buildFixtureTransformPayload(activeEntity));
+    };
+
+    const elapsed = Date.now() - localState.lastFixtureDragSyncAt;
+    if (elapsed >= fixtureDragSyncIntervalMs) {
+      flush();
+      return;
+    }
+    if (localState.dragSyncTimeoutId === null) {
+      localState.dragSyncTimeoutId = window.setTimeout(
+        flush,
+        fixtureDragSyncIntervalMs - elapsed
+      );
+    }
   }
 
   function onPointerDown(event) {
@@ -350,7 +480,13 @@ function createThreeSceneController({
       clearSelection();
       return;
     }
-    setSelection(entity.type === 'fixture' ? { type: 'fixture', fixtureId: entity.fixture.id } : { type: 'video_wall' });
+    if (entity.type === 'fixture') {
+      setSelection({ type: 'fixture', fixtureId: entity.fixture.id });
+    } else if (entity.type === 'dj_booth') {
+      setSelection({ type: 'dj_booth' });
+    } else {
+      setSelection({ type: 'video_wall' });
+    }
   }
 
   function onContextMenu(event) {
@@ -426,20 +562,100 @@ function createThreeSceneController({
     syncInteractionMode();
   }
 
+  function fixtureVisualProfile(fixture) {
+    if (fixture.fixture_type === 'motionstrip_38') {
+      return {
+        kind: 'motionstrip',
+        bodyWidth: 0.84,
+        bodyDepth: 0.096,
+        bodyHeight: 0.16,
+        coneLength: 6.0,
+        coneRadius: 0.45,
+      };
+    }
+    if (
+      [
+        'chauvet_spot_110',
+        'chauvet_spot_160',
+        'chauvet_rogue_beam_r2',
+        'chauvet_move_9ch',
+      ].includes(fixture.fixture_type)
+    ) {
+      return {
+        kind: 'moving_head',
+        baseWidth: 0.384,
+        baseDepth: 0.256,
+        baseHeight: 0.096,
+        headWidth: 0.16,
+        headDepth: 0.384,
+        headHeight: 0.16,
+        headOffsetZ: 0.216,
+        coneLength: 15.0,
+        coneRadius: 0.14,
+      };
+    }
+    if (['five_beam_laser', 'two_beam_laser'].includes(fixture.fixture_type)) {
+      return {
+        kind: 'laser',
+        bodyWidth: 0.4,
+        bodyDepth: 0.4,
+        bodyHeight: 0.4,
+        coneLength: 12.0,
+        coneRadius: 0.08,
+      };
+    }
+    return {
+      kind: 'bulb',
+      bodyWidth: 0.32,
+      bodyDepth: 0.096,
+      bodyHeight: 0.32,
+      coneLength: 8.0,
+      coneRadius: 0.24,
+    };
+  }
+
   function createFixtureEntity(fixture) {
     const group = new THREE.Group();
     group.position.copy(toScenePosition(fixture.x, fixture.y, fixture.z));
     group.rotation.set(fixture.rotation_x || 0, fixture.rotation_y || 0, fixture.rotation_z || 0);
     group.userData = { entityKey: fixture.id };
 
+    const runtimeAxesGroup = new THREE.Group();
+    group.add(runtimeAxesGroup);
+    const profile = fixtureVisualProfile(fixture);
+
     const bodyMaterial = new THREE.MeshStandardMaterial({
       color: fixture.is_manual ? 0xf59e0b : 0xef4444,
       metalness: 0.08,
       roughness: 0.56,
     });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.34, 0.28), bodyMaterial);
-    body.userData = { entityKey: fixture.id };
-    group.add(body);
+    const secondaryMaterials = [];
+
+    if (profile.kind === 'moving_head') {
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(profile.baseWidth, profile.baseDepth, profile.baseHeight),
+        bodyMaterial
+      );
+      base.position.z = profile.baseHeight / 2;
+      base.userData = { entityKey: fixture.id };
+      runtimeAxesGroup.add(base);
+
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(profile.headWidth, profile.headDepth, profile.headHeight),
+        bodyMaterial
+      );
+      head.position.set(0, 0, profile.baseHeight + profile.headOffsetZ);
+      head.userData = { entityKey: fixture.id };
+      runtimeAxesGroup.add(head);
+    } else {
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(profile.bodyWidth, profile.bodyDepth, profile.bodyHeight),
+        bodyMaterial
+      );
+      body.position.z = profile.bodyHeight / 2;
+      body.userData = { entityKey: fixture.id };
+      runtimeAxesGroup.add(body);
+    }
 
     const helperMaterial = new THREE.MeshBasicMaterial({
       color: 0x8ec5ff,
@@ -449,10 +665,10 @@ function createThreeSceneController({
     });
     const helperMesh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), helperMaterial);
     helperMesh.userData = { entityKey: fixture.id };
-    group.add(helperMesh);
+    runtimeAxesGroup.add(helperMesh);
 
-    const coneLength = 3.8;
-    const coneRadius = 0.9;
+    const coneLength = profile.coneLength;
+    const coneRadius = profile.coneRadius;
     const coneMaterial = new THREE.MeshBasicMaterial({
       color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
       transparent: true,
@@ -464,10 +680,32 @@ function createThreeSceneController({
       new THREE.ConeGeometry(coneRadius, coneLength, 24, 1, true),
       coneMaterial
     );
-    coneMesh.rotation.x = -Math.PI / 2;
-    coneMesh.position.z = coneLength / 2;
+    coneMesh.position.set(
+      0,
+      coneLength / 2 + (profile.kind === 'moving_head' ? profile.headDepth * 0.32 : profile.bodyDepth * 0.7),
+      profile.kind === 'moving_head'
+        ? profile.baseHeight + profile.headOffsetZ + profile.headHeight * 0.05
+        : profile.bodyHeight
+    );
     coneMesh.userData = { entityKey: fixture.id };
-    group.add(coneMesh);
+    runtimeAxesGroup.add(coneMesh);
+
+    const lensMaterial = new THREE.MeshBasicMaterial({
+      color: fixture.is_manual ? 0xfbbf24 : 0xf8fafc,
+      transparent: true,
+      opacity: 0.95,
+    });
+    const lens = new THREE.Mesh(new THREE.SphereGeometry(profile.kind === 'laser' ? 0.06 : 0.08, 12, 12), lensMaterial);
+    lens.position.set(
+      0,
+      profile.kind === 'moving_head' ? profile.headDepth * 0.6 : profile.bodyDepth * 0.7,
+      profile.kind === 'moving_head'
+        ? profile.baseHeight + profile.headOffsetZ + profile.headHeight * 0.05
+        : profile.bodyHeight
+    );
+    lens.userData = { entityKey: fixture.id };
+    runtimeAxesGroup.add(lens);
+    secondaryMaterials.push(lensMaterial);
 
     const hitMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.62, 16, 16),
@@ -487,6 +725,7 @@ function createThreeSceneController({
       fixture,
       group,
       bodyMaterial,
+      secondaryMaterials,
       helperMaterial,
       coneMaterial,
       baseConeOpacity: 0.18,
@@ -511,8 +750,8 @@ function createThreeSceneController({
       metalness: 0.22,
       roughness: 0.58,
     });
-    const wallWidth = Math.max(videoWall.width * localState.venueScale.planarScale, 0.8);
-    const wallDepth = Math.max(videoWall.depth * localState.venueScale.planarScale, 0.1);
+    const wallWidth = Math.max(videoWall.width, 0.8);
+    const wallDepth = Math.max(videoWall.depth, 0.1);
     const wallHeight = Math.max(videoWall.height, 0.8);
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(
@@ -564,50 +803,96 @@ function createThreeSceneController({
       type: 'video_wall',
       group,
       bodyMaterial,
+      secondaryMaterials: [screenMaterial],
       baseConeOpacity: 0,
     });
   }
 
-  function createFurniture(sceneObject) {
-    const group = new THREE.Group();
-    group.position.copy(toScenePosition(sceneObject.x, sceneObject.y, sceneObject.z));
-    group.rotation.set(
-      sceneObject.rotation_x || 0,
-      sceneObject.rotation_y || 0,
-      sceneObject.rotation_z || 0
-    );
-
-    if (sceneObject.kind === 'dj_table') {
-      const table = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          2.0,
-          0.6,
-          1.2
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x2d1b16,
-          metalness: 0.04,
-          roughness: 0.9,
-        })
-      );
-      group.add(table);
-    } else if (sceneObject.kind === 'dj_cutout') {
-      const cutout = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.5, 1.5),
-        new THREE.MeshBasicMaterial({
-          map: djSilhouetteTexture,
-          color: 0xffffff,
-          transparent: true,
-          opacity: 1,
-          alphaTest: 0.02,
-          side: THREE.DoubleSide,
-        })
-      );
-      cutout.rotation.x = -Math.PI / 2;
-      group.add(cutout);
+  function createDjBoothEntity(djTable, djCutout) {
+    if (!djTable || !djCutout) {
+      return;
     }
 
+    const anchor = new THREE.Vector3(
+      (djTable.x + djCutout.x) / 2,
+      (djTable.y + djCutout.y) / 2,
+      (djTable.z + djCutout.z) / 2
+    );
+    const group = new THREE.Group();
+    group.position.copy(toScenePosition(anchor.x, anchor.y, anchor.z));
+    group.rotation.set(
+      djTable.rotation_x || 0,
+      djTable.rotation_y || 0,
+      djTable.rotation_z || 0
+    );
+    group.userData = { entityKey: 'dj_booth' };
+
+    const tableMaterial = new THREE.MeshStandardMaterial({
+      color: 0x2d1b16,
+      metalness: 0.04,
+      roughness: 0.9,
+    });
+    const table = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        Math.max(djTable.width, 0.2),
+        Math.max(djTable.depth, 0.2),
+        Math.max(djTable.height, 0.2)
+      ),
+      tableMaterial
+    );
+    const tableOffset = new THREE.Vector3(
+      djTable.x - anchor.x,
+      djTable.y - anchor.y,
+      djTable.z - anchor.z
+    );
+    table.position.copy(tableOffset);
+    table.userData = { entityKey: 'dj_booth' };
+    group.add(table);
+
+    const cutout = new THREE.Mesh(
+      new THREE.PlaneGeometry(Math.max(djCutout.width, 0.3), Math.max(djCutout.height, 0.5)),
+      new THREE.MeshBasicMaterial({
+        map: djSilhouetteTexture,
+        color: 0xffffff,
+        transparent: true,
+        opacity: 1,
+        alphaTest: 0.02,
+        side: THREE.DoubleSide,
+      })
+    );
+    const cutoutOffset = new THREE.Vector3(
+      djCutout.x - anchor.x,
+      djCutout.y - anchor.y,
+      djCutout.z - anchor.z
+    );
+    cutout.position.copy(cutoutOffset);
+    cutout.rotation.x = -Math.PI / 2;
+    cutout.rotation.z = Math.PI;
+    cutout.userData = { entityKey: 'dj_booth' };
+    group.add(cutout);
+
+    const hitMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 1.6, 2.0),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.001,
+        depthWrite: false,
+      })
+    );
+    hitMesh.userData = { entityKey: 'dj_booth' };
+    group.add(hitMesh);
+
     sceneContent.add(group);
+    localState.entityMap.set('dj_booth', {
+      type: 'dj_booth',
+      group,
+      bodyMaterial: tableMaterial,
+      secondaryMaterials: [cutout.material],
+      djTable,
+      djCutout,
+      anchor,
+    });
   }
 
   function applyBootstrap(venueSnapshot) {
@@ -622,26 +907,13 @@ function createThreeSceneController({
       return;
     }
 
-    const floorObject = getSceneObject(venueSnapshot, 'floor');
-    if (floorObject) {
-      floorMesh.position.copy(toScenePosition(floorObject.x, floorObject.y, floorObject.z));
-      floorMesh.rotation.set(
-        floorObject.rotation_x || 0,
-        floorObject.rotation_y || 0,
-        floorObject.rotation_z || 0
-      );
-    }
-
-    floorMesh.scale.set(
-      localState.venueScale.worldWidth / 10,
-      localState.venueScale.worldDepth / 10,
-      1
-    );
+    syncFloorMeshFromSnapshot();
 
     createVideoWallEntity(venueSnapshot.video_wall);
-    venueSnapshot.scene_objects
-      .filter((sceneObject) => sceneObject.kind === 'dj_table' || sceneObject.kind === 'dj_cutout')
-      .forEach(createFurniture);
+    createDjBoothEntity(
+      getSceneObject(venueSnapshot, 'dj_table'),
+      getSceneObject(venueSnapshot, 'dj_cutout')
+    );
     venueSnapshot.fixtures.forEach(createFixtureEntity);
     resizeRenderer();
     setView(localState.currentView);
@@ -649,11 +921,19 @@ function createThreeSceneController({
 
   transformControls.addEventListener('dragging-changed', (event) => {
     if (event.value) {
+      localState.isTransformDragging = true;
       orbitControls.enabled = false;
       renderer.domElement.style.cursor = 'grabbing';
+      onTransformDragStateChange?.(true);
       return;
     }
+    localState.isTransformDragging = false;
     syncInteractionMode();
+    onTransformDragStateChange?.(false);
+  });
+
+  transformControls.addEventListener('objectChange', () => {
+    scheduleFixtureDragSync();
   });
 
   transformControls.addEventListener('mouseUp', async () => {
@@ -665,23 +945,43 @@ function createThreeSceneController({
       return;
     }
 
+    if (localState.dragSyncTimeoutId !== null) {
+      window.clearTimeout(localState.dragSyncTimeoutId);
+      localState.dragSyncTimeoutId = null;
+    }
+
     const domainPosition = fromScenePosition(entity.group.position);
     const rotation = entity.group.rotation;
     if (entity.type === 'fixture') {
-      await onFixtureTransform({
-        fixtureId: entity.fixture.id,
-        x: domainPosition.x,
-        y: domainPosition.y,
-        z: domainPosition.z,
-        rotation_x: rotation.x,
-        rotation_y: rotation.y,
-        rotation_z: rotation.z,
-      });
-    } else {
+      await onFixtureTransform(buildFixtureTransformPayload(entity));
+    } else if (entity.type === 'video_wall') {
       await onVideoWallTransform({
         x: domainPosition.x,
         y: domainPosition.y,
         z: domainPosition.z,
+      });
+    } else if (entity.type === 'dj_booth') {
+      const delta = {
+        x: domainPosition.x - entity.anchor.x,
+        y: domainPosition.y - entity.anchor.y,
+        z: domainPosition.z - entity.anchor.z,
+      };
+      await onSceneObjectTransform({
+        type: 'dj_booth',
+        objects: [
+          {
+            kind: 'dj_table',
+            x: entity.djTable.x + delta.x,
+            y: entity.djTable.y + delta.y,
+            z: entity.djTable.z + delta.z,
+          },
+          {
+            kind: 'dj_cutout',
+            x: entity.djCutout.x + delta.x,
+            y: entity.djCutout.y + delta.y,
+            z: entity.djCutout.z + delta.z,
+          },
+        ],
       });
     }
   });
@@ -706,6 +1006,7 @@ function createThreeSceneController({
 
   return {
     applyBootstrap,
+    updateFloorPreview,
     setView,
     setSelection,
     setInteractionMode,
@@ -714,6 +1015,9 @@ function createThreeSceneController({
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('resize', resizeRenderer);
+      if (localState.dragSyncTimeoutId !== null) {
+        window.clearTimeout(localState.dragSyncTimeoutId);
+      }
       transformControls.detach();
       renderer.dispose();
       viewportEl.replaceChildren();

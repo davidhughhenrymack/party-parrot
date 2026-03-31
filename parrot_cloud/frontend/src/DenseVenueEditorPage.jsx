@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createSceneController } from './DenseSceneController.js';
 
 const isTestMode = new URLSearchParams(window.location.search).has('test_mode');
+const FEET_PER_METER = 3.280839895;
+const ROTATION_STEP_DEGREES = 45;
 
 export default function DenseVenueEditorPage({ venueId }) {
   const viewportRef = useRef(null);
@@ -10,6 +12,8 @@ export default function DenseVenueEditorPage({ venueId }) {
   const venueRef = useRef(null);
   const videoWallLockedRef = useRef(false);
   const selectedFixtureIdRef = useRef(null);
+  const transformDraggingRef = useRef(false);
+  const pendingVenueSnapshotRef = useRef(null);
   const venueNameSaveTimerRef = useRef(null);
   const floorSaveTimerRef = useRef(null);
 
@@ -46,6 +50,19 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
     return venueSnapshot.fixtures.find((fixture) => fixture.id === selectedFixtureId) ?? null;
   }, [venueSnapshot, selectedFixtureId]);
+
+  const selectedSceneObject = useMemo(() => {
+    if (!venueSnapshot || !selectedKind) {
+      return null;
+    }
+    if (selectedKind === 'video_wall') {
+      return venueSnapshot.scene_objects.find((sceneObject) => sceneObject.kind === 'video_wall') ?? null;
+    }
+    if (selectedKind === 'dj_booth') {
+      return venueSnapshot.scene_objects.find((sceneObject) => sceneObject.kind === 'dj_table') ?? null;
+    }
+    return null;
+  }, [selectedKind, venueSnapshot]);
 
   const venueSummary = useMemo(
     () => venueSummaries.find((venue) => venue.id === venueId) ?? null,
@@ -92,6 +109,30 @@ export default function DenseVenueEditorPage({ venueId }) {
             depth: venueRef.current.video_wall.depth,
             locked: videoWallLockedRef.current,
           });
+        },
+        onSceneObjectTransform: async (payload) => {
+          if (!venueRef.current || payload.type !== 'dj_booth') {
+            return;
+          }
+          await Promise.all(
+            payload.objects.map((sceneObject) =>
+              apiPatchSceneObject(venueRef.current.summary.id, sceneObject.kind, {
+                x: sceneObject.x,
+                y: sceneObject.y,
+                z: sceneObject.z,
+              })
+            )
+          );
+        },
+        onTransformDragStateChange: (isDragging) => {
+          transformDraggingRef.current = isDragging;
+          if (!isDragging && pendingVenueSnapshotRef.current) {
+            const nextSnapshot = pendingVenueSnapshotRef.current;
+            pendingVenueSnapshotRef.current = null;
+            window.requestAnimationFrame(() => {
+              setVenueSnapshot(nextSnapshot);
+            });
+          }
         },
       });
 
@@ -154,8 +195,8 @@ export default function DenseVenueEditorPage({ venueId }) {
 
     setVenueNameDraft(venueSnapshot.summary.name);
     setFloorValues({
-      width: String(venueSnapshot.floor_width),
-      height: String(venueSnapshot.floor_depth),
+      width: String(Math.round(metersToFeet(venueSnapshot.floor_width))),
+      height: String(Math.round(metersToFeet(venueSnapshot.floor_depth))),
     });
     setVideoWallLocked(venueSnapshot.video_wall.locked);
     sceneControllerRef.current?.applyBootstrap(venueSnapshot);
@@ -214,8 +255,8 @@ export default function DenseVenueEditorPage({ venueId }) {
     if (!venueSnapshot) {
       return;
     }
-    const nextWidth = Number(floorValues.width || 0);
-    const nextHeight = Number(floorValues.height || 0);
+    const nextWidth = feetToMeters(Number(floorValues.width || 0));
+    const nextHeight = feetToMeters(Number(floorValues.height || 0));
     if (
       Number.isNaN(nextWidth) ||
       Number.isNaN(nextHeight) ||
@@ -243,7 +284,7 @@ export default function DenseVenueEditorPage({ venueId }) {
     selectedFixtureIdRef.current = selectedFixtureId;
     if (selectedFixtureId) {
       sceneControllerRef.current?.setSelection({ type: 'fixture', fixtureId: selectedFixtureId });
-    } else if (selectedKind !== 'video_wall') {
+    } else if (selectedKind !== 'video_wall' && selectedKind !== 'dj_booth') {
       sceneControllerRef.current?.setSelection(null);
     }
   }, [selectedFixtureId, selectedKind]);
@@ -256,6 +297,16 @@ export default function DenseVenueEditorPage({ venueId }) {
       if (payload.type === 'bootstrap') {
         applyBootstrap(payload.data);
         void loadVenueSnapshot(venueId);
+      } else if (payload.type === 'venues') {
+        setVenueSummaries(payload.data?.venues || []);
+      } else if (payload.type === 'venue_snapshot') {
+        if (payload.data?.summary?.id === venueId) {
+          if (transformDraggingRef.current) {
+            pendingVenueSnapshotRef.current = payload.data;
+          } else {
+            setVenueSnapshot(payload.data);
+          }
+        }
       }
     };
     ws.onclose = () => {
@@ -266,6 +317,9 @@ export default function DenseVenueEditorPage({ venueId }) {
 
   function applyBootstrap(nextBootstrap) {
     setVenueSummaries(nextBootstrap.venues || []);
+    if (nextBootstrap.active_venue?.summary?.id === venueId) {
+      setVenueSnapshot(nextBootstrap.active_venue);
+    }
   }
 
   async function loadVenueSnapshot(nextVenueId) {
@@ -337,6 +391,69 @@ export default function DenseVenueEditorPage({ venueId }) {
     await apiDeleteFixture(venueSnapshot.summary.id, selectedFixture.id);
     setSelectedFixtureId(null);
     setSelectedKind(null);
+  }
+
+  async function handleRotateSelection(axis, direction) {
+    if (!venueSnapshot || !selectedKind) {
+      return;
+    }
+    const deltaRadians = degreesToRadians(ROTATION_STEP_DEGREES * direction);
+
+    if (selectedKind === 'fixture' && selectedFixture) {
+      const nextRotation = normalizeRightAngleRadians((selectedFixture[`rotation_${axis}`] || 0) + deltaRadians);
+      setVenueSnapshot((current) => current ? {
+        ...current,
+        fixtures: current.fixtures.map((fixture) => (
+          fixture.id === selectedFixture.id
+            ? { ...fixture, [`rotation_${axis}`]: nextRotation }
+            : fixture
+        )),
+      } : current);
+      await apiPatchFixture(venueSnapshot.summary.id, selectedFixture.id, {
+        [`rotation_${axis}`]: nextRotation,
+      });
+      return;
+    }
+
+    if (selectedKind === 'video_wall') {
+      const videoWallSceneObject = venueSnapshot.scene_objects.find((sceneObject) => sceneObject.kind === 'video_wall');
+      if (!videoWallSceneObject) {
+        return;
+      }
+      const nextRotation = normalizeRightAngleRadians((videoWallSceneObject[`rotation_${axis}`] || 0) + deltaRadians);
+      setVenueSnapshot((current) => current ? {
+        ...current,
+        scene_objects: current.scene_objects.map((sceneObject) => (
+          sceneObject.kind === 'video_wall'
+            ? { ...sceneObject, [`rotation_${axis}`]: nextRotation }
+            : sceneObject
+        )),
+      } : current);
+      await apiPatchSceneObject(venueSnapshot.summary.id, 'video_wall', {
+        [`rotation_${axis}`]: nextRotation,
+      });
+      return;
+    }
+
+    if (selectedKind === 'dj_booth') {
+      const djTableSceneObject = venueSnapshot.scene_objects.find((sceneObject) => sceneObject.kind === 'dj_table');
+      if (!djTableSceneObject) {
+        return;
+      }
+      const nextRotation = normalizeRightAngleRadians((djTableSceneObject[`rotation_${axis}`] || 0) + deltaRadians);
+      setVenueSnapshot((current) => current ? {
+        ...current,
+        scene_objects: current.scene_objects.map((sceneObject) => (
+          sceneObject.kind === 'dj_table' || sceneObject.kind === 'dj_cutout'
+            ? { ...sceneObject, [`rotation_${axis}`]: nextRotation }
+            : sceneObject
+        )),
+      } : current);
+      await Promise.all([
+        apiPatchSceneObject(venueSnapshot.summary.id, 'dj_table', { [`rotation_${axis}`]: nextRotation }),
+        apiPatchSceneObject(venueSnapshot.summary.id, 'dj_cutout', { [`rotation_${axis}`]: nextRotation }),
+      ]);
+    }
   }
 
   return (
@@ -429,42 +546,42 @@ export default function DenseVenueEditorPage({ venueId }) {
                 <input
                   id="floor-width"
                   type="number"
-                  step="0.1"
+                  step="10"
                   value={floorValues.width}
                   onChange={(event) => {
                     const nextValue = event.target.value;
                     setFloorValues((current) => ({ ...current, width: nextValue }));
-                    setVenueSnapshot((current) => (
-                      current
-                        ? {
-                            ...current,
-                            floor_width: Number(nextValue || current.floor_width),
-                          }
-                        : current
-                    ));
+                    const parsedWidth = feetToMeters(Number(nextValue));
+                    if (Number.isFinite(parsedWidth) && parsedWidth > 0) {
+                      sceneControllerRef.current?.updateFloorPreview({
+                        width: parsedWidth,
+                        depth: feetToMeters(Number(floorValues.height || metersToFeet(venueRef.current?.floor_depth || 0))),
+                      });
+                    }
                   }}
                 />
+                <span className="compact-suffix">ft</span>
               </label>
               <label className="compact-label">
                 <span>H</span>
                 <input
                   id="floor-height"
                   type="number"
-                  step="0.1"
+                  step="10"
                   value={floorValues.height}
                   onChange={(event) => {
                     const nextValue = event.target.value;
                     setFloorValues((current) => ({ ...current, height: nextValue }));
-                    setVenueSnapshot((current) => (
-                      current
-                        ? {
-                            ...current,
-                            floor_depth: Number(nextValue || current.floor_depth),
-                          }
-                        : current
-                    ));
+                    const parsedDepth = feetToMeters(Number(nextValue));
+                    if (Number.isFinite(parsedDepth) && parsedDepth > 0) {
+                      sceneControllerRef.current?.updateFloorPreview({
+                        width: feetToMeters(Number(floorValues.width || metersToFeet(venueRef.current?.floor_width || 0))),
+                        depth: parsedDepth,
+                      });
+                    }
                   }}
                 />
+                <span className="compact-suffix">ft</span>
               </label>
             </div>
           </div>
@@ -485,6 +602,31 @@ export default function DenseVenueEditorPage({ venueId }) {
           </div>
 
           <div id="viewport" ref={viewportRef} />
+
+          {selectedKind ? (
+            <div className="floating-transform-panel">
+              <div className="dense-section-header">
+                <h3>{selectedKind === 'fixture' ? 'Fixture Rotation' : selectedKind === 'video_wall' ? 'Video Wall Rotation' : 'DJ Booth Rotation'}</h3>
+              </div>
+              {['x', 'y', 'z'].map((axis) => {
+                const radians = selectedKind === 'fixture'
+                  ? (selectedFixture?.[`rotation_${axis}`] || 0)
+                  : (selectedSceneObject?.[`rotation_${axis}`] || 0);
+                return (
+                  <div key={axis} className="rotation-row">
+                    <span className="rotation-axis">{axis.toUpperCase()}</span>
+                    <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, -1)}>
+                      -45°
+                    </button>
+                    <span className="rotation-value">{Math.round(radiansToDegrees(radians))}°</span>
+                    <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, 1)}>
+                      +45°
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
 
           <div className="floating-bottom-bar">
             <div className="tool-radio-group" role="radiogroup" aria-label="Viewport tool">
@@ -580,8 +722,15 @@ export default function DenseVenueEditorPage({ venueId }) {
         open={addFixtureModalOpen}
         title="Add Light"
         onClose={() => setAddFixtureModalOpen(false)}
+        showHeaderCloseButton={false}
       >
-        <div className="modal-form">
+        <form
+          className="modal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleAddFixture();
+          }}
+        >
           <label>
             Fixture Type
             <select
@@ -622,10 +771,10 @@ export default function DenseVenueEditorPage({ venueId }) {
             </select>
           </label>
           <div className="modal-actions">
-            <button className="secondary-button" onClick={() => setAddFixtureModalOpen(false)}>Cancel</button>
-            <button id="add-fixture-button" onClick={handleAddFixture}>Add Fixture</button>
+            <button type="button" className="secondary-button" onClick={() => setAddFixtureModalOpen(false)}>Cancel</button>
+            <button id="add-fixture-button" type="submit">Add Fixture</button>
           </div>
-        </div>
+        </form>
       </Modal>
     </>
   );
@@ -644,6 +793,14 @@ export default function DenseVenueEditorPage({ venueId }) {
 
   async function apiPatchVideoWall(targetVenueId, data) {
     await fetchJson(`/api/venues/${targetVenueId}/video-wall`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiPatchSceneObject(targetVenueId, kind, data) {
+    await fetchJson(`/api/venues/${targetVenueId}/scene-objects/${kind}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -673,7 +830,7 @@ export default function DenseVenueEditorPage({ venueId }) {
   }
 }
 
-function Modal({ open, title, onClose, children }) {
+function Modal({ open, title, onClose, children, showHeaderCloseButton = true }) {
   if (!open) {
     return null;
   }
@@ -683,7 +840,9 @@ function Modal({ open, title, onClose, children }) {
       <div className="modal-card" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>
-          <button className="small-button secondary-button" onClick={onClose}>Close</button>
+          {showHeaderCloseButton ? (
+            <button type="button" className="small-button secondary-button" onClick={onClose}>Close</button>
+          ) : null}
         </div>
         {children}
       </div>
@@ -702,4 +861,25 @@ async function fetchJson(url, options = {}) {
 
 function withCurrentSearch(pathname) {
   return `${pathname}${window.location.search}`;
+}
+
+function metersToFeet(value) {
+  return value * FEET_PER_METER;
+}
+
+function feetToMeters(value) {
+  return value / FEET_PER_METER;
+}
+
+function degreesToRadians(value) {
+  return (value * Math.PI) / 180;
+}
+
+function radiansToDegrees(value) {
+  return (value * 180) / Math.PI;
+}
+
+function normalizeRightAngleRadians(value) {
+  const step = degreesToRadians(ROTATION_STEP_DEGREES);
+  return Math.round(value / step) * step;
 }

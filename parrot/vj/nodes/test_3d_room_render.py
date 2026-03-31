@@ -8,6 +8,7 @@ from PIL import Image
 import os
 import tempfile
 import shutil
+from unittest.mock import Mock
 
 from parrot.vj.nodes.fixture_visualization import FixtureVisualization
 from parrot.director.frame import Frame, FrameSignal
@@ -64,6 +65,7 @@ class Test3DRoomRender:
         return FixtureVisualization(
             state=state,
             position_manager=position_manager,
+            vj_director=Mock(),
             width=1920,
             height=1080,
             canvas_width=1200,

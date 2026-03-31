@@ -10,7 +10,7 @@ import websocket
 from beartype import beartype
 
 from parrot.state import State
-from parrot_cloud.domain import RuntimeBootstrap
+from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
 
 
 def _to_websocket_url(base_url: str) -> str:
@@ -69,7 +69,24 @@ class RuntimeVenueClient:
             message_type = payload.get("type")
             if message_type == "bootstrap":
                 bootstrap = RuntimeBootstrap.from_dict(payload["data"])
-                self.state.queue_runtime_bootstrap(bootstrap)
+                self.state.queue_runtime_venues(list(bootstrap.venues))
+                if bootstrap.active_venue is not None:
+                    self.state.queue_runtime_snapshot(bootstrap.active_venue)
+            elif message_type == "venues":
+                venues = [
+                    VenueSummary.from_dict(dict(venue_data))
+                    for venue_data in payload.get("data", {}).get("venues", [])
+                ]
+                self.state.queue_runtime_venues(venues)
+            elif message_type == "venue_snapshot":
+                snapshot_data = payload.get("data")
+                if snapshot_data:
+                    snapshot = VenueSnapshot.from_dict(dict(snapshot_data))
+                    if snapshot.summary.active:
+                        self.state.queue_runtime_snapshot(snapshot)
+            elif message_type == "control_state":
+                control_state = ControlState.from_dict(dict(payload.get("data", {})))
+                self.state.queue_runtime_control_state(control_state)
             elif message_type == "effect":
                 effect = str(payload.get("data", {}).get("effect", ""))
                 if effect:

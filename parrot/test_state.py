@@ -7,6 +7,13 @@ from unittest.mock import Mock, patch, MagicMock
 from parrot.state import State
 from parrot.director.mode import Mode
 from parrot.director.themes import themes
+from parrot_cloud.domain import (
+    FixtureSpec,
+    SceneObjectSpec,
+    VenueSnapshot,
+    VenueSummary,
+    VideoWallSpec,
+)
 
 
 class TestState:
@@ -262,3 +269,215 @@ class TestState:
 
         assert state.mode == Mode.rave
         mock_gui_handler.assert_called_once_with(Mode.rave)
+
+    def test_runtime_scene_update_does_not_switch_fixture_mode(self):
+        state = State()
+        venue_change_handler = Mock()
+        runtime_scene_handler = Mock()
+        state.events.on_venue_change += venue_change_handler
+        state.events.on_runtime_scene_change += runtime_scene_handler
+
+        initial_snapshot = VenueSnapshot(
+            summary=VenueSummary(
+                id="venue-1",
+                slug="demo",
+                name="Demo Venue",
+                archived=False,
+                active=True,
+                revision=1,
+            ),
+            floor_width=20.0,
+            floor_depth=15.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=10.0,
+                y=1.0,
+                z=3.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(
+                FixtureSpec(
+                    id="fixture-1",
+                    fixture_type="par_rgb",
+                    address=10,
+                    universe="default",
+                    x=1.0,
+                    y=2.0,
+                    z=3.0,
+                ),
+            ),
+            scene_objects=(
+                SceneObjectSpec(
+                    id="floor",
+                    kind="floor",
+                    x=10.0,
+                    y=7.5,
+                    z=0.0,
+                    width=20.0,
+                    height=15.0,
+                    depth=0.08,
+                ),
+            ),
+        )
+        updated_snapshot = VenueSnapshot(
+            summary=VenueSummary(
+                id="venue-1",
+                slug="demo",
+                name="Demo Venue",
+                archived=False,
+                active=True,
+                revision=2,
+            ),
+            floor_width=20.0,
+            floor_depth=15.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=10.0,
+                y=1.0,
+                z=3.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(
+                FixtureSpec(
+                    id="fixture-1",
+                    fixture_type="par_rgb",
+                    address=10,
+                    universe="default",
+                    x=4.0,
+                    y=5.0,
+                    z=6.0,
+                ),
+            ),
+            scene_objects=(
+                SceneObjectSpec(
+                    id="floor",
+                    kind="floor",
+                    x=10.0,
+                    y=7.5,
+                    z=0.0,
+                    width=20.0,
+                    height=15.0,
+                    depth=0.08,
+                ),
+            ),
+        )
+
+        state._apply_runtime_snapshot(initial_snapshot)
+        state.set_show_fixture_mode(True)
+        venue_change_handler.reset_mock()
+        runtime_scene_handler.reset_mock()
+
+        state._apply_runtime_snapshot(updated_snapshot)
+
+        assert state.show_fixture_mode is True
+        venue_change_handler.assert_not_called()
+        runtime_scene_handler.assert_called_once_with(updated_snapshot)
+
+    def test_runtime_scene_update_preserves_fixture_instances(self):
+        state = State()
+        initial_snapshot = VenueSnapshot(
+            summary=VenueSummary(
+                id="venue-1",
+                slug="demo",
+                name="Demo Venue",
+                archived=False,
+                active=True,
+                revision=1,
+            ),
+            floor_width=20.0,
+            floor_depth=15.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=10.0,
+                y=1.0,
+                z=3.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(
+                FixtureSpec(
+                    id="fixture-1",
+                    fixture_type="par_rgb",
+                    address=10,
+                    universe="default",
+                    x=1.0,
+                    y=2.0,
+                    z=3.0,
+                ),
+            ),
+            scene_objects=(
+                SceneObjectSpec(
+                    id="floor",
+                    kind="floor",
+                    x=10.0,
+                    y=7.5,
+                    z=0.0,
+                    width=20.0,
+                    height=15.0,
+                    depth=0.08,
+                ),
+            ),
+        )
+        updated_snapshot = VenueSnapshot(
+            summary=VenueSummary(
+                id="venue-1",
+                slug="demo",
+                name="Demo Venue",
+                archived=False,
+                active=True,
+                revision=2,
+            ),
+            floor_width=20.0,
+            floor_depth=15.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=10.0,
+                y=1.0,
+                z=3.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(
+                FixtureSpec(
+                    id="fixture-1",
+                    fixture_type="par_rgb",
+                    address=10,
+                    universe="default",
+                    x=9.0,
+                    y=8.0,
+                    z=7.0,
+                ),
+            ),
+            scene_objects=(
+                SceneObjectSpec(
+                    id="floor",
+                    kind="floor",
+                    x=10.0,
+                    y=7.5,
+                    z=0.0,
+                    width=20.0,
+                    height=15.0,
+                    depth=0.08,
+                ),
+            ),
+        )
+
+        state._apply_runtime_snapshot(initial_snapshot)
+        original_fixture = state.runtime_patch[0]
+
+        state._apply_runtime_snapshot(updated_snapshot)
+
+        assert state.runtime_patch[0] is original_fixture
+        assert original_fixture.x == 9.0
+        assert original_fixture.y == 8.0
+        assert original_fixture.z == 7.0

@@ -27,6 +27,12 @@ from parrot_cloud.database import create_session, get_repo_root
 from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
 
+LEGACY_PLAN_UNITS_PER_METER = 50.0
+DJ_HEIGHT_METERS = 1.8288
+DJ_TABLE_HEIGHT_METERS = 1.0668
+DJ_TABLE_DEPTH_METERS = 1.2192
+DJ_TABLE_WIDTH_METERS = 2.4384
+
 
 @contextmanager
 def _session_scope():
@@ -117,6 +123,7 @@ class VenueRepository:
             if venue is None:
                 return None
             self._ensure_scene_objects(session, venue)
+            self._normalize_metric_scene_units(venue)
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
@@ -126,6 +133,7 @@ class VenueRepository:
             if venue is None:
                 raise KeyError(f"Venue not found: {venue_id}")
             self._ensure_scene_objects(session, venue)
+            self._normalize_metric_scene_units(venue)
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
@@ -182,10 +190,10 @@ class VenueRepository:
                 venue.archived = bool(data["archived"])
             if "floor_width" in data:
                 floor_object.width = float(data["floor_width"])
-                floor_object.x = floor_object.width / 2.0
+                floor_object.x = 0.0
             if "floor_depth" in data:
                 floor_object.height = float(data["floor_depth"])
-                floor_object.y = floor_object.height / 2.0
+                floor_object.y = 0.0
             if "floor_height" in data:
                 floor_object.options = {
                     **dict(floor_object.options or {}),
@@ -225,6 +233,33 @@ class VenueRepository:
                 video_wall.depth = float(data["video_wall_depth"])
             if "video_wall_locked" in data:
                 video_wall.locked = bool(data["video_wall_locked"])
+
+            self._sync_legacy_scene_fields(venue)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def update_scene_object(
+        self, venue_id: str, scene_object_kind: str, data: dict[str, object]
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            self._ensure_scene_objects(session, venue)
+            scene_object = self._scene_object_by_kind(venue, scene_object_kind)
+
+            for key in ("x", "y", "z", "width", "height", "depth"):
+                if key in data and data[key] is not None:
+                    setattr(scene_object, key, float(data[key]))
+            for key in ("rotation_x", "rotation_y", "rotation_z"):
+                if key in data and data[key] is not None:
+                    setattr(scene_object, key, float(data[key]))
+            if "locked" in data:
+                scene_object.locked = bool(data["locked"])
+            if "options" in data and data["options"] is not None:
+                scene_object.options = dict(data["options"])
 
             self._sync_legacy_scene_fields(venue)
             self._touch_venue(venue)
@@ -560,22 +595,23 @@ class VenueRepository:
             if scene_object.id == scene_object_spec.id and scene_object.options in (None, {}):
                 self._apply_scene_object_spec(scene_object, scene_object_spec, order_index)
             scene_object.order_index = order_index
+        self._normalize_metric_scene_units(venue)
         self._sync_legacy_scene_fields(venue)
 
     def _default_scene_objects(self, venue: VenueModel) -> tuple[SceneObjectSpec, ...]:
         floor_width = max(float(venue.floor_width or 20.0), 1.0)
         floor_depth = max(float(venue.floor_depth or 15.0), 1.0)
         room_height = float(venue.floor_height or 10.0)
-        table_width = floor_width * 0.2
-        table_depth = floor_depth * 0.06
-        table_height = 1.2
-        table_y = floor_depth * 0.15
+        table_width = DJ_TABLE_WIDTH_METERS
+        table_depth = DJ_TABLE_DEPTH_METERS
+        table_height = DJ_TABLE_HEIGHT_METERS
+        table_y = -(floor_depth / 2.0) + 1.2
         return (
             SceneObjectSpec(
                 id=f"{venue.id}:floor",
                 kind="floor",
-                x=floor_width / 2.0,
-                y=floor_depth / 2.0,
+                x=0.0,
+                y=0.0,
                 z=-0.04,
                 width=floor_width,
                 height=floor_depth,
@@ -585,8 +621,8 @@ class VenueRepository:
             SceneObjectSpec(
                 id=f"{venue.id}:video_wall",
                 kind="video_wall",
-                x=float(venue.video_wall_x or floor_width / 2.0),
-                y=float(venue.video_wall_y or floor_depth * 0.05),
+                x=float(venue.video_wall_x or 0.0),
+                y=float(venue.video_wall_y or (-(floor_depth / 2.0) + 0.4)),
                 z=float(venue.video_wall_z or 3.0),
                 width=float(venue.video_wall_width or floor_width),
                 height=float(venue.video_wall_height or 6.0),
@@ -596,7 +632,7 @@ class VenueRepository:
             SceneObjectSpec(
                 id=f"{venue.id}:dj_table",
                 kind="dj_table",
-                x=floor_width / 2.0,
+                x=0.0,
                 y=table_y,
                 z=table_height / 2.0,
                 width=table_width,
@@ -606,11 +642,11 @@ class VenueRepository:
             SceneObjectSpec(
                 id=f"{venue.id}:dj_cutout",
                 kind="dj_cutout",
-                x=floor_width / 2.0,
+                x=0.0,
                 y=table_y - table_depth / 2.0,
-                z=table_height + 0.55,
-                width=floor_width * 0.15,
-                height=1.5,
+                z=DJ_HEIGHT_METERS / 2.0,
+                width=0.9,
+                height=DJ_HEIGHT_METERS,
                 depth=0.05,
                 options={"use_billboard": True},
             ),
@@ -706,3 +742,37 @@ class VenueRepository:
             venue.video_wall_height = float(video_wall.height)
             venue.video_wall_depth = float(video_wall.depth)
             venue.video_wall_locked = bool(video_wall.locked)
+
+    def _normalize_metric_scene_units(self, venue: VenueModel) -> None:
+        floor_object = next(
+            (scene_object for scene_object in venue.scene_objects if scene_object.kind == "floor"),
+            None,
+        )
+        if floor_object is None or float(floor_object.width) <= 100.0:
+            return
+
+        legacy_floor_width = float(floor_object.width)
+        legacy_floor_depth = float(floor_object.height)
+
+        def convert_lateral(value: float) -> float:
+            return (value - (legacy_floor_width / 2.0)) / LEGACY_PLAN_UNITS_PER_METER
+
+        def convert_depth(value: float) -> float:
+            return (value - (legacy_floor_depth / 2.0)) / LEGACY_PLAN_UNITS_PER_METER
+
+        floor_object.width = legacy_floor_width / LEGACY_PLAN_UNITS_PER_METER
+        floor_object.height = legacy_floor_depth / LEGACY_PLAN_UNITS_PER_METER
+        floor_object.x = 0.0
+        floor_object.y = 0.0
+
+        for scene_object in venue.scene_objects:
+            if scene_object.kind == "floor":
+                continue
+            scene_object.x = convert_lateral(float(scene_object.x))
+            scene_object.y = convert_depth(float(scene_object.y))
+            scene_object.width = float(scene_object.width) / LEGACY_PLAN_UNITS_PER_METER
+            scene_object.depth = float(scene_object.depth) / LEGACY_PLAN_UNITS_PER_METER
+
+        for fixture in venue.fixtures:
+            fixture.x = convert_lateral(float(fixture.x))
+            fixture.y = convert_depth(float(fixture.y))

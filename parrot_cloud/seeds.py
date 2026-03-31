@@ -9,6 +9,13 @@ from beartype import beartype
 from parrot_cloud.database import get_repo_root
 from parrot_cloud.domain import FixtureSpec, SceneObjectSpec, VideoWallSpec
 
+LEGACY_PLAN_UNITS_PER_METER = 50.0
+FEET_PER_METER = 3.280839895
+DJ_HEIGHT_METERS = 6.0 / FEET_PER_METER
+DJ_TABLE_HEIGHT_METERS = 3.5 / FEET_PER_METER
+DJ_TABLE_DEPTH_METERS = 4.0 / FEET_PER_METER
+DJ_TABLE_WIDTH_METERS = 8.0 / FEET_PER_METER
+
 
 @beartype
 @dataclass(frozen=True)
@@ -152,6 +159,8 @@ def _pi_over_two() -> float:
 
 def _build_mtn_lotus_fixtures() -> tuple[FixtureSpec, ...]:
     fixtures: list[FixtureSpec] = []
+    legacy_floor_width = 450.0
+    legacy_floor_depth = 400.0
     for legacy_id, pos_data in _load_mtn_lotus_gui().items():
         legacy_type, address_and_universe = legacy_id.split("@", 1)
         address_text, universe = address_and_universe.split(":", 1)
@@ -178,8 +187,10 @@ def _build_mtn_lotus_fixtures() -> tuple[FixtureSpec, ...]:
                 fixture_type,
                 int(address_text),
                 universe,
-                float(pos_data.get("x", 0.0)),
-                float(pos_data.get("y", 0.0)),
+                (float(pos_data.get("x", 0.0)) - (legacy_floor_width / 2.0))
+                / LEGACY_PLAN_UNITS_PER_METER,
+                (float(pos_data.get("y", 0.0)) - (legacy_floor_depth / 2.0))
+                / LEGACY_PLAN_UNITS_PER_METER,
                 float(pos_data.get("z", 3.0)),
                 rotation_x=rotation_x,
                 rotation_y=rotation_y,
@@ -194,16 +205,16 @@ def _build_mtn_lotus_fixtures() -> tuple[FixtureSpec, ...]:
 
 
 def build_seed_venues() -> tuple[SeedVenueDefinition, ...]:
-    floor_width = 450.0
-    floor_depth = 400.0
+    floor_width = 450.0 / LEGACY_PLAN_UNITS_PER_METER
+    floor_depth = 400.0 / LEGACY_PLAN_UNITS_PER_METER
     floor_height = 12.0
-    table_width = floor_width * 0.2
-    table_depth = floor_depth * 0.06
-    table_height = 1.2
-    table_y = floor_depth * 0.15
+    table_width = DJ_TABLE_WIDTH_METERS
+    table_depth = DJ_TABLE_DEPTH_METERS
+    table_height = DJ_TABLE_HEIGHT_METERS
+    table_y = -(floor_depth / 2.0) + 1.2
     video_wall = VideoWallSpec(
-        x=floor_width / 2.0,
-        y=floor_depth * 0.05,
+        x=0.0,
+        y=-(floor_depth / 2.0) + 0.4,
         z=3.0,
         width=floor_width,
         height=6.0,
@@ -225,8 +236,8 @@ def build_seed_venues() -> tuple[SeedVenueDefinition, ...]:
                 _scene_object(
                     "mtn-lotus-demo-floor",
                     "floor",
-                    floor_width / 2.0,
-                    floor_depth / 2.0,
+                    0.0,
+                    0.0,
                     -0.04,
                     width=floor_width,
                     height=floor_depth,
@@ -247,7 +258,7 @@ def build_seed_venues() -> tuple[SeedVenueDefinition, ...]:
                 _scene_object(
                     "mtn-lotus-demo-dj-table",
                     "dj_table",
-                    floor_width / 2.0,
+                    0.0,
                     table_y,
                     table_height / 2.0,
                     width=table_width,
@@ -257,11 +268,11 @@ def build_seed_venues() -> tuple[SeedVenueDefinition, ...]:
                 _scene_object(
                     "mtn-lotus-demo-dj-cutout",
                     "dj_cutout",
-                    floor_width / 2.0,
+                    0.0,
                     table_y - table_depth / 2.0,
-                    table_height + 0.55,
-                    width=floor_width * 0.15,
-                    height=1.5,
+                    DJ_HEIGHT_METERS / 2.0,
+                    width=0.9,
+                    height=DJ_HEIGHT_METERS,
                     depth=0.05,
                     options={"use_billboard": True},
                 ),

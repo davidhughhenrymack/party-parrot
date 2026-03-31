@@ -133,3 +133,23 @@ def test_video_wall_and_fixture_endpoints(client):
     )
     assert patched_fixture["address"] == 411
     assert patched_fixture["universe"] == "default"
+
+
+def test_scene_object_patch_endpoint(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+
+    response = client.patch(
+        f"/api/venues/{venue_id}/scene-objects/dj_table",
+        json={"x": 42.0, "y": 24.0, "z": 3.5},
+    )
+
+    assert response.status_code == 200
+    dj_table = next(
+        scene_object
+        for scene_object in response.get_json()["scene_objects"]
+        if scene_object["kind"] == "dj_table"
+    )
+    assert dj_table["x"] == 42.0
+    assert dj_table["y"] == 24.0
+    assert dj_table["z"] == 3.5

@@ -116,21 +116,24 @@ def test_headless_browser_basic_editor_flow(parrot_cloud_server):
         page.wait_for_selector("#venue-name-input")
         assert page.input_value("#venue-name-input") == "Browser Test Venue"
         assert "No lights yet" in page.locator("#fixture-list").text_content()
+        assert page.get_attribute("#floor-width", "step") == "10"
+        assert page.get_attribute("#floor-height", "step") == "10"
 
         venue_id = page.url.rsplit("/", 1)[-1].split("?", 1)[0]
 
-        page.fill("#floor-width", "42")
-        page.fill("#floor-height", "21")
+        page.fill("#floor-width", "40")
+        page.fill("#floor-height", "20")
         page.wait_for_function(
             f"""async () => {{
                 const response = await fetch('/api/venues/{venue_id}');
                 const data = await response.json();
-                return data.floor_width === 42 && data.floor_depth === 21;
+                return Math.abs(data.floor_width - 12.192) < 0.02 && Math.abs(data.floor_depth - 6.096) < 0.02;
             }}"""
         )
 
         page.click("#open-add-light-modal-button")
         page.wait_for_selector("#fixture-type-select")
+        assert page.locator(".modal-header button", has_text="Close").count() == 0
         page.select_option("#fixture-type-select", "par_rgb")
         page.fill("#fixture-address-input", "321")
         page.select_option("#fixture-universe-input", "art1")

@@ -2256,6 +2256,10 @@ class Room3DRenderer:
         world_depth = float(floor.get("depth", 10.0))
         center_x = float(floor.get("center_x", 0.0))
         center_z = float(floor.get("center_z", 0.0))
+        source_centered = bool(floor.get("source_centered", False))
+
+        if source_centered:
+            return center_x + x, z, center_z + y
 
         norm_x = 0.0 if source_width <= 0 else x / source_width
         norm_y = 0.0 if source_depth <= 0 else y / source_depth

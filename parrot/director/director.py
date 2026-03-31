@@ -50,7 +50,7 @@ class Director:
         # Initialize position manager first (so fixtures have positions before interpreters are created)
         self.position_manager = FixturePositionManager(state)
 
-        self.setup_patch()
+        self.setup_patch(reset_vj=True)
         self.generate_color_scheme()
 
         self.warmup_complete = False
@@ -58,11 +58,13 @@ class Director:
         # Register event handlers
         self.state.events.on_mode_change += self.on_mode_change
         self.state.events.on_theme_change += lambda s: self.generate_color_scheme()
-        self.state.events.on_venue_change += lambda s: self.setup_patch()
+        self.state.events.on_venue_change += lambda s: self.setup_patch(reset_vj=False)
 
-    def setup_patch(self):
+    def setup_patch(self, reset_vj: bool = False):
         self.group_fixtures()
-        self.generate_all()  # Initialize both lighting and VJ
+        self.generate_interpreters()
+        if reset_vj and self.vj_director:
+            self.vj_director.shift(self.state.vj_mode, threshold=1.0)
 
     def group_fixtures(self):
         to_group = [

@@ -9,7 +9,10 @@ from parrot.vj.vj_mode import VJMode
 from parrot.director.themes import themes, get_theme_by_name
 from parrot.patch_bay import venues
 from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
-from parrot_cloud.fixture_catalog import build_runtime_fixture_groups
+from parrot_cloud.fixture_catalog import (
+    build_runtime_fixture_groups,
+    update_runtime_fixture_transforms,
+)
 
 
 @beartype
@@ -227,13 +230,22 @@ class State:
         )
         self._runtime_venue_snapshot = snapshot
         self._venue = snapshot.summary
-        self._runtime_patch, self._runtime_manual_group = build_runtime_fixture_groups(
-            snapshot
-        )
+        structure_changed = venue_changed
+        if not venue_changed and self._runtime_patch is not None:
+            updated_in_place = update_runtime_fixture_transforms(
+                self._runtime_patch,
+                self._runtime_manual_group,
+                snapshot,
+            )
+            structure_changed = not updated_in_place
+        if structure_changed:
+            self._runtime_patch, self._runtime_manual_group = build_runtime_fixture_groups(
+                snapshot
+            )
         self._manual_dimmer_supported_override = any(
             fixture.is_manual for fixture in snapshot.fixtures
         )
-        if venue_changed:
+        if venue_changed or structure_changed:
             self.events.on_venue_change(self._venue)
         else:
             self.events.on_runtime_scene_change(snapshot)
