@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import socket
 
 from parrot_cloud.app import create_app
@@ -30,6 +31,8 @@ def main() -> None:
     initialize_database()
     build_frontend()
     app = create_app()
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)
+    app.logger.setLevel(logging.ERROR)
     local_ip = get_local_ip()
     print(f"\n☁️  Parrot Cloud available at: http://{local_ip}:{args.port}/")
     print(f"🗄️  Parrot Cloud database is local and auto-seeded on first launch\n")

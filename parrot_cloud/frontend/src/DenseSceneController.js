@@ -77,9 +77,13 @@ function createThreeSceneController({
     dragSyncTimeoutId: null,
     lastFixtureDragSyncAt: 0,
     isTransformDragging: false,
+    /** Ignore canvas background clicks that immediately follow a transform drag (they clear selection). */
+    suppressCanvasDeselectUntil: 0,
     destroyed: false,
   };
   const fixtureDragSyncIntervalMs = 100;
+  /** Upstage of table back edge (venue −y), meters — matches runtime / repository default. */
+  const DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.61;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1b2430);
@@ -461,10 +465,11 @@ function createThreeSceneController({
     }
   }
 
+  function shouldSuppressCanvasDeselect() {
+    return performance.now() < localState.suppressCanvasDeselectUntil;
+  }
+
   function onPointerDown(event) {
-    if (localState.interactionMode !== 'select') {
-      return;
-    }
     if (transformControls.axis) {
       return;
     }
@@ -472,12 +477,16 @@ function createThreeSceneController({
     const groups = Array.from(localState.entityMap.values()).map((entity) => entity.group);
     const hits = raycaster.intersectObjects(groups, true);
     if (hits.length === 0) {
-      clearSelection();
+      if (localState.interactionMode === 'select' && !shouldSuppressCanvasDeselect()) {
+        clearSelection();
+      }
       return;
     }
     const entity = getEntityFromObject(hits[0].object);
     if (!entity) {
-      clearSelection();
+      if (localState.interactionMode === 'select' && !shouldSuppressCanvasDeselect()) {
+        clearSelection();
+      }
       return;
     }
     if (entity.type === 'fixture') {
@@ -490,9 +499,6 @@ function createThreeSceneController({
   }
 
   function onContextMenu(event) {
-    if (localState.interactionMode !== 'select') {
-      return;
-    }
     event.preventDefault();
     updatePointer(event);
     const groups = Array.from(localState.entityMap.values())
@@ -676,17 +682,20 @@ function createThreeSceneController({
       side: THREE.DoubleSide,
       depthWrite: false,
     });
+    // ConeGeometry: tip at +Y, base at -Y. Beam should be narrow at the lens and widen along the throw;
+    // flip 180° so the tip sits on the lens (same convention as ArrowHelper cone).
     const coneMesh = new THREE.Mesh(
       new THREE.ConeGeometry(coneRadius, coneLength, 24, 1, true),
       coneMaterial
     );
-    coneMesh.position.set(
-      0,
-      coneLength / 2 + (profile.kind === 'moving_head' ? profile.headDepth * 0.32 : profile.bodyDepth * 0.7),
+    coneMesh.rotateX(Math.PI);
+    const yBeamOrigin =
+      profile.kind === 'moving_head' ? profile.headDepth * 0.6 : profile.bodyDepth * 0.7;
+    const zBeamOrigin =
       profile.kind === 'moving_head'
         ? profile.baseHeight + profile.headOffsetZ + profile.headHeight * 0.05
-        : profile.bodyHeight
-    );
+        : profile.bodyHeight;
+    coneMesh.position.set(0, yBeamOrigin + coneLength / 2, zBeamOrigin);
     coneMesh.userData = { entityKey: fixture.id };
     runtimeAxesGroup.add(coneMesh);
 
@@ -813,13 +822,8 @@ function createThreeSceneController({
       return;
     }
 
-    const anchor = new THREE.Vector3(
-      (djTable.x + djCutout.x) / 2,
-      (djTable.y + djCutout.y) / 2,
-      (djTable.z + djCutout.z) / 2
-    );
     const group = new THREE.Group();
-    group.position.copy(toScenePosition(anchor.x, anchor.y, anchor.z));
+    group.position.copy(toScenePosition(djTable.x, djTable.y, djTable.z));
     group.rotation.set(
       djTable.rotation_x || 0,
       djTable.rotation_y || 0,
@@ -840,14 +844,14 @@ function createThreeSceneController({
       ),
       tableMaterial
     );
-    const tableOffset = new THREE.Vector3(
-      djTable.x - anchor.x,
-      djTable.y - anchor.y,
-      djTable.z - anchor.z
-    );
-    table.position.copy(tableOffset);
+    table.position.set(0, 0, 0);
     table.userData = { entityKey: 'dj_booth' };
     group.add(table);
+
+    const depth = Math.max(djTable.depth, 0.02);
+    const silH = Math.max(djCutout.height, 0.1);
+    const behindLocalY = -(depth / 2 + DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M);
+    const cutLocalZ = silH / 2 - djTable.z;
 
     const cutout = new THREE.Mesh(
       new THREE.PlaneGeometry(Math.max(djCutout.width, 0.3), Math.max(djCutout.height, 0.5)),
@@ -860,12 +864,7 @@ function createThreeSceneController({
         side: THREE.DoubleSide,
       })
     );
-    const cutoutOffset = new THREE.Vector3(
-      djCutout.x - anchor.x,
-      djCutout.y - anchor.y,
-      djCutout.z - anchor.z
-    );
-    cutout.position.copy(cutoutOffset);
+    cutout.position.set(0, behindLocalY, cutLocalZ);
     cutout.rotation.x = -Math.PI / 2;
     cutout.rotation.z = Math.PI;
     cutout.userData = { entityKey: 'dj_booth' };
@@ -891,18 +890,23 @@ function createThreeSceneController({
       secondaryMaterials: [cutout.material],
       djTable,
       djCutout,
-      anchor,
     });
   }
 
   function applyBootstrap(venueSnapshot) {
+    const previousSelectedEntityKey = localState.selectedEntityKey;
     localState.venueSnapshot = venueSnapshot;
     localState.venueScale = venueSnapshot ? computeVenueScale(venueSnapshot) : null;
     sceneContent.clear();
     localState.entityMap.clear();
-    clearSelection();
+    localState.selectedEntityKey = null;
+    transformControls.detach();
 
     if (!venueSnapshot) {
+      applySelectionVisuals();
+      if (previousSelectedEntityKey) {
+        onSelectionChange(null);
+      }
       resizeRenderer();
       return;
     }
@@ -917,6 +921,20 @@ function createThreeSceneController({
     venueSnapshot.fixtures.forEach(createFixtureEntity);
     resizeRenderer();
     setView(localState.currentView);
+
+    const restoreKey =
+      previousSelectedEntityKey != null ? String(previousSelectedEntityKey) : null;
+    if (restoreKey && localState.entityMap.has(restoreKey)) {
+      const entity = localState.entityMap.get(restoreKey);
+      localState.selectedEntityKey = restoreKey;
+      transformControls.attach(entity.group);
+      applySelectionVisuals();
+    } else {
+      applySelectionVisuals();
+      if (previousSelectedEntityKey) {
+        onSelectionChange(null);
+      }
+    }
   }
 
   transformControls.addEventListener('dragging-changed', (event) => {
@@ -928,6 +946,7 @@ function createThreeSceneController({
       return;
     }
     localState.isTransformDragging = false;
+    localState.suppressCanvasDeselectUntil = performance.now() + 320;
     syncInteractionMode();
     onTransformDragStateChange?.(false);
   });
@@ -961,25 +980,43 @@ function createThreeSceneController({
         z: domainPosition.z,
       });
     } else if (entity.type === 'dj_booth') {
-      const delta = {
-        x: domainPosition.x - entity.anchor.x,
-        y: domainPosition.y - entity.anchor.y,
-        z: domainPosition.z - entity.anchor.z,
+      const newTable = {
+        x: domainPosition.x,
+        y: domainPosition.y,
+        z: domainPosition.z,
+      };
+      const rot = entity.group.rotation;
+      const depth = Math.max(entity.djTable.depth, 0.02);
+      const silH = Math.max(entity.djCutout.height, 0.1);
+      const behindLocalY = -(depth / 2 + DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M);
+      const cutLocalZ = silH / 2 - newTable.z;
+      const offset = new THREE.Vector3(0, behindLocalY, cutLocalZ);
+      offset.applyEuler(rot);
+      const cutVenue = {
+        x: newTable.x + offset.x,
+        y: newTable.y + offset.y,
+        z: newTable.z + offset.z,
       };
       await onSceneObjectTransform({
         type: 'dj_booth',
         objects: [
           {
             kind: 'dj_table',
-            x: entity.djTable.x + delta.x,
-            y: entity.djTable.y + delta.y,
-            z: entity.djTable.z + delta.z,
+            x: newTable.x,
+            y: newTable.y,
+            z: newTable.z,
+            rotation_x: rot.x,
+            rotation_y: rot.y,
+            rotation_z: rot.z,
           },
           {
             kind: 'dj_cutout',
-            x: entity.djCutout.x + delta.x,
-            y: entity.djCutout.y + delta.y,
-            z: entity.djCutout.z + delta.z,
+            x: cutVenue.x,
+            y: cutVenue.y,
+            z: cutVenue.z,
+            rotation_x: rot.x,
+            rotation_y: rot.y,
+            rotation_z: rot.z,
           },
         ],
       });

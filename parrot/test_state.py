@@ -270,6 +270,25 @@ class TestState:
         assert state.mode == Mode.rave
         mock_gui_handler.assert_called_once_with(Mode.rave)
 
+    def test_process_gui_updates_runtime_venues_notifies_listeners(self):
+        state = State()
+        handler = Mock()
+        state.events.on_available_venues_change += handler
+        new_venues = [
+            VenueSummary(
+                id="v-new",
+                slug="new",
+                name="New Venue",
+                archived=False,
+                active=False,
+                revision=1,
+            )
+        ]
+        state._gui_update_queue.put(("runtime_venues", new_venues))
+        state.process_gui_updates()
+        assert state.available_venues == new_venues
+        handler.assert_called_once_with(new_venues)
+
     def test_runtime_scene_update_does_not_switch_fixture_mode(self):
         state = State()
         venue_change_handler = Mock()

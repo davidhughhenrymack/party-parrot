@@ -177,9 +177,13 @@ class State:
     def queue_runtime_effect(self, effect: str):
         self._gui_update_queue.put(("runtime_effect", effect))
 
+    def _apply_runtime_venue_summaries(self, venues: list[VenueSummary]) -> None:
+        self._available_venues = list(venues)
+        self.events.on_available_venues_change(self._available_venues)
+
     def apply_runtime_bootstrap(self, bootstrap: RuntimeBootstrap):
         self._apply_control_state(bootstrap.control_state)
-        self._available_venues = list(bootstrap.venues)
+        self._apply_runtime_venue_summaries(list(bootstrap.venues))
         if bootstrap.active_venue is not None:
             self._apply_runtime_snapshot(bootstrap.active_venue)
 
@@ -424,7 +428,7 @@ class State:
                 elif update_type == "runtime_bootstrap":
                     self.apply_runtime_bootstrap(value)
                 elif update_type == "runtime_venues":
-                    self._available_venues = list(value)
+                    self._apply_runtime_venue_summaries(list(value))
                 elif update_type == "runtime_snapshot":
                     self._apply_runtime_snapshot(value)
                 elif update_type == "runtime_control_state":

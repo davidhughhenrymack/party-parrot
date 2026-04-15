@@ -32,6 +32,8 @@ DJ_HEIGHT_METERS = 1.8288
 DJ_TABLE_HEIGHT_METERS = 1.0668
 DJ_TABLE_DEPTH_METERS = 1.2192
 DJ_TABLE_WIDTH_METERS = 2.4384
+# Upstage of the table back edge (venue −y), ~2 ft — silhouette is derived from table + this gap.
+DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.61
 
 
 @contextmanager
@@ -643,7 +645,7 @@ class VenueRepository:
                 id=f"{venue.id}:dj_cutout",
                 kind="dj_cutout",
                 x=0.0,
-                y=table_y - table_depth / 2.0,
+                y=table_y - table_depth / 2.0 - DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M,
                 z=DJ_HEIGHT_METERS / 2.0,
                 width=0.9,
                 height=DJ_HEIGHT_METERS,

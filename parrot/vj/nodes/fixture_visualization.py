@@ -28,6 +28,9 @@ import numpy as np
 import math
 from parrot.venue_runtime import get_runtime_fixtures, get_runtime_manual_group
 
+# Upstage of table back edge (venue −y); keep in sync with parrot_cloud.repository default.
+DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.61
+
 
 @beartype
 class FixtureVisualization(GenerativeEffectBase):
@@ -225,15 +228,35 @@ class FixtureVisualization(GenerativeEffectBase):
                 "rotation_z": dj_table.rotation_z,
             }
 
-        if dj_cutout is not None:
+        if dj_table is not None and dj_cutout is not None:
+            sil_h = max(float(dj_cutout.height), 0.1)
+            depth = max(float(dj_table.depth), 0.02)
+            tz = float(dj_table.z)
+            offset_venue = np.array(
+                [
+                    0.0,
+                    -depth / 2.0 - DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M,
+                    sil_h / 2.0 - tz,
+                ],
+                dtype=np.float32,
+            )
+            q = self.room_renderer._quaternion_from_euler_xyz(
+                float(dj_table.rotation_x),
+                float(dj_table.rotation_y),
+                float(dj_table.rotation_z),
+            )
+            rotated = quaternion_rotate_vector(q, offset_venue)
+            cx = float(dj_table.x) + float(rotated[0])
+            cy = float(dj_table.y) + float(rotated[1])
+            cz = float(dj_table.z) + float(rotated[2])
             layout["dj_cutout"] = {
-                "position": to_room_position(dj_cutout.x, dj_cutout.y, dj_cutout.z),
+                "position": to_room_position(cx, cy, cz),
                 "width": max(dj_cutout.width, 0.1),
-                "height": max(dj_cutout.height, 0.1),
+                "height": sil_h,
                 "depth": max(dj_cutout.depth, 0.01),
-                "rotation_x": dj_cutout.rotation_x,
-                "rotation_y": dj_cutout.rotation_y,
-                "rotation_z": dj_cutout.rotation_z,
+                "rotation_x": dj_table.rotation_x,
+                "rotation_y": dj_table.rotation_y,
+                "rotation_z": dj_table.rotation_z,
             }
 
         return layout

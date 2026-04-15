@@ -240,6 +240,7 @@ def run_gl_window_app(args):
                     self.vj_mode_items = []
                     self.venue_items = []
                     self.theme_items = []
+                    self.venue_menu = None
                     return self
 
                 def updateModeCheckmarks(self):
@@ -260,6 +261,26 @@ def run_gl_window_app(args):
                         item.setState_(
                             1 if self.venues_list[idx] == self.state.venue else 0
                         )
+
+                def rebuildVenueMenu(self, _venues):
+                    """Refresh Venue submenu when the runtime venue list changes."""
+                    if self.venue_menu is None:
+                        return
+                    self.venues_list = list(get_runtime_venues(self.state))
+                    self.venue_menu.removeAllItems()
+                    self.venue_items = []
+                    for idx, venue in enumerate(self.venues_list):
+                        display_name = venue.name.replace("_", " ").title()
+                        menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                            display_name,
+                            objc.selector(self.selectVenue_, signature=b"v@:@"),
+                            "",
+                        )
+                        menu_item.setTag_(idx)
+                        menu_item.setTarget_(self)
+                        self.venue_menu.addItem_(menu_item)
+                        self.venue_items.append(menu_item)
+                    self.updateVenueCheckmarks()
 
                 def updateThemeCheckmarks(self):
                     """Update checkmarks for theme menu items"""
@@ -362,6 +383,8 @@ def run_gl_window_app(args):
             )
             venue_menu_item.setSubmenu_(venue_menu)
             main_menu.addItem_(venue_menu_item)
+            delegate.venue_menu = venue_menu
+            state.events.on_available_venues_change += delegate.rebuildVenueMenu
             delegate.updateVenueCheckmarks()
 
             # Create Theme menu with keyboard shortcuts

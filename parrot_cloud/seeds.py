@@ -15,6 +15,7 @@ DJ_HEIGHT_METERS = 6.0 / FEET_PER_METER
 DJ_TABLE_HEIGHT_METERS = 3.5 / FEET_PER_METER
 DJ_TABLE_DEPTH_METERS = 4.0 / FEET_PER_METER
 DJ_TABLE_WIDTH_METERS = 8.0 / FEET_PER_METER
+DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 2.0 / FEET_PER_METER
 
 
 @beartype
@@ -269,7 +270,7 @@ def build_seed_venues() -> tuple[SeedVenueDefinition, ...]:
                     "mtn-lotus-demo-dj-cutout",
                     "dj_cutout",
                     0.0,
-                    table_y - table_depth / 2.0,
+                    table_y - table_depth / 2.0 - DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M,
                     DJ_HEIGHT_METERS / 2.0,
                     width=0.9,
                     height=DJ_HEIGHT_METERS,
