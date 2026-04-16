@@ -274,8 +274,8 @@ class BrightGlow(PostProcessEffectBase):
         pass
 
     def render(
-        self, frame: Frame, scheme: ColorScheme, context
-    ) -> "Optional[mgl.Framebuffer]":
+        self, frame: Frame, scheme: ColorScheme, context: mgl.Context
+    ) -> Optional[mgl.Framebuffer]:
         """Multi-pass rendering: threshold -> blur -> compose"""
         # Get input from child node
         input_fb = self.input_node.render(frame, scheme, context)
