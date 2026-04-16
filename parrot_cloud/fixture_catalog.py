@@ -12,6 +12,10 @@ from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
 from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
+from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+    ChauvetIntimidatorHybrid140SR_13Ch,
+    ChauvetIntimidatorHybrid140SR_19Ch,
+)
 from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
 from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
 from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
@@ -159,6 +163,50 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+    ),
+    "chauvet_intimidator_hybrid_140sr": FixtureTypeDefinition(
+        key="chauvet_intimidator_hybrid_140sr",
+        label="Chauvet Intimidator Hybrid 140SR (19ch)",
+        builder=lambda spec: _apply_transform(
+            ChauvetIntimidatorHybrid140SR_19Ch(
+                spec.address,
+                pan_lower=_option_float(spec, "pan_lower", 0.0),
+                pan_upper=_option_float(spec, "pan_upper", 540.0),
+                tilt_lower=_option_float(spec, "tilt_lower", 0.0),
+                tilt_upper=_option_float(spec, "tilt_upper", 270.0),
+                dimmer_upper=_option_float(spec, "dimmer_upper", 255.0),
+                universe=_parse_universe(spec.universe),
+            ),
+            spec,
+        ),
+        default_options={
+            "pan_lower": 0,
+            "pan_upper": 540,
+            "tilt_lower": 0,
+            "tilt_upper": 270,
+        },
+    ),
+    "chauvet_intimidator_hybrid_140sr_13ch": FixtureTypeDefinition(
+        key="chauvet_intimidator_hybrid_140sr_13ch",
+        label="Chauvet Intimidator Hybrid 140SR (13ch)",
+        builder=lambda spec: _apply_transform(
+            ChauvetIntimidatorHybrid140SR_13Ch(
+                spec.address,
+                pan_lower=_option_float(spec, "pan_lower", 0.0),
+                pan_upper=_option_float(spec, "pan_upper", 540.0),
+                tilt_lower=_option_float(spec, "tilt_lower", 0.0),
+                tilt_upper=_option_float(spec, "tilt_upper", 270.0),
+                dimmer_upper=_option_float(spec, "dimmer_upper", 255.0),
+                universe=_parse_universe(spec.universe),
+            ),
+            spec,
+        ),
+        default_options={
+            "pan_lower": 0,
+            "pan_upper": 540,
+            "tilt_lower": 0,
+            "tilt_upper": 270,
+        },
     ),
     "motionstrip_38": FixtureTypeDefinition(
         key="motionstrip_38",

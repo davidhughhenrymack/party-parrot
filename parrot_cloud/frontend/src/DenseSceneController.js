@@ -585,6 +585,8 @@ function createThreeSceneController({
         'chauvet_spot_160',
         'chauvet_rogue_beam_r2',
         'chauvet_move_9ch',
+        'chauvet_intimidator_hybrid_140sr',
+        'chauvet_intimidator_hybrid_140sr_13ch',
       ].includes(fixture.fixture_type)
     ) {
       return {
