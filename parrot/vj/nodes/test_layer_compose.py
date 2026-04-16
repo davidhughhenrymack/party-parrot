@@ -11,7 +11,7 @@ from parrot.vj.nodes.layer_compose import LayerCompose, LayerSpec, BlendMode
 from parrot.vj.nodes.black import Black
 from parrot.vj.nodes.video_player import VideoPlayer
 from parrot.vj.nodes.text_renderer import TextRenderer
-from parrot.vj.nodes.volumetric_beam import VolumetricBeam
+from parrot.vj.nodes.sparkle_field_effect import SparkleFieldEffect
 from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
 from parrot.vj.nodes.static_color import StaticColor
 from parrot.director.frame import Frame, FrameSignal
@@ -152,29 +152,20 @@ class TestSceneElementComposition:
         assert isinstance(layer_compose.layer_specs[0].node, Black)
         assert isinstance(layer_compose.layer_specs[1].node, TextRenderer)
 
-    def test_volumetric_beams_on_black_composition(self):
-        """Test volumetric beams compositing on black background"""
+    def test_sparkle_field_on_black_composition(self):
+        """Test sparkle shader compositing on black background"""
         black = Black()
-        beams = VolumetricBeam(
-            beam_count=3,
-            beam_length=10.0,
-            beam_width=0.3,
-            beam_intensity=2.0,
-            haze_density=0.8,
-            movement_speed=1.5,
-            color=(1.0, 0.8, 0.6),
-            signal=FrameSignal.freq_low,
-        )
+        sparkles = SparkleFieldEffect(width=1280, height=720)
 
         layer_compose = LayerCompose(
             LayerSpec(black, BlendMode.NORMAL),  # Black base
-            LayerSpec(beams, BlendMode.NORMAL),  # Beams with alpha blending
+            LayerSpec(sparkles, BlendMode.NORMAL),
         )
 
         # Verify layer setup
         assert len(layer_compose.layer_specs) == 2
         assert isinstance(layer_compose.layer_specs[0].node, Black)
-        assert isinstance(layer_compose.layer_specs[1].node, VolumetricBeam)
+        assert isinstance(layer_compose.layer_specs[1].node, SparkleFieldEffect)
         assert layer_compose.layer_specs[1].blend_mode == BlendMode.NORMAL
 
     def test_laser_scan_heads_on_black_composition(self):
@@ -203,7 +194,7 @@ class TestSceneElementComposition:
         black = Black()
         video = VideoPlayer(fn_group="bg")
         text = TextRenderer(text="CONCERT", font_size=64)
-        beams = VolumetricBeam(beam_count=4, signal=FrameSignal.freq_low)
+        sparkles = SparkleFieldEffect(width=1280, height=720)
 
         # Create laser scan heads
         lasers = LaserScanHeads(num_heads=4, beams_per_head=16)
@@ -212,7 +203,7 @@ class TestSceneElementComposition:
             LayerSpec(black, BlendMode.NORMAL),  # Black base
             LayerSpec(video, BlendMode.NORMAL),  # Video background
             LayerSpec(text, BlendMode.MULTIPLY),  # Text mask
-            LayerSpec(beams, BlendMode.NORMAL),  # Atmospheric beams
+            LayerSpec(sparkles, BlendMode.NORMAL),  # Generative layer
             LayerSpec(lasers, BlendMode.ADDITIVE),  # Sharp laser effects
         )
 
@@ -221,7 +212,7 @@ class TestSceneElementComposition:
         assert layer_compose.layer_specs[0].blend_mode == BlendMode.NORMAL  # Black
         assert layer_compose.layer_specs[1].blend_mode == BlendMode.NORMAL  # Video
         assert layer_compose.layer_specs[2].blend_mode == BlendMode.MULTIPLY  # Text
-        assert layer_compose.layer_specs[3].blend_mode == BlendMode.NORMAL  # Beams
+        assert layer_compose.layer_specs[3].blend_mode == BlendMode.NORMAL  # Sparkles
         assert layer_compose.layer_specs[4].blend_mode == BlendMode.ADDITIVE  # Lasers
 
     def test_layer_opacity_control(self):
@@ -450,32 +441,24 @@ class TestLayerComposeRendering:
         black.exit()
         lasers.exit()
 
-    def test_volumetric_beams_composition(self, gl_context, test_frame, test_scheme):
-        """Test volumetric beams with normal blending"""
+    def test_sparkle_field_composition(self, gl_context, test_frame, test_scheme):
+        """Test sparkle field shader with normal blending"""
         # Black base
         black = Black(width=1280, height=720)
 
-        # Volumetric beams
-        beams = VolumetricBeam(
-            beam_count=4,
-            beam_length=10.0,
-            beam_width=0.3,
-            signal=FrameSignal.freq_low,
-            width=1280,
-            height=720,
-        )
+        sparkles = SparkleFieldEffect(width=1280, height=720)
 
         # Compose
         compose = LayerCompose(
             LayerSpec(black, BlendMode.NORMAL),
-            LayerSpec(beams, BlendMode.NORMAL),
+            LayerSpec(sparkles, BlendMode.NORMAL),
             width=1280,
             height=720,
         )
 
         # Initialize all nodes
         black.enter(gl_context)
-        beams.enter(gl_context)
+        sparkles.enter(gl_context)
         compose.enter(gl_context)
         compose.generate(Vibe(mode=Mode.rave))
 
@@ -484,12 +467,12 @@ class TestLayerComposeRendering:
         assert result is not None
 
         # Save to PNG
-        self._save_framebuffer_to_png(result, "layer_compose_beams.png")
+        self._save_framebuffer_to_png(result, "layer_compose_sparkles.png")
 
         # Cleanup
         compose.exit()
         black.exit()
-        beams.exit()
+        sparkles.exit()
 
     def test_multi_layer_composition(self, gl_context, test_frame, test_scheme):
         """Test complex multi-layer composition with different blend modes"""
@@ -499,10 +482,7 @@ class TestLayerComposeRendering:
         # Colored background
         bg_color = StaticColor(color=(0.1, 0.05, 0.2), width=1280, height=720)
 
-        # Volumetric beams
-        beams = VolumetricBeam(
-            beam_count=3, signal=FrameSignal.freq_low, width=1280, height=720
-        )
+        sparkles = SparkleFieldEffect(width=1280, height=720)
 
         # Laser scan heads
         lasers = LaserScanHeads(width=1280, height=720, beams_per_head=12)
@@ -511,7 +491,7 @@ class TestLayerComposeRendering:
         compose = LayerCompose(
             LayerSpec(black, BlendMode.NORMAL),  # Black base
             LayerSpec(bg_color, BlendMode.NORMAL),  # Colored background
-            LayerSpec(beams, BlendMode.NORMAL),  # Atmospheric beams
+            LayerSpec(sparkles, BlendMode.NORMAL),  # Generative sparkles
             LayerSpec(lasers, BlendMode.ADDITIVE),  # Sharp laser effects
             width=1280,
             height=720,
@@ -520,7 +500,7 @@ class TestLayerComposeRendering:
         # Initialize all nodes
         black.enter(gl_context)
         bg_color.enter(gl_context)
-        beams.enter(gl_context)
+        sparkles.enter(gl_context)
         lasers.enter(gl_context)
         compose.enter(gl_context)
         compose.generate(Vibe(mode=Mode.rave))
@@ -536,5 +516,5 @@ class TestLayerComposeRendering:
         compose.exit()
         black.exit()
         bg_color.exit()
-        beams.exit()
+        sparkles.exit()
         lasers.exit()

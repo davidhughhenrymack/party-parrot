@@ -22,6 +22,10 @@ class FixtureBase:
         self.speed_value = 0
         self.x: Optional[int] = None
         self.y: Optional[int] = None
+        self.cloud_spec_id: Optional[str] = None
+        self.cloud_fixture_type: Optional[str] = None
+        self.cloud_group_name: Optional[str] = None
+        self.cloud_is_manual = False
 
     def set_position(self, x: int, y: int):
         """Set the position of the fixture in the venue (e.g. it's x,y coordinate from the gui rendering)"""

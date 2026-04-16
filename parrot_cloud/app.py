@@ -121,6 +121,17 @@ def create_app() -> Flask:
     def runtime_bootstrap():
         return jsonify(repository.get_runtime_bootstrap().to_dict())
 
+    @app.get("/api/runtime/fixture-state")
+    def get_runtime_fixture_state():
+        return jsonify(repository.get_fixture_runtime_state())
+
+    @app.post("/api/runtime/fixture-state")
+    def post_runtime_fixture_state():
+        data = request.get_json(force=True) or {}
+        payload = repository.set_fixture_runtime_state(dict(data))
+        hub.broadcast({"type": "fixture_runtime_state", "data": payload})
+        return jsonify(payload)
+
     @app.get("/api/runtime/active-venue")
     def runtime_active_venue():
         venue = repository.get_active_venue_snapshot()

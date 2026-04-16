@@ -258,7 +258,7 @@ class ControlState:
     def from_dict(cls, data: JsonDict) -> "ControlState":
         return cls(
             mode=str(data.get("mode", "chill")),
-            vj_mode=str(data.get("vj_mode", "full_rave")),
+            vj_mode=str(data.get("vj_mode", "prom_dmack")),
             theme_name=str(data.get("theme_name", "Rave")),
             manual_dimmer=float(data.get("manual_dimmer", 0.0)),
             hype_limiter=bool(data.get("hype_limiter", False)),
@@ -273,6 +273,9 @@ class RuntimeBootstrap:
     venues: tuple[VenueSummary, ...]
     active_venue: VenueSnapshot | None
     control_state: ControlState
+    fixture_runtime_state: JsonDict = field(
+        default_factory=lambda: {"version": 1, "fixtures": []}
+    )
 
     def to_dict(self) -> JsonDict:
         return {
@@ -281,11 +284,15 @@ class RuntimeBootstrap:
                 None if self.active_venue is None else self.active_venue.to_dict()
             ),
             "control_state": self.control_state.to_dict(),
+            "fixture_runtime_state": dict(self.fixture_runtime_state),
         }
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> "RuntimeBootstrap":
         active_venue_data = data.get("active_venue")
+        frs = data.get("fixture_runtime_state")
+        if not isinstance(frs, dict):
+            frs = {"version": 1, "fixtures": []}
         return cls(
             venues=tuple(
                 VenueSummary.from_dict(dict(venue_data))
@@ -297,4 +304,5 @@ class RuntimeBootstrap:
                 else VenueSnapshot.from_dict(dict(active_venue_data))
             ),
             control_state=ControlState.from_dict(dict(data.get("control_state", {}))),
+            fixture_runtime_state=dict(frs),
         )

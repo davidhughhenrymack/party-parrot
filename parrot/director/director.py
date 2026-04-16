@@ -286,7 +286,6 @@ class Director:
         warmup_phase = min(1, run_time / WARMUP_SECONDS)
 
         if warmup_phase == 1 and not self.warmup_complete:
-            print("Warmup phase complete")
             self.warmup_complete = True
 
         frame = frame * warmup_phase

@@ -11,15 +11,17 @@ from parrot.audio.audio_analyzer import AudioAnalyzer
 from parrot.director.director import Director
 from parrot.director.mode import Mode
 from parrot.director.frame import Frame, FrameSignal
+from parrot.gl_display_mode import EditorDisplayMode
 from parrot.state import State
-from parrot.utils.dmx_utils import get_controller
+from parrot.utils.dmx_utils import Universe, get_controller
+from parrot.vj.dmx_heatmap_renderer import DmxHeatmapRenderer
 from parrot.vj.vj_director import VJDirector
 from parrot.director.signal_states import SignalStates
 from parrot.utils.overlay_ui import OverlayUI
 from parrot.keyboard_handler import KeyboardHandler
 from parrot.utils.input_events import InputEvents
 from parrot.director.themes import themes
-from parrot.vj.vj_mode import VJMode
+from parrot.vj.vj_mode import VJMode, vj_mode_menu_label
 from parrot.runtime_venue_client import RuntimeVenueClient
 from parrot.venue_runtime import get_runtime_venues
 
@@ -51,16 +53,12 @@ def run_gl_window_app(args):
             runtime_client.bootstrap()
             state.process_gui_updates()
         except Exception as exc:
-            print(f"⚠️  Venue editor bootstrap unavailable, using local fallback: {exc}")
+            print(f"⚠️  Venue service bootstrap failed: {exc}")
         runtime_client.start()
 
     # Override mode if specified via args, otherwise use loaded/default mode
     if getattr(args, "rave", False):
         state.set_mode(Mode.rave)
-        print("🎉 Starting in RAVE mode (from command line)")
-    else:
-        # Use the mode loaded from state.json or default
-        print(f"🎉 Starting in {state.mode.name.upper()} mode")
 
     # Initialize audio analyzer
     audio_analyzer = AudioAnalyzer(signal_states)
@@ -83,6 +81,9 @@ def run_gl_window_app(args):
         height=1080,
     )
     fixture_renderer.enter(ctx)
+
+    dmx_heatmap_renderer = DmxHeatmapRenderer()
+    dmx_heatmap_renderer.enter(ctx)
 
     # Initialize DMX with venue-specific configuration
     dmx_ref = {"controller": get_controller(state.venue)}
@@ -204,7 +205,6 @@ def run_gl_window_app(args):
     # Check for start-with-overlay flag
     if getattr(args, "start_with_overlay", False):
         overlay.show()
-        print("🖥️  Starting with overlay visible")
 
     # Setup native macOS menu bar for settings
     def create_settings_menus():
@@ -212,7 +212,6 @@ def run_gl_window_app(args):
         import sys
 
         if sys.platform != "darwin":
-            print("⚠️  Menu bar only supported on macOS")
             return
 
         try:
@@ -262,7 +261,7 @@ def run_gl_window_app(args):
                             1 if self.venues_list[idx] == self.state.venue else 0
                         )
 
-                def rebuildVenueMenu(self, _venues):
+                def rebuildVenueMenu(self):
                     """Refresh Venue submenu when the runtime venue list changes."""
                     if self.venue_menu is None:
                         return
@@ -345,7 +344,7 @@ def run_gl_window_app(args):
             # Create VJ Mode menu
             vj_mode_menu = NSMenu.alloc().initWithTitle_("VJ Mode")
             for idx, vj_mode in enumerate(VJMode):
-                display_name = vj_mode.value.replace("_", " ").title()
+                display_name = vj_mode_menu_label(vj_mode)
                 menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
                     display_name,
                     objc.selector(delegate.selectVJMode_, signature=b"v@:@"),
@@ -384,7 +383,7 @@ def run_gl_window_app(args):
             venue_menu_item.setSubmenu_(venue_menu)
             main_menu.addItem_(venue_menu_item)
             delegate.venue_menu = venue_menu
-            state.events.on_available_venues_change += delegate.rebuildVenueMenu
+            state.events.on_available_venues_change += lambda *_args: delegate.rebuildVenueMenu()
             delegate.updateVenueCheckmarks()
 
             # Create Theme menu with keyboard shortcuts
@@ -412,12 +411,9 @@ def run_gl_window_app(args):
             pyglet_window._settings_menu_delegate = delegate
 
         except ImportError:
-            print("⚠️  PyObjC not available, menu bar creation skipped")
-            print("   Settings available via overlay (ENTER key)")
+            print("⚠️  Menu bar: PyObjC not available (overlay: ENTER)")
         except Exception as e:
-            print(f"⚠️  Could not create menu bar: {e}")
-            print(f"   Error details: {type(e).__name__}")
-            print("   Settings still available via overlay (ENTER key)")
+            print(f"⚠️  Menu bar: {e}")
 
     create_settings_menus()
 
@@ -428,25 +424,18 @@ def run_gl_window_app(args):
         screenshot_time = time.perf_counter() + 0.5
         print("📸 Screenshot mode: will capture after 0.5s and exit")
 
-    # Override fixture mode if specified via args, otherwise use loaded/default
     if getattr(args, "fixture_mode", False):
-        state.set_show_fixture_mode(True)
-        print("🔧 Starting in fixture mode (from command line)")
-    elif state.show_fixture_mode:
-        print("🔧 Starting in fixture mode (from saved state)")
-    else:
-        print("📺 Starting in VJ mode")
+        state.set_editor_display_mode(EditorDisplayMode.FIXTURE_SCENE)
 
     def update_cursor_visibility():
-        """Update cursor visibility based on fixture mode"""
+        """Hide cursor in VJ/video mode; show for DMX heatmap and fixture scene."""
         if pyglet_window:
-            # Show cursor in fixture mode, hide in VJ mode
-            pyglet_window.set_mouse_visible(state.show_fixture_mode)
+            pyglet_window.set_mouse_visible(
+                state.editor_display_mode != EditorDisplayMode.VJ
+            )
 
-    def toggle_fixture_mode():
-        state.set_show_fixture_mode(not state.show_fixture_mode)
-        mode_str = "fixture" if state.show_fixture_mode else "VJ"
-        print(f"🔀 Toggled to {mode_str} mode")
+    def cycle_display_mode():
+        state.cycle_editor_display_mode()
         update_cursor_visibility()
 
     # Setup keyboard handler on the underlying pyglet window
@@ -455,7 +444,7 @@ def run_gl_window_app(args):
         overlay,
         signal_states,
         state,
-        show_fixture_mode_callback=toggle_fixture_mode,
+        show_fixture_mode_callback=cycle_display_mode,
     )
 
     # Setup mouse handler for input events
@@ -502,20 +491,6 @@ def run_gl_window_app(args):
         lambda show_fixture: update_cursor_visibility()
     )
 
-    print("⌨️  Keyboard shortcuts:")
-    print(
-        "   SPACE: Regenerate all  |  S: Full shift lighting only  |  O: Full shift VJ only"
-    )
-    print("   ENTER: Toggle overlay  |  \\: Toggle fixture/VJ mode")
-    print(
-        "   C/D: Navigate lighting modes (C=up towards rave, D=down towards blackout)"
-    )
-    print("   E/F: Navigate VJ modes (E=down towards blackout, F=up towards full_rave)")
-    print("   LEFT/RIGHT: Navigate VJ modes (alternative)")
-    print("   I: Small Blinder  |  G: Big Blinder  |  H: Strobe  |  J: Pulse")
-    print("🖱️  Mouse: Drag to rotate/tilt camera  |  Scroll to zoom (in fixture mode)")
-    print("🖱️  Cursor: Hidden in VJ mode, visible in fixture mode")
-
     frame_counter = 0
 
     # Schedule web server request handling if enabled
@@ -535,7 +510,6 @@ def run_gl_window_app(args):
 
         # Schedule to check for web requests every 50ms
         pyglet.clock.schedule_interval(handle_web_requests, 0.05)
-        print("🌐 Web server integrated into main thread")
 
     # Track time for delta time calculations
     last_frame_time = time.perf_counter()
@@ -575,6 +549,8 @@ def run_gl_window_app(args):
                 state.process_gui_updates()
                 director.step(frame)
                 director.render(dmx_ref["controller"])
+                if runtime_client is not None:
+                    runtime_client.maybe_push_fixture_runtime_state()
             last_audio_update = time.perf_counter()
 
         # Get VJ frame data
@@ -588,17 +564,19 @@ def run_gl_window_app(args):
 
         # Check if window was resized and update renderers
         if (window_width, window_height) != last_window_size:
-            print(f"🖼️  Window resized to {window_width}x{window_height}")
             fixture_renderer.resize(ctx, window_width, window_height)
             last_window_size = (window_width, window_height)
 
         # Render based on mode
-        if state.show_fixture_mode:
-            # In fixture mode, fixture renderer calls VJ director internally
+        if state.editor_display_mode == EditorDisplayMode.FIXTURE_SCENE:
             rendered_fbo = fixture_renderer.render(frame_data, scheme_data, ctx)
-        else:
-            # In VJ mode, show VJ output directly
+        elif state.editor_display_mode == EditorDisplayMode.VJ:
             rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)
+        else:
+            snap = dmx_ref["controller"].snapshot_universe(Universe.default)
+            rendered_fbo = dmx_heatmap_renderer.render(
+                ctx, snap, window_width, window_height
+            )
 
         # Bind the window's default framebuffer (screen) and render to it
         ctx.screen.use()

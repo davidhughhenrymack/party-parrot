@@ -9,6 +9,7 @@ import requests
 import websocket
 from beartype import beartype
 
+from parrot.runtime_fixture_state import build_fixture_runtime_payload
 from parrot.state import State
 from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
 
@@ -27,6 +28,9 @@ class RuntimeVenueClient:
         self.ws_url = _to_websocket_url(self.base_url)
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
+        self._fixture_push_lock = threading.Lock()
+        self._last_fixture_push_mono = 0.0
+        self._last_fixture_payload_json: str | None = None
         self.state.disable_local_state_persistence()
         self.state.set_remote_venue_selector(self.set_active_venue)
 
@@ -38,6 +42,32 @@ class RuntimeVenueClient:
 
     def stop(self) -> None:
         self._stop_event.set()
+
+    def maybe_push_fixture_runtime_state(self) -> None:
+        if self._stop_event.is_set():
+            return
+        patch = self.state.runtime_patch
+        if patch is None:
+            return
+        now = time.monotonic()
+        if now - self._last_fixture_push_mono < 0.1:
+            return
+        payload = build_fixture_runtime_payload(patch, self.state.runtime_manual_group)
+        encoded = json.dumps(payload, separators=(",", ":"), sort_keys=True)
+        with self._fixture_push_lock:
+            if encoded == self._last_fixture_payload_json:
+                return
+            self._last_fixture_payload_json = encoded
+        self._last_fixture_push_mono = now
+        try:
+            requests.post(
+                f"{self.base_url}/api/runtime/fixture-state",
+                json=payload,
+                timeout=2.0,
+            ).raise_for_status()
+        except Exception:
+            with self._fixture_push_lock:
+                self._last_fixture_payload_json = None
 
     def bootstrap(self) -> None:
         response = requests.get(f"{self.base_url}/api/runtime/bootstrap", timeout=5)

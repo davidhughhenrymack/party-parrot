@@ -26,6 +26,7 @@ from parrot_cloud.models import (
 from parrot_cloud.database import create_session, get_repo_root
 from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
+from parrot.vj.vj_mode import parse_vj_mode_string
 
 LEGACY_PLAN_UNITS_PER_METER = 50.0
 DJ_HEIGHT_METERS = 1.8288
@@ -76,6 +77,58 @@ STANDARD_SCENE_OBJECT_ORDER = (
 
 @beartype
 class VenueRepository:
+    def __init__(self) -> None:
+        self._fixture_runtime_state: dict[str, object] = {"version": 1, "fixtures": []}
+
+    def get_fixture_runtime_state(self) -> dict[str, object]:
+        return dict(self._fixture_runtime_state)
+
+    def set_fixture_runtime_state(self, data: dict[str, object]) -> dict[str, object]:
+        version = int(data.get("version", 1))
+        fixtures_raw = data.get("fixtures", [])
+        if not isinstance(fixtures_raw, list):
+            fixtures_raw = []
+        normalized: list[dict[str, object]] = []
+        for item in fixtures_raw:
+            if not isinstance(item, dict) or item.get("id") is None:
+                continue
+            entry: dict[str, object] = {"id": str(item["id"])}
+            if "dimmer" in item:
+                entry["dimmer"] = float(max(0.0, min(1.0, float(item["dimmer"]))))
+            if "rgb" in item and isinstance(item["rgb"], list) and len(item["rgb"]) >= 3:
+                rgb = item["rgb"]
+                entry["rgb"] = [
+                    float(max(0.0, min(1.0, float(rgb[0])))),
+                    float(max(0.0, min(1.0, float(rgb[1])))),
+                    float(max(0.0, min(1.0, float(rgb[2])))),
+                ]
+            for key in ("pan_deg", "tilt_deg", "bar_pan_deg"):
+                if key in item and item[key] is not None:
+                    entry[key] = float(item[key])
+            bulbs_raw = item.get("bulbs")
+            if isinstance(bulbs_raw, list):
+                bulbs: list[dict[str, object]] = []
+                for bulb in bulbs_raw:
+                    if not isinstance(bulb, dict):
+                        continue
+                    b: dict[str, object] = {}
+                    if "dimmer" in bulb:
+                        b["dimmer"] = float(max(0.0, min(1.0, float(bulb["dimmer"]))))
+                    if "rgb" in bulb and isinstance(bulb["rgb"], list) and len(bulb["rgb"]) >= 3:
+                        br = bulb["rgb"]
+                        b["rgb"] = [
+                            float(max(0.0, min(1.0, float(br[0])))),
+                            float(max(0.0, min(1.0, float(br[1])))),
+                            float(max(0.0, min(1.0, float(br[2])))),
+                        ]
+                    if b:
+                        bulbs.append(b)
+                if bulbs:
+                    entry["bulbs"] = bulbs
+            normalized.append(entry)
+        self._fixture_runtime_state = {"version": version, "fixtures": normalized}
+        return self.get_fixture_runtime_state()
+
     def list_venue_summaries(self) -> list[VenueSummary]:
         with _session_scope() as session:
             venues = session.scalars(select(VenueModel).order_by(VenueModel.name)).all()
@@ -89,6 +142,7 @@ class VenueRepository:
             venues=venues,
             active_venue=active_venue,
             control_state=control_state,
+            fixture_runtime_state=self.get_fixture_runtime_state(),
         )
 
     def get_control_state(self) -> ControlState:
@@ -102,7 +156,9 @@ class VenueRepository:
             if "mode" in data and data["mode"] is not None:
                 control_state.mode = str(data["mode"])
             if "vj_mode" in data and data["vj_mode"] is not None:
-                control_state.vj_mode = str(data["vj_mode"])
+                control_state.vj_mode = parse_vj_mode_string(
+                    str(data["vj_mode"])
+                ).value
             if "theme_name" in data and data["theme_name"] is not None:
                 control_state.theme_name = str(data["theme_name"])
             if "manual_dimmer" in data and data["manual_dimmer"] is not None:
@@ -531,7 +587,7 @@ class VenueRepository:
     def _control_state_from_model(self, control_state: ControlStateModel) -> ControlState:
         return ControlState(
             mode=control_state.mode,
-            vj_mode=control_state.vj_mode,
+            vj_mode=parse_vj_mode_string(control_state.vj_mode).value,
             theme_name=control_state.theme_name,
             manual_dimmer=control_state.manual_dimmer,
             hype_limiter=control_state.hype_limiter,
@@ -548,7 +604,7 @@ class VenueRepository:
         control_state = ControlStateModel(
             id=1,
             mode=str(initial_data.get("mode", "chill")),
-            vj_mode=str(initial_data.get("vj_mode", "full_rave")),
+            vj_mode=str(initial_data.get("vj_mode", "prom_dmack")),
             theme_name=str(initial_data.get("theme_name", "Rave")),
             manual_dimmer=max(
                 0.0, min(1.0, float(initial_data.get("manual_dimmer", 0.0)))

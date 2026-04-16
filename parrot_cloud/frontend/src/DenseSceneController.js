@@ -1,3 +1,11 @@
+import {
+  addFixtureOpaqueMeshes,
+  beamOriginLocal,
+  beamOriginMovingHeadAimLocal,
+  lensRadiusForModel,
+  resolveFixtureVisualModel,
+} from './fixtureModels.js';
+
 export function createNoopSceneController(viewportEl) {
   if (viewportEl) {
     viewportEl.textContent = '3D viewport disabled in test mode.';
@@ -8,6 +16,7 @@ export function createNoopSceneController(viewportEl) {
     setView() {},
     setSelection() {},
     setInteractionMode() {},
+    applyFixtureRuntimeState() {},
     destroy() {},
   };
 }
@@ -473,6 +482,9 @@ function createThreeSceneController({
     if (transformControls.axis) {
       return;
     }
+    if (localState.interactionMode === 'pan' || localState.interactionMode === 'rotate') {
+      return;
+    }
     updatePointer(event);
     const groups = Array.from(localState.entityMap.values()).map((entity) => entity.group);
     const hits = raycaster.intersectObjects(groups, true);
@@ -500,6 +512,9 @@ function createThreeSceneController({
 
   function onContextMenu(event) {
     event.preventDefault();
+    if (localState.interactionMode === 'pan' || localState.interactionMode === 'rotate') {
+      return;
+    }
     updatePointer(event);
     const groups = Array.from(localState.entityMap.values())
       .filter((entity) => entity.type === 'fixture')
@@ -568,58 +583,59 @@ function createThreeSceneController({
     syncInteractionMode();
   }
 
-  function fixtureVisualProfile(fixture) {
-    if (fixture.fixture_type === 'motionstrip_38') {
-      return {
-        kind: 'motionstrip',
-        bodyWidth: 0.84,
-        bodyDepth: 0.096,
-        bodyHeight: 0.16,
-        coneLength: 6.0,
-        coneRadius: 0.45,
-      };
+  function applyFixtureRuntimeVisual(entity, vis, rgb, dim) {
+    const r = Math.min(1, rgb[0] * dim);
+    const g = Math.min(1, rgb[1] * dim);
+    const b = Math.min(1, rgb[2] * dim);
+    entity.bodyMaterial.color.setRGB(r, g, b);
+    if (entity.coneMaterial) {
+      entity.coneMaterial.color.setRGB(
+        Math.min(1, r * 1.15),
+        Math.min(1, g * 1.15),
+        Math.min(1, b * 1.15)
+      );
+      const base = entity.baseConeOpacity ?? 0.18;
+      entity.coneMaterial.opacity = base * 0.35 + dim * (base * 1.65);
     }
-    if (
-      [
-        'chauvet_spot_110',
-        'chauvet_spot_160',
-        'chauvet_rogue_beam_r2',
-        'chauvet_move_9ch',
-        'chauvet_intimidator_hybrid_140sr',
-        'chauvet_intimidator_hybrid_140sr_13ch',
-      ].includes(fixture.fixture_type)
-    ) {
-      return {
-        kind: 'moving_head',
-        baseWidth: 0.384,
-        baseDepth: 0.256,
-        baseHeight: 0.096,
-        headWidth: 0.16,
-        headDepth: 0.384,
-        headHeight: 0.16,
-        headOffsetZ: 0.216,
-        coneLength: 15.0,
-        coneRadius: 0.14,
-      };
+    if (entity.lensMaterial) {
+      entity.lensMaterial.color.setRGB(
+        Math.min(1, r + 0.12),
+        Math.min(1, g + 0.12),
+        Math.min(1, b + 0.12)
+      );
+      entity.lensMaterial.opacity = 0.35 + dim * 0.58;
     }
-    if (['five_beam_laser', 'two_beam_laser'].includes(fixture.fixture_type)) {
-      return {
-        kind: 'laser',
-        bodyWidth: 0.4,
-        bodyDepth: 0.4,
-        bodyHeight: 0.4,
-        coneLength: 12.0,
-        coneRadius: 0.08,
-      };
+    if (entity.aimGroup) {
+      const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
+      const tilt = typeof vis.tilt_deg === 'number' ? THREE.MathUtils.degToRad(vis.tilt_deg) : 0;
+      entity.aimGroup.rotation.order = 'ZXY';
+      entity.aimGroup.rotation.z = -pan;
+      entity.aimGroup.rotation.x = tilt;
     }
-    return {
-      kind: 'bulb',
-      bodyWidth: 0.32,
-      bodyDepth: 0.096,
-      bodyHeight: 0.32,
-      coneLength: 8.0,
-      coneRadius: 0.24,
-    };
+    if (entity.stripPanGroup && typeof vis.bar_pan_deg === 'number') {
+      entity.stripPanGroup.rotation.x = THREE.MathUtils.degToRad(vis.bar_pan_deg);
+    }
+  }
+
+  function applyFixtureRuntimeState(payload) {
+    if (!payload || Number(payload.version) !== 1 || !Array.isArray(payload.fixtures)) {
+      return;
+    }
+    const byId = new Map(
+      payload.fixtures.map((entry) => [String(entry.id), entry]),
+    );
+    localState.entityMap.forEach((entity) => {
+      if (entity.type !== 'fixture') {
+        return;
+      }
+      const vis = byId.get(String(entity.fixture.id));
+      if (!vis || !Array.isArray(vis.rgb) || vis.rgb.length < 3) {
+        return;
+      }
+      const dim = typeof vis.dimmer === 'number' ? vis.dimmer : 0;
+      applyFixtureRuntimeVisual(entity, vis, vis.rgb, dim);
+    });
+    applySelectionVisuals();
   }
 
   function createFixtureEntity(fixture) {
@@ -630,7 +646,7 @@ function createThreeSceneController({
 
     const runtimeAxesGroup = new THREE.Group();
     group.add(runtimeAxesGroup);
-    const profile = fixtureVisualProfile(fixture);
+    const profile = resolveFixtureVisualModel(fixture.fixture_type);
 
     const bodyMaterial = new THREE.MeshStandardMaterial({
       color: fixture.is_manual ? 0xf59e0b : 0xef4444,
@@ -639,41 +655,16 @@ function createThreeSceneController({
     });
     const secondaryMaterials = [];
 
-    if (profile.kind === 'moving_head') {
-      const base = new THREE.Mesh(
-        new THREE.BoxGeometry(profile.baseWidth, profile.baseDepth, profile.baseHeight),
-        bodyMaterial
-      );
-      base.position.z = profile.baseHeight / 2;
-      base.userData = { entityKey: fixture.id };
-      runtimeAxesGroup.add(base);
-
-      const head = new THREE.Mesh(
-        new THREE.BoxGeometry(profile.headWidth, profile.headDepth, profile.headHeight),
-        bodyMaterial
-      );
-      head.position.set(0, 0, profile.baseHeight + profile.headOffsetZ);
-      head.userData = { entityKey: fixture.id };
-      runtimeAxesGroup.add(head);
+    const placed = addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, profile, fixture.id);
+    const beamParent = placed.aimGroup ?? placed.stripPanGroup ?? runtimeAxesGroup;
+    let beam;
+    if (placed.aimGroup) {
+      beam = beamOriginMovingHeadAimLocal(profile);
+    } else if (placed.stripPanGroup) {
+      beam = { y: profile.bodyDepth * 0.7, z: profile.bodyHeight };
     } else {
-      const body = new THREE.Mesh(
-        new THREE.BoxGeometry(profile.bodyWidth, profile.bodyDepth, profile.bodyHeight),
-        bodyMaterial
-      );
-      body.position.z = profile.bodyHeight / 2;
-      body.userData = { entityKey: fixture.id };
-      runtimeAxesGroup.add(body);
+      beam = beamOriginLocal(profile);
     }
-
-    const helperMaterial = new THREE.MeshBasicMaterial({
-      color: 0x8ec5ff,
-      transparent: true,
-      opacity: 0.08,
-      depthWrite: false,
-    });
-    const helperMesh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), helperMaterial);
-    helperMesh.userData = { entityKey: fixture.id };
-    runtimeAxesGroup.add(helperMesh);
 
     const coneLength = profile.coneLength;
     const coneRadius = profile.coneRadius;
@@ -691,31 +682,22 @@ function createThreeSceneController({
       coneMaterial
     );
     coneMesh.rotateX(Math.PI);
-    const yBeamOrigin =
-      profile.kind === 'moving_head' ? profile.headDepth * 0.6 : profile.bodyDepth * 0.7;
-    const zBeamOrigin =
-      profile.kind === 'moving_head'
-        ? profile.baseHeight + profile.headOffsetZ + profile.headHeight * 0.05
-        : profile.bodyHeight;
-    coneMesh.position.set(0, yBeamOrigin + coneLength / 2, zBeamOrigin);
+    coneMesh.position.set(0, beam.y + coneLength / 2, beam.z);
     coneMesh.userData = { entityKey: fixture.id };
-    runtimeAxesGroup.add(coneMesh);
+    beamParent.add(coneMesh);
 
     const lensMaterial = new THREE.MeshBasicMaterial({
       color: fixture.is_manual ? 0xfbbf24 : 0xf8fafc,
       transparent: true,
       opacity: 0.95,
     });
-    const lens = new THREE.Mesh(new THREE.SphereGeometry(profile.kind === 'laser' ? 0.06 : 0.08, 12, 12), lensMaterial);
-    lens.position.set(
-      0,
-      profile.kind === 'moving_head' ? profile.headDepth * 0.6 : profile.bodyDepth * 0.7,
-      profile.kind === 'moving_head'
-        ? profile.baseHeight + profile.headOffsetZ + profile.headHeight * 0.05
-        : profile.bodyHeight
+    const lens = new THREE.Mesh(
+      new THREE.SphereGeometry(lensRadiusForModel(profile), 12, 12),
+      lensMaterial
     );
+    lens.position.set(0, beam.y, beam.z);
     lens.userData = { entityKey: fixture.id };
-    runtimeAxesGroup.add(lens);
+    beamParent.add(lens);
     secondaryMaterials.push(lensMaterial);
 
     const hitMesh = new THREE.Mesh(
@@ -737,9 +719,13 @@ function createThreeSceneController({
       group,
       bodyMaterial,
       secondaryMaterials,
-      helperMaterial,
+      helperMaterial: null,
       coneMaterial,
+      lensMaterial,
       baseConeOpacity: 0.18,
+      aimGroup: placed.aimGroup ?? null,
+      stripPanGroup: placed.stripPanGroup ?? null,
+      profile,
     });
   }
 
@@ -897,6 +883,19 @@ function createThreeSceneController({
 
   function applyBootstrap(venueSnapshot) {
     const previousSelectedEntityKey = localState.selectedEntityKey;
+    const previousVenueId = localState.venueSnapshot?.summary?.id ?? null;
+    /** Keep orbit pose when the same venue is reloaded (e.g. after PATCH / WS); setView() resets camera by design. */
+    let preservedOrbit = null;
+    if (
+      previousVenueId !== null
+      && venueSnapshot?.summary?.id === previousVenueId
+    ) {
+      preservedOrbit = {
+        target: orbitControls.target.clone(),
+        position: localState.activeCamera.position.clone(),
+      };
+    }
+
     localState.venueSnapshot = venueSnapshot;
     localState.venueScale = venueSnapshot ? computeVenueScale(venueSnapshot) : null;
     sceneContent.clear();
@@ -923,6 +922,12 @@ function createThreeSceneController({
     venueSnapshot.fixtures.forEach(createFixtureEntity);
     resizeRenderer();
     setView(localState.currentView);
+
+    if (preservedOrbit) {
+      orbitControls.target.copy(preservedOrbit.target);
+      localState.activeCamera.position.copy(preservedOrbit.position);
+      orbitControls.update();
+    }
 
     const restoreKey =
       previousSelectedEntityKey != null ? String(previousSelectedEntityKey) : null;
@@ -1049,6 +1054,7 @@ function createThreeSceneController({
     setView,
     setSelection,
     setInteractionMode,
+    applyFixtureRuntimeState,
     destroy() {
       localState.destroyed = true;
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);

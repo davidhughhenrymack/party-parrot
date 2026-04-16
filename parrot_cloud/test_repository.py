@@ -112,6 +112,6 @@ def test_initial_control_state_migrates_from_state_json(monkeypatch, tmp_path):
     control_state = repository.get_control_state()
 
     assert control_state.mode == "rave"
-    assert control_state.vj_mode == "early_rave"
+    assert control_state.vj_mode == "zr_early_rave"
     assert control_state.theme_name == "Berlin"
     assert control_state.manual_dimmer == 0.3

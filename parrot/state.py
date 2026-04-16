@@ -5,8 +5,9 @@ from typing import Callable, Optional
 from events import Events
 from beartype import beartype
 from parrot.director.mode import Mode
-from parrot.vj.vj_mode import VJMode
+from parrot.vj.vj_mode import VJMode, parse_vj_mode_string
 from parrot.director.themes import themes, get_theme_by_name
+from parrot.gl_display_mode import DISPLAY_MODE_CYCLE, EditorDisplayMode
 from parrot.patch_bay import venues
 from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
 from parrot_cloud.fixture_catalog import (
@@ -22,14 +23,14 @@ class State:
 
         # Default values
         self._mode = Mode.chill  # Default mode
-        self._vj_mode = VJMode.full_rave  # Default VJ mode
+        self._vj_mode = VJMode.prom_dmack  # Default VJ mode
         self._hype = 30
         self._theme = themes[0]
         self._venue = venues.dmack
         self._manual_dimmer = 0  # New property for manual control
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
-        self._show_fixture_mode = False  # Default to VJ mode, not fixture mode
+        self._editor_display_mode = EditorDisplayMode.DMX_HEATMAP
         self._available_venues = []
         self._runtime_venue_snapshot: Optional[VenueSnapshot] = None
         self._runtime_patch = None
@@ -48,6 +49,8 @@ class State:
 
         # Try to load state from file
         self.load_state()
+        # Desktop GL window always opens in DMX heatmap; persisted editor_display_mode is for save/cycle only.
+        self._editor_display_mode = EditorDisplayMode.DMX_HEATMAP
 
     @property
     def mode(self):
@@ -193,7 +196,7 @@ class State:
             self._mode = next_mode
             self.events.on_mode_change(self._mode)
 
-        next_vj_mode = VJMode(control_state.vj_mode)
+        next_vj_mode = parse_vj_mode_string(control_state.vj_mode)
         if self._vj_mode != next_vj_mode:
             self._vj_mode = next_vj_mode
             self.events.on_vj_mode_change(self._vj_mode)
@@ -213,10 +216,14 @@ class State:
             self._show_waveform = next_show_waveform
             self.events.on_show_waveform_change(self._show_waveform)
 
-        next_show_fixture_mode = bool(control_state.show_fixture_mode)
-        if self._show_fixture_mode != next_show_fixture_mode:
-            self._show_fixture_mode = next_show_fixture_mode
-            self.events.on_show_fixture_mode_change(self._show_fixture_mode)
+        next_display = (
+            EditorDisplayMode.FIXTURE_SCENE
+            if bool(control_state.show_fixture_mode)
+            else EditorDisplayMode.DMX_HEATMAP
+        )
+        if self._editor_display_mode != next_display:
+            self._editor_display_mode = next_display
+            self.events.on_show_fixture_mode_change(self.show_fixture_mode)
 
         try:
             next_theme = get_theme_by_name(control_state.theme_name)
@@ -289,16 +296,30 @@ class State:
         self.events.on_show_waveform_change(self._show_waveform)
 
     @property
-    def show_fixture_mode(self):
-        return self._show_fixture_mode
+    def editor_display_mode(self) -> EditorDisplayMode:
+        return self._editor_display_mode
 
-    def set_show_fixture_mode(self, value):
-        if self._show_fixture_mode == value:
+    def set_editor_display_mode(self, value: EditorDisplayMode) -> None:
+        if self._editor_display_mode == value:
             return
 
-        self._show_fixture_mode = value
-        self.events.on_show_fixture_mode_change(self._show_fixture_mode)
+        self._editor_display_mode = value
+        self.events.on_show_fixture_mode_change(self.show_fixture_mode)
         self.save_state()
+
+    def cycle_editor_display_mode(self) -> None:
+        order = DISPLAY_MODE_CYCLE
+        idx = order.index(self._editor_display_mode)
+        self.set_editor_display_mode(order[(idx + 1) % len(order)])
+
+    @property
+    def show_fixture_mode(self) -> bool:
+        return self._editor_display_mode == EditorDisplayMode.FIXTURE_SCENE
+
+    def set_show_fixture_mode(self, value: bool) -> None:
+        self.set_editor_display_mode(
+            EditorDisplayMode.FIXTURE_SCENE if value else EditorDisplayMode.DMX_HEATMAP
+        )
 
     def save_state(self):
         """Save the current state to a JSON file."""
@@ -313,7 +334,7 @@ class State:
             "manual_dimmer": 0,  # We do not want to restart the app with lights on
             "hype_limiter": self._hype_limiter,
             "show_waveform": self._show_waveform,
-            "show_fixture_mode": self._show_fixture_mode,
+            "editor_display_mode": self._editor_display_mode.value,
             "vj_mode": self._vj_mode.name if self._vj_mode else None,
         }
 
@@ -376,13 +397,24 @@ class State:
             if "show_waveform" in state_data:
                 self._show_waveform = state_data["show_waveform"]
 
-            if "show_fixture_mode" in state_data:
-                self._show_fixture_mode = state_data["show_fixture_mode"]
+            if "editor_display_mode" in state_data:
+                try:
+                    self._editor_display_mode = EditorDisplayMode(
+                        str(state_data["editor_display_mode"])
+                    )
+                except ValueError:
+                    pass
+            elif "show_fixture_mode" in state_data:
+                self._editor_display_mode = (
+                    EditorDisplayMode.FIXTURE_SCENE
+                    if state_data["show_fixture_mode"]
+                    else EditorDisplayMode.VJ
+                )
 
             if "vj_mode" in state_data and state_data["vj_mode"]:
                 try:
-                    self._vj_mode = VJMode[state_data["vj_mode"]]
-                except KeyError:
+                    self._vj_mode = parse_vj_mode_string(str(state_data["vj_mode"]))
+                except ValueError:
                     print(f"VJ mode '{state_data['vj_mode']}' not found, using default")
 
         except Exception as e:

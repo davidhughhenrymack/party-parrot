@@ -108,7 +108,7 @@ class ControlStateModel(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
     mode: Mapped[str] = mapped_column(String(64), nullable=False, default="chill")
     vj_mode: Mapped[str] = mapped_column(
-        String(64), nullable=False, default="full_rave"
+        String(64), nullable=False, default="prom_dmack"
     )
     theme_name: Mapped[str] = mapped_column(String(255), nullable=False, default="Rave")
     manual_dimmer: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)

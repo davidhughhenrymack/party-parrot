@@ -1,3 +1,4 @@
+from parrot.gl_display_mode import EditorDisplayMode
 from parrot.state import State
 from parrot_cloud.domain import (
     ControlState,
@@ -57,7 +58,7 @@ def test_state_applies_runtime_bootstrap():
         ),
         control_state=ControlState(
             mode="rave",
-            vj_mode="full_rave",
+            vj_mode="zr_full_rave",
             theme_name="Rave",
             manual_dimmer=0.4,
             hype_limiter=False,
@@ -74,3 +75,4 @@ def test_state_applies_runtime_bootstrap():
     assert len(state.runtime_patch) == 1
     assert state.runtime_patch[0].address == 10
     assert state.manual_dimmer == 0.4
+    assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP

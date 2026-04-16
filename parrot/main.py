@@ -47,7 +47,7 @@ def parse_arguments():
     parser.add_argument(
         "--fixture-mode",
         action="store_true",
-        help="Start in fixture renderer mode (toggle with backslash)",
+        help="Start in full-scene fixture mode (\\ cycles DMX heatmap → Video → full scene)",
     )
     return parser.parse_args()
 

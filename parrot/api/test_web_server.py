@@ -376,13 +376,7 @@ class TestWebServer:
         mock_thread.assert_called_once()
         mock_thread.return_value.start.assert_called_once()
 
-        # Check that IP address was printed
-        mock_print.assert_any_call(
-            "\n🌐 Web interface available at: http://192.168.1.100:8080/"
-        )
-        mock_print.assert_any_call(
-            "🏛️  Venue editor available at: http://192.168.1.100:4041/"
-        )
+        mock_print.assert_any_call("🌐 Web: http://192.168.1.100:8080/")
 
     def test_app_configuration(self):
         """Test Flask app configuration."""
@@ -404,21 +398,21 @@ class TestWebServer:
         import parrot.api.web_server as web_server_module
 
         mock_state = Mock()
-        mock_state.vj_mode = VJMode.full_rave
+        mock_state.vj_mode = VJMode.zr_full_rave
         web_server_module.state_instance = mock_state
 
         response = self.client.get("/api/vj_mode")
         assert response.status_code == 200
 
         data = json.loads(response.data)
-        assert data["vj_mode"] == "full_rave"
+        assert data["vj_mode"] == "zr_full_rave"
         assert "available_vj_modes" in data
 
     def test_set_vj_mode_no_state(self):
         """Test POST /api/vj_mode when state is not initialized."""
         response = self.client.post(
             "/api/vj_mode",
-            json={"vj_mode": "full_rave"},
+            json={"vj_mode": "zr_full_rave"},
             content_type="application/json",
         )
         assert response.status_code == 500
@@ -465,12 +459,12 @@ class TestWebServer:
 
         response = self.client.post(
             "/api/vj_mode",
-            json={"vj_mode": "full_rave"},
+            json={"vj_mode": "zr_full_rave"},
             content_type="application/json",
         )
         assert response.status_code == 200
 
         data = json.loads(response.data)
         assert data["success"] is True
-        assert data["vj_mode"] == "full_rave"
-        mock_state.set_vj_mode_thread_safe.assert_called_once_with(VJMode.full_rave)
+        assert data["vj_mode"] == "zr_full_rave"
+        mock_state.set_vj_mode_thread_safe.assert_called_once_with(VJMode.zr_full_rave)

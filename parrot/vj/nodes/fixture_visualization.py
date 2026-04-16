@@ -272,7 +272,6 @@ class FixtureVisualization(GenerativeEffectBase):
     def _load_fixtures(self):
         """Load fixtures from the current venue's patch bay, create renderers, and flatten groups"""
         fixtures = []
-        print(f"loading fixtures for {self.state.venue}")
         # Get fixtures from current venue in state (live fixtures)
         for item in get_runtime_fixtures(self.state):
             if isinstance(item, FixtureGroup):

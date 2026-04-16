@@ -2,11 +2,11 @@
   "mode": "rave",
   "hype": 30,
   "theme_name": "Rave",
-  "venue_name": "mtn_lotus",
-  "venue_slug": null,
+  "venue_name": "Demo Venue",
+  "venue_slug": "demo",
   "manual_dimmer": 0,
   "hype_limiter": false,
   "show_waveform": true,
-  "show_fixture_mode": false,
-  "vj_mode": "full_rave"
+  "editor_display_mode": "dmx_heatmap",
+  "vj_mode": "zr_full_rave"
 }

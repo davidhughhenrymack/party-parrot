@@ -65,8 +65,8 @@ class TestConcertStage:
         # Effects are now ModeSwitch instances that select different configurations
         # based on mode. We test that the ModeSwitch responds to generate calls.
 
-        # Test full_rave mode
-        rave_vibe = Vibe(VJMode.full_rave)
+        # Test zr_full_rave mode
+        rave_vibe = Vibe(VJMode.zr_full_rave)
         stage.laser_scan_heads.generate(rave_vibe)
 
         # After generate, the current_child should be the rave instance
@@ -74,8 +74,8 @@ class TestConcertStage:
 
         assert isinstance(stage.laser_scan_heads.current_child, LaserScanHeads)
 
-        # Test early_rave mode
-        gentle_vibe = Vibe(VJMode.early_rave)
+        # Test zr_early_rave mode
+        gentle_vibe = Vibe(VJMode.zr_early_rave)
         stage.laser_scan_heads.generate(gentle_vibe)
 
         # Current child should still be a LaserScanHeads but different instance
@@ -94,8 +94,8 @@ class TestConcertStage:
         """Test generate method with different vibes using recursive generation"""
         stage = ConcertStage()
 
-        # Test with full_rave vibe
-        rave_vibe = Vibe(VJMode.full_rave)
+        # Test with zr_full_rave vibe
+        rave_vibe = Vibe(VJMode.zr_full_rave)
 
         # The recursive generate will work for ModeSwitch nodes
         stage.generate_recursive(rave_vibe)
@@ -195,7 +195,7 @@ class TestConcertStage:
         print(initial_tree)
 
         # Test with threshold=1.0 first to guarantee changes
-        rave_vibe = Vibe(VJMode.full_rave)
+        rave_vibe = Vibe(VJMode.zr_full_rave)
         stage.generate_recursive(rave_vibe, threshold=1.0)
 
         # Get tree structure after guaranteed shift
@@ -219,8 +219,8 @@ class TestConcertStage:
             or "TextRenderer" in guaranteed_shift_tree
         )
 
-        # Apply shift to early_rave mode to verify mode changes
-        gentle_vibe = Vibe(VJMode.early_rave)
+        # Apply shift to zr_early_rave mode to verify mode changes
+        gentle_vibe = Vibe(VJMode.zr_early_rave)
         stage.generate_recursive(gentle_vibe, threshold=1.0)
 
         gentle_shift_tree = stage.print_tree()

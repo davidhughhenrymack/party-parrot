@@ -4,6 +4,7 @@ import os
 import tempfile
 import shutil
 from unittest.mock import Mock, patch, MagicMock
+from parrot.gl_display_mode import EditorDisplayMode
 from parrot.state import State
 from parrot.director.mode import Mode
 from parrot.director.themes import themes
@@ -53,7 +54,8 @@ class TestState:
         assert state.manual_dimmer == 0
         assert state.hype_limiter is False
         assert state.show_waveform is True
-        assert state.show_fixture_mode is False  # Default to VJ mode
+        assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
+        assert state.show_fixture_mode is False
         assert hasattr(state, "events")
         assert hasattr(state, "signal_states")
 
@@ -177,7 +179,7 @@ class TestState:
         assert saved_data["manual_dimmer"] == 0  # Should be reset to 0
         assert saved_data["hype_limiter"] is True
         assert saved_data["show_waveform"] is False
-        assert saved_data["show_fixture_mode"] is True
+        assert saved_data["editor_display_mode"] == "fixture_scene"
 
     def test_load_state_file_not_exists(self):
         """Test loading state when file doesn't exist."""
@@ -194,7 +196,7 @@ class TestState:
             "manual_dimmer": 0.6,
             "hype_limiter": True,
             "show_waveform": False,
-            "show_fixture_mode": True,
+            "editor_display_mode": "fixture_scene",
         }
 
         with open("state.json", "w") as f:
@@ -207,7 +209,28 @@ class TestState:
         assert state.manual_dimmer == 0.6
         assert state.hype_limiter is True
         assert state.show_waveform is False
-        assert state.show_fixture_mode is True
+        assert state.show_fixture_mode is False
+        assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
+
+    def test_load_state_legacy_show_fixture_mode_key(self):
+        test_data = {
+            "hype": 40,
+            "show_fixture_mode": True,
+        }
+        with open("state.json", "w") as f:
+            json.dump(test_data, f)
+        state = State()
+        assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
+
+    def test_cycle_editor_display_mode(self):
+        state = State()
+        assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
+        state.cycle_editor_display_mode()
+        assert state.editor_display_mode == EditorDisplayMode.VJ
+        state.cycle_editor_display_mode()
+        assert state.editor_display_mode == EditorDisplayMode.FIXTURE_SCENE
+        state.cycle_editor_display_mode()
+        assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
 
     def test_load_state_with_invalid_json(self):
         """Test loading state with invalid JSON doesn't crash."""

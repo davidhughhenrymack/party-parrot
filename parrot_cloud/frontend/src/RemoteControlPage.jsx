@@ -8,7 +8,7 @@ export default function RemoteControlPage() {
   });
   const [controlState, setControlState] = useState({
     mode: 'chill',
-    vj_mode: 'full_rave',
+    vj_mode: 'prom_dmack',
     manual_dimmer: 0,
   });
   const [manualDimmerSupported, setManualDimmerSupported] = useState(false);
@@ -124,7 +124,7 @@ export default function RemoteControlPage() {
                 className={controlState.vj_mode === mode ? 'active-choice' : ''}
                 onClick={() => postJson('/api/vj_mode', { vj_mode: mode })}
               >
-                {labelize(mode)}
+                {formatVjModeLabel(mode)}
               </button>
             ))}
           </div>
@@ -173,6 +173,24 @@ export default function RemoteControlPage() {
 
 function labelize(value) {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function formatVjModeLabel(mode) {
+  if (mode === 'blackout') {
+    return 'Blackout';
+  }
+  if (mode === 'prom_dmack') {
+    return 'Prom · dmack';
+  }
+  if (mode.startsWith('zr_')) {
+    const rest = mode
+      .slice(3)
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    return `Zombie Rave · ${rest}`;
+  }
+  return labelize(mode);
 }
 
 async function postJson(url, body) {

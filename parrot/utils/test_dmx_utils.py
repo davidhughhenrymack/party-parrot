@@ -83,8 +83,12 @@ class TestDmxUtils:
         assert isinstance(controller, MockDmxController)
 
     @patch.dict(os.environ, {}, clear=True)
+    @patch(
+        "parrot.utils.dmx_utils.find_entec_port",
+        return_value="/dev/cu.usbserial-EN419206",
+    )
     @patch("parrot.utils.dmx_utils.Controller")
-    def test_get_entec_controller_success(self, mock_controller_class):
+    def test_get_entec_controller_success(self, mock_controller_class, _find):
         """Test get_entec_controller returns real controller when available."""
         mock_controller_instance = Mock()
         mock_controller_class.return_value = mock_controller_instance
@@ -95,8 +99,12 @@ class TestDmxUtils:
         mock_controller_class.assert_called_once_with("/dev/cu.usbserial-EN419206")
 
     @patch.dict(os.environ, {}, clear=True)
+    @patch(
+        "parrot.utils.dmx_utils.find_entec_port",
+        return_value="/dev/cu.usbserial-EN419206",
+    )
     @patch("parrot.utils.dmx_utils.Controller")
-    def test_get_entec_controller_exception(self, mock_controller_class):
+    def test_get_entec_controller_exception(self, mock_controller_class, _find):
         """Test get_entec_controller falls back to mock when real controller fails."""
         mock_controller_class.side_effect = Exception("USB device not found")
 
@@ -142,9 +150,13 @@ class TestDmxUtils:
 
     @patch("builtins.print")
     @patch.dict(os.environ, {}, clear=True)
+    @patch(
+        "parrot.utils.dmx_utils.find_entec_port",
+        return_value="/dev/cu.usbserial-EN419206",
+    )
     @patch("parrot.utils.dmx_utils.Controller")
     def test_get_entec_controller_exception_prints_message(
-        self, mock_controller_class, mock_print
+        self, mock_controller_class, _find, mock_print
     ):
         """Test that get_entec_controller prints appropriate messages when failing."""
         exception = Exception("USB device not found")
@@ -152,8 +164,8 @@ class TestDmxUtils:
 
         get_entec_controller()
 
-        # Should print the exception and fallback message
-        assert mock_print.call_count >= 2
+        printed = " ".join(str(c[0][0]) for c in mock_print.call_args_list)
+        assert "Enttec" in printed and "mock" in printed.lower()
 
     @patch("parrot.utils.dmx_utils.StupidArtnet")
     def test_artnet_controller_set_channel(self, mock_artnet_class):
@@ -269,8 +281,7 @@ class TestDmxUtils:
         mock_artnet = Mock()
         mock_artnet_class.return_value = mock_artnet
 
-        # Create mock venue
-        mock_venue = Mock()
+        mock_venue = Mock(spec=["name"])
         mock_venue.name = "mtn_lotus"
 
         controller = get_controller(mock_venue)
@@ -297,3 +308,13 @@ class TestDmxUtils:
         assert isinstance(controller, SwitchController)
         assert Universe.default in controller.controller_map
         assert Universe.art1 not in controller.controller_map
+
+    def test_switch_controller_snapshot_universe_tracks_set_channel(self):
+        mock_backing = MockDmxController()
+        sc = SwitchController({Universe.default: mock_backing})
+        sc.set_channel(1, 200)
+        sc.set_channel(512, 42)
+        snap = sc.snapshot_universe(Universe.default)
+        assert len(snap) == 512
+        assert snap[0] == 200
+        assert snap[511] == 42

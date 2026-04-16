@@ -25,12 +25,52 @@ def test_bootstrap_endpoint_returns_active_venue(client):
     data = response.get_json()
     assert data["active_venue"]["summary"]["slug"] == "mtn-lotus-demo"
     assert data["control_state"]["mode"] == "chill"
+    assert data["fixture_runtime_state"]["version"] == 1
+    assert data["fixture_runtime_state"]["fixtures"] == []
     assert {scene_object["kind"] for scene_object in data["active_venue"]["scene_objects"]} == {
         "floor",
         "video_wall",
         "dj_table",
         "dj_cutout",
     }
+
+
+def test_runtime_fixture_state_post_broadcast_shape(client):
+    response = client.post(
+        "/api/runtime/fixture-state",
+        json={
+            "version": 1,
+            "fixtures": [
+                {
+                    "id": "test-fixture",
+                    "dimmer": 0.5,
+                    "rgb": [1.0, 0.0, 0.0],
+                    "pan_deg": 10.0,
+                    "tilt_deg": -5.0,
+                }
+            ],
+        },
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["fixtures"][0]["id"] == "test-fixture"
+    assert data["fixtures"][0]["dimmer"] == 0.5
+
+
+def test_runtime_fixture_state_get_returns_current(client):
+    client.post(
+        "/api/runtime/fixture-state",
+        json={
+            "version": 1,
+            "fixtures": [{"id": "a", "dimmer": 1.0, "rgb": [0.0, 1.0, 0.0]}],
+        },
+    )
+    response = client.get("/api/runtime/fixture-state")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["version"] == 1
+    assert len(data["fixtures"]) == 1
+    assert data["fixtures"][0]["id"] == "a"
 
 
 def test_fixture_types_endpoint(client):
@@ -58,7 +98,7 @@ def test_config_endpoint_lists_supported_universes(client):
         {"value": "art1", "label": "Art-Net 1"},
     ]
     assert "chill" in data["available_modes"]
-    assert "full_rave" in data["available_vj_modes"]
+    assert "zr_full_rave" in data["available_vj_modes"]
 
 
 def test_control_state_endpoints(client):

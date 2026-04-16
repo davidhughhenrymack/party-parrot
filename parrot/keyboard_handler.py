@@ -133,7 +133,7 @@ class KeyboardHandler:
             self._navigate_mode_down()
             return True
 
-        # VJ mode navigation (E = down towards blackout, F = up towards full_rave)
+        # VJ mode navigation (E = down towards blackout, F = up towards zr_full_rave)
         elif symbol == pyglet.window.key.E:
             self._navigate_vj_mode_previous()
             return True

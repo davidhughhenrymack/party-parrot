@@ -4,7 +4,7 @@ import imgui
 from imgui.integrations.pyglet import create_renderer
 from beartype import beartype
 from parrot.director.mode import Mode
-from parrot.vj.vj_mode import VJMode
+from parrot.vj.vj_mode import VJMode, vj_mode_menu_label
 from parrot.state import State
 from parrot.director.themes import themes
 from parrot.venue_runtime import get_runtime_venues
@@ -128,7 +128,7 @@ class OverlayUI:
             # VJ Mode selection
             imgui.text("VJ Mode (Visuals)")
             vj_modes = list(VJMode)
-            vj_mode_names = [m.name.replace("_", " ").title() for m in vj_modes]
+            vj_mode_names = [vj_mode_menu_label(m) for m in vj_modes]
             current_vj_mode_idx = vj_modes.index(self.state.vj_mode)
             clicked, new_vj_mode_idx = imgui.combo(
                 "##vj_mode", current_vj_mode_idx, vj_mode_names

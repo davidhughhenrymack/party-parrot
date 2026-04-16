@@ -251,9 +251,7 @@ def start_web_server(
 
     # Get local IP address
     local_ip = get_local_ip()
-    print(f"\n🌐 Web interface available at: http://{local_ip}:{port}/")
-    print(f"🏛️  Venue editor available at: http://{local_ip}:{editor_port}/")
-    print(f"📱 Connect from your mobile device using the above URL\n")
+    print(f"🌐 Web: http://{local_ip}:{port}/")
 
     if threaded:
         # Start Flask in a separate thread (legacy mode)

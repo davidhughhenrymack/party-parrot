@@ -42,18 +42,15 @@ def find_entec_port():
 
     # First, try the hardcoded path
     if os.path.exists(usb_path):
-        print(f"Found Entec port at hardcoded path: {usb_path}")
         return usb_path
 
     # macOS-specific tty fallback
     if sys.platform == "darwin":
         tty_path = usb_path.replace("/dev/cu.", "/dev/tty.")
         if os.path.exists(tty_path):
-            print(f"Found Entec port at tty variant: {tty_path}")
             return tty_path
 
     ports = serial.tools.list_ports.comports()
-    print(f"Scanning {len(ports)} serial ports for Entec DMX controller...")
 
     for port in ports:
         desc = str(port.description).lower()
@@ -62,7 +59,6 @@ def find_entec_port():
         product = str(getattr(port, "product", "")).lower()
 
         if "0403" in hwid and "6001" in hwid:
-            print(f"✅ Found FTDI device at {port.device}")
             return port.device
 
         if any(
@@ -72,7 +68,6 @@ def find_entec_port():
             or keyword in product
             for keyword in ["enttec", "entec", "dmx", "ftdi"]
         ):
-            print(f"✅ Found potential Entec device at {port.device}")
             return port.device
 
     # OS-specific /dev scanning
@@ -89,14 +84,11 @@ def find_entec_port():
             "/dev/ttyACM*",
         ]
 
-    print(f"Scanning /dev using patterns: {scan_patterns}")
     for pattern in scan_patterns:
         for path in glob.glob(pattern):
             if os.path.exists(path):
-                print(f"✅ Found device at {path}")
                 return path
 
-    print("❌ No Entec DMX controller port found")
     return None
 
 
@@ -129,6 +121,9 @@ class SwitchController:
             controller_map: Dict mapping Universe enum values to controller instances
         """
         self.controller_map = controller_map
+        self._shadow: dict[Universe, list[int]] = {
+            u: [0] * 512 for u in controller_map
+        }
         # Track which universes use Entec controllers for reconnection
         self._entec_universes = set()
 
@@ -138,37 +133,35 @@ class SwitchController:
 
     def set_channel(self, channel, value, universe=Universe.default):
         """Set a channel value on the specified universe"""
+        if universe not in self._shadow:
+            self._shadow[universe] = [0] * 512
+        if 1 <= channel <= 512:
+            self._shadow[universe][channel - 1] = dmx_clamp(value)
         controller = self.controller_map.get(universe)
         if controller:
             controller.set_channel(channel, value)
+
+    def snapshot_universe(self, universe: Universe = Universe.default) -> list[int]:
+        """Last values routed through this controller (for DMX heatmap UI)."""
+        return list(self._shadow.get(universe, [0] * 512))
 
     def _reconnect_entec(self, universe):
         """Attempt to reconnect the Entec controller for a universe"""
         if universe not in self._entec_universes:
             return False
 
-        print(
-            f"🔄 Attempting to reconnect Entec DMX controller for universe {universe.value}..."
-        )
         try:
             new_controller = get_entec_controller()
             if isinstance(new_controller, Controller):
                 self.controller_map[universe] = new_controller
-                print(
-                    f"✅ Successfully reconnected Entec DMX controller for universe {universe.value}"
-                )
                 return True
             else:
-                print(
-                    f"⚠️  Entec controller not available, using mock controller for universe {universe.value}"
-                )
                 self.controller_map[universe] = new_controller
                 # Remove from Entec universes since we're using mock now
                 self._entec_universes.discard(universe)
                 return False
         except Exception as e:
-            print(f"❌ Failed to reconnect Entec DMX controller: {e}")
-            print(f"   Using mock controller for universe {universe.value}")
+            print(f"⚠️  Enttec reconnect failed ({universe.value}): {e}")
             self.controller_map[universe] = MockDmxController()
             # Remove from Entec universes since we're using mock now
             self._entec_universes.discard(universe)
@@ -180,14 +173,9 @@ class SwitchController:
             try:
                 controller.submit()
             except (SerialException, OSError) as e:
-                # Device may have disconnected - print error and attempt reconnect
-                print(f"⚠️  DMX controller crash for universe {universe.value}: {e}")
-                # Only attempt reconnection for Entec controllers
+                print(f"⚠️  DMX submit failed ({universe.value}): {e}")
                 if universe in self._entec_universes:
-                    print(f"   Attempting to reconnect...")
                     self._reconnect_entec(universe)
-                else:
-                    print(f"   Skipping reconnection (not an Entec controller)")
 
 
 # Per-venue Art-Net configuration
@@ -206,23 +194,13 @@ def get_entec_controller():
     # Try to find the Entec port
     port_path = find_entec_port()
     if port_path is None:
-        print("⚠️  Could not find Entec DMX controller port")
-        print("   Troubleshooting steps:")
-        print("   1. Make sure the Entec DMX USB PRO is plugged in")
-        print("   2. Check System Information > USB to see if the device appears")
-        print("   3. Try unplugging and replugging the device")
-        print(
-            "   4. Install FTDI drivers if needed: https://ftdichip.com/drivers/vcp-drivers/"
-        )
-        print("   5. Check if the device appears under a different name")
-        print("   Using mock DMX controller")
+        print("⚠️  Enttec USB DMX Pro not found — using mock DMX output.")
         return MockDmxController()
 
     # Try to connect with the found port
     try:
         return Controller(port_path)
     except Exception as e:
-        # If cu.* fails, try tty.* variant (macOS specific)
         if port_path.startswith("/dev/cu."):
             tty_path = port_path.replace("/dev/cu.", "/dev/tty.")
             if os.path.exists(tty_path):
@@ -230,14 +208,12 @@ def get_entec_controller():
                     return Controller(tty_path)
                 except Exception as e2:
                     print(
-                        f"Could not connect to Entec DMX controller at {port_path}: {e}"
+                        f"⚠️  Enttec DMX open failed ({port_path}, {tty_path}): {e}; {e2}"
                     )
-                    print(
-                        f"Could not connect to Entec DMX controller at {tty_path}: {e2}"
-                    )
-        else:
-            print(f"Could not connect to Entec DMX controller at {port_path}: {e}")
-        print("Using mock DMX controller")
+                    print("⚠️  Using mock DMX output.")
+                    return MockDmxController()
+        print(f"⚠️  Enttec DMX open failed ({port_path}): {e}")
+        print("⚠️  Using mock DMX output.")
         return MockDmxController()
 
 
@@ -267,7 +243,7 @@ def get_controller(venue=None):
 
         if config:
             print(
-                f"Art-Net enabled for {venue_name}: {config['ip']} Universe {config['universe']}"
+                f"Art-Net: {venue_name} → {config['ip']} u{config['universe']}"
             )
             artnet = ArtNetController(config["ip"], config["universe"])
             controller_map[Universe.art1] = artnet

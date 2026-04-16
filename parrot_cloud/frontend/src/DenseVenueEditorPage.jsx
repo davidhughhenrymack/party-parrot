@@ -16,6 +16,8 @@ export default function DenseVenueEditorPage({ venueId }) {
   const pendingVenueSnapshotRef = useRef(null);
   const venueNameSaveTimerRef = useRef(null);
   const floorSaveTimerRef = useRef(null);
+  const fixtureRuntimeStateRef = useRef(null);
+  const lastRuntimeFixtureJsonRef = useRef('');
 
   const [venueSummaries, setVenueSummaries] = useState([]);
   const [venueSnapshot, setVenueSnapshot] = useState(null);
@@ -120,18 +122,20 @@ export default function DenseVenueEditorPage({ venueId }) {
                 x: sceneObject.x,
                 y: sceneObject.y,
                 z: sceneObject.z,
+                rotation_x: sceneObject.rotation_x,
+                rotation_y: sceneObject.rotation_y,
+                rotation_z: sceneObject.rotation_z,
               })
             )
           );
         },
         onTransformDragStateChange: (isDragging) => {
           transformDraggingRef.current = isDragging;
-          if (!isDragging && pendingVenueSnapshotRef.current) {
-            const nextSnapshot = pendingVenueSnapshotRef.current;
+          if (!isDragging) {
+            // Do not apply a buffered WS snapshot when a transform drag ends: that snapshot
+            // matches the pre-drag server state (same revision) and would rebuild the scene
+            // from React state before mouseUp PATCH + broadcast, snapping the DJ booth etc. back.
             pendingVenueSnapshotRef.current = null;
-            window.requestAnimationFrame(() => {
-              setVenueSnapshot(nextSnapshot);
-            });
           }
         },
       });
@@ -156,8 +160,13 @@ export default function DenseVenueEditorPage({ venueId }) {
       if (disposed) {
         return;
       }
+      fixtureRuntimeStateRef.current = nextBootstrap.fixture_runtime_state ?? {
+        version: 1,
+        fixtures: [],
+      };
       applyBootstrap(nextBootstrap);
       await loadVenueSnapshot(venueId);
+      sceneControllerRef.current?.applyFixtureRuntimeState(fixtureRuntimeStateRef.current);
       connectWebSocket();
       document.body.dataset.appReady = 'true';
     }
@@ -200,6 +209,9 @@ export default function DenseVenueEditorPage({ venueId }) {
     });
     setVideoWallLocked(venueSnapshot.video_wall.locked);
     sceneControllerRef.current?.applyBootstrap(venueSnapshot);
+    if (fixtureRuntimeStateRef.current) {
+      sceneControllerRef.current?.applyFixtureRuntimeState(fixtureRuntimeStateRef.current);
+    }
   }, [venueSnapshot]);
 
   useEffect(() => {
@@ -224,8 +236,43 @@ export default function DenseVenueEditorPage({ venueId }) {
     sceneControllerRef.current?.setView(currentView);
   }, [currentView]);
 
+  /** Poll live DMX/visual state: WS broadcasts can race HTTP threads; polling keeps the editor in sync. */
+  useEffect(() => {
+    if (isTestMode) {
+      return undefined;
+    }
+    lastRuntimeFixtureJsonRef.current = '';
+    const intervalId = window.setInterval(() => {
+      const controller = sceneControllerRef.current;
+      if (!controller || document.hidden) {
+        return;
+      }
+      void fetchJson('/api/runtime/fixture-state')
+        .then((data) => {
+          const enc = JSON.stringify(data);
+          if (enc === lastRuntimeFixtureJsonRef.current) {
+            return;
+          }
+          lastRuntimeFixtureJsonRef.current = enc;
+          fixtureRuntimeStateRef.current = data;
+          controller.applyFixtureRuntimeState(data);
+        })
+        .catch(() => {});
+    }, 100);
+    return () => window.clearInterval(intervalId);
+  }, [venueId]);
+
   useEffect(() => {
     sceneControllerRef.current?.setInteractionMode(interactionMode);
+  }, [interactionMode]);
+
+  useEffect(() => {
+    if (interactionMode !== 'pan' && interactionMode !== 'rotate') {
+      return;
+    }
+    setSelectedFixtureId((currentId) => (currentId ? null : currentId));
+    setSelectedKind((currentKind) => (currentKind === 'fixture' ? null : currentKind));
+    setContextMenu((current) => ({ ...current, visible: false }));
   }, [interactionMode]);
 
   useEffect(() => {
@@ -295,8 +342,15 @@ export default function DenseVenueEditorPage({ venueId }) {
     ws.onmessage = (event) => {
       const payload = JSON.parse(event.data);
       if (payload.type === 'bootstrap') {
+        fixtureRuntimeStateRef.current = payload.data?.fixture_runtime_state ?? {
+          version: 1,
+          fixtures: [],
+        };
         applyBootstrap(payload.data);
         void loadVenueSnapshot(venueId);
+      } else if (payload.type === 'fixture_runtime_state') {
+        fixtureRuntimeStateRef.current = payload.data;
+        sceneControllerRef.current?.applyFixtureRuntimeState(payload.data);
       } else if (payload.type === 'venues') {
         setVenueSummaries(payload.data?.venues || []);
       } else if (payload.type === 'venue_snapshot') {
@@ -317,6 +371,10 @@ export default function DenseVenueEditorPage({ venueId }) {
 
   function applyBootstrap(nextBootstrap) {
     setVenueSummaries(nextBootstrap.venues || []);
+    fixtureRuntimeStateRef.current = nextBootstrap.fixture_runtime_state ?? {
+      version: 1,
+      fixtures: [],
+    };
     if (nextBootstrap.active_venue?.summary?.id === venueId) {
       setVenueSnapshot(nextBootstrap.active_venue);
     }
