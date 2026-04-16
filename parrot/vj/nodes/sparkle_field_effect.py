@@ -89,11 +89,11 @@ class SparkleFieldEffect(GenerativeEffectBase):
                     vec2 pf = f - j;
 
                     float ph = hash3(cell, 7.0);
-                    // Burst rate rises with audio; per-cell desync via ph.
-                    float spd = (0.5 + ph * 0.95) * (0.42 + drive * 2.1);
+                    // Burst rate rises with audio, but kept slower against wall-clock time.
+                    float spd = (0.26 + ph * 0.44) * (0.24 + drive * 0.95);
                     float cycle = fract(time * spd + ph * 19.0 + lz * 4.1);
                     // Sudden peak at cycle=0, then exponential decay (no sinusoidal fade-in).
-                    float decay_k = 10.0 + drive * 15.0;
+                    float decay_k = 3.2 + drive * 5.6;
                     float tw = exp(-cycle * decay_k);
 
                     float r = length(pf);
