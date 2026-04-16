@@ -357,14 +357,12 @@ class TestWebServer:
         assert data["editor_port"] == 4041
 
     @patch("threading.Thread")
-    @patch("builtins.print")
-    def test_start_web_server(self, mock_print, mock_thread):
+    def test_start_web_server(self, mock_thread):
         """Test start_web_server function."""
         mock_state = Mock()
         mock_director = Mock()
 
-        with patch("parrot.api.web_server.get_local_ip", return_value="192.168.1.100"):
-            start_web_server(mock_state, mock_director, port=8080)
+        start_web_server(mock_state, mock_director, port=8080)
 
         # Check that global instances are set
         import parrot.api.web_server as web_server_module
@@ -375,8 +373,6 @@ class TestWebServer:
         # Check that thread was started
         mock_thread.assert_called_once()
         mock_thread.return_value.start.assert_called_once()
-
-        mock_print.assert_any_call("🌐 Web: http://192.168.1.100:8080/")
 
     def test_app_configuration(self):
         """Test Flask app configuration."""

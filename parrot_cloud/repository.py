@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import datetime
-import json
 import uuid
 
 from beartype import beartype
@@ -23,7 +22,7 @@ from parrot_cloud.models import (
     SceneObjectModel,
     VenueModel,
 )
-from parrot_cloud.database import create_session, get_repo_root
+from parrot_cloud.database import create_session
 from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import parse_vj_mode_string
@@ -35,6 +34,7 @@ DJ_TABLE_DEPTH_METERS = 1.2192
 DJ_TABLE_WIDTH_METERS = 2.4384
 # Upstage of the table back edge (venue −y), ~2 ft — silhouette is derived from table + this gap.
 DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.61
+DISPLAY_MODE_VALUES = {"venue", "dmx_heatmap", "vj"}
 
 
 @contextmanager
@@ -161,6 +161,10 @@ class VenueRepository:
                 ).value
             if "theme_name" in data and data["theme_name"] is not None:
                 control_state.theme_name = str(data["theme_name"])
+            if "display_mode" in data and data["display_mode"] is not None:
+                control_state.display_mode = self._normalize_display_mode(
+                    str(data["display_mode"])
+                )
             if "manual_dimmer" in data and data["manual_dimmer"] is not None:
                 control_state.manual_dimmer = max(
                     0.0, min(1.0, float(data["manual_dimmer"]))
@@ -170,14 +174,31 @@ class VenueRepository:
             if "show_waveform" in data:
                 control_state.show_waveform = bool(data["show_waveform"])
             if "show_fixture_mode" in data:
-                control_state.show_fixture_mode = bool(data["show_fixture_mode"])
+                control_state.display_mode = (
+                    "venue"
+                    if bool(data["show_fixture_mode"])
+                    else "dmx_heatmap"
+                )
+            if "active_venue_id" in data:
+                active_venue_id = data["active_venue_id"]
+                if active_venue_id in (None, ""):
+                    control_state.active_venue_id = None
+                else:
+                    venue = session.get(VenueModel, str(active_venue_id))
+                    if venue is None:
+                        raise KeyError(f"Venue not found: {active_venue_id}")
+                    self._set_active_venue(session, control_state, venue.id)
+
+            # Keep legacy boolean column aligned while callers migrate.
+            control_state.show_fixture_mode = control_state.display_mode == "venue"
 
             self._touch_control_state(control_state)
             return self._control_state_from_model(control_state)
 
     def get_active_venue_snapshot(self) -> VenueSnapshot | None:
         with _session_scope() as session:
-            venue = session.scalar(select(VenueModel).where(VenueModel.active.is_(True)))
+            control_state = self._get_or_create_control_state(session)
+            venue = self._resolve_active_venue(session, control_state)
             if venue is None:
                 return None
             self._ensure_scene_objects(session, venue)
@@ -197,17 +218,16 @@ class VenueRepository:
 
     def set_active_venue(self, venue_id: str) -> VenueSnapshot:
         with _session_scope() as session:
+            control_state = self._get_or_create_control_state(session)
             venues = session.scalars(select(VenueModel)).all()
             target = None
             for venue in venues:
-                is_target = venue.id == venue_id
-                if venue.active != is_target:
-                    venue.active = is_target
-                    self._touch_venue(venue)
-                if is_target:
+                if venue.id == venue_id:
                     target = venue
+                    break
             if target is None:
                 raise KeyError(f"Venue not found: {venue_id}")
+            self._set_active_venue(session, control_state, target.id)
             return self._snapshot_from_model(target)
 
     def create_venue(self, name: str) -> VenueSnapshot:
@@ -260,9 +280,8 @@ class VenueRepository:
             if "manual_dimmer_supported" in data:
                 venue.manual_dimmer_supported = bool(data["manual_dimmer_supported"])
             if "active" in data and bool(data["active"]):
-                for other in session.scalars(select(VenueModel)).all():
-                    other.active = other.id == venue.id
-                    self._touch_venue(other)
+                control_state = self._get_or_create_control_state(session)
+                self._set_active_venue(session, control_state, venue.id)
             self._sync_legacy_scene_fields(venue)
             self._touch_venue(venue)
             session.flush()
@@ -488,10 +507,8 @@ class VenueRepository:
             self._touch_venue(venue)
 
             if seed.active:
-                for other in session.scalars(select(VenueModel)).all():
-                    if other.id != venue.id and other.active:
-                        other.active = False
-                        self._touch_venue(other)
+                control_state = self._get_or_create_control_state(session)
+                self._set_active_venue(session, control_state, venue.id)
 
     def _touch_venue(self, venue: VenueModel) -> None:
         venue.revision = int(venue.revision) + 1
@@ -589,10 +606,11 @@ class VenueRepository:
             mode=control_state.mode,
             vj_mode=parse_vj_mode_string(control_state.vj_mode).value,
             theme_name=control_state.theme_name,
+            active_venue_id=control_state.active_venue_id,
+            display_mode=self._normalize_display_mode(control_state.display_mode),
             manual_dimmer=control_state.manual_dimmer,
             hype_limiter=control_state.hype_limiter,
             show_waveform=control_state.show_waveform,
-            show_fixture_mode=control_state.show_fixture_mode,
         )
 
     def _get_or_create_control_state(self, session) -> ControlStateModel:
@@ -600,32 +618,58 @@ class VenueRepository:
         if control_state is not None:
             return control_state
 
-        initial_data = self._load_initial_control_state_data()
+        active_venue = session.scalar(
+            select(VenueModel).where(VenueModel.active.is_(True)).limit(1)
+        )
         control_state = ControlStateModel(
             id=1,
-            mode=str(initial_data.get("mode", "chill")),
-            vj_mode=str(initial_data.get("vj_mode", "prom_dmack")),
-            theme_name=str(initial_data.get("theme_name", "Rave")),
-            manual_dimmer=max(
-                0.0, min(1.0, float(initial_data.get("manual_dimmer", 0.0)))
-            ),
-            hype_limiter=bool(initial_data.get("hype_limiter", False)),
-            show_waveform=bool(initial_data.get("show_waveform", True)),
-            show_fixture_mode=bool(initial_data.get("show_fixture_mode", False)),
+            mode="chill",
+            vj_mode="prom_dmack",
+            theme_name="Rave",
+            active_venue_id=active_venue.id if active_venue is not None else None,
+            display_mode="dmx_heatmap",
+            manual_dimmer=0.0,
+            hype_limiter=False,
+            show_waveform=True,
+            show_fixture_mode=False,
         )
         session.add(control_state)
         session.flush()
         return control_state
 
-    def _load_initial_control_state_data(self) -> dict[str, object]:
-        state_path = get_repo_root() / "state.json"
-        if not state_path.exists():
-            return {}
+    def _normalize_display_mode(self, value: str) -> str:
+        normalized = str(value).strip().lower()
+        if normalized in DISPLAY_MODE_VALUES:
+            return normalized
+        if normalized == "fixture_scene":
+            return "venue"
+        return "dmx_heatmap"
 
-        try:
-            return dict(json.loads(state_path.read_text()))
-        except Exception:
-            return {}
+    def _resolve_active_venue(
+        self, session, control_state: ControlStateModel
+    ) -> VenueModel | None:
+        venue: VenueModel | None = None
+        if control_state.active_venue_id:
+            venue = session.get(VenueModel, control_state.active_venue_id)
+        if venue is None:
+            venue = session.scalar(select(VenueModel).where(VenueModel.active.is_(True)))
+        if venue is None:
+            venue = session.scalar(select(VenueModel).order_by(VenueModel.name).limit(1))
+        if venue is not None and control_state.active_venue_id != venue.id:
+            self._set_active_venue(session, control_state, venue.id)
+        return venue
+
+    def _set_active_venue(
+        self, session, control_state: ControlStateModel, venue_id: str
+    ) -> None:
+        control_state.active_venue_id = venue_id
+        self._touch_control_state(control_state)
+        venues = session.scalars(select(VenueModel)).all()
+        for venue in venues:
+            is_target = venue.id == venue_id
+            if venue.active != is_target:
+                venue.active = is_target
+                self._touch_venue(venue)
 
     def _next_available_slug(
         self, session, base_slug: str, current_venue_id: str | None = None

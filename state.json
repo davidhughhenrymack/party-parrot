@@ -2,11 +2,11 @@
   "mode": "rave",
   "hype": 30,
   "theme_name": "Rave",
-  "venue_name": "Demo Venue",
-  "venue_slug": "demo",
+  "venue_name": "dmack",
+  "venue_slug": null,
   "manual_dimmer": 0,
   "hype_limiter": false,
   "show_waveform": true,
   "editor_display_mode": "dmx_heatmap",
-  "vj_mode": "zr_full_rave"
+  "vj_mode": "zr_early_rave"
 }

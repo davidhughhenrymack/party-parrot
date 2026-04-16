@@ -60,10 +60,11 @@ def test_state_applies_runtime_bootstrap():
             mode="rave",
             vj_mode="zr_full_rave",
             theme_name="Rave",
+            active_venue_id="venue-1",
+            display_mode="dmx_heatmap",
             manual_dimmer=0.4,
             hype_limiter=False,
             show_waveform=True,
-            show_fixture_mode=False,
         ),
     )
 

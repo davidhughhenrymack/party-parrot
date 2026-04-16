@@ -31,8 +31,7 @@ class RuntimeVenueClient:
         self._fixture_push_lock = threading.Lock()
         self._last_fixture_push_mono = 0.0
         self._last_fixture_payload_json: str | None = None
-        self.state.disable_local_state_persistence()
-        self.state.set_remote_venue_selector(self.set_active_venue)
+        self.state.set_remote_control_state_updater(self.update_control_state)
 
     def start(self) -> None:
         if self._thread is not None:
@@ -75,14 +74,15 @@ class RuntimeVenueClient:
         bootstrap = RuntimeBootstrap.from_dict(response.json())
         self.state.queue_runtime_bootstrap(bootstrap)
 
-    def set_active_venue(self, venue_id: str) -> None:
+    def update_control_state(self, patch: dict[str, object]) -> None:
         try:
-            requests.post(
-                f"{self.base_url}/api/venues/{venue_id}/activate",
+            requests.patch(
+                f"{self.base_url}/api/control-state",
+                json=patch,
                 timeout=5,
             ).raise_for_status()
         except Exception as exc:
-            print(f"Failed to select venue {venue_id}: {exc}")
+            print(f"Failed to update remote control state: {exc}")
 
     def _run(self) -> None:
         while not self._stop_event.is_set():

@@ -9,7 +9,6 @@ from parrot_cloud.management import initialize_database
 def client(monkeypatch, tmp_path):
     db_path = tmp_path / "parrot_cloud.sqlite3"
     monkeypatch.setenv("PARROT_CLOUD_DB_PATH", str(db_path))
-    monkeypatch.setattr("parrot_cloud.repository.get_repo_root", lambda: tmp_path)
     reset_database_state()
     initialize_database()
     app = create_app()
@@ -99,17 +98,27 @@ def test_config_endpoint_lists_supported_universes(client):
     ]
     assert "chill" in data["available_modes"]
     assert "zr_full_rave" in data["available_vj_modes"]
+    assert data["available_display_modes"] == ["venue", "dmx_heatmap", "vj"]
 
 
 def test_control_state_endpoints(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    new_active_venue_id = bootstrap["active_venue"]["summary"]["id"]
     response = client.patch(
         "/api/control-state",
-        json={"mode": "rave", "manual_dimmer": 0.25},
+        json={
+            "mode": "rave",
+            "manual_dimmer": 0.25,
+            "display_mode": "venue",
+            "active_venue_id": new_active_venue_id,
+        },
     )
 
     assert response.status_code == 200
     assert response.get_json()["mode"] == "rave"
     assert response.get_json()["manual_dimmer"] == 0.25
+    assert response.get_json()["display_mode"] == "venue"
+    assert response.get_json()["active_venue_id"] == new_active_venue_id
 
     mode_response = client.get("/api/mode")
     assert mode_response.get_json()["mode"] == "rave"

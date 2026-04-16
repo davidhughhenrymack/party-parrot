@@ -4,11 +4,17 @@ export default function RemoteControlPage() {
   const [config, setConfig] = useState({
     available_modes: [],
     available_vj_modes: [],
+    available_display_modes: [],
+    theme_names: [],
     effects: [],
   });
+  const [venues, setVenues] = useState([]);
   const [controlState, setControlState] = useState({
     mode: 'chill',
     vj_mode: 'prom_dmack',
+    theme_name: 'Rave',
+    display_mode: 'dmx_heatmap',
+    active_venue_id: null,
     manual_dimmer: 0,
   });
   const [manualDimmerSupported, setManualDimmerSupported] = useState(false);
@@ -34,6 +40,8 @@ export default function RemoteControlPage() {
       setConfig({
         available_modes: nextConfig.available_modes || [],
         available_vj_modes: nextConfig.available_vj_modes || [],
+        available_display_modes: nextConfig.available_display_modes || [],
+        theme_names: nextConfig.theme_names || [],
         effects: nextConfig.effects || [],
       });
       applyBootstrap(bootstrap);
@@ -52,6 +60,8 @@ export default function RemoteControlPage() {
             ...current,
             ...payload.data,
           }));
+        } else if (payload.type === 'venues') {
+          setVenues(payload.data?.venues || []);
         } else if (payload.type === 'venue_snapshot' && payload.data?.summary?.active) {
           setManualDimmerSupported(
             Boolean(payload.data?.fixtures?.some((fixture) => fixture.is_manual)),
@@ -64,9 +74,14 @@ export default function RemoteControlPage() {
     }
 
     function applyBootstrap(bootstrap) {
+      setVenues(bootstrap.venues || []);
       setControlState((current) => ({
         ...current,
         ...bootstrap.control_state,
+        active_venue_id:
+          bootstrap.control_state?.active_venue_id ||
+          bootstrap.active_venue?.summary?.id ||
+          null,
       }));
       setManualDimmerSupported(
         Boolean(bootstrap.active_venue?.fixtures?.some((fixture) => fixture.is_manual)),
@@ -101,13 +116,28 @@ export default function RemoteControlPage() {
 
       <div className="remote-grid">
         <section className="panel">
+          <h2>Venue</h2>
+          <div className="button-grid">
+            {venues.map((venue) => (
+              <button
+                key={venue.id}
+                className={controlState.active_venue_id === venue.id ? 'active-choice' : ''}
+                onClick={() => patchControlState({ active_venue_id: venue.id })}
+              >
+                {venue.name}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel">
           <h2>Lighting Mode</h2>
           <div className="button-grid">
             {config.available_modes.map((mode) => (
               <button
                 key={mode}
                 className={controlState.mode === mode ? 'active-choice' : ''}
-                onClick={() => postJson('/api/mode', { mode })}
+                onClick={() => patchControlState({ mode })}
               >
                 {labelize(mode)}
               </button>
@@ -122,9 +152,39 @@ export default function RemoteControlPage() {
               <button
                 key={mode}
                 className={controlState.vj_mode === mode ? 'active-choice' : ''}
-                onClick={() => postJson('/api/vj_mode', { vj_mode: mode })}
+                onClick={() => patchControlState({ vj_mode: mode })}
               >
                 {formatVjModeLabel(mode)}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel">
+          <h2>Color Scheme</h2>
+          <div className="button-grid">
+            {config.theme_names.map((themeName) => (
+              <button
+                key={themeName}
+                className={controlState.theme_name === themeName ? 'active-choice' : ''}
+                onClick={() => patchControlState({ theme_name: themeName })}
+              >
+                {themeName}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel">
+          <h2>Display</h2>
+          <div className="button-grid">
+            {config.available_display_modes.map((displayMode) => (
+              <button
+                key={displayMode}
+                className={controlState.display_mode === displayMode ? 'active-choice' : ''}
+                onClick={() => patchControlState({ display_mode: displayMode })}
+              >
+                {formatDisplayModeLabel(displayMode)}
               </button>
             ))}
           </div>
@@ -193,9 +253,28 @@ function formatVjModeLabel(mode) {
   return labelize(mode);
 }
 
+function formatDisplayModeLabel(displayMode) {
+  if (displayMode === 'dmx_heatmap') {
+    return 'DMX heatmap';
+  }
+  return labelize(displayMode);
+}
+
 async function postJson(url, body) {
   const response = await fetch(url, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  return response.json();
+}
+
+async function patchControlState(body) {
+  const response = await fetch('/api/control-state', {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });

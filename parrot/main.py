@@ -39,16 +39,6 @@ def parse_arguments():
         action="store_true",
         help="Start with overlay UI visible",
     )
-    parser.add_argument(
-        "--rave",
-        action="store_true",
-        help="Start in rave mode",
-    )
-    parser.add_argument(
-        "--fixture-mode",
-        action="store_true",
-        help="Start in full-scene fixture mode (\\ cycles DMX heatmap → Video → full scene)",
-    )
     return parser.parse_args()
 
 

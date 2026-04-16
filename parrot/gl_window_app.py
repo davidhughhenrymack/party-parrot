@@ -9,7 +9,6 @@ import numpy as np
 
 from parrot.audio.audio_analyzer import AudioAnalyzer
 from parrot.director.director import Director
-from parrot.director.mode import Mode
 from parrot.director.frame import Frame, FrameSignal
 from parrot.gl_display_mode import EditorDisplayMode
 from parrot.state import State
@@ -55,10 +54,6 @@ def run_gl_window_app(args):
         except Exception as exc:
             print(f"⚠️  Venue service bootstrap failed: {exc}")
         runtime_client.start()
-
-    # Override mode if specified via args, otherwise use loaded/default mode
-    if getattr(args, "rave", False):
-        state.set_mode(Mode.rave)
 
     # Initialize audio analyzer
     audio_analyzer = AudioAnalyzer(signal_states)
@@ -113,6 +108,8 @@ def run_gl_window_app(args):
     uniform sampler2D source_texture;
     uniform vec2 source_size;
     uniform vec2 target_size;
+    // 0 = VJ / fixture (legacy Y flip for correct on-screen orientation). 1 = DMX heatmap only (no flip).
+    uniform int u_dmx_heatmap;
     
     void main() {
         float src_aspect = source_size.x / source_size.y;
@@ -126,10 +123,11 @@ def run_gl_window_app(args):
             scale_y = dst_aspect / src_aspect;
         }
         
-        // Flip Y coordinate (OpenGL texture origin is bottom-left)
-        vec2 flipped_uv = vec2(uv.x, 1.0 - uv.y);
-        
-        vec2 centered = (flipped_uv - 0.5);
+        vec2 tex_uv = uv;
+        if (u_dmx_heatmap == 0) {
+            tex_uv = vec2(uv.x, 1.0 - uv.y);
+        }
+        vec2 centered = (tex_uv - 0.5);
         centered.x /= scale_x;
         centered.y /= scale_y;
         vec2 cover_uv = centered + 0.5;
@@ -424,9 +422,6 @@ def run_gl_window_app(args):
         screenshot_time = time.perf_counter() + 0.5
         print("📸 Screenshot mode: will capture after 0.5s and exit")
 
-    if getattr(args, "fixture_mode", False):
-        state.set_editor_display_mode(EditorDisplayMode.FIXTURE_SCENE)
-
     def update_cursor_visibility():
         """Hide cursor in VJ/video mode; show for DMX heatmap and fixture scene."""
         if pyglet_window:
@@ -600,6 +595,11 @@ def run_gl_window_app(args):
                 display_shader["target_size"].value = (
                     float(window_width),
                     float(window_height),
+                )
+                display_shader["u_dmx_heatmap"] = (
+                    1
+                    if state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
+                    else 0
                 )
 
                 # Render to screen with proper viewport

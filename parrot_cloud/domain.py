@@ -238,20 +238,22 @@ class ControlState:
     mode: str
     vj_mode: str
     theme_name: str
+    active_venue_id: str | None
+    display_mode: str
     manual_dimmer: float
     hype_limiter: bool
     show_waveform: bool
-    show_fixture_mode: bool
 
     def to_dict(self) -> JsonDict:
         return {
             "mode": self.mode,
             "vj_mode": self.vj_mode,
             "theme_name": self.theme_name,
+            "active_venue_id": self.active_venue_id,
+            "display_mode": self.display_mode,
             "manual_dimmer": self.manual_dimmer,
             "hype_limiter": self.hype_limiter,
             "show_waveform": self.show_waveform,
-            "show_fixture_mode": self.show_fixture_mode,
         }
 
     @classmethod
@@ -260,10 +262,20 @@ class ControlState:
             mode=str(data.get("mode", "chill")),
             vj_mode=str(data.get("vj_mode", "prom_dmack")),
             theme_name=str(data.get("theme_name", "Rave")),
+            active_venue_id=(
+                str(data.get("active_venue_id"))
+                if data.get("active_venue_id") not in (None, "")
+                else None
+            ),
+            display_mode=str(
+                data.get(
+                    "display_mode",
+                    "venue" if bool(data.get("show_fixture_mode", False)) else "dmx_heatmap",
+                )
+            ),
             manual_dimmer=float(data.get("manual_dimmer", 0.0)),
             hype_limiter=bool(data.get("hype_limiter", False)),
             show_waveform=bool(data.get("show_waveform", True)),
-            show_fixture_mode=bool(data.get("show_fixture_mode", False)),
         )
 
 

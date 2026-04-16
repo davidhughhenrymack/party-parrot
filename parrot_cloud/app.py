@@ -103,6 +103,7 @@ def create_app() -> Flask:
                 ],
                 "available_modes": [mode.name for mode in Mode],
                 "available_vj_modes": [mode.value for mode in VJMode],
+                "available_display_modes": ["venue", "dmx_heatmap", "vj"],
                 "theme_names": [theme.name for theme in themes],
                 "effects": [
                     FrameSignal.strobe.value,
@@ -145,6 +146,8 @@ def create_app() -> Flask:
     @app.patch("/api/control-state")
     def patch_control_state():
         control_state = repository.update_control_state(request.get_json(force=True))
+        broadcast_venues()
+        broadcast_active_venue()
         broadcast_control_state()
         return jsonify(control_state.to_dict())
 
@@ -249,6 +252,7 @@ def create_app() -> Flask:
         snapshot = repository.set_active_venue(venue_id)
         broadcast_venues()
         broadcast_active_venue()
+        broadcast_control_state()
         return jsonify(snapshot.to_dict())
 
     @app.patch("/api/venues/<venue_id>/video-wall")

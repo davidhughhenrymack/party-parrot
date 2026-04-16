@@ -190,17 +190,15 @@ poetry run python -m parrot.main
 # Fullscreen VJ window
 poetry run python -m parrot.main --vj-fullscreen
 
-# Start in rave mode
-poetry run python -m parrot.main --rave
-
 # Custom web port
 poetry run python -m parrot.main --web-port 8080
 
 # Disable web interface
 poetry run python -m parrot.main --no-web
 
-# Fixture visualization mode
-poetry run python -m parrot.main --fixture-mode
+# Startup mode/vj/theme/venue/display come from Parrot Cloud control state
+# Open the remote UI and choose them there:
+# http://127.0.0.1:4041/remote
 
 # Enable profiling
 poetry run python -m parrot.main --profile --profile-interval 30

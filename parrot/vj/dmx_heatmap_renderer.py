@@ -43,7 +43,7 @@ def _build_header_rgb_image(width: int, header_h: int) -> Image.Image:
     font_title = _pick_font(title_size)
     font_sub = _pick_font(sub_size)
     title = "Party Parrot"
-    subtitle = "Heatmap"
+    subtitle = "DMX heatmap"
     bbox_t = draw.textbbox((0, 0), title, font=font_title)
     bbox_s = draw.textbbox((0, 0), subtitle, font=font_sub)
     h1 = bbox_t[3] - bbox_t[1]
@@ -109,10 +109,12 @@ class DmxHeatmapRenderer:
         uniform sampler2D data_tex;
         uniform vec2 grid_size;
         void main() {
-            vec2 cell = floor(v_uv * grid_size);
+            // Match PIL/header orientation: CPU row 0 is top of grid; GL v_uv.y=0 is bottom of quad.
+            vec2 uv = vec2(v_uv.x, 1.0 - v_uv.y);
+            vec2 cell = floor(uv * grid_size);
             vec2 center = (cell + 0.5) / grid_size;
             vec3 c = texture(data_tex, center).rgb;
-            vec2 f = fract(v_uv * grid_size);
+            vec2 f = fract(uv * grid_size);
             float edge = max(step(0.88, f.x), step(0.88, f.y));
             c *= 1.0 - edge * 0.45;
             out_color = c;

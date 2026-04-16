@@ -111,6 +111,10 @@ class ControlStateModel(Base):
         String(64), nullable=False, default="prom_dmack"
     )
     theme_name: Mapped[str] = mapped_column(String(255), nullable=False, default="Rave")
+    active_venue_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    display_mode: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="dmx_heatmap"
+    )
     manual_dimmer: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     hype_limiter: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     show_waveform: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

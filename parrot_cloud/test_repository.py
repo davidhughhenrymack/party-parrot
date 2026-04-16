@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from parrot_cloud.database import reset_database_state
@@ -11,7 +9,6 @@ from parrot_cloud.repository import VenueRepository
 def venue_repository(monkeypatch, tmp_path):
     db_path = tmp_path / "parrot_cloud.sqlite3"
     monkeypatch.setenv("PARROT_CLOUD_DB_PATH", str(db_path))
-    monkeypatch.setattr("parrot_cloud.repository.get_repo_root", lambda: tmp_path)
     reset_database_state()
     run_migrations()
     repository = VenueRepository()
@@ -89,29 +86,16 @@ def test_fixture_crud_updates_snapshot(venue_repository):
     )
 
 
-def test_initial_control_state_migrates_from_state_json(monkeypatch, tmp_path):
+def test_initial_control_state_tracks_active_seed_venue(monkeypatch, tmp_path):
     db_path = tmp_path / "parrot_cloud.sqlite3"
     monkeypatch.setenv("PARROT_CLOUD_DB_PATH", str(db_path))
     reset_database_state()
     run_migrations()
-    monkeypatch.setattr("parrot_cloud.repository.get_repo_root", lambda: tmp_path)
-
-    state_path = tmp_path / "state.json"
-    state_path.write_text(
-        json.dumps(
-            {
-                "mode": "rave",
-                "vj_mode": "early_rave",
-                "theme_name": "Berlin",
-                "manual_dimmer": 0.3,
-                "show_waveform": False,
-            }
-        )
-    )
     repository = VenueRepository()
+    repository.ensure_seed_data()
     control_state = repository.get_control_state()
 
-    assert control_state.mode == "rave"
-    assert control_state.vj_mode == "zr_early_rave"
-    assert control_state.theme_name == "Berlin"
-    assert control_state.manual_dimmer == 0.3
+    active_venue = repository.get_active_venue_snapshot()
+    assert active_venue is not None
+    assert control_state.active_venue_id == active_venue.summary.id
+    assert control_state.display_mode == "dmx_heatmap"

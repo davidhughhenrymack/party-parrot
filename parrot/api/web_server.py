@@ -249,10 +249,6 @@ def start_web_server(
     log.setLevel(logging.ERROR)
     app.logger.setLevel(logging.ERROR)
 
-    # Get local IP address
-    local_ip = get_local_ip()
-    print(f"🌐 Web: http://{local_ip}:{port}/")
-
     if threaded:
         # Start Flask in a separate thread (legacy mode)
         threading.Thread(

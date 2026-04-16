@@ -1,5 +1,3 @@
-import json
-import os
 import queue
 from typing import Callable, Optional
 from events import Events
@@ -36,8 +34,10 @@ class State:
         self._runtime_patch = None
         self._runtime_manual_group = None
         self._manual_dimmer_supported_override: Optional[bool] = None
-        self._remote_venue_selector: Optional[Callable[[str], None]] = None
-        self._use_local_state_persistence = True
+        self._remote_control_state_updater: Optional[
+            Callable[[dict[str, object]], None]
+        ] = None
+        self._suppress_remote_control_sync = False
 
         # Queue for GUI updates from other threads
         self._gui_update_queue = queue.Queue()
@@ -47,10 +47,6 @@ class State:
 
         self.signal_states = SignalStates()
 
-        # Try to load state from file
-        self.load_state()
-        # Desktop GL window always opens in DMX heatmap; persisted editor_display_mode is for save/cycle only.
-        self._editor_display_mode = EditorDisplayMode.DMX_HEATMAP
 
     @property
     def mode(self):
@@ -62,7 +58,7 @@ class State:
 
         self._mode = value
         self.events.on_mode_change(self._mode)
-        self.save_state()
+        self._push_remote_control_state({"mode": value.name})
 
     def set_mode_thread_safe(self, value: Mode):
         """Set the mode (now safe since web server runs on main thread)."""
@@ -93,7 +89,7 @@ class State:
 
         self._vj_mode = value
         self.events.on_vj_mode_change(self._vj_mode)
-        self.save_state()
+        self._push_remote_control_state({"vj_mode": value.value})
 
     def set_vj_mode_thread_safe(self, value: VJMode):
         """Set the VJ mode (now safe since web server runs on main thread)."""
@@ -122,7 +118,9 @@ class State:
 
         self._theme = value
         self.events.on_theme_change(self._theme)
-        self.save_state()
+        theme_name = getattr(value, "name", None)
+        if theme_name:
+            self._push_remote_control_state({"theme_name": str(theme_name)})
 
     @property
     def venue(self):
@@ -134,10 +132,9 @@ class State:
 
         self._venue = value
         venue_id = getattr(value, "id", None)
-        if venue_id and self._remote_venue_selector is not None:
-            self._remote_venue_selector(venue_id)
         self.events.on_venue_change(self._venue)
-        self.save_state()
+        if venue_id:
+            self._push_remote_control_state({"active_venue_id": str(venue_id)})
 
     @property
     def available_venues(self):
@@ -159,11 +156,30 @@ class State:
     def manual_dimmer_supported_override(self) -> Optional[bool]:
         return self._manual_dimmer_supported_override
 
-    def set_remote_venue_selector(self, handler: Callable[[str], None]):
-        self._remote_venue_selector = handler
+    def set_remote_control_state_updater(
+        self, handler: Callable[[dict[str, object]], None]
+    ):
+        self._remote_control_state_updater = handler
 
-    def disable_local_state_persistence(self):
-        self._use_local_state_persistence = False
+    def _push_remote_control_state(self, patch: dict[str, object]) -> None:
+        if self._suppress_remote_control_sync:
+            return
+        if self._remote_control_state_updater is None:
+            return
+        self._remote_control_state_updater(patch)
+
+    def _display_mode_to_control_state(self, mode: EditorDisplayMode) -> str:
+        if mode == EditorDisplayMode.FIXTURE_SCENE:
+            return "venue"
+        return mode.value
+
+    def _display_mode_from_control_state(self, value: str) -> EditorDisplayMode:
+        if value == "venue":
+            return EditorDisplayMode.FIXTURE_SCENE
+        try:
+            return EditorDisplayMode(value)
+        except ValueError:
+            return EditorDisplayMode.DMX_HEATMAP
 
     def queue_runtime_bootstrap(self, bootstrap: RuntimeBootstrap):
         self._gui_update_queue.put(("runtime_bootstrap", bootstrap))
@@ -191,47 +207,48 @@ class State:
             self._apply_runtime_snapshot(bootstrap.active_venue)
 
     def _apply_control_state(self, control_state: ControlState):
-        next_mode = Mode[control_state.mode]
-        if self._mode != next_mode:
-            self._mode = next_mode
-            self.events.on_mode_change(self._mode)
-
-        next_vj_mode = parse_vj_mode_string(control_state.vj_mode)
-        if self._vj_mode != next_vj_mode:
-            self._vj_mode = next_vj_mode
-            self.events.on_vj_mode_change(self._vj_mode)
-
-        next_manual_dimmer = float(control_state.manual_dimmer)
-        if self._manual_dimmer != next_manual_dimmer:
-            self._manual_dimmer = next_manual_dimmer
-            self.events.on_manual_dimmer_change(self._manual_dimmer)
-
-        next_hype_limiter = bool(control_state.hype_limiter)
-        if self._hype_limiter != next_hype_limiter:
-            self._hype_limiter = next_hype_limiter
-            self.events.on_hype_limiter_change(self._hype_limiter)
-
-        next_show_waveform = bool(control_state.show_waveform)
-        if self._show_waveform != next_show_waveform:
-            self._show_waveform = next_show_waveform
-            self.events.on_show_waveform_change(self._show_waveform)
-
-        next_display = (
-            EditorDisplayMode.FIXTURE_SCENE
-            if bool(control_state.show_fixture_mode)
-            else EditorDisplayMode.DMX_HEATMAP
-        )
-        if self._editor_display_mode != next_display:
-            self._editor_display_mode = next_display
-            self.events.on_show_fixture_mode_change(self.show_fixture_mode)
-
+        self._suppress_remote_control_sync = True
         try:
-            next_theme = get_theme_by_name(control_state.theme_name)
-        except ValueError:
-            next_theme = self._theme
-        if self._theme != next_theme:
-            self._theme = next_theme
-            self.events.on_theme_change(self._theme)
+            next_mode = Mode[control_state.mode]
+            if self._mode != next_mode:
+                self._mode = next_mode
+                self.events.on_mode_change(self._mode)
+
+            next_vj_mode = parse_vj_mode_string(control_state.vj_mode)
+            if self._vj_mode != next_vj_mode:
+                self._vj_mode = next_vj_mode
+                self.events.on_vj_mode_change(self._vj_mode)
+
+            next_manual_dimmer = float(control_state.manual_dimmer)
+            if self._manual_dimmer != next_manual_dimmer:
+                self._manual_dimmer = next_manual_dimmer
+                self.events.on_manual_dimmer_change(self._manual_dimmer)
+
+            next_hype_limiter = bool(control_state.hype_limiter)
+            if self._hype_limiter != next_hype_limiter:
+                self._hype_limiter = next_hype_limiter
+                self.events.on_hype_limiter_change(self._hype_limiter)
+
+            next_show_waveform = bool(control_state.show_waveform)
+            if self._show_waveform != next_show_waveform:
+                self._show_waveform = next_show_waveform
+                self.events.on_show_waveform_change(self._show_waveform)
+
+            display_mode = str(control_state.display_mode or "dmx_heatmap")
+            next_display = self._display_mode_from_control_state(display_mode)
+            if self._editor_display_mode != next_display:
+                self._editor_display_mode = next_display
+                self.events.on_show_fixture_mode_change(self.show_fixture_mode)
+
+            try:
+                next_theme = get_theme_by_name(control_state.theme_name)
+            except ValueError:
+                next_theme = self._theme
+            if self._theme != next_theme:
+                self._theme = next_theme
+                self.events.on_theme_change(self._theme)
+        finally:
+            self._suppress_remote_control_sync = False
 
     def _apply_runtime_snapshot(self, snapshot: VenueSnapshot):
         previous_snapshot = self._runtime_venue_snapshot
@@ -260,7 +277,6 @@ class State:
             self.events.on_venue_change(self._venue)
         else:
             self.events.on_runtime_scene_change(snapshot)
-        self.save_state()
 
     @property
     def manual_dimmer(self):
@@ -272,6 +288,7 @@ class State:
 
         self._manual_dimmer = value
         self.events.on_manual_dimmer_change(self._manual_dimmer)
+        self._push_remote_control_state({"manual_dimmer": float(value)})
 
     @property
     def hype_limiter(self):
@@ -283,6 +300,7 @@ class State:
 
         self._hype_limiter = value
         self.events.on_hype_limiter_change(self._hype_limiter)
+        self._push_remote_control_state({"hype_limiter": bool(value)})
 
     @property
     def show_waveform(self):
@@ -294,6 +312,7 @@ class State:
 
         self._show_waveform = value
         self.events.on_show_waveform_change(self._show_waveform)
+        self._push_remote_control_state({"show_waveform": bool(value)})
 
     @property
     def editor_display_mode(self) -> EditorDisplayMode:
@@ -305,7 +324,9 @@ class State:
 
         self._editor_display_mode = value
         self.events.on_show_fixture_mode_change(self.show_fixture_mode)
-        self.save_state()
+        self._push_remote_control_state(
+            {"display_mode": self._display_mode_to_control_state(self._editor_display_mode)}
+        )
 
     def cycle_editor_display_mode(self) -> None:
         order = DISPLAY_MODE_CYCLE
@@ -320,105 +341,6 @@ class State:
         self.set_editor_display_mode(
             EditorDisplayMode.FIXTURE_SCENE if value else EditorDisplayMode.DMX_HEATMAP
         )
-
-    def save_state(self):
-        """Save the current state to a JSON file."""
-        if not self._use_local_state_persistence:
-            return
-        state_data = {
-            "mode": self._mode.name if self._mode else None,
-            "hype": self._hype,
-            "theme_name": self._theme.name if hasattr(self._theme, "name") else None,
-            "venue_name": self._venue.name if hasattr(self._venue, "name") else None,
-            "venue_slug": self._venue.slug if hasattr(self._venue, "slug") else None,
-            "manual_dimmer": 0,  # We do not want to restart the app with lights on
-            "hype_limiter": self._hype_limiter,
-            "show_waveform": self._show_waveform,
-            "editor_display_mode": self._editor_display_mode.value,
-            "vj_mode": self._vj_mode.name if self._vj_mode else None,
-        }
-
-        try:
-            with open("state.json", "w") as f:
-                json.dump(state_data, f, indent=2)
-        except Exception as e:
-            print(f"Error saving state: {e}")
-
-    def load_state(self):
-        """Load state from a JSON file if it exists."""
-        if not os.path.exists("state.json"):
-            return
-
-        try:
-            with open("state.json", "r") as f:
-                state_data = json.load(f)
-
-            # Set values from loaded state
-            if "mode" in state_data and state_data["mode"]:
-                try:
-                    self._mode = Mode[state_data["mode"]]
-                except KeyError:
-                    print(f"Mode '{state_data['mode']}' not found, using default")
-
-            if "hype" in state_data:
-                self._hype = state_data["hype"]
-
-            # Handle theme loading - try theme_name first, then fall back to theme_index for backward compatibility
-            if "theme_name" in state_data and state_data["theme_name"]:
-                try:
-                    self._theme = get_theme_by_name(state_data["theme_name"])
-                except ValueError:
-                    # If theme name not found, keep default
-                    print(
-                        f"Theme '{state_data['theme_name']}' not found, using default"
-                    )
-            elif "theme_index" in state_data and 0 <= state_data["theme_index"] < len(
-                themes
-            ):
-                # Backward compatibility with old format
-                self._theme = themes[state_data["theme_index"]]
-
-            if "venue_name" in state_data and state_data["venue_name"]:
-                # Find venue by name
-                for venue in venues.__dict__.values():
-                    if (
-                        hasattr(venue, "name")
-                        and venue.name == state_data["venue_name"]
-                    ):
-                        self._venue = venue
-                        break
-
-            if "manual_dimmer" in state_data:
-                self._manual_dimmer = state_data["manual_dimmer"]
-
-            if "hype_limiter" in state_data:
-                self._hype_limiter = state_data["hype_limiter"]
-
-            if "show_waveform" in state_data:
-                self._show_waveform = state_data["show_waveform"]
-
-            if "editor_display_mode" in state_data:
-                try:
-                    self._editor_display_mode = EditorDisplayMode(
-                        str(state_data["editor_display_mode"])
-                    )
-                except ValueError:
-                    pass
-            elif "show_fixture_mode" in state_data:
-                self._editor_display_mode = (
-                    EditorDisplayMode.FIXTURE_SCENE
-                    if state_data["show_fixture_mode"]
-                    else EditorDisplayMode.VJ
-                )
-
-            if "vj_mode" in state_data and state_data["vj_mode"]:
-                try:
-                    self._vj_mode = parse_vj_mode_string(str(state_data["vj_mode"]))
-                except ValueError:
-                    print(f"VJ mode '{state_data['vj_mode']}' not found, using default")
-
-        except Exception as e:
-            print(f"Error loading state: {e}")
 
     def process_gui_updates(self):
         """Process any pending GUI updates from the queue."""

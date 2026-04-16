@@ -1,4 +1,4 @@
-# Desktop GL app, venue editor on 4041 if needed; opens http://127.0.0.1:<web-port> (default 4040) in browser.
+# Desktop GL app; starts venue editor on 4041 if needed and opens that URL (embedded Flask on 4040 is off).
 launch:
     poetry run python -m parrot.launch_stack $@
 
