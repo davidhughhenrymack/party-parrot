@@ -31,11 +31,18 @@ def color_scheme():
 
 
 def test_sparkle_field_renders_and_saves_png(gl_context, color_scheme, tmp_path):
-    """Headless render: golden sparkles on black; PNG should not be flat black or flat white."""
+    """Headless render under high signal: sparkles should be visible and bounded."""
     w, h = 640, 360
     fx = SparkleFieldEffect(width=w, height=h)
     fx.enter(gl_context)
     frame = Frame({s: 0.0 for s in FrameSignal})
+    frame.extend(
+        {
+            FrameSignal.freq_high: 1.0,
+            FrameSignal.pulse: 0.8,
+            FrameSignal.strobe: 0.5,
+        }
+    )
     fbo = fx.render(frame, color_scheme, gl_context)
     assert fbo is not None
     tex = fbo.color_attachments[0]
