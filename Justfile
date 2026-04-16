@@ -10,6 +10,10 @@ launch-profile:
 launch-runtime-only:
     poetry run python -m parrot.main $@
 
+# Headless PNG: golden sparkles + Muro dmack → test_output/prom_dmack_full.png
+preview-prom:
+    poetry run python -m parrot.vj.preview_prom_dmack
+
 seed-venue-editor:
     poetry run python -c "from parrot_cloud.management import initialize_database; initialize_database()"
 

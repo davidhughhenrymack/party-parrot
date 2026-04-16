@@ -2,6 +2,7 @@
 
 import os
 import random
+from pathlib import Path
 from typing import Optional, Union
 import numpy as np
 import moderngl as mgl
@@ -12,6 +13,44 @@ from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
 from parrot.vj.constants import DEFAULT_WIDTH, DEFAULT_HEIGHT
+
+
+@beartype
+def common_bold_sans_font_path() -> Optional[str]:
+    """Resolve a widely available bold sans path (macOS / Linux / Windows)."""
+    for path in (
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "/Library/Fonts/Arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "C:/Windows/Fonts/arialbd.ttf",
+        "C:/Windows/Fonts/arial.ttf",
+    ):
+        if os.path.exists(path):
+            return path
+    return None
+
+
+@beartype
+def muro_font_path() -> Optional[str]:
+    """Resolve the Muro display font if installed (repo ``fonts/``, user Fonts, Windows)."""
+    patterns = ("*Muro*.ttf", "*Muro*.otf", "*muro*.ttf", "*muro*.otf")
+    search_dirs = (
+        Path(__file__).resolve().parent / "fonts",
+        Path.home() / "Library" / "Fonts",
+        Path("/Library/Fonts"),
+        Path.home() / ".local" / "share" / "fonts",
+        Path("C:/Windows/Fonts"),
+    )
+    for directory in search_dirs:
+        if not directory.is_dir():
+            continue
+        for pat in patterns:
+            matches = sorted(directory.glob(pat))
+            if matches:
+                return str(matches[0])
+    return None
 
 
 @beartype
@@ -30,6 +69,7 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         height: int = DEFAULT_HEIGHT,
         text_color: tuple[int, int, int] = (255, 255, 255),  # White text
         bg_color: tuple[int, int, int] = (0, 0, 0),  # Black background
+        font_path: Optional[str] = None,
     ):
         super().__init__([])
         # Handle both single text and list of texts
@@ -39,6 +79,7 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             self.text_options = text
         self.current_text = self.text_options[0]  # Start with first option
         self.font_name = font_name
+        self._font_path = font_path
         self.font_size = font_size
         self.width = width
         self.height = height
@@ -90,6 +131,9 @@ class TextRenderer(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def _load_font(self):
         """Load the specified font"""
+        if self._font_path is not None and os.path.isfile(self._font_path):
+            self.font = ImageFont.truetype(self._font_path, self.font_size)
+            return
         try:
             # Try to load system font
             self.font = ImageFont.truetype(self.font_name, self.font_size)

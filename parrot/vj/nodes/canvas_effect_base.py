@@ -272,6 +272,10 @@ class GenerativeEffectBase(CanvasEffectBase):
         self.width = width
         self.height = height
 
+    def enter(self, context: mgl.Context):
+        """Allocate FBO at ``self.width`` x ``self.height`` (base class used 1920×1080 by default)."""
+        self._setup_gl_resources(context, self.width, self.height)
+
     def render(
         self, frame: Frame, scheme: ColorScheme, context: mgl.Context
     ) -> mgl.Framebuffer:

@@ -17,7 +17,7 @@ from parrot.vj.nodes.hot_sparks_effect import HotSparksEffect
 from parrot.vj.nodes.sparkle_field_effect import SparkleFieldEffect
 from parrot.vj.nodes.stage_blinders import StageBlinders
 from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
-from parrot.vj.nodes.text_renderer import TextRenderer
+from parrot.vj.nodes.text_renderer import TextRenderer, muro_font_path
 from parrot.vj.profiler import vj_profiler
 from parrot.fixtures.moving_head import MovingHead
 from parrot.director.mode_interpretations import get_interpreter
@@ -72,14 +72,16 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         prom_sparkles = SparkleFieldEffect()
         prom_title = TextRenderer(
             text="dmack",
-            font_name="Chalkboard SE",
-            font_size=200,
-            text_color=(255, 248, 252),
-            bg_color=(8, 10, 28),
+            font_name="Muro",
+            font_path=muro_font_path(),
+            font_size=440,
+            text_color=(255, 245, 200),
+            bg_color=(0, 0, 0),
         )
+        # SCREEN: black pixels from the text layer pass through so golden sparkles show behind
         prom_dmack_scene = LayerCompose(
             LayerSpec(prom_sparkles, BlendMode.NORMAL),
-            LayerSpec(prom_title, BlendMode.NORMAL),
+            LayerSpec(prom_title, BlendMode.SCREEN),
         )
 
         mode_switch = ModeSwitch(
