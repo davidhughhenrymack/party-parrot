@@ -38,12 +38,15 @@ class FixtureTypeDefinition:
     label: str
     builder: Callable[[FixtureSpec], FixtureBase]
     default_options: dict[str, int | float | bool] = field(default_factory=dict)
+    # DMX channel footprint (matches desktop FixtureBase width).
+    dmx_address_width: int = 1
 
     def to_dict(self) -> dict[str, object]:
         return {
             "key": self.key,
             "label": self.label,
             "default_options": dict(self.default_options),
+            "dmx_address_width": self.dmx_address_width,
         }
 
 
@@ -99,6 +102,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             spec,
         ),
         default_options={"width": 1},
+        dmx_address_width=1,
     ),
     "par_rgb": FixtureTypeDefinition(
         key="par_rgb",
@@ -107,6 +111,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ParRGB(spec.address, universe=_parse_universe(spec.universe)),
             spec,
         ),
+        dmx_address_width=7,
     ),
     "par_rgbawu": FixtureTypeDefinition(
         key="par_rgbawu",
@@ -115,6 +120,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ParRGBAWU(spec.address, universe=_parse_universe(spec.universe)),
             spec,
         ),
+        dmx_address_width=9,
     ),
     "chauvet_spot_110": FixtureTypeDefinition(
         key="chauvet_spot_110",
@@ -131,6 +137,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        dmx_address_width=12,
     ),
     "chauvet_spot_160": FixtureTypeDefinition(
         key="chauvet_spot_160",
@@ -147,6 +154,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        dmx_address_width=11,
     ),
     "chauvet_rogue_beam_r2": FixtureTypeDefinition(
         key="chauvet_rogue_beam_r2",
@@ -163,6 +171,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        dmx_address_width=15,
     ),
     "chauvet_intimidator_hybrid_140sr": FixtureTypeDefinition(
         key="chauvet_intimidator_hybrid_140sr",
@@ -185,6 +194,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_lower": 0,
             "tilt_upper": 270,
         },
+        dmx_address_width=19,
     ),
     "chauvet_intimidator_hybrid_140sr_13ch": FixtureTypeDefinition(
         key="chauvet_intimidator_hybrid_140sr_13ch",
@@ -207,6 +217,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_lower": 0,
             "tilt_upper": 270,
         },
+        dmx_address_width=13,
     ),
     "motionstrip_38": FixtureTypeDefinition(
         key="motionstrip_38",
@@ -222,16 +233,19 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        dmx_address_width=38,
     ),
     "five_beam_laser": FixtureTypeDefinition(
         key="five_beam_laser",
         label="Uking 5 Beam Laser",
         builder=lambda spec: _apply_transform(FiveBeamLaser(spec.address), spec),
+        dmx_address_width=13,
     ),
     "two_beam_laser": FixtureTypeDefinition(
         key="two_beam_laser",
         label="Oultia 2 Beam Laser",
         builder=lambda spec: _apply_transform(TwoBeamLaser(spec.address), spec),
+        dmx_address_width=10,
     ),
     "chauvet_slimpar_pro_q_5ch": FixtureTypeDefinition(
         key="chauvet_slimpar_pro_q_5ch",
@@ -242,26 +256,31 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        dmx_address_width=5,
     ),
     "chauvet_slimpar_pro_h_7ch": FixtureTypeDefinition(
         key="chauvet_slimpar_pro_h_7ch",
         label="Chauvet SlimPAR Pro H 7Ch",
         builder=lambda spec: _apply_transform(ChauvetSlimParProH_7Ch(spec.address), spec),
+        dmx_address_width=7,
     ),
     "chauvet_par_rgbawu": FixtureTypeDefinition(
         key="chauvet_par_rgbawu",
         label="Chauvet Par RGBAWU",
         builder=lambda spec: _apply_transform(ChauvetParRGBAWU(spec.address), spec),
+        dmx_address_width=7,
     ),
     "chauvet_derby": FixtureTypeDefinition(
         key="chauvet_derby",
         label="Chauvet Derby",
         builder=lambda spec: _apply_transform(ChauvetDerby(spec.address), spec),
+        dmx_address_width=6,
     ),
     "chauvet_rotosphere_28ch": FixtureTypeDefinition(
         key="chauvet_rotosphere_28ch",
         label="Chauvet Rotosphere 28Ch",
         builder=lambda spec: _apply_transform(ChauvetRotosphere_28Ch(spec.address), spec),
+        dmx_address_width=28,
     ),
     "chauvet_move_9ch": FixtureTypeDefinition(
         key="chauvet_move_9ch",
@@ -277,6 +296,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        dmx_address_width=12,
     ),
     "chauvet_colorband_pix_36ch": FixtureTypeDefinition(
         key="chauvet_colorband_pix_36ch",
@@ -285,8 +305,22 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ChauvetColorBandPiX_36Ch(spec.address),
             spec,
         ),
+        dmx_address_width=36,
     ),
 }
+
+
+@beartype
+def dmx_address_width_for_fixture(
+    fixture_type: str, options: dict[str, object]
+) -> int:
+    """DMX footprint for spacing cloned fixtures (matches FixtureBase.width)."""
+    if fixture_type == "manual_dimmer_channel":
+        return max(1, int(float(options.get("width", 1))))
+    definition = FIXTURE_TYPES.get(fixture_type)
+    if definition is None:
+        return 1
+    return definition.dmx_address_width
 
 
 def list_fixture_types() -> list[dict[str, object]]:

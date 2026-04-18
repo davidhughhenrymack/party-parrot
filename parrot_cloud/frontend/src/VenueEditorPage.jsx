@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createSceneController } from './sceneController.js';
 
-const isTestMode = new URLSearchParams(window.location.search).has('test_mode');
+import { isViewportWebGlDisabledForTests } from './viewportTestMode.js';
+
+const isTestMode = isViewportWebGlDisabledForTests();
 
 export default function VenueEditorPage({ venueId }) {
   const viewportRef = useRef(null);

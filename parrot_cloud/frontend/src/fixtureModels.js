@@ -75,16 +75,16 @@ export function resolveFixtureVisualModel(fixtureType) {
     return {
       kind: 'motionstrip',
       ...motionstripDimensions(8),
-      coneLength: 6.0,
-      coneRadius: bs * 1.4,
+      coneLength: 2.8,
+      coneRadius: bs * 1.85,
     };
   }
   if (fixtureType === 'chauvet_colorband_pix_36ch') {
     return {
       kind: 'motionstrip',
       ...motionstripDimensions(12),
-      coneLength: 6.0,
-      coneRadius: bs * 1.5,
+      coneLength: 2.8,
+      coneRadius: bs * 2.0,
     };
   }
   if (MOVING_HEAD_TYPES.has(fixtureType)) {
@@ -92,8 +92,8 @@ export function resolveFixtureVisualModel(fixtureType) {
     return {
       kind: 'moving_head',
       ...mh,
-      coneLength: 15.0,
-      coneRadius: bs * 0.4375,
+      coneLength: 6.5,
+      coneRadius: bs * 0.58,
     };
   }
   if (fixtureType === 'five_beam_laser' || fixtureType === 'two_beam_laser') {
@@ -101,16 +101,16 @@ export function resolveFixtureVisualModel(fixtureType) {
     return {
       kind: 'laser',
       ...lz,
-      coneLength: 12.0,
-      coneRadius: bs * 0.25,
+      coneLength: 5.0,
+      coneRadius: bs * 0.38,
     };
   }
   const par = parLikeDimensions();
   return {
     kind: 'bulb',
     ...par,
-    coneLength: 8.0,
-    coneRadius: bs * 0.75,
+    coneLength: 3.5,
+    coneRadius: bs * 1.0,
   };
 }
 

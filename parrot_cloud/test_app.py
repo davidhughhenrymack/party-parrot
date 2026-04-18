@@ -26,6 +26,7 @@ def test_bootstrap_endpoint_returns_active_venue(client):
     assert data["control_state"]["mode"] == "chill"
     assert data["fixture_runtime_state"]["version"] == 1
     assert data["fixture_runtime_state"]["fixtures"] == []
+    assert data.get("vj_preview") is None
     assert {scene_object["kind"] for scene_object in data["active_venue"]["scene_objects"]} == {
         "floor",
         "video_wall",
@@ -56,6 +57,31 @@ def test_runtime_fixture_state_post_broadcast_shape(client):
     assert data["fixtures"][0]["dimmer"] == 0.5
 
 
+def test_runtime_vj_preview_post_and_get(client):
+    from io import BytesIO
+
+    from PIL import Image
+
+    img = Image.new("RGB", (8, 8), color=(10, 200, 30))
+    buf = BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    jpeg = buf.getvalue()
+    post = client.post(
+        "/api/runtime/vj-preview",
+        data=jpeg,
+        headers={"Content-Type": "image/jpeg"},
+    )
+    assert post.status_code == 200
+    assert "updated_at" in post.get_json()
+    get_img = client.get("/api/runtime/vj-preview")
+    assert get_img.status_code == 200
+    assert get_img.mimetype == "image/jpeg"
+    assert len(get_img.data) >= len(jpeg) // 2
+    boot = client.get("/api/bootstrap").get_json()
+    assert boot["vj_preview"] is not None
+    assert boot["vj_preview"]["updated_at"] is not None
+
+
 def test_runtime_fixture_state_get_returns_current(client):
     client.post(
         "/api/runtime/fixture-state",
@@ -77,7 +103,16 @@ def test_fixture_types_endpoint(client):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert any(item["key"] == "par_rgb" for item in data["fixture_types"])
+    par_rgb = next(item for item in data["fixture_types"] if item["key"] == "par_rgb")
+    assert par_rgb["dmx_address_width"] == 7
+
+
+def test_dmx_address_width_for_fixture_helper():
+    from parrot_cloud.fixture_catalog import dmx_address_width_for_fixture
+
+    assert dmx_address_width_for_fixture("par_rgb", {}) == 7
+    assert dmx_address_width_for_fixture("manual_dimmer_channel", {"width": 4}) == 4
+    assert dmx_address_width_for_fixture("motionstrip_38", {}) == 38
 
 
 def test_asset_endpoint_serves_dj_silhouette(client):
@@ -184,6 +219,46 @@ def test_video_wall_and_fixture_endpoints(client):
     assert patched_fixture["universe"] == "default"
 
 
+def test_magic_repatch_fixtures_compact(client):
+    created = client.post("/api/venues", json={"name": "Magic Repatch Venue"})
+    assert created.status_code == 200
+    venue_id = created.get_json()["summary"]["id"]
+
+    client.post(
+        f"/api/venues/{venue_id}/fixtures",
+        json={
+            "id": "repatch-a",
+            "fixture_type": "par_rgb",
+            "address": 90,
+            "universe": "default",
+            "x": 1.0,
+            "y": 2.0,
+            "z": 3.0,
+            "options": {},
+        },
+    )
+    client.post(
+        f"/api/venues/{venue_id}/fixtures",
+        json={
+            "id": "repatch-b",
+            "fixture_type": "par_rgb",
+            "address": 400,
+            "universe": "default",
+            "x": 2.0,
+            "y": 2.0,
+            "z": 3.0,
+            "options": {},
+        },
+    )
+
+    repatch = client.post(f"/api/venues/{venue_id}/fixtures/magic-repatch")
+    assert repatch.status_code == 200
+    fixtures = repatch.get_json()["fixtures"]
+    by_id = {f["id"]: f for f in fixtures}
+    assert by_id["repatch-a"]["address"] == 1
+    assert by_id["repatch-b"]["address"] == 8
+
+
 def test_scene_object_patch_endpoint(client):
     bootstrap = client.get("/api/bootstrap").get_json()
     venue_id = bootstrap["active_venue"]["summary"]["id"]
@@ -202,3 +277,24 @@ def test_scene_object_patch_endpoint(client):
     assert dj_table["x"] == 42.0
     assert dj_table["y"] == 24.0
     assert dj_table["z"] == 3.5
+
+
+def test_patch_video_wall_does_not_reset_dj_table_position(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+
+    client.patch(
+        f"/api/venues/{venue_id}/scene-objects/dj_table",
+        json={"x": 1.25, "y": -4.5, "z": 0.9},
+    )
+
+    wall = client.patch(
+        f"/api/venues/{venue_id}/video-wall",
+        json={"y": -6.0, "z": 3.2},
+    )
+    assert wall.status_code == 200
+    data = wall.get_json()
+    dj = next(o for o in data["scene_objects"] if o["kind"] == "dj_table")
+    assert dj["x"] == 1.25
+    assert dj["y"] == -4.5
+    assert dj["z"] == 0.9

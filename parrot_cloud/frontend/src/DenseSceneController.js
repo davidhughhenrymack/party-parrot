@@ -6,16 +6,23 @@ import {
   resolveFixtureVisualModel,
 } from './fixtureModels.js';
 
-export function createNoopSceneController(viewportEl) {
-  if (viewportEl) {
-    viewportEl.textContent = '3D viewport disabled in test mode.';
+export function createNoopSceneController(
+  viewportEl,
+  message = '3D viewport disabled in test mode.',
+) {
+  if (viewportEl && message != null) {
+    viewportEl.textContent = message;
   }
   return {
     applyBootstrap() {},
+    applyVjPreviewUrl() {},
+    resetVideoWallToPlaceholder() {},
     updateFloorPreview() {},
+    updateVideoWallPreview() {},
     setView() {},
     setSelection() {},
     setInteractionMode() {},
+    setLightingMode() {},
     applyFixtureRuntimeState() {},
     destroy() {},
   };
@@ -56,10 +63,7 @@ export async function createSceneController({
     });
   } catch (error) {
     console.error('Failed to initialize 3D viewport:', error);
-    if (viewportEl) {
-      viewportEl.textContent = '3D viewport failed to load.';
-    }
-    return createNoopSceneController(viewportEl);
+    return createNoopSceneController(viewportEl, '3D viewport failed to load.');
   }
 }
 
@@ -92,7 +96,10 @@ function createThreeSceneController({
   };
   const fixtureDragSyncIntervalMs = 100;
   /** Upstage of table back edge (venue −y), meters — matches runtime / repository default. */
-  const DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.61;
+  /** 0 = silhouette plane flush to the table’s upstage edge (local −Y). */
+  const DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0;
+  /** Silhouette feet sit slightly below the table top surface (meters). */
+  const DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.02;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1b2430);
@@ -103,9 +110,11 @@ function createThreeSceneController({
 
   const perspectiveCamera = new THREE.PerspectiveCamera(48, 1, 0.1, 5000);
   const orthoCamera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 5000);
-  localState.activeCamera = orthoCamera;
+  /** Venue floor is Z-up; perspective editing uses Z-up. OrbitControls must be constructed with this basis. */
+  perspectiveCamera.up.set(0, 0, 1);
+  localState.activeCamera = perspectiveCamera;
 
-  const orbitControls = new OrbitControls(localState.activeCamera, renderer.domElement);
+  const orbitControls = new OrbitControls(perspectiveCamera, renderer.domElement);
   orbitControls.enableDamping = true;
   orbitControls.enableZoom = true;
   orbitControls.rotateSpeed = 0.9;
@@ -113,16 +122,56 @@ function createThreeSceneController({
   orbitControls.minPolarAngle = 0.12;
   orbitControls.maxPolarAngle = Math.PI - 0.12;
 
-  const transformControls = new TransformControls(localState.activeCamera, renderer.domElement);
+  const transformControls = new TransformControls(perspectiveCamera, renderer.domElement);
   transformControls.setMode('translate');
   transformControls.setSpace('world');
   transformControls.size = 0.8;
   scene.add(transformControls.getHelper());
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+  scene.add(ambientLight);
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
   directionalLight.position.set(10, -14, 18);
   scene.add(directionalLight);
+
+  const LIGHTING_PRESETS = {
+    default: {
+      background: 0x1b2430,
+      ambient: { color: 0xffffff, intensity: 0.9 },
+      directional: { color: 0xffffff, intensity: 1.0, x: 10, y: -14, z: 18 },
+      floorColor: 0x13202d,
+    },
+    bright: {
+      background: 0x2a3444,
+      ambient: { color: 0xffffff, intensity: 1.15 },
+      directional: { color: 0xffffff, intensity: 0.65, x: 8, y: -12, z: 20 },
+      floorColor: 0x1c2a3a,
+    },
+    contrast: {
+      background: 0x0c1016,
+      ambient: { color: 0xb8c4d4, intensity: 0.32 },
+      directional: { color: 0xffffff, intensity: 1.55, x: 12, y: -16, z: 14 },
+      floorColor: 0x0a121a,
+    },
+    night: {
+      background: 0x05070c,
+      ambient: { color: 0x4466aa, intensity: 0.22 },
+      directional: { color: 0xffe8cc, intensity: 0.5, x: 6, y: -10, z: 12 },
+      floorColor: 0x060a10,
+    },
+  };
+
+  function setLightingMode(mode) {
+    const preset = LIGHTING_PRESETS[mode] ?? LIGHTING_PRESETS.default;
+    scene.background = new THREE.Color(preset.background);
+    ambientLight.color.setHex(preset.ambient.color);
+    ambientLight.intensity = preset.ambient.intensity;
+    directionalLight.color.setHex(preset.directional.color);
+    directionalLight.intensity = preset.directional.intensity;
+    directionalLight.position.set(preset.directional.x, preset.directional.y, preset.directional.z);
+    floorMaterial.color.setHex(preset.floorColor);
+    floorMaterial.needsUpdate = true;
+  }
 
   const sceneContent = new THREE.Group();
   scene.add(sceneContent);
@@ -138,6 +187,8 @@ function createThreeSceneController({
 
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
+
+  let videoWallPlaceholderCanvas = null;
 
   const videoWallTexture = createVideoWallTexture();
   const djSilhouetteTexture = createDjSilhouetteTexture();
@@ -251,11 +302,18 @@ function createThreeSceneController({
     return toScenePosition(floorObject.x, floorObject.y, 0);
   }
 
-  function createVideoWallTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 18;
-    const context = canvas.getContext('2d');
+  /**
+   * OrbitControls maps camera offset into Y-up spherical space using _quat from the camera's
+   * `up` at construction. When we switch activeCamera (Z-up perspective vs Y-up top ortho, etc.)
+   * we must refresh that basis or mouse orbit drags couple azimuth/polar incorrectly.
+   */
+  function syncOrbitControlsSphericalBasis(controls) {
+    const yUp = new THREE.Vector3(0, 1, 0);
+    controls._quat.setFromUnitVectors(controls.object.up, yUp);
+    controls._quatInverse.copy(controls._quat).invert();
+  }
+
+  function paintVideoWallPlaceholderCanvas(canvas, context) {
     const palette = [
       '#ff4d6d',
       '#fb7185',
@@ -284,12 +342,54 @@ function createThreeSceneController({
     for (let band = 0; band < canvas.height; band += 4) {
       context.fillRect(0, band, canvas.width, 1);
     }
+  }
+
+  function createVideoWallTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 18;
+    const context = canvas.getContext('2d');
+    paintVideoWallPlaceholderCanvas(canvas, context);
+    videoWallPlaceholderCanvas = canvas;
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
     return texture;
+  }
+
+  function resetVideoWallToPlaceholder() {
+    if (!videoWallPlaceholderCanvas) {
+      return;
+    }
+    const ctx = videoWallPlaceholderCanvas.getContext('2d');
+    paintVideoWallPlaceholderCanvas(videoWallPlaceholderCanvas, ctx);
+    videoWallTexture.image = videoWallPlaceholderCanvas;
+    videoWallTexture.magFilter = THREE.NearestFilter;
+    videoWallTexture.minFilter = THREE.NearestFilter;
+    videoWallTexture.colorSpace = THREE.SRGBColorSpace;
+    videoWallTexture.needsUpdate = true;
+  }
+
+  function applyVjPreviewUrl(url) {
+    new THREE.TextureLoader().load(
+      url,
+      (loadedTex) => {
+        const img = loadedTex.image;
+        loadedTex.dispose();
+        videoWallTexture.image = img;
+        videoWallTexture.colorSpace = THREE.SRGBColorSpace;
+        videoWallTexture.generateMipmaps = true;
+        videoWallTexture.minFilter = THREE.LinearMipmapLinearFilter;
+        videoWallTexture.magFilter = THREE.LinearFilter;
+        videoWallTexture.needsUpdate = true;
+      },
+      undefined,
+      () => {
+        resetVideoWallToPlaceholder();
+      }
+    );
   }
 
   function createDjSilhouetteTexture() {
@@ -339,10 +439,19 @@ function createThreeSceneController({
         entity.helperMaterial.opacity = isSelected ? 0.22 : fixtureFocusedSelection ? 0.056 : 0.08;
       }
       if (entity.coneMaterial) {
-        const baseOpacity = fixtureFocusedSelection && !isSelected
-          ? entity.baseConeOpacity * 0.7
-          : entity.baseConeOpacity;
-        entity.coneMaterial.opacity = isSelected ? 0.34 : baseOpacity;
+        const ro = entity.runtimeConeOpacity ?? 0;
+        if (ro <= 1e-5) {
+          entity.coneMaterial.opacity = 0;
+        } else {
+          let mul = 1.0;
+          if (fixtureFocusedSelection && !isSelected) {
+            mul *= 0.62;
+          }
+          if (isSelected) {
+            mul *= 1.28;
+          }
+          entity.coneMaterial.opacity = Math.min(1, ro * mul);
+        }
       }
     });
   }
@@ -393,12 +502,10 @@ function createThreeSceneController({
 
   function syncInteractionMode() {
     if (localState.interactionMode === 'rotate') {
-      const floorCenterTarget = getFloorCenterTarget();
       orbitControls.enabled = true;
       orbitControls.enableRotate = localState.currentView === 'perspective';
       orbitControls.enablePan = false;
       orbitControls.screenSpacePanning = false;
-      orbitControls.target.copy(floorCenterTarget);
       orbitControls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
       orbitControls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
       renderer.domElement.style.cursor = 'grab';
@@ -554,24 +661,32 @@ function createThreeSceneController({
       orbitControls.enableRotate = true;
     } else if (viewName === 'front') {
       localState.activeCamera = orthoCamera;
-      orthoCamera.position.set(0, -scale.worldDepth * 1.6, flatTarget.z);
+      orthoCamera.zoom = 1;
+      const frontEye = flatTarget.clone();
+      frontEye.y -= scale.worldDepth * 1.6;
+      orthoCamera.position.copy(frontEye);
       orthoCamera.up.set(0, 0, 1);
       orthoCamera.lookAt(flatTarget);
       orbitControls.enableRotate = false;
     } else if (viewName === 'side') {
       localState.activeCamera = orthoCamera;
-      orthoCamera.position.set(scale.worldWidth * 1.6, 0, flatTarget.z);
+      orthoCamera.zoom = 1;
+      const sideEye = flatTarget.clone();
+      sideEye.x += scale.worldWidth * 1.6;
+      orthoCamera.position.copy(sideEye);
       orthoCamera.up.set(0, 0, 1);
       orthoCamera.lookAt(flatTarget);
       orbitControls.enableRotate = false;
     } else {
       localState.activeCamera = orthoCamera;
+      orthoCamera.zoom = 1;
       orthoCamera.position.set(0, 0, scale.maxDimension * 3.2);
       orthoCamera.up.set(0, 1, 0);
       orthoCamera.lookAt(floorCenterTarget);
       orbitControls.enableRotate = false;
     }
     orbitControls.object = localState.activeCamera;
+    syncOrbitControlsSphericalBasis(orbitControls);
     orbitControls.target.copy(viewName === 'perspective' ? floorCenterTarget : flatTarget);
     orbitControls.update();
     transformControls.camera = localState.activeCamera;
@@ -583,10 +698,14 @@ function createThreeSceneController({
     syncInteractionMode();
   }
 
+  /** Max cone opacity when dimmer is 1; at dimmer 0 the cone is fully faded out. */
+  const CONE_OPACITY_AT_FULL_DIM = 0.5;
+
   function applyFixtureRuntimeVisual(entity, vis, rgb, dim) {
-    const r = Math.min(1, rgb[0] * dim);
-    const g = Math.min(1, rgb[1] * dim);
-    const b = Math.min(1, rgb[2] * dim);
+    const dimClamped = Math.max(0, Math.min(1, dim));
+    const r = Math.min(1, rgb[0] * dimClamped);
+    const g = Math.min(1, rgb[1] * dimClamped);
+    const b = Math.min(1, rgb[2] * dimClamped);
     entity.bodyMaterial.color.setRGB(r, g, b);
     if (entity.coneMaterial) {
       entity.coneMaterial.color.setRGB(
@@ -594,8 +713,8 @@ function createThreeSceneController({
         Math.min(1, g * 1.15),
         Math.min(1, b * 1.15)
       );
-      const base = entity.baseConeOpacity ?? 0.18;
-      entity.coneMaterial.opacity = base * 0.35 + dim * (base * 1.65);
+      entity.runtimeConeOpacity = dimClamped * CONE_OPACITY_AT_FULL_DIM;
+      entity.coneMaterial.opacity = entity.runtimeConeOpacity;
     }
     if (entity.lensMaterial) {
       entity.lensMaterial.color.setRGB(
@@ -603,7 +722,7 @@ function createThreeSceneController({
         Math.min(1, g + 0.12),
         Math.min(1, b + 0.12)
       );
-      entity.lensMaterial.opacity = 0.35 + dim * 0.58;
+      entity.lensMaterial.opacity = 0.35 + dimClamped * 0.58;
     }
     if (entity.aimGroup) {
       const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
@@ -630,6 +749,10 @@ function createThreeSceneController({
       }
       const vis = byId.get(String(entity.fixture.id));
       if (!vis || !Array.isArray(vis.rgb) || vis.rgb.length < 3) {
+        if (entity.coneMaterial) {
+          entity.runtimeConeOpacity = 0;
+          entity.coneMaterial.opacity = 0;
+        }
         return;
       }
       const dim = typeof vis.dimmer === 'number' ? vis.dimmer : 0;
@@ -671,7 +794,7 @@ function createThreeSceneController({
     const coneMaterial = new THREE.MeshBasicMaterial({
       color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
@@ -722,7 +845,7 @@ function createThreeSceneController({
       helperMaterial: null,
       coneMaterial,
       lensMaterial,
-      baseConeOpacity: 0.18,
+      runtimeConeOpacity: 0,
       aimGroup: placed.aimGroup ?? null,
       stripPanGroup: placed.stripPanGroup ?? null,
       profile,
@@ -801,8 +924,55 @@ function createThreeSceneController({
       group,
       bodyMaterial,
       secondaryMaterials: [screenMaterial],
-      baseConeOpacity: 0,
     });
+  }
+
+  function updateVideoWallPreview({ width, height }) {
+    if (!localState.venueSnapshot) {
+      return;
+    }
+    const entity = localState.entityMap.get('video_wall');
+    if (!entity) {
+      return;
+    }
+    const prev = localState.venueSnapshot.video_wall;
+    const vw = { ...prev };
+    if (Number.isFinite(width) && width > 0) {
+      vw.width = width;
+    }
+    if (Number.isFinite(height) && height > 0) {
+      vw.height = height;
+    }
+    localState.venueSnapshot.video_wall = vw;
+    const sceneObject = getSceneObject(localState.venueSnapshot, 'video_wall');
+    if (sceneObject) {
+      if (Number.isFinite(width) && width > 0) {
+        sceneObject.width = width;
+      }
+      if (Number.isFinite(height) && height > 0) {
+        sceneObject.height = height;
+      }
+    }
+
+    const wasSelected = localState.selectedEntityKey === 'video_wall';
+    transformControls.detach();
+    sceneContent.remove(entity.group);
+    entity.group.traverse((child) => {
+      if (child.geometry) {
+        child.geometry.dispose();
+      }
+    });
+    localState.entityMap.delete('video_wall');
+    createVideoWallEntity(vw);
+    if (wasSelected) {
+      const nextEntity = localState.entityMap.get('video_wall');
+      if (nextEntity) {
+        localState.selectedEntityKey = 'video_wall';
+        transformControls.attach(nextEntity.group);
+        applySelectionVisuals();
+      }
+    }
+    resizeRenderer();
   }
 
   function createDjBoothEntity(djTable, djCutout) {
@@ -838,8 +1008,11 @@ function createThreeSceneController({
 
     const depth = Math.max(djTable.depth, 0.02);
     const silH = Math.max(djCutout.height, 0.1);
+    const tableHalfH = Math.max(djTable.height, 0.2) / 2;
     const behindLocalY = -(depth / 2 + DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M);
-    const cutLocalZ = silH / 2 - djTable.z;
+    /** Feet sit along local −Z from the plane center (texture + rotation.z); place feet just under table top. */
+    const cutLocalZ =
+      tableHalfH + silH / 2 - DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M;
 
     const cutout = new THREE.Mesh(
       new THREE.PlaneGeometry(Math.max(djCutout.width, 0.3), Math.max(djCutout.height, 0.5)),
@@ -995,8 +1168,10 @@ function createThreeSceneController({
       const rot = entity.group.rotation;
       const depth = Math.max(entity.djTable.depth, 0.02);
       const silH = Math.max(entity.djCutout.height, 0.1);
+      const tableHalfH = Math.max(entity.djTable.height, 0.2) / 2;
       const behindLocalY = -(depth / 2 + DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M);
-      const cutLocalZ = silH / 2 - newTable.z;
+      const cutLocalZ =
+        tableHalfH + silH / 2 - DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M;
       const offset = new THREE.Vector3(0, behindLocalY, cutLocalZ);
       offset.applyEuler(rot);
       const cutVenue = {
@@ -1050,10 +1225,14 @@ function createThreeSceneController({
 
   return {
     applyBootstrap,
+    applyVjPreviewUrl,
+    resetVideoWallToPlaceholder,
     updateFloorPreview,
+    updateVideoWallPreview,
     setView,
     setSelection,
     setInteractionMode,
+    setLightingMode,
     applyFixtureRuntimeState,
     destroy() {
       localState.destroyed = true;

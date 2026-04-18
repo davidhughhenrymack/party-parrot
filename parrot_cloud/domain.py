@@ -288,6 +288,7 @@ class RuntimeBootstrap:
     fixture_runtime_state: JsonDict = field(
         default_factory=lambda: {"version": 1, "fixtures": []}
     )
+    vj_preview: JsonDict | None = None
 
     def to_dict(self) -> JsonDict:
         return {
@@ -297,6 +298,9 @@ class RuntimeBootstrap:
             ),
             "control_state": self.control_state.to_dict(),
             "fixture_runtime_state": dict(self.fixture_runtime_state),
+            "vj_preview": (
+                None if self.vj_preview is None else dict(self.vj_preview)
+            ),
         }
 
     @classmethod
@@ -305,6 +309,9 @@ class RuntimeBootstrap:
         frs = data.get("fixture_runtime_state")
         if not isinstance(frs, dict):
             frs = {"version": 1, "fixtures": []}
+        vp = data.get("vj_preview")
+        if vp is not None and not isinstance(vp, dict):
+            vp = None
         return cls(
             venues=tuple(
                 VenueSummary.from_dict(dict(venue_data))
@@ -317,4 +324,5 @@ class RuntimeBootstrap:
             ),
             control_state=ControlState.from_dict(dict(data.get("control_state", {}))),
             fixture_runtime_state=dict(frs),
+            vj_preview=dict(vp) if vp is not None else None,
         )

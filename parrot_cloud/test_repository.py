@@ -30,6 +30,7 @@ def test_seed_creates_demo_venue(venue_repository):
         "dj_table",
         "dj_cutout",
     }
+    assert bootstrap.vj_preview is None
 
 
 def test_seed_is_idempotent(venue_repository):
@@ -84,6 +85,54 @@ def test_fixture_crud_updates_snapshot(venue_repository):
     assert not any(
         fixture.id == "integration-test-fixture" for fixture in deleted_snapshot.fixtures
     )
+
+
+def test_video_wall_update_does_not_reset_dj_table_scene_object(venue_repository):
+    bootstrap = venue_repository.get_runtime_bootstrap()
+    venue_id = bootstrap.active_venue.summary.id
+
+    moved = venue_repository.update_scene_object(
+        venue_id,
+        "dj_table",
+        {
+            "x": 5.5,
+            "y": -3.25,
+            "z": 1.05,
+            "rotation_x": 0.0,
+            "rotation_y": 0.0,
+            "rotation_z": 0.1,
+        },
+    )
+    dj_before = next(o for o in moved.scene_objects if o.kind == "dj_table")
+    assert dj_before.x == 5.5
+    assert dj_before.y == -3.25
+
+    after_wall = venue_repository.update_video_wall(
+        venue_id,
+        {"video_wall_y": -7.5},
+    )
+    dj_after = next(o for o in after_wall.scene_objects if o.kind == "dj_table")
+    assert dj_after.x == dj_before.x
+    assert dj_after.y == dj_before.y
+    assert dj_after.z == dj_before.z
+    assert dj_after.rotation_z == dj_before.rotation_z
+
+
+def test_active_venue_persists_across_seed_runs(venue_repository):
+    bootstrap = venue_repository.get_runtime_bootstrap()
+    demo_id = bootstrap.active_venue.summary.id
+    other = venue_repository.create_venue("Other Hall")
+    other_id = other.summary.id
+    assert other_id != demo_id
+
+    venue_repository.update_control_state({"active_venue_id": other_id})
+
+    venue_repository.ensure_seed_data()
+
+    after = venue_repository.get_runtime_bootstrap()
+    assert after.control_state.active_venue_id == other_id
+    assert after.active_venue is not None
+    assert after.active_venue.summary.id == other_id
 
 
 def test_initial_control_state_tracks_active_seed_venue(monkeypatch, tmp_path):

@@ -1,6 +1,9 @@
-export function createNoopSceneController(viewportEl) {
-  if (viewportEl) {
-    viewportEl.textContent = '3D viewport disabled in test mode.';
+export function createNoopSceneController(
+  viewportEl,
+  message = '3D viewport disabled in test mode.',
+) {
+  if (viewportEl && message != null) {
+    viewportEl.textContent = message;
   }
   return {
     applyBootstrap() {},
@@ -40,10 +43,7 @@ export async function createSceneController({
     });
   } catch (error) {
     console.error('Failed to initialize 3D viewport:', error);
-    if (viewportEl) {
-      viewportEl.textContent = '3D viewport failed to load.';
-    }
-    return createNoopSceneController(viewportEl);
+    return createNoopSceneController(viewportEl, '3D viewport failed to load.');
   }
 }
 

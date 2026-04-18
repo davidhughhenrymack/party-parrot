@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
+import io
 import time
 from urllib.parse import urlparse
 import moderngl_window as mglw
 import moderngl as mgl
 from beartype import beartype
 import numpy as np
+from typing import Any
 
 from parrot.audio.audio_analyzer import AudioAnalyzer
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
+from parrot.director.mode import Mode
 from parrot.gl_display_mode import EditorDisplayMode
 from parrot.state import State
 from parrot.utils.dmx_utils import Universe, get_controller
@@ -23,6 +26,26 @@ from parrot.director.themes import themes
 from parrot.vj.vj_mode import VJMode, vj_mode_menu_label
 from parrot.runtime_venue_client import RuntimeVenueClient
 from parrot.venue_runtime import get_runtime_venues
+
+
+@beartype
+def _encode_texture_rgb_as_jpeg(tex: Any) -> bytes | None:
+    """Read an RGB texture from the VJ/offscreen FBO and return JPEG bytes."""
+    from PIL import Image
+
+    w, h = tex.size
+    if w < 2 or h < 2:
+        return None
+    raw = tex.read()
+    img = Image.frombuffer("RGB", (w, h), raw, "raw", "RGB", 0, 1)
+    img = img.transpose(Image.FLIP_TOP_BOTTOM)
+    max_w = 1280
+    if w > max_w:
+        nh = max(2, int(round(h * (max_w / w))))
+        img = img.resize((max_w, nh), Image.Resampling.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85, optimize=True)
+    return buf.getvalue()
 
 
 def run_gl_window_app(args):
@@ -511,6 +534,7 @@ def run_gl_window_app(args):
 
     # Track window size for resize detection
     last_window_size = window.size
+    last_vj_preview_push_mono = -1000.0
 
     while not window.is_closing:
         current_time = time.perf_counter()
@@ -606,6 +630,21 @@ def run_gl_window_app(args):
                 display_quad.render(mgl.TRIANGLE_STRIP)
             except Exception as e:
                 print(f"Error displaying to screen: {e}")
+
+        if (
+            runtime_client is not None
+            and state.editor_display_mode == EditorDisplayMode.VJ
+            and rendered_fbo
+            and rendered_fbo.color_attachments
+        ):
+            now_mono = time.perf_counter()
+            if now_mono - last_vj_preview_push_mono >= 30.0:
+                jpeg = _encode_texture_rgb_as_jpeg(rendered_fbo.color_attachments[0])
+                if jpeg is not None:
+                    if runtime_client.push_vj_preview_jpeg(jpeg):
+                        last_vj_preview_push_mono = now_mono
+                    else:
+                        last_vj_preview_push_mono = now_mono
 
         # Restore viewport before rendering overlay (imgui manages its own viewport)
         ctx.viewport = (0, 0, window_width, window_height)

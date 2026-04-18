@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_sock import Sock
 
 from parrot_cloud.database import get_repo_root
@@ -132,6 +132,23 @@ def create_app() -> Flask:
         payload = repository.set_fixture_runtime_state(dict(data))
         hub.broadcast({"type": "fixture_runtime_state", "data": payload})
         return jsonify(payload)
+
+    @app.get("/api/runtime/vj-preview")
+    def get_runtime_vj_preview():
+        blob = repository.get_vj_preview_jpeg()
+        if blob is None:
+            return Response(status=404)
+        return Response(blob, mimetype="image/jpeg")
+
+    @app.post("/api/runtime/vj-preview")
+    def post_runtime_vj_preview():
+        raw = request.get_data()
+        try:
+            info = repository.set_vj_preview_jpeg(raw)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        hub.broadcast({"type": "vj_preview", "data": info})
+        return jsonify(info)
 
     @app.get("/api/runtime/active-venue")
     def runtime_active_venue():
@@ -280,6 +297,17 @@ def create_app() -> Flask:
             scene_object_kind,
             request.get_json(force=True),
         )
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.post("/api/venues/<venue_id>/fixtures/magic-repatch")
+    def magic_repatch_fixtures(venue_id: str):
+        try:
+            snapshot = repository.magic_repatch_fixtures_compact(venue_id)
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 

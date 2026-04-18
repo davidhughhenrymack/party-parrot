@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
+import time
 import uuid
 
 from beartype import beartype
@@ -23,6 +25,7 @@ from parrot_cloud.models import (
     VenueModel,
 )
 from parrot_cloud.database import create_session
+from parrot_cloud.fixture_catalog import dmx_address_width_for_fixture
 from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import parse_vj_mode_string
@@ -32,8 +35,9 @@ DJ_HEIGHT_METERS = 1.8288
 DJ_TABLE_HEIGHT_METERS = 1.0668
 DJ_TABLE_DEPTH_METERS = 1.2192
 DJ_TABLE_WIDTH_METERS = 2.4384
-# Upstage of the table back edge (venue −y), ~2 ft — silhouette is derived from table + this gap.
-DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.61
+# Silhouette is centered on the DJ table’s upstage edge; extra meters further upstage (optional).
+DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.0
+DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.02
 DISPLAY_MODE_VALUES = {"venue", "dmx_heatmap", "vj"}
 
 
@@ -79,6 +83,8 @@ STANDARD_SCENE_OBJECT_ORDER = (
 class VenueRepository:
     def __init__(self) -> None:
         self._fixture_runtime_state: dict[str, object] = {"version": 1, "fixtures": []}
+        self._vj_preview_jpeg: bytes | None = None
+        self._vj_preview_updated_at: float | None = None
 
     def get_fixture_runtime_state(self) -> dict[str, object]:
         return dict(self._fixture_runtime_state)
@@ -129,6 +135,18 @@ class VenueRepository:
         self._fixture_runtime_state = {"version": version, "fixtures": normalized}
         return self.get_fixture_runtime_state()
 
+    def get_vj_preview_jpeg(self) -> bytes | None:
+        return self._vj_preview_jpeg
+
+    def set_vj_preview_jpeg(self, data: bytes) -> dict[str, object]:
+        if len(data) > 5 * 1024 * 1024:
+            raise ValueError("VJ preview image too large")
+        if len(data) < 3 or data[0:3] != b"\xff\xd8\xff":
+            raise ValueError("VJ preview must be a JPEG")
+        self._vj_preview_jpeg = bytes(data)
+        self._vj_preview_updated_at = time.time()
+        return {"updated_at": float(self._vj_preview_updated_at)}
+
     def list_venue_summaries(self) -> list[VenueSummary]:
         with _session_scope() as session:
             venues = session.scalars(select(VenueModel).order_by(VenueModel.name)).all()
@@ -138,11 +156,19 @@ class VenueRepository:
         venues = tuple(self.list_venue_summaries())
         active_venue = self.get_active_venue_snapshot()
         control_state = self.get_control_state()
+        vj_blob = self._vj_preview_jpeg
+        vj_ts = self._vj_preview_updated_at
+        vj_preview = (
+            None
+            if vj_blob is None or vj_ts is None
+            else {"updated_at": float(vj_ts)}
+        )
         return RuntimeBootstrap(
             venues=venues,
             active_venue=active_venue,
             control_state=control_state,
             fixture_runtime_state=self.get_fixture_runtime_state(),
+            vj_preview=vj_preview,
         )
 
     def get_control_state(self) -> ControlState:
@@ -445,6 +471,40 @@ class VenueRepository:
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
+    @beartype
+    def magic_repatch_fixtures_compact(self, venue_id: str) -> VenueSnapshot:
+        """Assign DMX addresses per universe starting at 1 with no gaps (fixed order)."""
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+
+            by_universe: dict[str, list[FixtureModel]] = defaultdict(list)
+            for fx in venue.fixtures:
+                by_universe[str(fx.universe)].append(fx)
+
+            for universe, fixtures in by_universe.items():
+                fixtures.sort(key=lambda f: (f.order_index, f.id))
+                next_addr = 1
+                for fx in fixtures:
+                    w = dmx_address_width_for_fixture(
+                        str(fx.fixture_type),
+                        dict(fx.options or {}),
+                    )
+                    if next_addr + w - 1 > 512:
+                        raise ValueError(
+                            f"Universe {universe!r}: need more than 512 channels "
+                            f"(next slot {next_addr}, footprint {w}). "
+                            "Move some fixtures to another universe first."
+                        )
+                    fx.address = next_addr
+                    next_addr += w
+
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
     def ensure_seed_data(self) -> RuntimeBootstrap:
         for seed in build_seed_venues():
             self._upsert_seed(seed)
@@ -457,13 +517,13 @@ class VenueRepository:
                 venue = VenueModel(
                     slug=seed.slug,
                     name=seed.name,
+                    active=seed.active,
                 )
                 session.add(venue)
                 session.flush()
 
             venue.name = seed.name
             venue.archived = seed.archived
-            venue.active = seed.active
             venue.floor_width = seed.floor_width
             venue.floor_depth = seed.floor_depth
             venue.floor_height = seed.floor_height
@@ -505,10 +565,6 @@ class VenueRepository:
                 fixture_model.options = dict(fixture_spec.options)
 
             self._touch_venue(venue)
-
-            if seed.active:
-                control_state = self._get_or_create_control_state(session)
-                self._set_active_venue(session, control_state, venue.id)
 
     def _touch_venue(self, venue: VenueModel) -> None:
         venue.revision = int(venue.revision) + 1
@@ -688,13 +744,17 @@ class VenueRepository:
         defaults = self._default_scene_objects(venue)
         for order_index, scene_object_spec in enumerate(defaults):
             scene_object = existing_by_kind.get(scene_object_spec.kind)
+            created = False
             if scene_object is None:
                 scene_object = SceneObjectModel(id=scene_object_spec.id, venue_id=venue.id)
                 session.add(scene_object)
                 venue.scene_objects.append(scene_object)
+                created = True
             if not scene_object.kind:
                 scene_object.kind = scene_object_spec.kind
-            if scene_object.id == scene_object_spec.id and scene_object.options in (None, {}):
+            # Only apply default geometry when inserting a new row. Existing objects (e.g. dj_table
+            # with empty options) must not be overwritten on unrelated updates (video wall, etc.).
+            if created:
                 self._apply_scene_object_spec(scene_object, scene_object_spec, order_index)
             scene_object.order_index = order_index
         self._normalize_metric_scene_units(venue)
@@ -746,7 +806,9 @@ class VenueRepository:
                 kind="dj_cutout",
                 x=0.0,
                 y=table_y - table_depth / 2.0 - DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M,
-                z=DJ_HEIGHT_METERS / 2.0,
+                z=table_height
+                + DJ_HEIGHT_METERS / 2.0
+                - DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M,
                 width=0.9,
                 height=DJ_HEIGHT_METERS,
                 depth=0.05,

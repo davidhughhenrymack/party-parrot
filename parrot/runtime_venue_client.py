@@ -68,6 +68,21 @@ class RuntimeVenueClient:
             with self._fixture_push_lock:
                 self._last_fixture_payload_json = None
 
+    def push_vj_preview_jpeg(self, jpeg_bytes: bytes) -> bool:
+        """Upload a JPEG snapshot of the VJ framebuffer (caller controls cadence, e.g. every 30s)."""
+        if self._stop_event.is_set():
+            return False
+        try:
+            requests.post(
+                f"{self.base_url}/api/runtime/vj-preview",
+                data=jpeg_bytes,
+                headers={"Content-Type": "image/jpeg"},
+                timeout=15.0,
+            ).raise_for_status()
+            return True
+        except Exception:
+            return False
+
     def bootstrap(self) -> None:
         response = requests.get(f"{self.base_url}/api/runtime/bootstrap", timeout=5)
         response.raise_for_status()

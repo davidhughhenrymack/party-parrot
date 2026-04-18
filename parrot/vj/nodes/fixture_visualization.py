@@ -28,8 +28,10 @@ import numpy as np
 import math
 from parrot.venue_runtime import get_runtime_fixtures, get_runtime_manual_group
 
-# Upstage of table back edge (venue −y); keep in sync with parrot_cloud.repository default.
-DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.61
+# Extra offset upstage (−venue y) beyond the table’s upstage face; 0 = silhouette flush to that edge.
+DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.0
+# Silhouette feet sit slightly below the table top; keep in sync with DenseSceneController.js.
+DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.02
 
 
 @beartype
@@ -175,8 +177,6 @@ class FixtureVisualization(GenerativeEffectBase):
         video_wall = snapshot.scene_object("video_wall")
         dj_table = snapshot.scene_object("dj_table")
         dj_cutout = snapshot.scene_object("dj_cutout")
-        if floor is None:
-            return {}
 
         def to_room_position(x: float, y: float, z: float) -> tuple[float, float, float]:
             return (
@@ -185,23 +185,35 @@ class FixtureVisualization(GenerativeEffectBase):
                 y,
             )
 
+        # Venue editor persists floor size on the venue row and in the floor scene object.
+        # Use snapshot floor fields whenever the floor object is missing so the desktop
+        # room matches the central DB instead of Room3DRenderer defaults (10×10).
+        floor_width = max(float(snapshot.floor_width), 0.5)
+        floor_depth = max(float(snapshot.floor_depth), 0.5)
+        room_height = max(float(snapshot.floor_height), 0.5)
+        if floor is not None:
+            floor_width = max(floor.width, 0.5)
+            floor_depth = max(floor.height, 0.5)
+            room_height = float(floor.options.get("room_height", snapshot.floor_height))
+
         layout: dict[str, dict[str, float | tuple[float, float, float]]] = {
             "floor": {
                 "center_x": 0.0,
                 "center_z": 0.0,
-                "width": max(floor.width, 0.5),
-                "depth": max(floor.height, 0.5),
-                "thickness": max(floor.depth, 0.02),
-                "rotation_x": floor.rotation_x,
-                "rotation_y": floor.rotation_y,
-                "rotation_z": floor.rotation_z,
-                "source_width": max(floor.width, 1.0),
-                "source_depth": max(floor.height, 1.0),
+                "width": floor_width,
+                "depth": floor_depth,
+                "thickness": max(floor.depth, 0.02) if floor is not None else 0.08,
+                "rotation_x": floor.rotation_x if floor is not None else 0.0,
+                "rotation_y": floor.rotation_y if floor is not None else 0.0,
+                "rotation_z": floor.rotation_z if floor is not None else 0.0,
+                "source_width": max(floor_width, 1.0),
+                "source_depth": max(floor_depth, 1.0),
                 "source_centered": True,
-                "room_height": float(floor.options.get("room_height", snapshot.floor_height)),
+                "room_height": room_height,
             }
         }
 
+        vw = snapshot.video_wall
         if video_wall is not None:
             layout["video_wall"] = {
                 "position": to_room_position(video_wall.x, video_wall.y, video_wall.z),
@@ -211,6 +223,16 @@ class FixtureVisualization(GenerativeEffectBase):
                 "rotation_x": video_wall.rotation_x,
                 "rotation_y": video_wall.rotation_y,
                 "rotation_z": video_wall.rotation_z,
+            }
+        else:
+            layout["video_wall"] = {
+                "position": to_room_position(vw.x, vw.y, vw.z),
+                "width": max(vw.width, 0.2),
+                "height": max(vw.height, 0.2),
+                "depth": max(vw.depth, 0.02),
+                "rotation_x": 0.0,
+                "rotation_y": 0.0,
+                "rotation_z": 0.0,
             }
 
         if dj_table is not None:
@@ -231,12 +253,15 @@ class FixtureVisualization(GenerativeEffectBase):
         if dj_table is not None and dj_cutout is not None:
             sil_h = max(float(dj_cutout.height), 0.1)
             depth = max(float(dj_table.depth), 0.02)
-            tz = float(dj_table.z)
+            table_h = max(float(dj_table.height), 0.1)
+            # Cutout center Z in table-local space; feet align to −Z from center vs table top (+table_h/2).
             offset_venue = np.array(
                 [
                     0.0,
                     -depth / 2.0 - DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M,
-                    sil_h / 2.0 - tz,
+                    table_h / 2.0
+                    + sil_h / 2.0
+                    - DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M,
                 ],
                 dtype=np.float32,
             )
