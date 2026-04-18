@@ -28,3 +28,50 @@ class RigColorCycle(InterpreterBase):
         c = self.COLORS[idx]
         for fixture in self.group:
             fixture.set_color(c)
+
+
+@beartype
+class PanTiltAxisCheck(InterpreterBase):
+    """Pan/tilt axis check for rig debugging.
+
+    Visits each DMX extreme one axis at a time, returning to the mid-range
+    ``(pan=127, tilt=127)`` between each extreme so you can reason about one
+    degree of freedom per step:
+
+        (127, 127) → (127, 255)  tilt up
+                   → (127, 127)  center
+                   → (127,   0)  tilt down
+                   → (127, 127)  center
+                   → (  0, 127)  pan left
+                   → (127, 127)  center
+                   → (255, 127)  pan right
+                   → (127, 127)  center
+
+    Each state holds for ``SECONDS_PER_STEP`` so the movement is easy to see on
+    physical fixtures. All fixtures in the group move in sync.
+    """
+
+    SECONDS_PER_STEP = 1.5
+
+    # (pan, tilt) per step. Order matches the docstring above so the rig walks
+    # tilt-up, tilt-down, pan-left, pan-right with a recenter between each.
+    SEQUENCE = (
+        (127, 127),
+        (127, 255),
+        (127, 127),
+        (127, 0),
+        (127, 127),
+        (0, 127),
+        (127, 127),
+        (255, 127),
+    )
+
+    def __str__(self) -> str:
+        return "🧭 PanTiltAxisCheck"
+
+    def step(self, frame: Frame, scheme: ColorScheme) -> None:
+        idx = int(frame.time / self.SECONDS_PER_STEP) % len(self.SEQUENCE)
+        pan, tilt = self.SEQUENCE[idx]
+        for fixture in self.group:
+            fixture.set_pan(pan)
+            fixture.set_tilt(tilt)

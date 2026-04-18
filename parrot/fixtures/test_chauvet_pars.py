@@ -4,6 +4,7 @@ from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
 from parrot.fixtures.chauvet.slimpar_pro_q import ChauvetSlimParProQ_5Ch
 from parrot.fixtures.chauvet.slimpar_pro_h import ChauvetSlimParProH_7Ch
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 
 
 class TestChauvetParRGBAWU:
@@ -65,7 +66,9 @@ class TestChauvetParRGBAWU:
         self.par.render(self.dmx)
 
         for i in range(7):
-            self.dmx.set_channel.assert_any_call(10 + i, (i + 1) * 10)
+            self.dmx.set_channel.assert_any_call(
+                10 + i, (i + 1) * 10, universe=Universe.default
+            )
 
 
 class TestChauvetSlimParProQ_5Ch:
@@ -133,7 +136,9 @@ class TestChauvetSlimParProQ_5Ch:
         self.par.render(self.dmx)
 
         for i in range(5):
-            self.dmx.set_channel.assert_any_call(15 + i, 50 + i * 50)
+            self.dmx.set_channel.assert_any_call(
+                15 + i, 50 + i * 50, universe=Universe.default
+            )
 
 
 class TestChauvetSlimParProH_7Ch:
@@ -228,4 +233,6 @@ class TestChauvetSlimParProH_7Ch:
         self.par.render(self.dmx)
 
         for i in range(7):
-            self.dmx.set_channel.assert_any_call(20 + i, (i + 1) * 10)
+            self.dmx.set_channel.assert_any_call(
+                20 + i, (i + 1) * 10, universe=Universe.default
+            )

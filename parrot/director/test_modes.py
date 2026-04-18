@@ -171,6 +171,51 @@ class TestModes(unittest.TestCase):
             f"randomize(RotatePrism, PrismOff) should visit both options; got {prism_picks}"
         )
 
+    def test_rave_sheer_lights_active_roughly_thirty_percent_of_reshuffles(self):
+        """Rave sheer movers should be dark ~70% of the time.
+
+        The outer matcher wraps the full combo in a 30/70 ``weighted_randomize``
+        against ``Dimmer0`` so the sheer lights feel like an occasional accent,
+        not a constant presence. We sample many seeds and assert the empirical
+        activation rate sits in a band around 30% — wide enough to absorb
+        normal variance but tight enough to catch a regression that flips the
+        weights, drops the gate entirely, or silences the sheers forever.
+        """
+        import random as _random
+        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+            ChauvetIntimidatorHybrid140SR_19Ch,
+        )
+
+        trials = 400
+        active = 0
+        for seed in range(trials):
+            _random.seed(seed)
+            movers = [
+                ChauvetIntimidatorHybrid140SR_19Ch(1 + i * 20) for i in range(4)
+            ]
+            for m in movers:
+                m.cloud_group_name = "sheer lights"
+
+            interp = get_interpreter(Mode.rave, movers, self.args)
+            # Step several frames so any combo that needs a few ticks to lift
+            # the dimmer (latched fades, chases, etc.) actually drives output.
+            for _ in range(8):
+                interp.step(self.frame, self.scheme)
+
+            # "Active" == at least one mover in the group lit up this pass.
+            # Dimmer0 keeps every fixture at 0; the combo lifts at least one.
+            if any(m.get_dimmer() > 0 for m in movers):
+                active += 1
+
+        rate = active / trials
+        # 30/70 weighted pick → expected mean 0.30, stdev ≈ sqrt(0.21/400) ≈ 0.023.
+        # Band [0.18, 0.42] is ~5σ — generous enough to be non-flaky, tight
+        # enough to fail if someone sets the weights to (50,50) or (10,90).
+        assert 0.18 <= rate <= 0.42, (
+            f"sheer-lights activation rate should be ~30%, got {rate:.2%} "
+            f"({active}/{trials})"
+        )
+
     def test_composite_interpreter_exposes_children_with_their_own_groups(self):
         """CompositeInterpreter.children must each carry the matched sub-group.
 

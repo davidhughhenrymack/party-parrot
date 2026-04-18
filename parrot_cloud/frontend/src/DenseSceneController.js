@@ -1008,6 +1008,12 @@ function createThreeSceneController({
       entity.lensMaterial.opacity = 0.35 + dimClamped * 0.58;
     }
     if (entity.aimGroup && entity.headPivotGroup) {
+      // Pan-then-tilt kinematics: `aimGroup` is the parent (yoke pan around
+      // Z/up), `headPivotGroup` is the child (head tilt around X). Three.js
+      // composes world = R_pan * R_tilt, which matches real moving-head
+      // mechanics. See fixtureModels.js for the matching comment and
+      // parrot/vj/renderers/moving_head.py::_moving_body_rotation for the
+      // desktop equivalent.
       const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
       const tilt = typeof vis.tilt_deg === 'number' ? THREE.MathUtils.degToRad(vis.tilt_deg) : 0;
       entity.aimGroup.rotation.set(0, 0, 0);
@@ -1017,6 +1023,12 @@ function createThreeSceneController({
       entity.headPivotGroup.rotation.order = 'ZXY';
       entity.headPivotGroup.rotation.x = tilt;
     } else {
+      // Fallback for legacy placements without a split aim/tilt pivot. With
+      // `rotation.order = 'ZXY'` Three.js applies the intrinsic rotations in
+      // Z-then-X-then-Y order: the group first pans (around Z/up), and the
+      // tilt (around X) is then applied in the *panned* frame — matching real
+      // moving-head mechanics, same result as the split parent/child groups
+      // above.
       const pivotGroup = entity.headPivotGroup ?? entity.aimGroup;
       if (pivotGroup) {
         const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
@@ -1032,11 +1044,15 @@ function createThreeSceneController({
     if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
       const baseOp = dimClamped * 0.42;
       entity.runtimeMirrorballOpacity = baseOp;
-      // Mirrorball beams represent reflected sparkles, not the fixture's own color
-      // (the Python Mirrorball has no color channel — its RGB stays black). Keep
-      // them white and let the dimmer drive opacity/brightness.
+      // Mirrorball now has a dimmer + RGB DMX footprint — tint the reflected
+      // sparkles with the fixture's raw color (not the dim-pre-multiplied
+      // `r/g/b`), since opacity alone carries the dim. The small floor keeps
+      // a sparkle feel on deep hues.
+      const br = Math.min(1, rgb[0] + 0.08);
+      const bg = Math.min(1, rgb[1] + 0.08);
+      const bb = Math.min(1, rgb[2] + 0.08);
       for (const m of entity.mirrorballBeamMaterials) {
-        m.color.setRGB(1, 1, 1);
+        m.color.setRGB(br, bg, bb);
         m.opacity = baseOp;
       }
     }

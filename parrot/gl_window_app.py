@@ -12,7 +12,7 @@ from typing import Any
 from parrot.audio.audio_analyzer import AudioAnalyzer
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
-from parrot.director.mode import MODES_BY_HYPE, Mode
+from parrot.director.mode import MODES_BY_HYPE
 from parrot.gl_display_mode import EditorDisplayMode
 from parrot.state import State
 from parrot.utils.dmx_utils import Universe, get_controller
@@ -29,14 +29,34 @@ from parrot.venue_runtime import get_runtime_venues
 
 @beartype
 def _encode_texture_rgb_as_jpeg(tex: Any) -> bytes | None:
-    """Read an RGB texture from the VJ/offscreen FBO and return JPEG bytes."""
+    """Read a color texture from the VJ/offscreen FBO and return JPEG bytes.
+
+    The VJ pipeline's final framebuffer is RGBA (see LayerCompose.final_texture),
+    but earlier fixture/DMX previews hand us RGB textures. Read exactly as many
+    bytes as the texture stores (1 byte/channel), tell PIL the matching mode,
+    and convert to RGB before JPEG encoding. Using a 3-byte stride on a 4-byte
+    texture shears every row and produces an interlaced/striped preview in the
+    web client.
+    """
     from PIL import Image
 
     w, h = tex.size
     if w < 2 or h < 2:
         return None
-    raw = tex.read()
-    img = Image.frombuffer("RGB", (w, h), raw, "raw", "RGB", 0, 1)
+    components = int(getattr(tex, "components", 3))
+    if components == 4:
+        mode = "RGBA"
+    elif components == 3:
+        mode = "RGB"
+    elif components == 1:
+        mode = "L"
+    else:
+        # Unsupported channel count (e.g. 2-channel RG); skip rather than shear.
+        return None
+    raw = tex.read(alignment=1)
+    img = Image.frombuffer(mode, (w, h), raw, "raw", mode, 0, 1)
+    if mode != "RGB":
+        img = img.convert("RGB")
     img = img.transpose(Image.FLIP_TOP_BOTTOM)
     max_w = 1280
     if w > max_w:
@@ -205,7 +225,6 @@ def run_gl_window_app(args):
         editor_port = urlparse(venue_service_url).port if venue_service_url else 4041
         web_server = start_web_server(
             state,
-            director=director,
             port=getattr(args, "web_port", 4040),
             threaded=False,  # Run in main thread
             editor_port=editor_port or 4041,
@@ -349,9 +368,11 @@ def run_gl_window_app(args):
             # Create the delegate
             delegate = SettingsMenuDelegate.alloc().initWithState_(state)
 
-            # Create Mode menu
+            # Create Mode menu — iterate MODES_BY_HYPE (not raw `Mode`) so item
+            # indices align with `delegate.modes` used for checkmark + selection.
+            # If these drift, the menu checks the wrong item on startup.
             mode_menu = NSMenu.alloc().initWithTitle_("Mode")
-            for idx, mode in enumerate(Mode):
+            for idx, mode in enumerate(MODES_BY_HYPE):
                 menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
                     mode.name.capitalize(),
                     objc.selector(delegate.selectMode_, signature=b"v@:@"),
@@ -538,6 +559,11 @@ def run_gl_window_app(args):
 
     # Track window size for resize detection
     last_window_size = window.size
+    # VJ preview push cadence: ~5 fps. The actual HTTP upload is async on a
+    # background thread inside `RuntimeVenueClient`, so this interval only
+    # governs how often we pay the GPU readback + JPEG encode cost on the GL
+    # thread. 0.2s feels live in the browser without saturating the network.
+    _VJ_PREVIEW_PUSH_INTERVAL_SEC = 0.2
     last_vj_preview_push_mono = -1000.0
 
     while not window.is_closing:
@@ -589,16 +615,34 @@ def run_gl_window_app(args):
             fixture_renderer.resize(ctx, window_width, window_height)
             last_window_size = (window_width, window_height)
 
-        # Render based on mode
+        # We want the web preview to keep streaming VJ frames regardless of
+        # which view the desktop operator is currently looking at (fixture
+        # scene, DMX heatmap, or VJ). So on every frame where a preview push
+        # is due, we render the VJ pipeline into its offscreen FBO for the
+        # upload even if the screen is showing something else. When the
+        # desktop *is* in VJ mode we render VJ unconditionally and reuse that
+        # FBO for both the on-screen blit and the web preview.
+        now_mono = time.perf_counter()
+        vj_preview_due = (
+            runtime_client is not None
+            and (now_mono - last_vj_preview_push_mono) >= _VJ_PREVIEW_PUSH_INTERVAL_SEC
+        )
+        vj_preview_fbo = None
+
         if state.editor_display_mode == EditorDisplayMode.FIXTURE_SCENE:
             rendered_fbo = fixture_renderer.render(frame_data, scheme_data, ctx)
+            if vj_preview_due:
+                vj_preview_fbo = vj_director.render(ctx, frame_data, scheme_data)
         elif state.editor_display_mode == EditorDisplayMode.VJ:
             rendered_fbo = vj_director.render(ctx, frame_data, scheme_data)
+            vj_preview_fbo = rendered_fbo
         else:
             snap = dmx_ref["controller"].snapshot_universe(Universe.default)
             rendered_fbo = dmx_heatmap_renderer.render(
                 ctx, snap, window_width, window_height
             )
+            if vj_preview_due:
+                vj_preview_fbo = vj_director.render(ctx, frame_data, scheme_data)
 
         # Bind the window's default framebuffer (screen) and render to it
         ctx.screen.use()
@@ -636,18 +680,17 @@ def run_gl_window_app(args):
 
         if (
             runtime_client is not None
-            and state.editor_display_mode == EditorDisplayMode.VJ
-            and rendered_fbo
-            and rendered_fbo.color_attachments
+            and vj_preview_due
+            and vj_preview_fbo is not None
+            and vj_preview_fbo.color_attachments
         ):
-            now_mono = time.perf_counter()
-            if now_mono - last_vj_preview_push_mono >= 30.0:
-                jpeg = _encode_texture_rgb_as_jpeg(rendered_fbo.color_attachments[0])
-                if jpeg is not None:
-                    if runtime_client.push_vj_preview_jpeg(jpeg):
-                        last_vj_preview_push_mono = now_mono
-                    else:
-                        last_vj_preview_push_mono = now_mono
+            jpeg = _encode_texture_rgb_as_jpeg(vj_preview_fbo.color_attachments[0])
+            if jpeg is not None:
+                runtime_client.queue_vj_preview_jpeg(jpeg)
+            # Advance the cadence timer whether or not encoding succeeded so a
+            # pathological frame (e.g. zero-size texture) doesn't cause us to
+            # hammer the encoder every tick.
+            last_vj_preview_push_mono = now_mono
 
         # Restore viewport before rendering overlay (imgui manages its own viewport)
         ctx.viewport = (0, 0, window_width, window_height)

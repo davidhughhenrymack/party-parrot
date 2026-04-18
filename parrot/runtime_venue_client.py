@@ -31,6 +31,14 @@ class RuntimeVenueClient:
         self._fixture_push_lock = threading.Lock()
         self._last_fixture_push_mono = 0.0
         self._last_fixture_payload_json: str | None = None
+        # VJ preview uploads live on a background thread with a single-slot
+        # "latest wins" queue. The GL render loop enqueues JPEG bytes and moves
+        # on; a slow/stalled POST can never stall rendering. Dropping stale
+        # frames is correct here — the web preview only cares about the most
+        # recent snapshot.
+        self._vj_preview_cond = threading.Condition()
+        self._vj_preview_latest: bytes | None = None
+        self._vj_uploader_thread: threading.Thread | None = None
         self.state.set_remote_control_state_updater(self.update_control_state)
 
     def start(self) -> None:
@@ -38,9 +46,15 @@ class RuntimeVenueClient:
             return
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
+        self._vj_uploader_thread = threading.Thread(
+            target=self._vj_uploader_run, daemon=True, name="vj-preview-uploader"
+        )
+        self._vj_uploader_thread.start()
 
     def stop(self) -> None:
         self._stop_event.set()
+        with self._vj_preview_cond:
+            self._vj_preview_cond.notify_all()
 
     def maybe_push_fixture_runtime_state(self) -> None:
         if self._stop_event.is_set():
@@ -68,20 +82,39 @@ class RuntimeVenueClient:
             with self._fixture_push_lock:
                 self._last_fixture_payload_json = None
 
-    def push_vj_preview_jpeg(self, jpeg_bytes: bytes) -> bool:
-        """Upload a JPEG snapshot of the VJ framebuffer (caller controls cadence, e.g. every 30s)."""
+    def queue_vj_preview_jpeg(self, jpeg_bytes: bytes) -> None:
+        """Enqueue a JPEG snapshot of the VJ framebuffer for upload.
+
+        Non-blocking: replaces any previously-queued-but-not-yet-sent frame so
+        the GL loop never builds up backpressure behind a slow network. The
+        background uploader thread picks up the latest bytes and POSTs them.
+        """
         if self._stop_event.is_set():
-            return False
-        try:
-            requests.post(
-                f"{self.base_url}/api/runtime/vj-preview",
-                data=jpeg_bytes,
-                headers={"Content-Type": "image/jpeg"},
-                timeout=15.0,
-            ).raise_for_status()
-            return True
-        except Exception:
-            return False
+            return
+        with self._vj_preview_cond:
+            self._vj_preview_latest = jpeg_bytes
+            self._vj_preview_cond.notify()
+
+    def _vj_uploader_run(self) -> None:
+        while not self._stop_event.is_set():
+            with self._vj_preview_cond:
+                while self._vj_preview_latest is None and not self._stop_event.is_set():
+                    self._vj_preview_cond.wait(timeout=0.5)
+                payload = self._vj_preview_latest
+                self._vj_preview_latest = None
+            if payload is None or self._stop_event.is_set():
+                continue
+            try:
+                requests.post(
+                    f"{self.base_url}/api/runtime/vj-preview",
+                    data=payload,
+                    headers={"Content-Type": "image/jpeg"},
+                    timeout=5.0,
+                ).raise_for_status()
+            except Exception:
+                # Drop this frame silently; the GL loop will enqueue another
+                # one on the next cadence tick.
+                pass
 
     def bootstrap(self) -> None:
         response = requests.get(f"{self.base_url}/api/runtime/bootstrap", timeout=5)

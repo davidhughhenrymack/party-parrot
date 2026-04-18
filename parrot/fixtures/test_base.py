@@ -9,6 +9,7 @@ from parrot.fixtures.base import (
     GoboWheelEntry,
 )
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 
 
 class TestFixtureBase:
@@ -90,26 +91,47 @@ class TestFixtureBase:
         dmx = MagicMock()
         self.fixture.values = [100, 150, 200]
         self.fixture.render(dmx)
-        dmx.set_channel.assert_any_call(1, 100)
-        dmx.set_channel.assert_any_call(2, 150)
-        dmx.set_channel.assert_any_call(3, 200)
+        dmx.set_channel.assert_any_call(1, 100, universe=Universe.default)
+        dmx.set_channel.assert_any_call(2, 150, universe=Universe.default)
+        dmx.set_channel.assert_any_call(3, 200, universe=Universe.default)
 
     def test_render_channel_limit(self):
-        """Test that render respects DMX channel limit"""
+        """Test that render respects DMX channel limit of 512."""
         dmx = MagicMock()
-        # Create a fixture that would exceed channel 512
         fixture = FixtureBase(address=511, name="Test", width=5)
         fixture.values = [100, 150, 200, 250, 255]
         fixture.render(dmx)
 
-        # Should only set channels up to 512
-        dmx.set_channel.assert_any_call(511, 100)
-        dmx.set_channel.assert_any_call(512, 150)
-        # Channels 513+ should not be called
+        dmx.set_channel.assert_any_call(511, 100, universe=Universe.default)
+        dmx.set_channel.assert_any_call(512, 150, universe=Universe.default)
+        # Channels above 512 must not be written. With address=511 + width=5
+        # the raw indices would be 511..515, so 513/514/515 would exceed the
+        # DMX universe and are clamped off by `FixtureBase.render`.
+        written = {call.args[0] for call in dmx.set_channel.call_args_list}
+        assert written == {511, 512}
+
+    def test_render_clamps_float_values(self):
+        """Fractional or out-of-range `values` must be clamped 0..255 by render()."""
+        dmx = MagicMock()
+        fixture = FixtureBase(address=1, name="Clamp", width=3)
+        fixture.values = [-5, 42.8, 900]
+        fixture.render(dmx)
+        calls_by_channel = {
+            call.args[0]: call.args[1] for call in dmx.set_channel.call_args_list
+        }
+        assert calls_by_channel == {1: 0, 2: 42, 3: 255}
+
+    def test_render_honors_universe(self):
+        """A fixture patched to a non-default universe must render there."""
+        dmx = MagicMock()
+        fixture = FixtureBase(address=1, name="Art", width=1, universe=Universe.art1)
+        fixture.values = [77]
+        fixture.render(dmx)
+        dmx.set_channel.assert_called_once_with(1, 77, universe=Universe.art1)
 
     def test_id_property(self):
-        """Test the ID property"""
-        expected_id = "test-fixture@1"
+        """Test the ID property includes the universe suffix."""
+        expected_id = "test-fixture@1:default"
         assert self.fixture.id == expected_id
 
     def test_str_representation(self):
@@ -118,53 +140,66 @@ class TestFixtureBase:
         assert str(self.fixture) == expected_str
 
 
+class _SpyBulb(FixtureBase):
+    """Minimal concrete FixtureBase subclass used to spy on propagation calls."""
+
+    def __init__(self, address=0):
+        super().__init__(address=address, name="spy bulb", width=4)
+        self.render_values_calls: list[list[int]] = []
+
+    def render_values(self, values):
+        self.render_values_calls.append(list(values))
+
+
 class TestFixtureWithBulbs:
     def setup_method(self):
-        """Setup for each test method"""
-        # Create mock bulbs
-        self.bulb1 = MagicMock()
-        self.bulb2 = MagicMock()
+        self.bulb1 = _SpyBulb()
+        self.bulb2 = _SpyBulb()
         self.bulbs = [self.bulb1, self.bulb2]
-
         self.fixture = FixtureWithBulbs(
             address=10, name="Test Bulb Fixture", width=6, bulbs=self.bulbs
         )
 
     def test_initialization(self):
-        """Test that FixtureWithBulbs initializes correctly"""
         assert self.fixture.address == 10
         assert self.fixture.name == "Test Bulb Fixture"
         assert self.fixture.width == 6
         assert len(self.fixture.bulbs) == 2
 
     def test_set_dimmer_propagation(self):
-        """Test that dimmer setting propagates to all bulbs"""
+        """Dimmer level set on parent fans out to every bulb."""
         self.fixture.set_dimmer(150)
         assert self.fixture.get_dimmer() == 150
-        self.bulb1.set_dimmer.assert_called_with(150)
-        self.bulb2.set_dimmer.assert_called_with(150)
+        for bulb in self.bulbs:
+            assert bulb.get_dimmer() == 150
 
     def test_set_color_propagation(self):
-        """Test that color setting propagates to all bulbs"""
+        """Color set on parent fans out to every bulb."""
         test_color = Color("green")
         self.fixture.set_color(test_color)
         assert self.fixture.get_color() == test_color
-        self.bulb1.set_color.assert_called_with(test_color)
-        self.bulb2.set_color.assert_called_with(test_color)
+        for bulb in self.bulbs:
+            assert bulb.get_color() == test_color
 
     def test_get_bulbs(self):
-        """Test getting bulbs"""
-        bulbs = self.fixture.get_bulbs()
-        assert bulbs == self.bulbs
+        assert self.fixture.get_bulbs() == self.bulbs
 
-    def test_render(self):
-        """Test render method calls bulb renders"""
-        dmx = MagicMock()
-        self.fixture.render(dmx)
+    def test_render_calls_bulb_render_values_with_parent_values(self):
+        """render() passes parent `.values` array to each bulb for RGBW fill-in."""
+        self.fixture.values = [1, 2, 3, 4, 5, 6]
+        self.fixture.render(MagicMock())
+        for bulb in self.bulbs:
+            assert bulb.render_values_calls == [[1, 2, 3, 4, 5, 6]]
 
-        # Should call render_values on each bulb
-        self.bulb1.render_values.assert_called_with(self.fixture.values)
-        self.bulb2.render_values.assert_called_with(self.fixture.values)
+    def test_begin_resets_parent_and_bulb_strobes(self):
+        """begin() propagates through to all bulbs (sets strobe_value = 0)."""
+        self.fixture.set_strobe(200)
+        for bulb in self.bulbs:
+            bulb.strobe_value = 200
+        self.fixture.begin()
+        assert self.fixture.get_strobe() == 0
+        for bulb in self.bulbs:
+            assert bulb.get_strobe() == 0
 
 
 class TestFixtureGroup:

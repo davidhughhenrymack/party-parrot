@@ -154,23 +154,6 @@ class TestState:
         # Should not raise an exception
         state.process_gui_updates()
 
-    def test_process_gui_updates_with_mode_update(self):
-        """Test processing GUI updates with mode change."""
-        state = State()
-
-        # Add a mode update to the queue
-        state._gui_update_queue.put(("mode", Mode.rave))
-
-        # Mock GUI event handler
-        mock_gui_handler = Mock()
-        mock_gui_handler.__module__ = "parrot.gui.something"
-        state.events.on_mode_change += mock_gui_handler
-
-        state.process_gui_updates()
-
-        assert state.mode == Mode.rave
-        mock_gui_handler.assert_called_once_with(Mode.rave)
-
     def test_runtime_shift_fires_registered_event_handler(self):
         """Remote shift messages must reach subscribers via process_gui_updates."""
         state = State()

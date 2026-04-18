@@ -1897,21 +1897,23 @@ class Room3DRenderer:
             # Interpolate alpha: start=alpha, end=alpha*0.1
             alpha_factor = 1.0 - z_normalized * 0.9  # 1.0 to 0.1
             
-            # White clipping at source: mix towards white only in first third of beam
-            # First third (z=0.0 to z=0.33): white_clip fades from 0.8 to 0.0
-            # Rest of beam (z>0.33): no white clipping
-            if z_normalized < 0.33:
-                # Fade from 0.8 at start to 0.0 at 1/3 point
-                white_clip_amount = (1.0 - z_normalized / 0.33) * 0.8
+            # Subtle "hot core" near the source. Previously this mixed up to 80%
+            # towards white over the first third of the beam, which washed out
+            # saturated colors (e.g. red reading as pink/white at the lens). Keep
+            # just enough of a highlight to feel luminous without losing hue.
+            _WHITE_CLIP_PEAK = 0.2  # was 0.8
+            _WHITE_CLIP_EXTENT = 0.15  # was 0.33
+            if z_normalized < _WHITE_CLIP_EXTENT:
+                white_clip_amount = (
+                    1.0 - z_normalized / _WHITE_CLIP_EXTENT
+                ) * _WHITE_CLIP_PEAK
             else:
                 white_clip_amount = 0.0
-            
-            # Apply brightness to color first
+
             r = color[0] * brightness_factor
             g = color[1] * brightness_factor
             b = color[2] * brightness_factor
-            
-            # Mix towards white at source (clipping effect)
+
             r = r + (1.0 - r) * white_clip_amount
             g = g + (1.0 - g) * white_clip_amount
             b = b + (1.0 - b) * white_clip_amount

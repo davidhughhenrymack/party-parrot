@@ -217,9 +217,16 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
     base.userData = userData;
     runtimeAxesGroup.add(base);
 
-    const aimGroup = new THREE.Group();
+    // Real moving-head kinematics: the yoke PANS around the vertical axis
+    // first, then the head TILTS around the yoke's (now-panned) horizontal
+    // axis. We model this as parent(pan) -> child(tilt) so Three.js composes
+    // world = R_pan * R_tilt. DO NOT collapse these into a single group or
+    // reorder the hierarchy — the body and the beam will diverge as soon as
+    // both pan and tilt are non-zero (see the matching
+    // `_moving_body_rotation` comment in parrot/vj/renderers/moving_head.py).
+    const aimGroup = new THREE.Group(); // pan (outer, around Z/up)
     aimGroup.position.set(0, 0, model.baseHeight);
-    const headPivotGroup = new THREE.Group();
+    const headPivotGroup = new THREE.Group(); // tilt (inner, around X)
     // Pivot at the center of the yoke / base of the head (horizontal centerline), not the rear face,
     // so pan/tilt rotate around the physical joint.
     headPivotGroup.position.set(0, 0, model.headOffsetZ);

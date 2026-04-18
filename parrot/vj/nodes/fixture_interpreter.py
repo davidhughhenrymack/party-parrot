@@ -78,26 +78,33 @@ class FixtureInterpreterNode(
         self._state = FixtureInterpreterState(mode=mode, interpreter=interpreter)
         return interpreter
 
+    def _exit_current_interpreter(self) -> None:
+        """Tell the active interpreter it's being torn down.
+
+        ``InterpreterBase.exit`` is beartype-enforced as ``(Frame, ColorScheme)``
+        so we can only call it after at least one ``render()`` has populated
+        ``_last_frame`` / ``_last_scheme``. Before that (e.g. mode switch on the
+        very first tick) we just skip the hook — there's no state for it to
+        wind down.
+        """
+        if self._state.interpreter is None:
+            return
+        if self._last_frame is None or self._last_scheme is None:
+            return
+        self._state.interpreter.exit(self._last_frame, self._last_scheme)
+
     def _ensure_interpreter(self, mode: Mode) -> Optional[InterpreterBase]:
         state = self._state
         if state.interpreter is not None and state.mode == mode:
             return state.interpreter
-        if state.interpreter is not None:
-            try:
-                state.interpreter.exit(self._last_frame, self._last_scheme)  # type: ignore[arg-type]
-            except Exception:
-                pass
+        self._exit_current_interpreter()
         return self._create_interpreter(mode)
 
     def enter(self, context: mgl.Context):
         self._ensure_interpreter(self._state.mode)
 
     def exit(self):
-        if self._state.interpreter is not None:
-            try:
-                self._state.interpreter.exit(self._last_frame, self._last_scheme)  # type: ignore[arg-type]
-            except Exception:
-                pass
+        self._exit_current_interpreter()
         self._state = FixtureInterpreterState(mode=self._state.mode, interpreter=None)
 
     def generate(self, vibe: Vibe):

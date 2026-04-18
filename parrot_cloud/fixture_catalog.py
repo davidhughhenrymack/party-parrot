@@ -339,7 +339,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             Mirrorball(spec.address, universe=_parse_universe(spec.universe)),
             spec,
         ),
-        dmx_address_width=1,
+        dmx_address_width=4,
     ),
 }
 

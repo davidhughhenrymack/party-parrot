@@ -1,6 +1,5 @@
 import math
 import random
-import scipy
 import time
 from typing import TypeVar
 from beartype import beartype

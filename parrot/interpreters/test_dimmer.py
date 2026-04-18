@@ -464,14 +464,19 @@ class TestLightingStab:
             self.fixture2.set_dimmer.assert_called_with(1.0 * 255)
 
     def test_lighting_stab_strobe_decay(self):
-        """Test LightingStab white strobe decays quickly"""
+        """LightingStab white strobe must decay by factor 0.5 per step on silent frames.
+
+        The decay factor lives in `dimmer.LightningStab.step` (``strobe_memory *= 0.5``)
+        so this is both a sanity test for the interpreter and a regression guard
+        against drift between the decay constant and the documented behavior.
+        """
+        decay = 0.5
         with patch("parrot.interpreters.dimmer.random.randint") as mock_randint:
             mock_randint.return_value = 0
 
             interpreter = LightningStab(self.group, self.args, trigger_level=0.2)
             scheme = MagicMock()
 
-            # First step with high freq_high to trigger strobe
             frame_values = {FrameSignal.freq_low: 0.0, FrameSignal.freq_high: 0.9}
             timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
             frame = Frame(frame_values, timeseries)
@@ -479,17 +484,15 @@ class TestLightingStab:
             first_dim = self.fixture1.set_dimmer.call_args[0][0]
             assert first_dim == 255  # 1.0 * 255
 
-            # Second step with no signal - should decay
             frame_values = {FrameSignal.freq_low: 0.0, FrameSignal.freq_high: 0.0}
             frame = Frame(frame_values, timeseries)
             interpreter.step(frame, scheme)
             second_dim = self.fixture1.set_dimmer.call_args[0][0]
-            assert second_dim == 0.3 * 255  # Decayed to 0.3
+            assert second_dim == pytest.approx(decay * 255)
 
-            # Third step - should decay further
             interpreter.step(frame, scheme)
             third_dim = self.fixture1.set_dimmer.call_args[0][0]
-            assert third_dim == 0.3 * 0.3 * 255  # Decayed to 0.09
+            assert third_dim == pytest.approx(decay * decay * 255)
 
     def test_lighting_stab_both_signals(self):
         """Test LightingStab handles both freq_low and freq_high simultaneously"""

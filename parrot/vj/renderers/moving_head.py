@@ -57,6 +57,23 @@ class MovingHeadRenderer(FixtureRenderer):
         tilt_rad = math.radians(tilt_deg) * 0.5
         return pan_rad, tilt_rad
 
+    def _moving_body_rotation(self) -> np.ndarray:
+        """Yoke rotation for the moving head's head cuboid.
+
+        Real moving-head mechanics: the yoke pans around world +Y, then the
+        head tilts around the *panned* yoke X-axis. In world/pre-multiply
+        quaternion form that is ``pan ∘ tilt`` — i.e. `pan_quat * tilt_quat`
+        — applied to the body's local forward (+Z). Using `tilt * pan` here
+        made the body and the beam diverge as soon as both pan and tilt were
+        non-zero, because the beam direction was computed as pan(tilt(+Z)).
+        """
+        pan_rad, tilt_rad = self._pan_tilt_radians_for_render()
+        y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+        x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
+        tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
+        return quaternion_multiply(pan_quat, tilt_quat)
+
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
         """Render only the opaque Blinn-Phong parts (fixed base + moving body)"""
         if self.room_renderer is None:
@@ -73,13 +90,7 @@ class MovingHeadRenderer(FixtureRenderer):
         moving_body_depth = body_size * 1.2
         moving_body_y = base_height + moving_body_height / 2 + body_size * 0.3
 
-        pan_rad, tilt_rad = self._pan_tilt_radians_for_render()
-
-        y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-        x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
-        pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
-        tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
-        moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
+        moving_body_rotation = self._moving_body_rotation()
 
         half_depth = moving_body_depth * 0.5
         pivot_local = np.array([0.0, 0.0, half_depth], dtype=np.float32)
@@ -141,23 +152,14 @@ class MovingHeadRenderer(FixtureRenderer):
         bulb_color = self.get_color()
         dimmer = self.get_effective_dimmer(frame)
 
-        pan_rad, tilt_rad = self._pan_tilt_radians_for_render()
+        moving_body_rotation = self._moving_body_rotation()
 
-        cos_tilt = math.cos(tilt_rad)
-        sin_tilt = math.sin(tilt_rad)
-        cos_pan = math.cos(pan_rad)
-        sin_pan = math.sin(pan_rad)
-
-        beam_dir_x = sin_pan * cos_tilt
-        beam_dir_y = -sin_tilt
-        beam_dir_z = cos_pan * cos_tilt
-        beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
-
-        y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-        x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
-        pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
-        tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
-        moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
+        # Beam + bulb render *inside* the moving-body transform stack (see the
+        # nested ``local_rotation`` contexts below), so their direction/normal
+        # must be expressed in the body's local frame. The body's long axis is
+        # +Z locally, so the beam shines straight out of the head along +Z and
+        # the room rotation stack carries it to the right world direction.
+        beam_direction = (0.0, 0.0, 1.0)
 
         half_depth = moving_body_depth * 0.5
         pivot_local = np.array([0.0, 0.0, half_depth], dtype=np.float32)

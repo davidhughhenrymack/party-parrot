@@ -5,21 +5,25 @@ from parrot.utils.color_extra import color_to_rgbw, dim_color
 from parrot.utils.dmx_utils import Universe
 from .base import FixtureBase, FixtureWithBulbs
 
-# DMX layout for 9 channel mode:
+# DMX layout reference for Motionstrip38's 38-channel mode.
+# Purely documentation — the runtime code uses fixed numeric indices
+# (see set_pan/set_pan_speed/set_dimmer/render below and the bulb 4-channel
+# stride starting at offset 6 configured in Motionstrip38.__init__).
 dmx_layout = [
-    "pan",
-    "pan_speed",
-    ["built_in_program", 0],
-    "built_in_program_speed",
-    "master_dimmer",
-    "strobe" "bulb 1: RGBW",
-    "bulb 2: RGBW",
-    "bulb 3: RGBW",
-    "bulb 4: RGBW",
-    "bulb 5: RGBW",
-    "bulb 6: RGBW",
-    "bulb 7: RGBW",
-    "bulb 8: RGBW",
+    "pan",                          # 0
+    "pan_speed",                    # 1
+    "built_in_program",             # 2
+    "built_in_program_speed",       # 3
+    "master_dimmer",                # 4
+    "strobe",                       # 5
+    "bulb 1: RGBW",                 # 6  (+ 4 per bulb)
+    "bulb 2: RGBW",                 # 10
+    "bulb 3: RGBW",                 # 14
+    "bulb 4: RGBW",                 # 18
+    "bulb 5: RGBW",                 # 22
+    "bulb 6: RGBW",                 # 26
+    "bulb 7: RGBW",                 # 30
+    "bulb 8: RGBW",                 # 34
 ]
 
 

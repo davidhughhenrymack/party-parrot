@@ -34,10 +34,6 @@ WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
 HYPE_BUCKETS = [10, 40, 70]
 
 
-def filter_nones(l):
-    return [i for i in l if i is not None]
-
-
 def _flatten_interpreter_rows(
     interpreter: InterpreterBase,
 ) -> list[tuple[list[FixtureBase], str]]:
@@ -367,9 +363,6 @@ class Director:
             i.render(dmx)
 
         dmx.submit()
-
-    def deploy_hype(self):
-        self.mode_machine.deploy_hype(self.last_frame)
 
     def on_mode_change(self, mode):
         """Handle mode changes, including those from the web interface."""

@@ -49,7 +49,10 @@ from parrot.interpreters.latched import (
     DimmerFadeLatched,
     DimmerFadeLatched4s,
 )
-from parrot.interpreters.mode_test_interpreters import RigColorCycle
+from parrot.interpreters.mode_test_interpreters import (
+    PanTiltAxisCheck,
+    RigColorCycle,
+)
 from parrot.interpreters.move import (
     MoveCircleSync,
     MoveCircles,
@@ -225,32 +228,43 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         # prism state (spinning prism vs. off). Picking per-group rather than
         # per-fixture keeps all the beams reading as one cohesive look, and each
         # reshuffle flips the character of the rig in one decision.
+        #
+        # Sheer lights should feel like a rare accent, not a constant presence —
+        # wrap the whole combo in a 30/70 weighted pick against Dimmer0 so each
+        # reshuffle keeps the sheer movers dark ~70% of the time and only
+        # occasionally brings them into play for the rave look.
         (Group("sheer lights"), MovingHead): [
-            combo(
-                signal_switch(
-                    randomize(
-                        HardSpatialPulse,
-                        HardSpatialCenterOutPulse,
-                        DimmersBeatChase,
-                        SlowDecay,
-                        GentlePulse,
-                        DimmerFadeLatched,
-                        SequenceDimmers,
-                        SequenceFadeDimmers,
-                        StabPulse,
-                        LightningStab,
+            weighted_randomize(
+                (
+                    30,
+                    combo(
+                        signal_switch(
+                            randomize(
+                                HardSpatialPulse,
+                                HardSpatialCenterOutPulse,
+                                DimmersBeatChase,
+                                SlowDecay,
+                                GentlePulse,
+                                DimmerFadeLatched,
+                                SequenceDimmers,
+                                SequenceFadeDimmers,
+                                StabPulse,
+                                LightningStab,
+                            ),
+                        ),
+                        weighted_randomize(
+                            (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
+                        ),
+                        randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                        weighted_randomize(
+                            (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
+                            (90, MoverNoGobo),
+                        ),
+                        randomize(FocusBig, FocusSmall),
+                        randomize(RotatePrism, PrismOff),
                     ),
                 ),
-                weighted_randomize(
-                    (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
-                ),
-                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
-                weighted_randomize(
-                    (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
-                    (90, MoverNoGobo),
-                ),
-                randomize(FocusBig, FocusSmall),
-                randomize(RotatePrism, PrismOff),
+                (70, Dimmer0),
             )
         ],
         Group("sheer lights"): [Dimmer0],
@@ -364,7 +378,10 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
     },
     Mode.ethereal: {
         Mirrorball: [
-            with_args("MirrorballFade10s", DimmerFadeInLinearSeconds, seconds=10.0)
+            combo(
+                with_args("MirrorballFade10s", DimmerFadeInLinearSeconds, seconds=10.0),
+                ColorAlternateBg,
+            ),
         ],
         (Group("sheer lights"), MovingHead): [
             combo(
@@ -377,7 +394,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 ),
                 ColorAlternateBg,
                 # Circles multiplier is 5x slower than the previous 0.16 for a drifty feel.
-                with_args("EtherealPhasedCircles", MoveCirclesPhased, multiplier=0.032),
+                with_args("EtherealPhasedCircles", MoveCirclesPhased, multiplier=0.1),
                 MoverRandomGobo,
                 with_args("EtherealRotatePrism", RotatePrism, rotate_speed=0.2),
                 with_args(
@@ -392,9 +409,18 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         Group("sheer lights"): [combo(Dimmer255, ColorAlternateBg)],
     },
     Mode.test: {
-        Mirrorball: [Dimmer255],
+        Mirrorball: [combo(Dimmer255, RigColorCycle)],
         Par: [combo(Dimmer255, RigColorCycle)],
-        MovingHead: [combo(Dimmer255, RigColorCycle, MoveCircleSync, MoverNoGobo)],
+        MovingHead: [
+            combo(
+                Dimmer255,
+                RigColorCycle,
+                PanTiltAxisCheck,
+                MoverNoGobo,
+                PrismOff,
+                FocusSmall,
+            )
+        ],
         Motionstrip: [combo(Dimmer255, RigColorCycle)],
         ChauvetColorBandPiX_36Ch: [combo(Dimmer255, for_bulbs(RigColorCycle))],
         Laser: [combo(Dimmer255, RigColorCycle)],

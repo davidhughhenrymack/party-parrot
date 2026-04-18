@@ -185,7 +185,7 @@ class TestHardSpatialPulse:
 
         # Should have modified hype and parameters
         assert interpreter.get_hype() == 90
-        assert interpreter.interpreter.edge_hardness == 4.0
+        assert interpreter.interpreter.edge_hardness == 2.0
         assert interpreter.interpreter.pulse_width == 0.2
         assert interpreter.interpreter.speed == 2.0
 

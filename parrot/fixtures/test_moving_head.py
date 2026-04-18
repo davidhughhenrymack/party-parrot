@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 from parrot.fixtures.moving_head import MovingHead
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 
 
 class TestMovingHead:
@@ -61,13 +62,14 @@ class TestMovingHead:
         assert self.moving_head.get_strobe() == 100
 
     def test_render(self):
-        """Test that render calls DMX correctly"""
+        """Test that render calls DMX correctly for every channel in the footprint."""
         self.moving_head.values = [10, 20, 30, 40, 50, 60, 70, 80]
         self.moving_head.render(self.dmx)
 
-        # Verify all channels are set
         for i in range(8):
-            self.dmx.set_channel.assert_any_call(10 + i, (i + 1) * 10)
+            self.dmx.set_channel.assert_any_call(
+                10 + i, (i + 1) * 10, universe=Universe.default
+            )
 
     def test_position_setting(self):
         """Test position setting and getting"""
@@ -77,6 +79,13 @@ class TestMovingHead:
         assert y == 200
 
     def test_id_property(self):
-        """Test the ID property"""
-        expected_id = "test-moving-head@10"
+        """Test the ID property includes universe."""
+        expected_id = "test-moving-head@10:default"
         assert self.moving_head.id == expected_id
+
+    def test_pan_tilt_angle_roundtrip(self):
+        """pan/tilt angle setters must round-trip through getters."""
+        self.moving_head.set_pan_angle(-120)
+        self.moving_head.set_tilt_angle(45)
+        assert self.moving_head.get_pan_angle() == -120
+        assert self.moving_head.get_tilt_angle() == 45

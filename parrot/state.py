@@ -61,10 +61,8 @@ class State:
         self._push_remote_control_state({"mode": value.name})
 
     def set_mode_thread_safe(self, value: Mode):
-        """Set the mode (now safe since web server runs on main thread)."""
-        # Since web server now runs on main thread, just call the regular method
+        """Set the mode (web server runs on main thread; no extra threading needed)."""
         self.set_mode(value)
-        print(f"Mode changed from web interface to: {value.name}")
 
     def _dispatch_shift(self, target: str) -> None:
         """Fire the event matching a remote shift target.
@@ -101,10 +99,8 @@ class State:
         self._push_remote_control_state({"vj_mode": value.value})
 
     def set_vj_mode_thread_safe(self, value: VJMode):
-        """Set the VJ mode (now safe since web server runs on main thread)."""
-        # Since web server now runs on main thread, just call the regular method
+        """Set the VJ mode (web server runs on main thread; no extra threading needed)."""
         self.set_vj_mode(value)
-        print(f"VJ mode changed from web interface to: {value.name}")
 
     @property
     def hype(self):
@@ -359,43 +355,16 @@ class State:
         )
 
     def process_gui_updates(self):
-        """Process any pending GUI updates from the queue."""
+        """Drain queued runtime updates on the main thread.
+
+        Called every frame by the GL loop so WebSocket/bootstrap events land
+        on the main thread (where OpenGL + pyglet are safe to touch).
+        """
         try:
             while True:
-                # Get update from queue (non-blocking)
-                update = self._gui_update_queue.get_nowait()
+                update_type, value = self._gui_update_queue.get_nowait()
 
-                # Process the update
-                update_type, value = update
-
-                if update_type == "mode":
-                    # Update the mode in the GUI
-                    if self._mode != value:
-                        self._mode = value
-                        # Only trigger GUI-related handlers
-                        if hasattr(self.events, "on_mode_change"):
-                            handlers = getattr(self.events, "on_mode_change")
-                            for handler in list(handlers):
-                                if "gui" in handler.__module__:
-                                    try:
-                                        handler(value)
-                                    except Exception as e:
-                                        print(f"Error in GUI event handler: {e}")
-
-                elif update_type == "vj_mode":
-                    # Update the VJ mode on the main thread
-                    if self._vj_mode != value:
-                        self._vj_mode = value
-                        # Trigger all event handlers (OpenGL operations are safe on main thread)
-                        if hasattr(self.events, "on_vj_mode_change"):
-                            handlers = getattr(self.events, "on_vj_mode_change")
-                            for handler in list(handlers):
-                                try:
-                                    handler(value)
-                                except Exception as e:
-                                    print(f"Error in VJ mode event handler: {e}")
-
-                elif update_type == "runtime_bootstrap":
+                if update_type == "runtime_bootstrap":
                     self.apply_runtime_bootstrap(value)
                 elif update_type == "runtime_venues":
                     self._apply_runtime_venue_summaries(list(value))
@@ -408,9 +377,7 @@ class State:
                 elif update_type == "runtime_shift":
                     self._dispatch_shift(value)
 
-                # Mark the task as done
                 self._gui_update_queue.task_done()
 
         except queue.Empty:
-            # No more updates to process
             pass

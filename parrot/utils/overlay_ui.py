@@ -53,15 +53,13 @@ class OverlayUI:
         self.visible = False
 
     def render(self):
-        """Render the overlay UI if visible"""
-        if not self.visible:
-            return
-
+        """Render overlay chrome. The mode-name label is always drawn (top-left);
+        the big control panel only appears when ``self.visible`` is True."""
         # Fix for first-render mouse input issue:
         # Event callbacks only fire when events happen. If the mouse hasn't moved
         # since the overlay became visible, ImGui doesn't know where it is and
         # won't respond to clicks. Manually sync mouse position from window state.
-        if self._first_render:
+        if self.visible and self._first_render:
             io = imgui.get_io()
             try:
                 x, y = self.pyglet_window._mouse_x, self.pyglet_window._mouse_y
@@ -77,8 +75,18 @@ class OverlayUI:
 
         imgui.new_frame()
 
-        # Double the font scale for better readability
-        imgui.get_io().font_global_scale = 2.0
+        # Keep global scale at 1.0 and opt into per-window scales below so the
+        # always-on mode label and the (optional) control panel can each pick
+        # their own size independently.
+        imgui.get_io().font_global_scale = 1.0
+
+        # Always-on current-mode label, top-left, 20pt.
+        self._render_mode_label()
+
+        if not self.visible:
+            imgui.render()
+            self.renderer.render(imgui.get_draw_data())
+            return
 
         # Create the overlay window
         imgui.set_next_window_position(20, 20, imgui.FIRST_USE_EVER)
@@ -88,6 +96,8 @@ class OverlayUI:
 
         # Begin window with close button - capture if window should remain open
         expanded, opened = imgui.begin("Party Parrot Control", True)
+        # Match the previous global-scale-of-2 look without affecting other windows.
+        imgui.set_window_font_scale(2.0)
 
         # If user clicked the (x) button, toggle visibility
         if not opened:
@@ -175,6 +185,40 @@ class OverlayUI:
         # Render ImGui
         imgui.render()
         self.renderer.render(imgui.get_draw_data())
+
+    def _render_mode_label(self):
+        """Top-left, always-visible current lighting mode name at ~20pt."""
+        # ImGui's default font is 13px; scale so the rendered text reads ~20pt.
+        font_scale = 20.0 / 13.0
+        mode_text = self.state.mode.name.upper()
+        # Size the backing window to fit the text at our chosen scale, then
+        # anchor it to the top-left corner with a small margin.
+        text_w, text_h = imgui.calc_text_size(mode_text)
+        padding_x, padding_y = 14.0, 8.0
+        label_w = text_w * font_scale + padding_x * 2.0
+        label_h = text_h * font_scale + padding_y * 2.0
+        margin = 16.0
+        imgui.set_next_window_position(margin, margin)
+        imgui.set_next_window_size(label_w, label_h)
+        # Solid-ish dark background so the label stays readable over bright
+        # beams/strobes; fully transparent backgrounds were disappearing into
+        # the lighting scene.
+        imgui.set_next_window_bg_alpha(0.75)
+        flags = (
+            imgui.WINDOW_NO_DECORATION
+            | imgui.WINDOW_NO_MOVE
+            | imgui.WINDOW_NO_SAVED_SETTINGS
+            | imgui.WINDOW_NO_FOCUS_ON_APPEARING
+            | imgui.WINDOW_NO_NAV
+            | imgui.WINDOW_NO_INPUTS
+        )
+        imgui.push_style_color(imgui.COLOR_WINDOW_BACKGROUND, 0.05, 0.05, 0.05, 0.75)
+        imgui.push_style_color(imgui.COLOR_TEXT, 1.0, 1.0, 1.0, 1.0)
+        imgui.begin("##pp_mode_label", flags=flags)
+        imgui.set_window_font_scale(font_scale)
+        imgui.text(mode_text)
+        imgui.end()
+        imgui.pop_style_color(2)
 
     def shutdown(self):
         """Cleanup resources"""

@@ -13,7 +13,10 @@ from parrot.fixtures.mirrorball import Mirrorball
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
 from parrot.interpreters.move import MoveCircleSync
-from parrot.interpreters.mode_test_interpreters import RigColorCycle
+from parrot.interpreters.mode_test_interpreters import (
+    PanTiltAxisCheck,
+    RigColorCycle,
+)
 from parrot.utils.colour import Color
 
 
@@ -71,6 +74,45 @@ class TestTestModeInterpreters(unittest.TestCase):
         interp = get_interpreter(Mode.test, [p1, p2], self.args)
         self.assertIn("RigColorCycle", str(interp))
         interp.step(_empty_frame(0.0), self.scheme)
+
+    def test_pan_tilt_axis_check_visits_each_extreme(self):
+        """Visits (127,127) between each (tilt up / down / pan left / right)."""
+        mh = MagicMock(spec=MovingHead)
+        checker = PanTiltAxisCheck([mh], self.args)
+        step = PanTiltAxisCheck.SECONDS_PER_STEP
+        # Sample the middle of each step so integer truncation can't ride a
+        # boundary. Expected sequence matches PanTiltAxisCheck.SEQUENCE.
+        expected = [
+            (127, 127),
+            (127, 255),
+            (127, 127),
+            (127, 0),
+            (127, 127),
+            (0, 127),
+            (127, 127),
+            (255, 127),
+        ]
+        for i, (pan, tilt) in enumerate(expected):
+            mh.reset_mock()
+            checker.step(_empty_frame(i * step + step * 0.5), self.scheme)
+            mh.set_pan.assert_called_once_with(pan)
+            mh.set_tilt.assert_called_once_with(tilt)
+
+    def test_pan_tilt_axis_check_wraps_modulo(self):
+        """After one full cycle, the next step is back at (127, 127)."""
+        mh = MagicMock(spec=MovingHead)
+        checker = PanTiltAxisCheck([mh], self.args)
+        cycle = PanTiltAxisCheck.SECONDS_PER_STEP * len(PanTiltAxisCheck.SEQUENCE)
+        checker.step(_empty_frame(cycle + 0.1), self.scheme)
+        mh.set_pan.assert_called_once_with(127)
+        mh.set_tilt.assert_called_once_with(127)
+
+    def test_get_interpreter_test_mode_moving_head_uses_axis_check(self):
+        from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
+
+        mh = ChauvetSpot160_12Ch(1)
+        interp = get_interpreter(Mode.test, [mh], self.args)
+        self.assertIn("PanTiltAxisCheck", str(interp))
 
     def test_get_interpreter_test_mode_mirrorball_full_dimmer(self):
         mb = MagicMock(spec=Mirrorball)

@@ -5,6 +5,7 @@ from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.uking.laser import FiveBeamLaser
 from parrot.fixtures.chauvet.gigbar import ChauvetGigbarLaser
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 
 
 class TestLaser:
@@ -59,9 +60,10 @@ class TestTwoBeamLaser:
         self.laser.values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         self.laser.render(self.dmx)
 
-        # Verify all channels are set
         for i in range(10):
-            self.dmx.set_channel.assert_any_call(1 + i, i + 1)
+            self.dmx.set_channel.assert_any_call(
+                1 + i, i + 1, universe=Universe.default
+            )
 
 
 class TestFiveBeamLaser:
@@ -114,9 +116,10 @@ class TestFiveBeamLaser:
         self.laser.values = list(range(13))
         self.laser.render(self.dmx)
 
-        # Verify all channels are set
         for i in range(13):
-            self.dmx.set_channel.assert_any_call(5 + i, i)
+            self.dmx.set_channel.assert_any_call(
+                5 + i, i, universe=Universe.default
+            )
 
 
 class TestChauvetGigbarLaser:
@@ -146,4 +149,4 @@ class TestChauvetGigbarLaser:
         """Test that render calls DMX correctly"""
         self.laser.set_dimmer(255)
         self.laser.render(self.dmx)
-        self.dmx.set_channel.assert_called_with(20, 6)
+        self.dmx.set_channel.assert_called_with(20, 6, universe=Universe.default)

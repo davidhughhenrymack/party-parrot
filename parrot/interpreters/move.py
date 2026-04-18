@@ -32,7 +32,14 @@ class MoveCircles(InterpreterBase):
 
 @beartype
 class MoveCirclesPhased(InterpreterBase):
-    """Pan/tilt circles with an independent random phase offset per fixture (no fan spread)."""
+    """Pan/tilt circles with a deterministic phase offset per group index.
+
+    Each fixture in the group gets an evenly spaced phase around the unit circle
+    (``i / N * 2π``), so the group traces the same circle but with fixtures
+    equidistantly staggered in time. Deterministic phasing keeps the look stable
+    across regenerations and avoids the occasional "all bunched up" roll that
+    random phasing can produce with small groups.
+    """
 
     def __init__(
         self,
@@ -42,7 +49,8 @@ class MoveCirclesPhased(InterpreterBase):
     ):
         super().__init__(group, args)
         self.multiplier = multiplier
-        self._phase = [random.uniform(0.0, 2.0 * math.pi) for _ in group]
+        n = max(len(group), 1)
+        self._phase = [i / n * 2.0 * math.pi for i in range(len(group))]
 
     def __str__(self) -> str:
         return f"🔄 {Fore.GREEN}CirclesPhased{Style.RESET_ALL}"

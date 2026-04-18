@@ -1,6 +1,5 @@
 import pytest
 import json
-import time
 from unittest.mock import Mock, patch, MagicMock
 from flask import Flask
 from parrot.api.web_server import (
@@ -10,12 +9,9 @@ from parrot.api.web_server import (
     set_mode,
     get_vj_mode,
     set_vj_mode,
-    deploy_hype,
-    get_hype_status,
     set_effect,
     start_web_server,
     state_instance,
-    director_instance,
 )
 from parrot.director.mode import Mode
 from parrot.vj.vj_mode import VJMode
@@ -28,12 +24,9 @@ class TestWebServer:
         app.config["TESTING"] = True
         self.client = app.test_client()
 
-        # Reset global state
         import parrot.api.web_server as web_server_module
 
         web_server_module.state_instance = None
-        web_server_module.director_instance = None
-        web_server_module.last_hype_time = 0
 
     def test_get_local_ip_success(self):
         """Test get_local_ip returns valid IP address."""
@@ -135,68 +128,6 @@ class TestWebServer:
         assert data["mode"] == "rave"
         mock_state.set_mode_thread_safe.assert_called_once_with(Mode.rave)
 
-    def test_deploy_hype_no_state(self):
-        """Test POST /api/hype when state is not initialized."""
-        response = self.client.post("/api/hype")
-        assert response.status_code == 500
-
-        data = json.loads(response.data)
-        assert "error" in data
-
-    def test_deploy_hype_no_director(self):
-        """Test POST /api/hype when director is not initialized."""
-        import parrot.api.web_server as web_server_module
-
-        web_server_module.state_instance = Mock()
-        web_server_module.director_instance = None
-
-        response = self.client.post("/api/hype")
-        assert response.status_code == 500
-
-        data = json.loads(response.data)
-        assert "error" in data
-
-    def test_deploy_hype_success(self):
-        """Test POST /api/hype with valid state and director."""
-        import parrot.api.web_server as web_server_module
-
-        mock_state = Mock()
-        mock_director = Mock()
-        web_server_module.state_instance = mock_state
-        web_server_module.director_instance = mock_director
-
-        response = self.client.post("/api/hype")
-        assert response.status_code == 200
-
-        data = json.loads(response.data)
-        assert data["success"] is True
-        assert "message" in data
-        assert "duration" in data
-        mock_director.deploy_hype.assert_called_once()
-
-    def test_get_hype_status_inactive(self):
-        """Test GET /api/hype/status when hype is inactive."""
-        response = self.client.get("/api/hype/status")
-        assert response.status_code == 200
-
-        data = json.loads(response.data)
-        assert data["active"] is False
-        assert data["remaining"] == 0
-
-    def test_get_hype_status_active(self):
-        """Test GET /api/hype/status when hype is active."""
-        import parrot.api.web_server as web_server_module
-
-        web_server_module.last_hype_time = time.time() - 2  # 2 seconds ago
-
-        response = self.client.get("/api/hype/status")
-        assert response.status_code == 200
-
-        data = json.loads(response.data)
-        assert data["active"] is True
-        assert data["remaining"] > 0
-        assert data["remaining"] <= 8  # HYPE_DURATION
-
     def test_set_effect_no_state(self):
         """Test POST /api/effect when state is not initialized."""
         response = self.client.post(
@@ -282,17 +213,13 @@ class TestWebServer:
     def test_start_web_server(self, mock_thread):
         """Test start_web_server function."""
         mock_state = Mock()
-        mock_director = Mock()
 
-        start_web_server(mock_state, mock_director, port=8080)
+        start_web_server(mock_state, port=8080)
 
-        # Check that global instances are set
         import parrot.api.web_server as web_server_module
 
         assert web_server_module.state_instance == mock_state
-        assert web_server_module.director_instance == mock_director
 
-        # Check that thread was started
         mock_thread.assert_called_once()
         mock_thread.return_value.start.assert_called_once()
 

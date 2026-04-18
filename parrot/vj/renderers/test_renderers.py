@@ -91,6 +91,57 @@ def test_moving_head_renderer_size():
     assert height == 40.0
 
 
+def test_moving_head_rotation_is_pan_then_tilt():
+    """Regression: the yoke rotation must be ``pan ∘ tilt`` (pan outer, tilt
+    inner), matching real moving-head mechanics — the yoke pans around world-Y,
+    then the head tilts around the *panned* yoke X. A previous implementation
+    used ``tilt * pan`` which made the beam and the body diverge as soon as
+    both pan and tilt were non-zero.
+
+    We verify this by composing the expected ``pan_quat * tilt_quat`` from the
+    same renderer-side pan/tilt radians and comparing to
+    ``_moving_body_rotation()``.
+    """
+    import math
+    import numpy as np
+    from parrot.vj.renderers.base import (
+        quaternion_from_axis_angle,
+        quaternion_multiply,
+        quaternion_rotate_vector,
+    )
+
+    fixture = ChauvetSpot160_12Ch(1)
+    fixture.set_pan(64)
+    fixture.set_tilt(192)
+    renderer = MovingHeadRenderer(fixture)
+
+    pan_rad, tilt_rad = renderer._pan_tilt_radians_for_render()
+    y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+    x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
+    tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
+
+    expected_pan_then_tilt = quaternion_multiply(pan_quat, tilt_quat)
+    wrong_tilt_then_pan = quaternion_multiply(tilt_quat, pan_quat)
+
+    actual = renderer._moving_body_rotation()
+
+    assert np.allclose(actual, expected_pan_then_tilt, atol=1e-5), (
+        f"Expected pan∘tilt {expected_pan_then_tilt}, got {actual}"
+    )
+    # And sanity-check it is NOT the reversed order (which would regress the
+    # body/beam-diverge bug).
+    assert not np.allclose(actual, wrong_tilt_then_pan, atol=1e-3)
+
+    # Beam direction sanity: body-local +Z rotated by pan∘tilt should match
+    # rotating +Z first by tilt (around X), then by pan (around Y).
+    local_forward = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    via_composed = quaternion_rotate_vector(actual, local_forward)
+    tilt_first = quaternion_rotate_vector(tilt_quat, local_forward)
+    pan_last = quaternion_rotate_vector(pan_quat, tilt_first)
+    assert np.allclose(via_composed, pan_last, atol=1e-5)
+
+
 def test_renderer_set_position():
     """Test that renderer position can be set"""
     fixture = ParRGB(1)

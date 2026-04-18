@@ -1,7 +1,6 @@
 import os
 import socket
 import threading
-import time
 import logging
 from flask import Flask, jsonify, request, send_from_directory
 from parrot.director.mode import MODES_BY_HYPE, Mode
@@ -13,13 +12,7 @@ app = Flask(__name__)
 
 # Global reference to the state object
 state_instance = None
-# Global reference to the director object
-director_instance = None
 editor_port_value = 4041
-# Track when hype was last deployed
-last_hype_time = 0
-# How long hype lasts (in seconds)
-HYPE_DURATION = 8
 
 
 def get_local_ip():
@@ -96,39 +89,6 @@ def static_files(path):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     static_dir = os.path.join(current_dir, "static")
     return send_from_directory(static_dir, path)
-
-
-@app.route("/api/hype", methods=["POST"])
-def deploy_hype():
-    """Deploy hype."""
-    global last_hype_time
-
-    if not state_instance or not director_instance:
-        return jsonify({"error": "State or Director not initialized"}), 500
-
-    # Deploy hype
-    director_instance.deploy_hype()
-    last_hype_time = time.time()
-
-    return jsonify(
-        {"success": True, "message": "Hype deployed! 🚀", "duration": HYPE_DURATION}
-    )
-
-
-@app.route("/api/hype/status", methods=["GET"])
-def get_hype_status():
-    """Get the current hype status."""
-    global last_hype_time
-    current_time = time.time()
-    elapsed = current_time - last_hype_time
-
-    if elapsed < HYPE_DURATION:
-        # Hype is still active
-        remaining = HYPE_DURATION - elapsed
-        return jsonify({"active": True, "remaining": remaining})
-    else:
-        # Hype is no longer active
-        return jsonify({"active": False, "remaining": 0})
 
 
 @app.route("/api/manual_fixture_dimmers", methods=["POST"])
@@ -232,16 +192,14 @@ def get_config():
 
 def start_web_server(
     state,
-    director=None,
     host="0.0.0.0",
     port=5000,
     threaded=True,
     editor_port=4041,
 ):
     """Start the web server in a separate thread or return the app for main thread integration."""
-    global state_instance, director_instance, editor_port_value
+    global state_instance, editor_port_value
     state_instance = state
-    director_instance = director
     editor_port_value = editor_port
 
     # Suppress Flask/Werkzeug logs

@@ -8,6 +8,7 @@ from parrot.fixtures.chauvet.colorband_pix import (
 )
 from parrot.fixtures.chauvet.gigbar import ChauvetGigbarLaser
 from parrot.utils.colour import Color
+from parrot.utils.dmx_utils import Universe
 
 
 class TestChauvetDerby:
@@ -67,7 +68,9 @@ class TestChauvetDerby:
         self.derby.render(self.dmx)
 
         for i in range(6):
-            self.dmx.set_channel.assert_any_call(10 + i, (i + 1) * 10)
+            self.dmx.set_channel.assert_any_call(
+                10 + i, (i + 1) * 10, universe=Universe.default
+            )
 
 
 class TestRotosphereBulb:
@@ -320,11 +323,11 @@ class TestChauvetGigbarLaser:
         self.laser.set_dimmer(255)
         self.laser.render(self.dmx)
 
-        self.dmx.set_channel.assert_called_with(25, 6)
+        self.dmx.set_channel.assert_called_with(25, 6, universe=Universe.default)
 
     def test_render_off(self):
         """Test render method when off"""
         self.laser.set_dimmer(0)
         self.laser.render(self.dmx)
 
-        self.dmx.set_channel.assert_called_with(25, 0)
+        self.dmx.set_channel.assert_called_with(25, 0, universe=Universe.default)

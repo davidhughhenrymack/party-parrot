@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import Optional
 from beartype import beartype
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp, Universe
@@ -114,7 +114,7 @@ class FixtureWithBulbs(FixtureBase):
         for bulb in self.bulbs:
             bulb.begin()
 
-    def get_bulbs(self) -> List[FixtureBase]:
+    def get_bulbs(self) -> list[FixtureBase]:
         return self.bulbs
 
     def render(self, dmx):

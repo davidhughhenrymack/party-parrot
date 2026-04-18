@@ -113,7 +113,7 @@ def test_dmx_address_width_for_fixture_helper():
     assert dmx_address_width_for_fixture("par_rgb", {}) == 7
     assert dmx_address_width_for_fixture("manual_dimmer_channel", {"width": 4}) == 4
     assert dmx_address_width_for_fixture("motionstrip_38", {}) == 38
-    assert dmx_address_width_for_fixture("mirrorball", {}) == 1
+    assert dmx_address_width_for_fixture("mirrorball", {}) == 4
 
 
 def test_asset_endpoint_serves_dj_silhouette(client):

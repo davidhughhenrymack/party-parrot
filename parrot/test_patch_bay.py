@@ -31,7 +31,8 @@ class TestPatchBay:
         # Check for expected fixture types
         fixture_types = [type(fixture).__name__ for fixture in dmack_fixtures]
         assert "ChauvetSpot160_12Ch" in fixture_types
-        assert "ChauvetSpot120_12Ch" in fixture_types
+        # Spot 110/120 share a controller class (ChauvetSpot110_12Ch).
+        assert "ChauvetSpot110_12Ch" in fixture_types
         assert "ParRGB" in fixture_types
         assert "Motionstrip38" in fixture_types
 
