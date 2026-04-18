@@ -1,4 +1,5 @@
 import queue
+import threading
 from typing import Callable, Optional
 from events import Events
 from beartype import beartype
@@ -65,18 +66,27 @@ class State:
         self.set_mode(value)
         print(f"Mode changed from web interface to: {value.name}")
 
-    def set_effect_thread_safe(self, effect: str):
-        """Set the effect in a thread-safe way."""
-        try:
-            from parrot.director.frame import FrameSignal
+    def _dispatch_shift(self, target: str) -> None:
+        """Fire the event matching a remote shift target.
 
-            signal = FrameSignal[effect]
-            if hasattr(self, "signal_states"):
-                self.signal_states.set_signal(signal, 1.0)
-                print(f"Thread-safe effect change to: {effect}")
-        except Exception as e:
-            print(f"Error setting effect: {e}")
-            raise
+        Subscribers (see ``gl_window_app``) register the director's
+        ``shift_lighting_only`` / ``shift_color_scheme`` / ``shift_vj_only``
+        methods against these events. ``Events()`` auto-creates event attributes
+        on access, so firing with zero subscribers is a harmless no-op.
+        """
+        event = getattr(self.events, f"on_shift_{target}_request")
+        event()
+
+    def set_effect_thread_safe(self, effect: str):
+        """Fire a one-shot FrameSignal from the remote control (key press + auto-release)."""
+        from parrot.director.frame import FrameSignal
+
+        signal = FrameSignal[effect]
+        self.signal_states.set_signal(signal, 1.0)
+        # Remote has no key-up event; release after a short hold so signals don't stick on.
+        threading.Timer(
+            0.35, lambda: self.signal_states.set_signal(signal, 0.0)
+        ).start()
 
     @property
     def vj_mode(self):
@@ -190,6 +200,14 @@ class State:
 
     def queue_runtime_effect(self, effect: str):
         self._gui_update_queue.put(("runtime_effect", effect))
+
+    def queue_runtime_shift(self, target: str):
+        """Queue a remote-triggered ``director.shift_<target>()`` request.
+
+        Dispatched on the main thread via ``process_gui_updates`` so director
+        calls happen in the same context as keyboard-driven shifts.
+        """
+        self._gui_update_queue.put(("runtime_shift", target))
 
     def _apply_runtime_venue_summaries(self, venues: list[VenueSummary]) -> None:
         self._available_venues = list(venues)
@@ -387,6 +405,8 @@ class State:
                     self._apply_control_state(value)
                 elif update_type == "runtime_effect":
                     self.set_effect_thread_safe(value)
+                elif update_type == "runtime_shift":
+                    self._dispatch_shift(value)
 
                 # Mark the task as done
                 self._gui_update_queue.task_done()

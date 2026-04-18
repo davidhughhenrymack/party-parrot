@@ -21,6 +21,10 @@ const MOVING_HEAD_TYPES = new Set([
   'chauvet_intimidator_hybrid_140sr_13ch',
 ]);
 
+export function isMovingHeadFixtureType(fixtureType) {
+  return MOVING_HEAD_TYPES.has(fixtureType);
+}
+
 function parLikeDimensions() {
   const bs = desktopBodySize();
   // PAR / theatre can: long axis along beam (stage Y), roughly square cross-section (X × Z)

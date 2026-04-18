@@ -22,7 +22,7 @@ def test_seed_creates_demo_venue(venue_repository):
 
     assert bootstrap.active_venue is not None
     assert bootstrap.active_venue.summary.slug == "mtn-lotus-demo"
-    assert len(bootstrap.active_venue.fixtures) >= 10
+    assert len(bootstrap.active_venue.fixtures) == 0
     assert bootstrap.control_state.mode == "chill"
     assert {scene_object.kind for scene_object in bootstrap.active_venue.scene_objects} == {
         "floor",
@@ -156,6 +156,113 @@ def test_active_venue_persists_across_seed_runs(venue_repository):
     assert after.control_state.active_venue_id == other_id
     assert after.active_venue is not None
     assert after.active_venue.summary.id == other_id
+
+
+def test_moving_head_add_seeds_pan_tilt_range_defaults(venue_repository):
+    """A new Hybrid 140SR fixture gets the fixture-type's mechanical range in options."""
+    active = venue_repository.get_active_venue_snapshot()
+    created = venue_repository.add_fixture(
+        active.summary.id,
+        {
+            "id": "range-seed-hybrid",
+            "fixture_type": "chauvet_intimidator_hybrid_140sr",
+            "address": 100,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+        },
+    )
+    fixture = next(f for f in created.fixtures if f.id == "range-seed-hybrid")
+    assert fixture.options["pan_lower"] == 0
+    assert fixture.options["pan_upper"] == 540
+    assert fixture.options["tilt_lower"] == 0
+    assert fixture.options["tilt_upper"] == 270
+
+
+def test_moving_head_add_respects_client_range_override(venue_repository):
+    active = venue_repository.get_active_venue_snapshot()
+    created = venue_repository.add_fixture(
+        active.summary.id,
+        {
+            "id": "range-override",
+            "fixture_type": "chauvet_spot_160",
+            "address": 200,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            # Top-level override wins over the fixture-type default (360..540).
+            "pan_lower": 400,
+            "pan_upper": 500,
+        },
+    )
+    fixture = next(f for f in created.fixtures if f.id == "range-override")
+    assert fixture.options["pan_lower"] == 400
+    assert fixture.options["pan_upper"] == 500
+    # Tilt defaults still seeded from the type.
+    assert fixture.options["tilt_lower"] == 0
+    assert fixture.options["tilt_upper"] == 90
+
+
+def test_update_fixture_merges_top_level_pan_tilt_range(venue_repository):
+    """PATCHing a single range field must preserve other options and the unchanged range fields."""
+    active = venue_repository.get_active_venue_snapshot()
+    created = venue_repository.add_fixture(
+        active.summary.id,
+        {
+            "id": "range-merge",
+            "fixture_type": "chauvet_intimidator_hybrid_140sr",
+            "address": 1,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "options": {"pan_lower": 100, "pan_upper": 400, "custom_marker": "keep me"},
+        },
+    )
+    fixture = next(f for f in created.fixtures if f.id == "range-merge")
+    # Client-supplied options win where they overlap with the type defaults;
+    # unspecified keys (tilt_*) fall through to the fixture-type defaults so new
+    # fixtures always expose the full range for editing.
+    assert fixture.options["pan_lower"] == 100
+    assert fixture.options["pan_upper"] == 400
+    assert fixture.options["custom_marker"] == "keep me"
+    assert fixture.options["tilt_lower"] == 0
+    assert fixture.options["tilt_upper"] == 270
+
+    updated = venue_repository.update_fixture(
+        active.summary.id,
+        "range-merge",
+        {"pan_lower": 250},
+    )
+    fixture = next(f for f in updated.fixtures if f.id == "range-merge")
+    # pan_lower was patched; everything else (including the unrelated custom_marker)
+    # is untouched.
+    assert fixture.options["pan_lower"] == 250
+    assert fixture.options["pan_upper"] == 400
+    assert fixture.options["custom_marker"] == "keep me"
+    assert fixture.options["tilt_lower"] == 0
+    assert fixture.options["tilt_upper"] == 270
+
+
+def test_non_moving_head_add_does_not_seed_pan_tilt_range(venue_repository):
+    active = venue_repository.get_active_venue_snapshot()
+    created = venue_repository.add_fixture(
+        active.summary.id,
+        {
+            "id": "par-no-range",
+            "fixture_type": "par_rgb",
+            "address": 1,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+        },
+    )
+    fixture = next(f for f in created.fixtures if f.id == "par-no-range")
+    assert "pan_lower" not in fixture.options
+    assert "tilt_upper" not in fixture.options
 
 
 def test_initial_control_state_tracks_active_seed_venue(monkeypatch, tmp_path):

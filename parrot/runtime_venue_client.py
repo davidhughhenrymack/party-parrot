@@ -136,6 +136,12 @@ class RuntimeVenueClient:
                 effect = str(payload.get("data", {}).get("effect", ""))
                 if effect:
                     self.state.queue_runtime_effect(effect)
+            elif message_type == "shift_lighting_only":
+                self.state.queue_runtime_shift("lighting_only")
+            elif message_type == "shift_color_scheme":
+                self.state.queue_runtime_shift("color_scheme")
+            elif message_type == "shift_vj_only":
+                self.state.queue_runtime_shift("vj_only")
 
         def on_error(_, error):
             print(f"Venue websocket error: {error}")

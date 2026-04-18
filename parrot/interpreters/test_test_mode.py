@@ -6,9 +6,10 @@ from unittest.mock import MagicMock
 
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame, FrameSignal
-from parrot.director.mode_interpretations import get_interpreter
+from parrot.director.mode_dispatch import get_interpreter
 from parrot.director.mode import Mode
 from parrot.fixtures.led_par import Par
+from parrot.fixtures.mirrorball import Mirrorball
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
 from parrot.interpreters.move import MoveCircleSync
@@ -70,6 +71,12 @@ class TestTestModeInterpreters(unittest.TestCase):
         interp = get_interpreter(Mode.test, [p1, p2], self.args)
         self.assertIn("RigColorCycle", str(interp))
         interp.step(_empty_frame(0.0), self.scheme)
+
+    def test_get_interpreter_test_mode_mirrorball_full_dimmer(self):
+        mb = MagicMock(spec=Mirrorball)
+        interp = get_interpreter(Mode.test, [mb], self.args)
+        interp.step(_empty_frame(0.0), self.scheme)
+        mb.set_dimmer.assert_called_with(255)
 
 
 if __name__ == "__main__":

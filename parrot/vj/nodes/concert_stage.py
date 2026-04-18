@@ -30,10 +30,55 @@ from parrot.vj.nodes.moving_head_array_renderer import (
     MovingHeadPlacement,
 )
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
-from parrot.vj.nodes.zombie_rave_stage import (
-    build_zombie_rave_bundle,
-    blackout_aware_overlay,
-)
+from parrot.vj.vj_mode import VJMode
+# NOTE: Zombie Rave (zr_*) scenes are disabled for now. Re-enable by uncommenting
+# the zr_* entries in `VJMode` and wiring `build_zombie_rave_bundle` back into
+# the ModeSwitch below. The helper is still available:
+#   from parrot.vj.nodes.zombie_rave_stage import build_zombie_rave_bundle
+
+
+# Per-DJ prom scene tints (RGB, 0..1). Each drives SparkleFieldEffect's palette.
+_PROM_SCENES: dict[VJMode, tuple[str, tuple[float, float, float]]] = {
+    VJMode.prom_dmack: ("dmack", (1.0, 0.72, 0.18)),           # warm gold
+    VJMode.prom_wufky: ("wufky", (1.0, 0.25, 0.75)),           # hot magenta
+    VJMode.prom_mayhem: ("mayhem", (0.30, 0.55, 1.0)),         # electric blue
+    VJMode.prom_thunderbunny: ("thunderbunny", (0.50, 1.0, 0.35)),  # neon green
+}
+
+
+@beartype
+def _blackout_aware_overlay(
+    effect: BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer],
+) -> ModeSwitch:
+    """One physical effect for all lit modes; full black only on `VJMode.blackout`."""
+    nodes: dict[str, BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]] = {
+        m.name: effect for m in VJMode if m != VJMode.blackout
+    }
+    nodes[VJMode.blackout.name] = Black()
+    return ModeSwitch(**nodes)
+
+
+@beartype
+def _build_prom_scene(
+    dj_name: str,
+    tint: tuple[float, float, float],
+) -> BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]:
+    """Sparkle field + DJ-name title in Muro, composed with SCREEN blend."""
+    # Longer names (like "thunderbunny") need a smaller font to fit on screen.
+    font_size = 440 if len(dj_name) <= 6 else 240
+    sparkles = SparkleFieldEffect(tint=tint)
+    title = TextRenderer(
+        text=dj_name,
+        font_name="Muro",
+        font_path=muro_font_path(),
+        font_size=font_size,
+        text_color=(255, 245, 200),
+        bg_color=(0, 0, 0),
+    )
+    return LayerCompose(
+        LayerSpec(sparkles, BlendMode.NORMAL),
+        LayerSpec(title, BlendMode.SCREEN),
+    )
 
 
 @beartype
@@ -62,41 +107,22 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
 
     def _create_mode_switch(self):
         """Create a ModeSwitch with different nodes for each mode"""
-        bundle = build_zombie_rave_bundle()
-        self.canvas_2d = bundle.canvas_2d
-        self.oscilloscope = bundle.oscilloscope
-
         moving_head_renderer = self._create_virtual_moving_heads()
         self.moving_head_renderer = moving_head_renderer
 
-        black_node = Black()
-
-        prom_sparkles = SparkleFieldEffect()
-        prom_title = TextRenderer(
-            text="dmack",
-            font_name="Muro",
-            font_path=muro_font_path(),
-            font_size=440,
-            text_color=(255, 245, 200),
-            bg_color=(0, 0, 0),
-        )
-        # SCREEN: black pixels from the text layer pass through so golden sparkles show behind
-        prom_dmack_scene = LayerCompose(
-            LayerSpec(prom_sparkles, BlendMode.NORMAL),
-            LayerSpec(prom_title, BlendMode.SCREEN),
-        )
+        prom_scene_nodes: dict[
+            str, BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]
+        ] = {
+            vj_mode.name: _build_prom_scene(dj_name, tint)
+            for vj_mode, (dj_name, tint) in _PROM_SCENES.items()
+        }
 
         mode_switch = ModeSwitch(
-            prom_dmack=prom_dmack_scene,
-            zr_full_rave=bundle.rave_composition,
-            zr_early_rave=bundle.zr_early_rave,
-            blackout=black_node,
-            zr_golden_age=bundle.zr_golden_age,
-            zr_music_vids=bundle.zr_music_vids,
-            zr_hiphop=bundle.zr_hiphop,
+            blackout=Black(),
+            **prom_scene_nodes,
         )
 
-        laser_scan_heads = blackout_aware_overlay(
+        laser_scan_heads = _blackout_aware_overlay(
             LaserScanHeads(
                 num_heads=5,
                 beams_per_head=12,
@@ -113,17 +139,17 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         )
         self.laser_scan_heads = laser_scan_heads
 
-        color_strobe = blackout_aware_overlay(
+        color_strobe = _blackout_aware_overlay(
             ColorStrobe(strobe_frequency=8.0, opacity_multiplier=0.6)
         )
         self.color_strobe = color_strobe
 
-        hot_sparks = blackout_aware_overlay(
+        hot_sparks = _blackout_aware_overlay(
             HotSparksEffect(num_sparks=350, opacity_multiplier=0.65)
         )
         self.hot_sparks = hot_sparks
 
-        stage_blinders = blackout_aware_overlay(
+        stage_blinders = _blackout_aware_overlay(
             StageBlinders(
                 num_blinders=8,
                 attack_time=0.05,
@@ -195,4 +221,3 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         """Render the complete concert stage using ModeSwitch"""
         with vj_profiler.profile("concert_stage_render"):
             return self.mode_switch.render(frame, scheme, context)
-

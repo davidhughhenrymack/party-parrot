@@ -4,7 +4,7 @@ import threading
 import time
 import logging
 from flask import Flask, jsonify, request, send_from_directory
-from parrot.director.mode import Mode
+from parrot.director.mode import MODES_BY_HYPE, Mode
 from parrot.vj.vj_mode import VJMode
 from parrot.state import State
 
@@ -39,14 +39,15 @@ def get_local_ip():
 @app.route("/api/mode", methods=["GET"])
 def get_mode():
     """Get the current mode."""
+    available_modes = [p.name for p in MODES_BY_HYPE]
     if state_instance and state_instance.mode:
         return jsonify(
             {
                 "mode": state_instance.mode.name,
-                "available_modes": [p.name for p in Mode],
+                "available_modes": available_modes,
             }
         )
-    return jsonify({"mode": None, "available_modes": [p.name for p in Mode]})
+    return jsonify({"mode": None, "available_modes": available_modes})
 
 
 @app.route("/api/mode", methods=["POST"])

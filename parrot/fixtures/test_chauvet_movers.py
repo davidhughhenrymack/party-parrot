@@ -227,6 +227,25 @@ class TestChauvetSpot160_12Ch:
         assert self.spot.pan_lower == expected_lower
         assert self.spot.pan_upper == expected_upper
 
+    def test_narrow_pan_range_limits_reported_pan_angle(self):
+        """Narrowing pan_lower/pan_upper in degrees must shrink the angle space that
+        interpreters (e.g. MoveCircles) and renderers see via get_pan_angle().
+
+        MoveCircles sweeps set_pan across 0..255; the mover projects that into the
+        mechanical range so the rendered circle shrinks with the range, exactly the
+        behavior we need for the venue editor pan/tilt-range feature.
+        """
+        narrow = ChauvetSpot160_12Ch(patch=30, pan_lower=350.0, pan_upper=400.0)
+        reported_angles = []
+        for v in (0, 64, 128, 192, 255):
+            narrow.set_pan(v)
+            reported_angles.append(narrow.get_pan_angle())
+
+        assert min(reported_angles) >= 350.0 - 1.5
+        assert max(reported_angles) <= 400.0 + 1.5
+        # Confirm travel actually tracks the sweep across the narrowed band.
+        assert max(reported_angles) - min(reported_angles) > 30.0
+
 
 class TestChauvetMove_9Ch:
     def setup_method(self):

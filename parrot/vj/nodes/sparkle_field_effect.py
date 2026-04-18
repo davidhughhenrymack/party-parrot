@@ -19,9 +19,21 @@ _EMIT_HISTORY_TTL = 2.5
 
 @beartype
 class SparkleFieldEffect(GenerativeEffectBase):
-    """Sparse golden sparkles: audio-driven spawn rate, sudden onset, exponential decay."""
+    """Sparse tinted sparkles: audio-driven spawn rate, sudden onset, exponential decay.
 
-    def __init__(self, width: int = 1920, height: int = 1080):
+    ``tint`` is the mid-tone RGB (0..1) sparkle color. The shader derives a deep/mid/
+    bright/glint palette from this single hue so each DJ can have their own flavor.
+    """
+
+    # Default warm-gold tint — matches the original hardcoded palette's mid tone.
+    DEFAULT_TINT: tuple[float, float, float] = (1.0, 0.72, 0.18)
+
+    def __init__(
+        self,
+        width: int = 1920,
+        height: int = 1080,
+        tint: tuple[float, float, float] = DEFAULT_TINT,
+    ):
         super().__init__(width, height)
         self._t0 = time.perf_counter()
         self._last_emit_trigger_time = -1000.0
@@ -29,6 +41,12 @@ class SparkleFieldEffect(GenerativeEffectBase):
         self._emit_burst_id = 0
         # (trigger_time, strength, burst_id) — each latched trigger adds a row; shader sums fades.
         self._emit_history: list[tuple[float, float, int]] = []
+        r, g, b = tint
+        self._tint = (
+            max(0.0, min(1.0, float(r))),
+            max(0.0, min(1.0, float(g))),
+            max(0.0, min(1.0, float(b))),
+        )
 
     def generate(self, vibe: Vibe) -> None:
         """No-op; sparkles are driven in the fragment shader."""
@@ -66,6 +84,7 @@ class SparkleFieldEffect(GenerativeEffectBase):
                 float(frame[FrameSignal.strobe]),
             ),
         )
+        self._safe_set_uniform("u_tint", self._tint)
     def _set_emit_history_uniforms(self) -> None:
         if not self.shader_program:
             return
@@ -94,6 +113,7 @@ class SparkleFieldEffect(GenerativeEffectBase):
         uniform float time;
         uniform vec2 resolution;
         uniform vec4 u_audio;
+        uniform vec3 u_tint;
         const int EMIT_HISTORY_MAX = 128;
         uniform int u_emit_n;
         uniform float u_emit_times[EMIT_HISTORY_MAX];
@@ -203,10 +223,13 @@ class SparkleFieldEffect(GenerativeEffectBase):
             vec2 p = uv * resolution;
             vec3 acc = vec3(0.0);
 
-            vec3 goldDeep = vec3(0.92, 0.42, 0.02);
-            vec3 goldMid = vec3(1.0, 0.72, 0.18);
-            vec3 goldBright = vec3(1.0, 0.94, 0.55);
-            vec3 glint = vec3(1.0, 0.98, 0.88);
+            // Derive a 4-step palette from the single `u_tint` hue so each scene
+            // (prom_dmack, prom_wufky, prom_mayhem, prom_thunderbunny) has its own flavor.
+            vec3 tint = u_tint;
+            vec3 goldDeep = tint * 0.55;
+            vec3 goldMid = tint;
+            vec3 goldBright = mix(tint, vec3(1.0), 0.50);
+            vec3 glint = mix(tint, vec3(1.0), 0.85);
 
             // Larger grid cells => fewer, bigger sparkles on screen.
             float scale = 0.0148;

@@ -63,12 +63,12 @@ class TestVJDirectorEvents:
             new_mode_1 = (
                 VJMode.blackout
                 if initial_mode != VJMode.blackout
-                else VJMode.zr_golden_age
+                else VJMode.prom_wufky
             )
             new_mode_2 = (
-                VJMode.zr_early_rave
-                if new_mode_1 != VJMode.zr_early_rave
-                else VJMode.zr_full_rave
+                VJMode.prom_mayhem
+                if new_mode_1 != VJMode.prom_mayhem
+                else VJMode.prom_thunderbunny
             )
 
             state.set_vj_mode(new_mode_1)

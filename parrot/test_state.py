@@ -125,20 +125,28 @@ class TestState:
         state.cycle_editor_display_mode()
         assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
 
-    @patch("parrot.director.frame.FrameSignal")
-    def test_set_effect_thread_safe(self, mock_frame_signal):
-        """Test thread-safe effect setting."""
-        state = State()
-        mock_signal = Mock()
-        mock_frame_signal.__getitem__.return_value = mock_signal
+    def test_set_effect_thread_safe_presses_and_releases(self):
+        """Remote control taps fire the signal then release it so it doesn't stick on."""
+        import time
 
-        # Mock the signal_states.set_signal method
+        from parrot.director.frame import FrameSignal
+
+        state = State()
         state.signal_states.set_signal = Mock()
 
         state.set_effect_thread_safe("strobe")
 
-        mock_frame_signal.__getitem__.assert_called_once_with("strobe")
-        state.signal_states.set_signal.assert_called_once_with(mock_signal, 1.0)
+        state.signal_states.set_signal.assert_called_once_with(FrameSignal.strobe, 1.0)
+
+        # Wait out the auto-release timer (currently 0.35s).
+        deadline = time.time() + 1.0
+        while time.time() < deadline and state.signal_states.set_signal.call_count < 2:
+            time.sleep(0.05)
+
+        assert state.signal_states.set_signal.call_args_list[-1] == (
+            (FrameSignal.strobe, 0.0),
+            {},
+        )
 
     def test_process_gui_updates_empty_queue(self):
         """Test processing GUI updates with empty queue."""
@@ -162,6 +170,25 @@ class TestState:
 
         assert state.mode == Mode.rave
         mock_gui_handler.assert_called_once_with(Mode.rave)
+
+    def test_runtime_shift_fires_registered_event_handler(self):
+        """Remote shift messages must reach subscribers via process_gui_updates."""
+        state = State()
+        lighting_handler = Mock()
+        color_handler = Mock()
+        vj_handler = Mock()
+        state.events.on_shift_lighting_only_request += lighting_handler
+        state.events.on_shift_color_scheme_request += color_handler
+        state.events.on_shift_vj_only_request += vj_handler
+
+        state.queue_runtime_shift("lighting_only")
+        state.queue_runtime_shift("color_scheme")
+        state.queue_runtime_shift("vj_only")
+        state.process_gui_updates()
+
+        lighting_handler.assert_called_once_with()
+        color_handler.assert_called_once_with()
+        vj_handler.assert_called_once_with()
 
     def test_process_gui_updates_runtime_venues_notifies_listeners(self):
         state = State()

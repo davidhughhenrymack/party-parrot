@@ -12,7 +12,7 @@ from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
-from parrot.director.mode_interpretations import get_interpreter
+from parrot.director.mode_dispatch import get_interpreter
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterBase, InterpreterArgs
 

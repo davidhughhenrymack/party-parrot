@@ -62,7 +62,7 @@ def test_state_applies_runtime_bootstrap():
         ),
         control_state=ControlState(
             mode="rave",
-            vj_mode="zr_full_rave",
+            vj_mode="prom_wufky",
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",
@@ -130,7 +130,7 @@ def test_room_layout_uses_snapshot_floor_when_scene_objects_empty():
         ),
         control_state=ControlState(
             mode="rave",
-            vj_mode="zr_full_rave",
+            vj_mode="prom_mayhem",
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",

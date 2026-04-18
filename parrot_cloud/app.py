@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import sys
+import traceback
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, request, send_from_directory
@@ -11,10 +13,15 @@ from parrot_cloud.fixture_catalog import list_fixture_types
 from parrot_cloud.repository import VenueRepository
 from parrot_cloud.ws_hub import VenueUpdateHub
 from parrot.director.frame import FrameSignal
-from parrot.director.mode import Mode
+from parrot.director.mode import MODES_BY_HYPE, Mode
 from parrot.director.themes import themes
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import VJMode
+
+
+# Shift actions the remote control can trigger on the desktop director.
+# Each target corresponds to a Director method: ``shift_<target>``.
+SHIFT_TARGETS: tuple[str, ...] = ("lighting_only", "color_scheme", "vj_only")
 
 
 def create_app() -> Flask:
@@ -26,17 +33,42 @@ def create_app() -> Flask:
     app.config["venue_repository"] = repository
     app.config["venue_update_hub"] = hub
 
+    @app.errorhandler(Exception)
+    def _log_unhandled(err):
+        # Force server-side traceback to stderr so 500s never go silent.
+        print(
+            f"[parrot_cloud] unhandled exception in {request.method} {request.path}:",
+            file=sys.stderr,
+        )
+        traceback.print_exc()
+        sys.stderr.flush()
+        raise err
+
+    def _safe_broadcast(label: str, build_event) -> None:
+        """Broadcasts are informational side effects; never let them 500 the request."""
+        try:
+            hub.broadcast(build_event())
+        except Exception:
+            print(
+                f"[parrot_cloud] broadcast {label} failed (ignored):",
+                file=sys.stderr,
+            )
+            traceback.print_exc()
+            sys.stderr.flush()
+
     def broadcast_bootstrap() -> None:
-        hub.broadcast(
-            {
+        _safe_broadcast(
+            "bootstrap",
+            lambda: {
                 "type": "bootstrap",
                 "data": repository.get_runtime_bootstrap().to_dict(),
-            }
+            },
         )
 
     def broadcast_venues() -> None:
-        hub.broadcast(
-            {
+        _safe_broadcast(
+            "venues",
+            lambda: {
                 "type": "venues",
                 "data": {
                     "venues": [
@@ -44,28 +76,38 @@ def create_app() -> Flask:
                         for summary in repository.list_venue_summaries()
                     ]
                 },
-            }
+            },
         )
 
     def broadcast_active_venue() -> None:
         venue = repository.get_active_venue_snapshot()
         if venue is None:
             return
-        hub.broadcast({"type": "venue_snapshot", "data": venue.to_dict()})
+        _safe_broadcast(
+            "venue_snapshot",
+            lambda: {"type": "venue_snapshot", "data": venue.to_dict()},
+        )
 
     def broadcast_venue_snapshot(snapshot) -> None:
-        hub.broadcast({"type": "venue_snapshot", "data": snapshot.to_dict()})
+        _safe_broadcast(
+            "venue_snapshot",
+            lambda: {"type": "venue_snapshot", "data": snapshot.to_dict()},
+        )
 
     def broadcast_control_state() -> None:
-        hub.broadcast(
-            {
+        _safe_broadcast(
+            "control_state",
+            lambda: {
                 "type": "control_state",
                 "data": repository.get_control_state().to_dict(),
-            }
+            },
         )
 
     def broadcast_command(command_type: str, data: dict[str, object]) -> None:
-        hub.broadcast({"type": command_type, "data": data})
+        _safe_broadcast(
+            command_type,
+            lambda: {"type": command_type, "data": data},
+        )
 
     @app.get("/")
     def index():
@@ -95,7 +137,7 @@ def create_app() -> Flask:
                     {"value": Universe.default.value, "label": "Enttec Pro"},
                     {"value": Universe.art1.value, "label": "Art-Net 1"},
                 ],
-                "available_modes": [mode.name for mode in Mode],
+                "available_modes": [mode.name for mode in MODES_BY_HYPE],
                 "available_vj_modes": [mode.value for mode in VJMode],
                 "available_display_modes": ["venue", "dmx_heatmap", "vj"],
                 "theme_names": [theme.name for theme in themes],
@@ -105,6 +147,7 @@ def create_app() -> Flask:
                     FrameSignal.small_blinder.value,
                     FrameSignal.pulse.value,
                 ],
+                "shift_targets": list(SHIFT_TARGETS),
             }
         )
 
@@ -124,7 +167,10 @@ def create_app() -> Flask:
     def post_runtime_fixture_state():
         data = request.get_json(force=True) or {}
         payload = repository.set_fixture_runtime_state(dict(data))
-        hub.broadcast({"type": "fixture_runtime_state", "data": payload})
+        _safe_broadcast(
+            "fixture_runtime_state",
+            lambda: {"type": "fixture_runtime_state", "data": payload},
+        )
         return jsonify(payload)
 
     @app.get("/api/runtime/vj-preview")
@@ -141,7 +187,10 @@ def create_app() -> Flask:
             info = repository.set_vj_preview_jpeg(raw)
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400
-        hub.broadcast({"type": "vj_preview", "data": info})
+        _safe_broadcast(
+            "vj_preview",
+            lambda: {"type": "vj_preview", "data": info},
+        )
         return jsonify(info)
 
     @app.get("/api/runtime/active-venue")
@@ -168,7 +217,7 @@ def create_app() -> Flask:
         return jsonify(
             {
                 "mode": control_state.mode,
-                "available_modes": [mode.name for mode in Mode],
+                "available_modes": [mode.name for mode in MODES_BY_HYPE],
             }
         )
 
@@ -202,6 +251,23 @@ def create_app() -> Flask:
         effect = str(data.get("effect", ""))
         broadcast_command("effect", {"effect": effect})
         return jsonify({"success": True, "effect": effect})
+
+    @app.post("/api/shift")
+    def trigger_shift():
+        data = request.get_json(force=True) or {}
+        target = str(data.get("target", ""))
+        if target not in SHIFT_TARGETS:
+            return (
+                jsonify(
+                    {
+                        "error": f"unknown shift target {target!r}",
+                        "available_targets": list(SHIFT_TARGETS),
+                    }
+                ),
+                400,
+            )
+        broadcast_command(f"shift_{target}", {"target": target})
+        return jsonify({"success": True, "target": target})
 
     @app.post("/api/seed")
     def seed():

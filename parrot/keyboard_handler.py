@@ -4,7 +4,7 @@ import pyglet
 from beartype import beartype
 
 from parrot.director.director import Director
-from parrot.director.mode import Mode
+from parrot.director.mode import MODES_BY_HYPE, Mode
 from parrot.director.frame import FrameSignal
 from parrot.director.signal_states import SignalStates
 from parrot.state import State
@@ -33,9 +33,10 @@ class KeyboardHandler:
         # Get list of VJ modes in enum order (blackout is lowest/first)
         self.vj_modes = list(VJMode)
 
-        # Get list of lighting modes ordered from lowest to highest intensity
-        # blackout (lowest) -> chill -> rave_gentle -> rave (highest)
-        self.modes = [Mode.blackout, Mode.chill, Mode.rave_gentle, Mode.rave]
+        # Lighting modes ordered from lowest to highest hype. Shared with the
+        # remote web UI and desktop overlay via ``MODES_BY_HYPE`` so up/down
+        # navigation and the mode picker always agree.
+        self.modes = list(MODES_BY_HYPE)
 
         # Track blackout toggle state
         self.blackout_active = False
@@ -114,7 +115,7 @@ class KeyboardHandler:
             self._navigate_mode_down()
             return True
 
-        # VJ mode navigation (E = down towards blackout, F = up towards zr_full_rave)
+        # VJ mode navigation (E = down towards blackout, F = up towards last prom mode)
         elif symbol == pyglet.window.key.E:
             self._navigate_vj_mode_previous()
             return True
@@ -156,24 +157,16 @@ class KeyboardHandler:
             self.state.set_vj_mode(prev_mode)
 
     def _navigate_mode_up(self):
-        """Navigate up lighting modes (towards rave, no wrapping)"""
-        current_mode = self.state.mode
-        current_index = self.modes.index(current_mode)
-
-        # Only move up if we're not at the highest mode
+        """Navigate up lighting modes (towards rave, no wrapping)."""
+        current_index = self.modes.index(self.state.mode)
         if current_index < len(self.modes) - 1:
-            next_mode = self.modes[current_index + 1]
-            self.state.set_mode(next_mode)
+            self.state.set_mode(self.modes[current_index + 1])
 
     def _navigate_mode_down(self):
-        """Navigate down lighting modes (towards blackout, no wrapping)"""
-        current_mode = self.state.mode
-        current_index = self.modes.index(current_mode)
-
-        # Only move down if we're not at the lowest mode
+        """Navigate down lighting modes (towards blackout, no wrapping)."""
+        current_index = self.modes.index(self.state.mode)
         if current_index > 0:
-            prev_mode = self.modes[current_index - 1]
-            self.state.set_mode(prev_mode)
+            self.state.set_mode(self.modes[current_index - 1])
 
     def _toggle_blackout(self):
         """Toggle blackout mode - remember and restore previous modes"""

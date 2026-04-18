@@ -202,9 +202,6 @@ poetry run python -m parrot.main --no-web
 
 # Enable profiling
 poetry run python -m parrot.main --profile --profile-interval 30
-
-# Legacy tkinter GUI (deprecated)
-poetry run python -m parrot.main --legacy-gui
 ```
 
 ### Justfile Commands

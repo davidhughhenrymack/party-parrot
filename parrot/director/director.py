@@ -19,7 +19,7 @@ from parrot.director.mode import Mode
 from parrot.fixtures.laser import Laser
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
-from .mode_interpretations import get_interpreter, mode_uses_group_matchers
+from .mode_dispatch import CompositeInterpreter, get_interpreter, mode_uses_group_matchers
 
 from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
@@ -36,6 +36,24 @@ HYPE_BUCKETS = [10, 40, 70]
 
 def filter_nones(l):
     return [i for i in l if i is not None]
+
+
+def _flatten_interpreter_rows(
+    interpreter: InterpreterBase,
+) -> list[tuple[list[FixtureBase], str]]:
+    """Return one ``(group, str(interpreter))`` row per leaf interpreter.
+
+    A :class:`CompositeInterpreter` partitions its ``group`` across children —
+    printing it as a single row against its flat group would imply every child
+    applies to every fixture, which is wrong. Expand to one row per child so
+    the tree reflects the real dispatch.
+    """
+    if isinstance(interpreter, CompositeInterpreter):
+        rows: list[tuple[list[FixtureBase], str]] = []
+        for child in interpreter.children:
+            rows.extend(_flatten_interpreter_rows(child))
+        return rows
+    return [(list(interpreter.group), str(interpreter))]
 
 
 class Director:
@@ -140,26 +158,37 @@ class Director:
         return "; ".join(parts)
 
     def print_lighting_tree(self, context: str = ""):
-        """Print a tree representation of the lighting interpreters"""
+        """Print a tree representation of the lighting interpreters.
+
+        Group-matcher modes (ethereal, rave, rave_gentle, chill) produce a
+        :class:`CompositeInterpreter` whose children each apply to a different
+        partitioned sub-group of the patch. Flatten those into one row per
+        child so each sub-group displays its own fixtures and interpreter,
+        rather than printing the whole patch against a ``child | child | child``
+        merged string.
+        """
         result = "DMX Lighting Tree"
         if context:
             result += f" ({context})"
         result += ":\n"
-        
-        if not hasattr(self, 'interpreters') or not self.interpreters:
+
+        if not self.interpreters:
             result += "└── (no interpreters)\n"
             return result
-        
-        for idx, interpreter in enumerate(self.interpreters):
-            is_last = idx == len(self.interpreters) - 1
+
+        rows: list[tuple[list[FixtureBase], str]] = []
+        for interpreter in self.interpreters:
+            rows.extend(_flatten_interpreter_rows(interpreter))
+
+        for idx, (group, interpreter_str_raw) in enumerate(rows):
+            is_last = idx == len(rows) - 1
             connector = "└── " if is_last else "├── "
-            
-            fixture_str = self.format_fixture_names(interpreter.group)
-            # Strip all ANSI escape sequences from interpreter string
-            interpreter_str = re.sub(r'\x1b\[[0-9;]*m', '', str(interpreter))
-            
-            result += f"{connector}{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
-        
+            fixture_str = self.format_fixture_names(group)
+            interpreter_str = re.sub(r"\x1b\[[0-9;]*m", "", interpreter_str_raw)
+            result += (
+                f"{connector}{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
+            )
+
         return result
 
     def generate_interpreters(self):

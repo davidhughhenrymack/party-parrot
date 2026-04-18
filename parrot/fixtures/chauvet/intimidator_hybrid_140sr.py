@@ -87,7 +87,50 @@ STATIC_GOBO_WHEEL: list[GoboWheelEntry] = [
 ]
 
 
-class ChauvetIntimidatorHybrid140SR_19Ch(ChauvetMoverBase):
+class _Hybrid140SRBase(ChauvetMoverBase):
+    """Shared Hybrid-140SR behavior: rotating-gobo DMX mapping for both personalities.
+
+    The rotating-gobo wheel and rotation channels are specific to this fixture
+    (different Chauvet movers either lack a rotating wheel or use different DMX
+    ranges), so the mapping lives here rather than polluting ``ChauvetMoverBase``.
+    """
+
+    # Midpoints of the Hybrid 140SR rotating-gobo-wheel DMX bands (19ch channel 8
+    # / 13ch channel 5). Slot 0 = open; slots 1..8 match rotating gobos 1..8.
+    _ROTATING_GOBO_DMX: tuple[int, ...] = (2, 14, 20, 26, 32, 38, 44, 50, 58)
+
+    def set_rotating_gobo(self, slot: int, rotate_speed: float = 0.0) -> None:
+        """Map (slot, rotate_speed) onto the Hybrid 140SR rotating-gobo channels.
+
+        Rotating gobo wheel bands (QRG Rev5, both 19ch ch 8 and 13ch ch 5):
+            000–005: open
+            006–011: beam mode
+            012–017: gobo 1   …   048–053: gobo 7
+            054–063: gobo 8
+
+        Gobo rotation channel bands (19ch ch 9 / 13ch ch 6):
+            000:     no function (static indexed gobo)
+            064–144: rotation, fast → slow
+            152–231: reverse rotation, slow → fast
+        """
+        super().set_rotating_gobo(slot, rotate_speed)
+        slot_idx = self.rotating_gobo_slot
+        if slot_idx >= len(self._ROTATING_GOBO_DMX):
+            slot_idx = len(self._ROTATING_GOBO_DMX) - 1
+        self.set("rotating_gobo", self._ROTATING_GOBO_DMX[slot_idx])
+
+        speed = self.rotating_gobo_rotate_speed
+        if speed == 0.0:
+            self.set("gobo_rotation", 0)
+        elif speed > 0.0:
+            # Forward: speed=1 → 64 (fastest); speed→0 → 144 (slowest).
+            self.set("gobo_rotation", int(round(144 - (144 - 64) * speed)))
+        else:
+            # Reverse: |speed|=0 → 152 (slowest); |speed|=1 → 231 (fastest).
+            self.set("gobo_rotation", int(round(152 + (231 - 152) * (-speed))))
+
+
+class ChauvetIntimidatorHybrid140SR_19Ch(_Hybrid140SRBase):
     """19-channel DMX mode — set fixture to DMX 19CH."""
 
     def __init__(
@@ -130,7 +173,7 @@ class ChauvetIntimidatorHybrid140SR_19Ch(ChauvetMoverBase):
         self.set("frost", 0)
 
 
-class ChauvetIntimidatorHybrid140SR_13Ch(ChauvetMoverBase):
+class ChauvetIntimidatorHybrid140SR_13Ch(_Hybrid140SRBase):
     """13-channel DMX mode — set fixture to DMX 13CH (no dedicated dimmer channel)."""
 
     def __init__(

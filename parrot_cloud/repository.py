@@ -25,7 +25,11 @@ from parrot_cloud.models import (
     VenueModel,
 )
 from parrot_cloud.database import create_session
-from parrot_cloud.fixture_catalog import dmx_address_width_for_fixture
+from parrot_cloud.fixture_catalog import (
+    dmx_address_width_for_fixture,
+    fixture_type_has_pan_tilt_range,
+    pan_tilt_range_default_options,
+)
 from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import parse_vj_mode_string
@@ -43,6 +47,45 @@ DISPLAY_MODE_VALUES = {"venue", "dmx_heatmap", "vj"}
 
 def _is_manual_dimmer_channel_type(fixture_type: str) -> bool:
     return fixture_type == "manual_dimmer_channel"
+
+
+# Top-level fields that PATCH/POST may send for the mechanical pan/tilt range of a
+# moving head. They're stored inside `FixtureModel.options` (a JSON column) alongside
+# position and rotation on the same row, so no schema migration is required.
+_PAN_TILT_RANGE_FIELDS: tuple[str, ...] = (
+    "pan_lower",
+    "pan_upper",
+    "tilt_lower",
+    "tilt_upper",
+)
+
+
+def _extract_pan_tilt_range(data: dict[str, object]) -> dict[str, float]:
+    """Return any pan/tilt range fields present at the top level of `data`."""
+    return {
+        key: float(data[key])  # type: ignore[arg-type]
+        for key in _PAN_TILT_RANGE_FIELDS
+        if key in data
+    }
+
+
+def _merge_pan_tilt_range_into_options(
+    existing_options: dict[str, object],
+    explicit_options: dict[str, object] | None,
+    range_overrides: dict[str, float],
+) -> dict[str, object]:
+    """Build the new `options` dict for a fixture update.
+
+    If the caller sent a top-level ``options`` key, it replaces the existing dict
+    wholesale (legacy behavior). Any top-level pan/tilt range fields are then
+    merged on top, so the editor can change a single field without having to
+    resend the entire options blob.
+    """
+    base: dict[str, object] = (
+        dict(explicit_options) if explicit_options is not None else dict(existing_options)
+    )
+    base.update(range_overrides)
+    return base
 
 
 @contextmanager
@@ -115,6 +158,11 @@ class VenueRepository:
             for key in ("pan_deg", "tilt_deg", "bar_pan_deg"):
                 if key in item and item[key] is not None:
                     entry[key] = float(item[key])
+            if "prism_on" in item and item["prism_on"] is not None:
+                entry["prism_on"] = bool(item["prism_on"])
+            if "prism_rotate_speed" in item and item["prism_rotate_speed"] is not None:
+                speed = float(item["prism_rotate_speed"])
+                entry["prism_rotate_speed"] = max(-1.0, min(1.0, speed))
             bulbs_raw = item.get("bulbs")
             if isinstance(bulbs_raw, list):
                 bulbs: list[dict[str, object]] = []
@@ -390,6 +438,17 @@ class VenueRepository:
                 is_manual = True
             else:
                 is_manual = bool(fixture_data.get("is_manual", False))
+
+            # Seed per-type defaults (e.g. pan/tilt range for moving heads) into
+            # `options` so a freshly-created fixture exposes them as editable fields.
+            # Client-supplied options and top-level range fields win over defaults.
+            seeded_options: dict[str, object] = {}
+            if fixture_type_has_pan_tilt_range(fixture_type_str):
+                seeded_options.update(pan_tilt_range_default_options(fixture_type_str))
+            if "options" in fixture_data:
+                seeded_options.update(dict(fixture_data["options"]))  # type: ignore[arg-type]
+            seeded_options.update(_extract_pan_tilt_range(fixture_data))
+
             fixture = FixtureModel(
                 id=str(fixture_data.get("id", uuid.uuid4())),
                 venue_id=venue_id,
@@ -414,7 +473,7 @@ class VenueRepository:
                 rotation_x=float(fixture_data.get("rotation_x", 0.0)),
                 rotation_y=float(fixture_data.get("rotation_y", 0.0)),
                 rotation_z=float(fixture_data.get("rotation_z", 0.0)),
-                options=dict(fixture_data.get("options", {})),
+                options=seeded_options,
             )
             session.add(fixture)
             self._touch_venue(venue)
@@ -464,8 +523,17 @@ class VenueRepository:
                 if key in fixture_data:
                     setattr(fixture, key, float(fixture_data[key]))
 
-            if "options" in fixture_data:
-                fixture.options = dict(fixture_data["options"])
+            range_overrides = _extract_pan_tilt_range(fixture_data)
+            if "options" in fixture_data or range_overrides:
+                fixture.options = _merge_pan_tilt_range_into_options(
+                    existing_options=dict(fixture.options or {}),
+                    explicit_options=(
+                        dict(fixture_data["options"])  # type: ignore[arg-type]
+                        if "options" in fixture_data
+                        else None
+                    ),
+                    range_overrides=range_overrides,
+                )
 
             if _is_manual_dimmer_channel_type(fixture.fixture_type):
                 fixture.is_manual = True

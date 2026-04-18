@@ -6,6 +6,8 @@ Schema version 1 (see parrot_cloud.repository.VenueRepository.set_fixture_runtim
 - dimmer: 0–1 master / fixture dimmer
 - rgb: [r,g,b] each 0–1 — aggregate color for simple fixtures
 - pan_deg, tilt_deg: moving heads (degrees, fixture logical angles)
+- prism_on, prism_rotate_speed: moving heads — prism toggle + rotation [-1,1]
+- focus: moving heads — 0.0 = big/wide beam, 1.0 = tight/pinpoint
 - bar_pan_deg: pan for linear bars (matches MotionstripRenderer convention)
 - bulbs: optional list of { dimmer, rgb } per cell for multi-bulb fixtures
 """
@@ -57,6 +59,10 @@ def fixture_runtime_entry(fixture: FixtureBase) -> dict[str, Any] | None:
     if isinstance(fixture, MovingHead):
         entry["pan_deg"] = float(fixture.get_pan_angle())
         entry["tilt_deg"] = float(fixture.get_tilt_angle())
+        prism_on, prism_speed = fixture.get_prism()
+        entry["prism_on"] = bool(prism_on)
+        entry["prism_rotate_speed"] = float(prism_speed)
+        entry["focus"] = float(fixture.get_focus())
     elif isinstance(fixture, Motionstrip):
         entry["bar_pan_deg"] = motionstrip_bar_pan_deg(fixture)
 

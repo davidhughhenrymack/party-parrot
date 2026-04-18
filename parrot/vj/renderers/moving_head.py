@@ -18,6 +18,26 @@ import numpy as np
 # up to ~270°; clamp before scaling so the proxy mesh/beam do not fold past a believable range.
 _MECHANICAL_TILT_MAX_DEG = 200.0
 
+# Prism rendering: 7-facet prism. Sub-beams are splayed well off the central
+# axis (so the fan is clearly visible, not a tight bundle) and each is drawn
+# wider than a single beam to make the prism look chunky and luminous.
+_PRISM_FACETS = 7
+_PRISM_SPLAY_DEG = 18.0
+# Scales `rotate_speed` ([-1,1]) into radians/sec for visual rotation.
+_PRISM_ROTATION_RATE_HZ = 0.5
+
+# Focus-to-beam-width mapping. Fixture focus ∈ [0.0 wide, 1.0 tight].
+# We scale the beam's end_radius by this factor so a fully-focused beam looks
+# like a tight pencil (≈_FOCUS_TIGHT_MULT × the wide width) and a fully-wide
+# beam matches the original (unfocused) size.
+_FOCUS_WIDE_MULT = 1.0
+_FOCUS_TIGHT_MULT = 0.22
+
+
+def _focus_width_multiplier(focus: float) -> float:
+    focus = max(0.0, min(1.0, focus))
+    return _FOCUS_WIDE_MULT + (_FOCUS_TIGHT_MULT - _FOCUS_WIDE_MULT) * focus
+
 
 @beartype
 class MovingHeadRenderer(FixtureRenderer):
@@ -182,15 +202,83 @@ class MovingHeadRenderer(FixtureRenderer):
                     if dimmer > 0.05:
                         beam_length = 15.0
                         beam_alpha = capped_alpha
-                        self.room_renderer.render_cone_beam(
-                            0.0,
-                            bulb_y,
-                            bulb_z,
-                            beam_direction,
-                            boosted_bulb_color,
-                            length=beam_length,
-                            start_radius=bulb_radius * 0.3,
-                            end_radius=bulb_radius * 1.2,
-                            segments=16,
-                            alpha=beam_alpha,
-                        )
+                        prism_on, prism_speed = self.fixture.get_prism()
+                        # Fixture focus modulates end_radius: tight focus → narrow beam,
+                        # wide focus → the original chunky cone. start_radius stays put
+                        # since the lens aperture doesn't visibly change with focus.
+                        focus_mult = _focus_width_multiplier(float(self.fixture.get_focus()))
+
+                        if prism_on:
+                            # Split the beam into N splayed copies around the central axis.
+                            rotation_phase = (
+                                frame.time * prism_speed * _PRISM_ROTATION_RATE_HZ * 2.0 * math.pi
+                            )
+                            # Each splayed sub-beam is chunkier than the plain beam so the
+                            # prism fan reads as "wide light", and they share the larger
+                            # splay angle above for a clearly-fanned look.
+                            sub_start_r = bulb_radius * 0.3
+                            sub_end_r = bulb_radius * 1.4 * focus_mult
+                            for i in range(_PRISM_FACETS):
+                                theta = (
+                                    2.0 * math.pi * i / _PRISM_FACETS + rotation_phase
+                                )
+                                dir_splayed = _splay_direction(
+                                    beam_direction, _PRISM_SPLAY_DEG, theta
+                                )
+                                self.room_renderer.render_cone_beam(
+                                    0.0,
+                                    bulb_y,
+                                    bulb_z,
+                                    dir_splayed,
+                                    boosted_bulb_color,
+                                    length=beam_length,
+                                    start_radius=sub_start_r,
+                                    end_radius=sub_end_r,
+                                    segments=12,
+                                    alpha=beam_alpha,
+                                )
+                        else:
+                            self.room_renderer.render_cone_beam(
+                                0.0,
+                                bulb_y,
+                                bulb_z,
+                                beam_direction,
+                                boosted_bulb_color,
+                                length=beam_length,
+                                start_radius=bulb_radius * 0.3,
+                                end_radius=bulb_radius * 1.2 * focus_mult,
+                                segments=16,
+                                alpha=beam_alpha,
+                            )
+
+
+def _splay_direction(
+    axis: tuple[float, float, float], splay_deg: float, theta: float
+) -> tuple[float, float, float]:
+    """Return ``axis`` rotated ``splay_deg`` off-axis at azimuth ``theta`` around ``axis``.
+
+    Builds a local orthonormal frame (``axis``, ``u``, ``v``), then returns
+    ``cos(splay)*axis + sin(splay)*(cos(theta)*u + sin(theta)*v)``.
+    """
+    ax = np.array(axis, dtype=np.float32)
+    n = np.linalg.norm(ax)
+    if n == 0.0:
+        return axis
+    ax = ax / n
+    # Pick a helper vector not parallel to the axis.
+    helper = (
+        np.array([0.0, 1.0, 0.0], dtype=np.float32)
+        if abs(ax[1]) < 0.9
+        else np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    )
+    u = np.cross(ax, helper)
+    un = np.linalg.norm(u)
+    if un == 0.0:
+        return axis
+    u = u / un
+    v = np.cross(ax, u)
+    splay_rad = math.radians(splay_deg)
+    cos_s = math.cos(splay_rad)
+    sin_s = math.sin(splay_rad)
+    d = cos_s * ax + sin_s * (math.cos(theta) * u + math.sin(theta) * v)
+    return (float(d[0]), float(d[1]), float(d[2]))

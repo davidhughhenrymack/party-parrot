@@ -41,6 +41,19 @@ def test_moving_head_angles():
     assert row is not None
     assert row["pan_deg"] == 90.0
     assert row["tilt_deg"] == 45.0
+    # Prism defaults: off + zero speed.
+    assert row["prism_on"] is False
+    assert row["prism_rotate_speed"] == 0.0
+
+
+def test_moving_head_prism_state_serialized():
+    spot = ChauvetSpot160_12Ch(1)
+    spot.cloud_spec_id = "mh-prism"
+    spot.set_prism(True, 0.4)
+    row = fixture_runtime_entry(spot)
+    assert row is not None
+    assert row["prism_on"] is True
+    assert row["prism_rotate_speed"] == 0.4
 
 
 def test_motionstrip_bar_pan():

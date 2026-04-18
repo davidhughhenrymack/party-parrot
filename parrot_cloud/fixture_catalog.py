@@ -138,6 +138,12 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        default_options={
+            "pan_lower": 270,
+            "pan_upper": 450,
+            "tilt_lower": 0,
+            "tilt_upper": 90,
+        },
         dmx_address_width=12,
     ),
     "chauvet_spot_160": FixtureTypeDefinition(
@@ -155,6 +161,12 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        default_options={
+            "pan_lower": 360,
+            "pan_upper": 540,
+            "tilt_lower": 0,
+            "tilt_upper": 90,
+        },
         dmx_address_width=11,
     ),
     "chauvet_rogue_beam_r2": FixtureTypeDefinition(
@@ -172,6 +184,12 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        default_options={
+            "pan_lower": 270,
+            "pan_upper": 450,
+            "tilt_lower": 0,
+            "tilt_upper": 90,
+        },
         dmx_address_width=15,
     ),
     "chauvet_intimidator_hybrid_140sr": FixtureTypeDefinition(
@@ -297,6 +315,12 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             ),
             spec,
         ),
+        default_options={
+            "pan_lower": 270,
+            "pan_upper": 450,
+            "tilt_lower": 0,
+            "tilt_upper": 90,
+        },
         dmx_address_width=12,
     ),
     "chauvet_colorband_pix_36ch": FixtureTypeDefinition(
@@ -335,6 +359,38 @@ def dmx_address_width_for_fixture(
 
 def list_fixture_types() -> list[dict[str, object]]:
     return [definition.to_dict() for definition in FIXTURE_TYPES.values()]
+
+
+# Keys that make up a moving head's mechanical pan/tilt range (in degrees, pre-scaling).
+# A fixture type "has a pan/tilt range" if all four keys are present in its default_options.
+_PAN_TILT_RANGE_KEYS: tuple[str, ...] = (
+    "pan_lower",
+    "pan_upper",
+    "tilt_lower",
+    "tilt_upper",
+)
+
+
+@beartype
+def fixture_type_has_pan_tilt_range(fixture_type: str) -> bool:
+    """True for moving-head types whose default_options declare a pan/tilt range."""
+    definition = FIXTURE_TYPES.get(fixture_type)
+    if definition is None:
+        return False
+    return all(key in definition.default_options for key in _PAN_TILT_RANGE_KEYS)
+
+
+@beartype
+def pan_tilt_range_default_options(fixture_type: str) -> dict[str, float]:
+    """Return the per-type default pan/tilt range (empty dict for non-movers)."""
+    definition = FIXTURE_TYPES.get(fixture_type)
+    if definition is None:
+        return {}
+    return {
+        key: float(definition.default_options[key])
+        for key in _PAN_TILT_RANGE_KEYS
+        if key in definition.default_options
+    }
 
 
 def create_fixture_instance(spec: FixtureSpec) -> FixtureBase:

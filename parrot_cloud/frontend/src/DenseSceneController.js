@@ -574,6 +574,16 @@ function createThreeSceneController({
           entity.coneMaterial.opacity = Math.min(1, ro * mul);
         }
       }
+      if (entity.prismMaterials && entity.prismMaterials.length > 0 && entity.prismOn) {
+        const baseRo = entity.runtimeConeOpacity ?? 0;
+        let mul = 1.0;
+        if (fixtureSelectionActive && !isSelected) mul *= 0.62;
+        if (isSelected) mul *= 1.28;
+        const op = Math.min(1, baseRo * mul);
+        for (const m of entity.prismMaterials) {
+          m.opacity = op;
+        }
+      }
       if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
         const ro = entity.runtimeMirrorballOpacity ?? 0;
         if (ro <= 1e-5) {
@@ -950,6 +960,45 @@ function createThreeSceneController({
       entity.runtimeConeOpacity = dimClamped * CONE_OPACITY_AT_FULL_DIM;
       entity.coneMaterial.opacity = entity.runtimeConeOpacity;
     }
+    const prismOn = vis.prism_on === true;
+    const prismSpeed =
+      typeof vis.prism_rotate_speed === 'number'
+        ? Math.max(-1, Math.min(1, vis.prism_rotate_speed))
+        : 0;
+    entity.prismOn = prismOn;
+    entity.prismRotateSpeed = prismSpeed;
+    if (entity.prismGroup) {
+      entity.prismGroup.visible = prismOn;
+    }
+    if (entity.coneMesh) {
+      entity.coneMesh.visible = !prismOn;
+    }
+    // Focus ∈ [0 wide, 1 tight] narrows the beam/prism sub-beams' base radius.
+    // Geometry tips are at the lens; scaling X/Z shrinks the far end. Must match
+    // FOCUS_TIGHT_MULT / FOCUS_WIDE_MULT in parrot/vj/renderers/moving_head.py.
+    const focus = typeof vis.focus === 'number'
+      ? Math.max(0, Math.min(1, vis.focus))
+      : 0;
+    const focusWidth = 1.0 + (0.22 - 1.0) * focus;
+    if (entity.coneMesh) {
+      entity.coneMesh.scale.set(focusWidth, 1, focusWidth);
+    }
+    if (entity.prismSubMeshes && entity.prismSubMeshes.length > 0) {
+      for (const sub of entity.prismSubMeshes) {
+        sub.scale.set(focusWidth, 1, focusWidth);
+      }
+    }
+    if (entity.prismMaterials && entity.prismMaterials.length > 0) {
+      const subOp = prismOn ? dimClamped * CONE_OPACITY_AT_FULL_DIM : 0;
+      for (const m of entity.prismMaterials) {
+        m.color.setRGB(
+          Math.min(1, r * 1.15),
+          Math.min(1, g * 1.15),
+          Math.min(1, b * 1.15)
+        );
+        m.opacity = subOp;
+      }
+    }
     if (entity.lensMaterial) {
       entity.lensMaterial.color.setRGB(
         Math.min(1, r + 0.12),
@@ -983,8 +1032,11 @@ function createThreeSceneController({
     if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
       const baseOp = dimClamped * 0.42;
       entity.runtimeMirrorballOpacity = baseOp;
+      // Mirrorball beams represent reflected sparkles, not the fixture's own color
+      // (the Python Mirrorball has no color channel — its RGB stays black). Keep
+      // them white and let the dimmer drive opacity/brightness.
       for (const m of entity.mirrorballBeamMaterials) {
-        m.color.setRGB(r, g, b);
+        m.color.setRGB(1, 1, 1);
         m.opacity = baseOp;
       }
     }
@@ -1044,6 +1096,10 @@ function createThreeSceneController({
 
     let coneMaterial = null;
     let lensMaterial = null;
+    let coneMeshRef = null;
+    let prismGroupRef = null;
+    let prismMaterialsRef = [];
+    let prismSubMeshesRef = [];
     if (profile.kind !== 'mirrorball') {
       let beam;
       if (placed.headPivotGroup) {
@@ -1073,6 +1129,48 @@ function createThreeSceneController({
       coneMesh.position.set(0, beam.y + coneLength / 2, beam.z);
       coneMesh.userData = { entityKey: fixture.id };
       beamParent.add(coneMesh);
+      coneMeshRef = coneMesh;
+
+      // Prism splay group: 7 thinner cones splayed off-axis around the main beam.
+      // Hidden by default; shown when runtime reports `prism_on` for this fixture.
+      if (profile.kind === 'moving_head') {
+        const prismGroup = new THREE.Group();
+        prismGroup.position.set(0, beam.y, beam.z);
+        prismGroup.visible = false;
+        prismGroup.userData = { entityKey: fixture.id };
+        const facets = 7;
+        // Wide-splay prism fan: more angle, chunkier sub-cones so the prism mode
+        // reads clearly as a splayed beam rather than a tight bundle.
+        const splayRad = THREE.MathUtils.degToRad(18);
+        const subR = coneRadius * 0.75;
+        const subL = coneLength;
+        for (let i = 0; i < facets; i += 1) {
+          const mat = new THREE.MeshBasicMaterial({
+            color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          prismMaterialsRef.push(mat);
+          const sub = new THREE.Mesh(
+            new THREE.ConeGeometry(subR, subL, 16, 1, true),
+            mat
+          );
+          // Sub-cone's tip sits at the facet-group origin along its local +Y.
+          sub.rotateX(Math.PI);
+          sub.position.set(0, subL / 2, 0);
+          prismSubMeshesRef.push(sub);
+          const facetGroup = new THREE.Group();
+          facetGroup.rotation.order = 'YXZ';
+          facetGroup.rotation.y = (2 * Math.PI * i) / facets;
+          facetGroup.rotation.x = splayRad;
+          facetGroup.add(sub);
+          prismGroup.add(facetGroup);
+        }
+        beamParent.add(prismGroup);
+        prismGroupRef = prismGroup;
+      }
 
       lensMaterial = new THREE.MeshBasicMaterial({
         color: fixture.is_manual ? 0xfbbf24 : 0xf8fafc,
@@ -1129,6 +1227,12 @@ function createThreeSceneController({
       localState.entityMap.set(fixture.id, {
         ...entityBase,
         runtimeConeOpacity: 0,
+        coneMesh: coneMeshRef,
+        prismGroup: prismGroupRef,
+        prismMaterials: prismMaterialsRef,
+        prismSubMeshes: prismSubMeshesRef,
+        prismOn: false,
+        prismRotateSpeed: 0,
       });
     }
   }
@@ -1579,10 +1683,21 @@ function createThreeSceneController({
     }
     requestAnimationFrame(animate);
     orbitControls.update();
-    const mbSpin = performance.now() * 0.00012;
+    const now = performance.now();
+    const mbSpin = now * 0.00012;
+    // Prism splay group rotation: rotate_speed in [-1,1] → ~0.5 Hz at full speed.
+    const prismPhase = now * 0.001 * Math.PI;
     localState.entityMap.forEach((entity) => {
       if (entity.type === 'fixture' && entity.mirrorballBeamsGroup) {
         entity.mirrorballBeamsGroup.rotation.z = mbSpin;
+      }
+      if (
+        entity.type === 'fixture' &&
+        entity.prismGroup &&
+        entity.prismOn &&
+        entity.prismRotateSpeed !== 0
+      ) {
+        entity.prismGroup.rotation.y = prismPhase * entity.prismRotateSpeed;
       }
     });
     renderer.render(scene, localState.activeCamera);

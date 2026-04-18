@@ -316,21 +316,21 @@ class TestWebServer:
         import parrot.api.web_server as web_server_module
 
         mock_state = Mock()
-        mock_state.vj_mode = VJMode.zr_full_rave
+        mock_state.vj_mode = VJMode.prom_thunderbunny
         web_server_module.state_instance = mock_state
 
         response = self.client.get("/api/vj_mode")
         assert response.status_code == 200
 
         data = json.loads(response.data)
-        assert data["vj_mode"] == "zr_full_rave"
+        assert data["vj_mode"] == "prom_thunderbunny"
         assert "available_vj_modes" in data
 
     def test_set_vj_mode_no_state(self):
         """Test POST /api/vj_mode when state is not initialized."""
         response = self.client.post(
             "/api/vj_mode",
-            json={"vj_mode": "zr_full_rave"},
+            json={"vj_mode": "prom_wufky"},
             content_type="application/json",
         )
         assert response.status_code == 500
@@ -377,12 +377,12 @@ class TestWebServer:
 
         response = self.client.post(
             "/api/vj_mode",
-            json={"vj_mode": "zr_full_rave"},
+            json={"vj_mode": "prom_mayhem"},
             content_type="application/json",
         )
         assert response.status_code == 200
 
         data = json.loads(response.data)
         assert data["success"] is True
-        assert data["vj_mode"] == "zr_full_rave"
-        mock_state.set_vj_mode_thread_safe.assert_called_once_with(VJMode.zr_full_rave)
+        assert data["vj_mode"] == "prom_mayhem"
+        mock_state.set_vj_mode_thread_safe.assert_called_once_with(VJMode.prom_mayhem)

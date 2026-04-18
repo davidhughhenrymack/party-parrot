@@ -7,6 +7,7 @@ export default function RemoteControlPage() {
     available_display_modes: [],
     theme_names: [],
     effects: [],
+    shift_targets: [],
   });
   const [venues, setVenues] = useState([]);
   const [controlState, setControlState] = useState({
@@ -43,6 +44,7 @@ export default function RemoteControlPage() {
         available_display_modes: nextConfig.available_display_modes || [],
         theme_names: nextConfig.theme_names || [],
         effects: nextConfig.effects || [],
+        shift_targets: nextConfig.shift_targets || [],
       });
       applyBootstrap(bootstrap);
       connectWebSocket();
@@ -216,6 +218,23 @@ export default function RemoteControlPage() {
         )}
       </section>
 
+      {config.shift_targets.length > 0 && (
+        <section className="remote-hero-panel">
+          <h2 className="remote-hero-title">Shift</h2>
+          <div className="remote-effects-grid">
+            {config.shift_targets.map((target) => (
+              <button
+                key={target}
+                className="remote-effect-button remote-shift-button"
+                onClick={() => postJson('/api/shift', { target })}
+              >
+                {formatShiftLabel(target)}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <CompactSelector
         label="Lighting"
         options={config.available_modes}
@@ -291,8 +310,8 @@ function formatVjModeLabel(mode) {
   if (mode === 'blackout') {
     return 'Blackout';
   }
-  if (mode === 'prom_dmack') {
-    return 'Prom · dmack';
+  if (mode.startsWith('prom_')) {
+    return `Prom · ${mode.slice('prom_'.length)}`;
   }
   if (mode.startsWith('zr_')) {
     const rest = mode
@@ -303,6 +322,16 @@ function formatVjModeLabel(mode) {
     return `ZR · ${rest}`;
   }
   return labelize(mode);
+}
+
+const SHIFT_LABELS = {
+  lighting_only: 'Shift Lighting',
+  color_scheme: 'Shift Colors',
+  vj_only: 'Shift VJ',
+};
+
+function formatShiftLabel(target) {
+  return SHIFT_LABELS[target] || `Shift ${labelize(target)}`;
 }
 
 function formatDisplayModeLabel(displayMode) {

@@ -7,7 +7,6 @@ from parrot.fixtures.moving_head import MovingHead
 
 
 class ChauvetMoverBase(MovingHead):
-
     def __init__(
         self,
         patch,
@@ -121,3 +120,34 @@ class ChauvetMoverBase(MovingHead):
 
     def set_shutter_open(self):
         self.set("shutter", self.shutter_open_value)
+
+    def set_focus(self, value: float) -> None:
+        """Write focus value to the "focus" DMX channel (big → small = 0 → 255)."""
+        super().set_focus(value)
+        self.set("focus", int(round(self.focus_value * 255)))
+
+    def set_prism(self, on: bool, rotate_speed: float = 0.0) -> None:
+        """Map (on, rotate_speed) onto the Prism 1 (7-facet) DMX channel.
+
+        Hybrid 140SR prism1 value ranges (both 19ch and 13ch layouts):
+            000–007: no prism
+            008–012: static prism on
+            013–130: forward rotation, slow → fast
+            131–247: reverse rotation, slow → fast
+            248–255: static prism on
+        """
+        super().set_prism(on, rotate_speed)
+        if not self.prism_on:
+            self.set("prism1", 0)
+            return
+
+        speed = self.prism_rotate_speed
+        if speed == 0.0:
+            # Static prism on — use the mid-range static plateau value.
+            self.set("prism1", 10)
+        elif speed > 0.0:
+            # Forward rotation: 13 (slowest) → 130 (fastest)
+            self.set("prism1", int(round(13 + (130 - 13) * speed)))
+        else:
+            # Reverse rotation: 131 (slowest) → 247 (fastest)
+            self.set("prism1", int(round(131 + (247 - 131) * (-speed))))

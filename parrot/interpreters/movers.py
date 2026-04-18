@@ -64,6 +64,157 @@ class MoverNoGobo(InterpreterBase[MovingHead]):
             fixture.set_gobo("open")
 
 
+class FocusBig(InterpreterBase[MovingHead]):
+    """Pin focus wide-open (big/unfocused beam) on every fixture in the group.
+
+    MovingHead fixtures without a focus channel accept the call; the write is
+    a no-op for subclasses whose ``dmx_layout`` lacks a "focus" entry.
+    """
+
+    def __init__(self, group, args: InterpreterArgs):
+        super().__init__(group, args)
+        for fixture in self.group:
+            fixture.set_focus(0.0)
+
+    def step(self, frame, scheme):
+        for fixture in self.group:
+            fixture.set_focus(0.0)
+
+
+class RotatingGobo(InterpreterBase[MovingHead]):
+    """Select a rotating-gobo-wheel slot and keep it spinning.
+
+    ``slot`` is 1-indexed per the Chauvet Intimidator Hybrid 140SR rotating
+    gobo wheel (1–8 → gobos 1–8, 0 → open/beam). ``rotate_speed`` is in
+    [-1, 1]; ``0`` leaves the gobo static (indexed), ``+1`` is fastest forward,
+    ``-1`` is fastest reverse. MovingHead fixtures without a rotating gobo
+    channel accept the call; it just has no DMX effect for those subclasses.
+    """
+
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+        slot: int,
+        rotate_speed: float = 0.3,
+    ):
+        super().__init__(group, args)
+        self._slot = slot
+        self._rotate_speed = rotate_speed
+        for fixture in self.group:
+            fixture.set_rotating_gobo(slot, rotate_speed)
+
+    def step(self, frame, scheme):
+        # Re-assert each frame so other interpreters can't drift the wheel off.
+        for fixture in self.group:
+            fixture.set_rotating_gobo(self._slot, self._rotate_speed)
+
+    def exit(self, frame, scheme):
+        for fixture in self.group:
+            fixture.set_rotating_gobo(0, 0.0)
+
+
+class RotatePrism(InterpreterBase[MovingHead]):
+    """Turn the prism on and spin it at a constant rate.
+
+    ``rotate_speed`` is in [-1, 1]; 0 = static prism on (no rotation).
+    MovingHead fixtures without a prism still accept the call; it just has no
+    DMX effect for those subclasses.
+    """
+
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+        rotate_speed: float = 0.25,
+    ):
+        super().__init__(group, args)
+        self._rotate_speed = rotate_speed
+        for fixture in self.group:
+            fixture.set_prism(True, rotate_speed)
+
+    def step(self, frame, scheme):
+        # Keep the prism asserted each frame in case another interpreter toggled it.
+        for fixture in self.group:
+            fixture.set_prism(True, self._rotate_speed)
+
+    def exit(self, frame, scheme):
+        for fixture in self.group:
+            fixture.set_prism(False, 0.0)
+
+
+class PrismOff(InterpreterBase[MovingHead]):
+    """Explicitly disable the prism on a group each frame."""
+
+    def __init__(self, group, args: InterpreterArgs):
+        super().__init__(group, args)
+        for fixture in self.group:
+            fixture.set_prism(False, 0.0)
+
+    def step(self, frame, scheme):
+        for fixture in self.group:
+            fixture.set_prism(False, 0.0)
+
+
+class RandomPrism(InterpreterBase[MovingHead]):
+    """Per-fixture randomize prism on/off once at construction.
+
+    Each fixture independently picks prism on (with ``rotate_speed``) or off based
+    on ``on_probability`` (default 0.5), then holds that choice. Re-asserted each
+    frame so other interpreters can't clobber the state.
+    """
+
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+        rotate_speed: float = 0.25,
+        on_probability: float = 0.5,
+    ):
+        super().__init__(group, args)
+        self._rotate_speed = float(rotate_speed)
+        self._states: list[bool] = [
+            random.random() < float(on_probability) for _ in self.group
+        ]
+        for fixture, on in zip(self.group, self._states):
+            fixture.set_prism(on, self._rotate_speed if on else 0.0)
+
+    def step(self, frame, scheme):
+        for fixture, on in zip(self.group, self._states):
+            fixture.set_prism(on, self._rotate_speed if on else 0.0)
+
+    def exit(self, frame, scheme):
+        for fixture in self.group:
+            fixture.set_prism(False, 0.0)
+
+
+class RandomFocus(InterpreterBase[MovingHead]):
+    """Per-fixture pick a random focus value once at construction.
+
+    ``min_focus`` / ``max_focus`` bound the picked value in the fixture's
+    [0.0 = wide, 1.0 = tight] focus space. Useful for dreamy looks where each
+    beam should have a different sharpness. Re-asserted each frame.
+    """
+
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+        min_focus: float = 0.0,
+        max_focus: float = 1.0,
+    ):
+        super().__init__(group, args)
+        low = max(0.0, min(1.0, float(min_focus)))
+        high = max(low, min(1.0, float(max_focus)))
+        self._values: list[float] = [random.uniform(low, high) for _ in self.group]
+        for fixture, value in zip(self.group, self._values):
+            fixture.set_focus(value)
+
+    def step(self, frame, scheme):
+        for fixture, value in zip(self.group, self._values):
+            fixture.set_focus(value)
+
+
 MoverBeatAndCircle = combo(FlashBeat, MoveCircles, ColorFg)
 MoverBeatInFan = combo(FlashBeat, MoverFan, ColorFg)
 MoverSequenceAndCircle = combo(MoveCircles, ColorFg, SequenceDimmers)

@@ -30,12 +30,8 @@ function HomePage() {
           src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXl1NGRjNzkxeHc1bnpkNjdybXRpOGRlbWk0c2s1aGgyaDZpNHJzaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2zVr6cu95nF6O4/giphy.gif"
           alt="Party Parrot"
         />
-        <div className="home-badge">Parrot Cloud</div>
-        <h1>Administer Party Parrots from one place.</h1>
-        <p className="home-copy">
-          Use the remote control for live show changes or enter the venue editor to manage rooms,
-          fixtures, and video walls.
-        </p>
+        <h1>Party Parrot</h1>
+        <p className="home-copy">A fast easy autopilot for party lighting</p>
         <div className="home-actions">
           <button id="enter-remote-button" onClick={() => window.location.assign('/remote')}>
             Enter Remote Control

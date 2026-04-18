@@ -133,8 +133,27 @@ def test_config_endpoint_lists_supported_universes(client):
         {"value": "art1", "label": "Art-Net 1"},
     ]
     assert "chill" in data["available_modes"]
-    assert "zr_full_rave" in data["available_vj_modes"]
+    assert "prom_dmack" in data["available_vj_modes"]
+    assert "prom_wufky" in data["available_vj_modes"]
+    assert "prom_mayhem" in data["available_vj_modes"]
+    assert "prom_thunderbunny" in data["available_vj_modes"]
     assert data["available_display_modes"] == ["venue", "dmx_heatmap", "vj"]
+    assert data["shift_targets"] == ["lighting_only", "color_scheme", "vj_only"]
+
+
+def test_shift_endpoint_accepts_known_targets(client):
+    for target in ("lighting_only", "color_scheme", "vj_only"):
+        response = client.post("/api/shift", json={"target": target})
+        assert response.status_code == 200
+        assert response.get_json() == {"success": True, "target": target}
+
+
+def test_shift_endpoint_rejects_unknown_target(client):
+    response = client.post("/api/shift", json={"target": "nope"})
+    assert response.status_code == 400
+    body = response.get_json()
+    assert "error" in body
+    assert body["available_targets"] == ["lighting_only", "color_scheme", "vj_only"]
 
 
 def test_control_state_endpoints(client):

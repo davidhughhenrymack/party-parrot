@@ -12,6 +12,7 @@ from parrot.interpreters.dimmer import (
     DimmersBeatChase,
     GentlePulse,
     LightningStab,
+    SlowBreath,
     StabPulse,
     Twinkle,
 )
@@ -579,3 +580,123 @@ class TestTwinkle:
             # Memory should have decayed
             assert interpreter.memory[0] < 1.0
             assert interpreter.memory[0] == 0.9  # 1.0 * 0.9
+
+
+class TestSlowBreath:
+    def setup_method(self):
+        self.fixture1 = MagicMock(spec=FixtureBase)
+        self.fixture2 = MagicMock(spec=FixtureBase)
+        self.group = [self.fixture1, self.fixture2]
+        self.args = InterpreterArgs(
+            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
+        )
+
+    def _frame_at(self, t: float, bass: float = 0.0) -> Frame:
+        """Build a Frame with ``frame.time = t`` and freq_low = ``bass``."""
+        fv = {s: 0.0 for s in FrameSignal}
+        fv[FrameSignal.freq_low] = bass
+        ts = {s.name: [0.0] * 4 for s in FrameSignal}
+        frame = Frame(fv, ts)
+        frame.time = t
+        return frame
+
+    def test_slow_breath_stays_within_configured_range_without_bass(self):
+        """With bass silent, the breath must stay inside [low, high]."""
+        random.seed(1)
+        interp = SlowBreath(
+            self.group, self.args, period_seconds=10.0, low=0.25, high=0.85
+        )
+        scheme = MagicMock()
+        for t in [0.0, 1.0, 2.5, 5.0, 7.5, 10.0]:
+            interp.step(self._frame_at(t, bass=0.0), scheme)
+            for fixture in self.group:
+                dim = fixture.set_dimmer.call_args[0][0]
+                assert 63.5 <= dim <= 217.0
+
+    def test_slow_breath_zero_amplitude_is_steady(self):
+        """Identical low and high values produce a constant dimmer regardless of time/phase."""
+        interp = SlowBreath(
+            self.group, self.args, period_seconds=10.0, low=0.5, high=0.5
+        )
+        scheme = MagicMock()
+        for t in [0.0, 0.3, 4.7, 12.1]:
+            interp.step(self._frame_at(t, bass=0.0), scheme)
+            for fixture in self.group:
+                dim = fixture.set_dimmer.call_args[0][0]
+                assert abs(dim - 127.5) < 1e-6
+
+    def test_slow_breath_per_fixture_phases_differ(self):
+        """Two fixtures should almost never receive the exact same dimmer on a random seed."""
+        random.seed(42)
+        interp = SlowBreath(
+            self.group, self.args, period_seconds=10.0, low=0.2, high=0.9
+        )
+        scheme = MagicMock()
+        interp.step(self._frame_at(2.0, bass=0.0), scheme)
+        d1 = self.fixture1.set_dimmer.call_args[0][0]
+        d2 = self.fixture2.set_dimmer.call_args[0][0]
+        assert d1 != d2
+
+    def test_slow_breath_bass_lifts_output_mildly(self):
+        """Sustained bass should raise the dimmer above the no-bass baseline, but
+        only by a modest amount (the sine keeps doing the heavy lifting)."""
+        random.seed(7)
+        interp = SlowBreath(
+            self.group,
+            self.args,
+            period_seconds=10.0,
+            low=0.3,
+            high=0.7,
+            bass_response=0.25,
+            bass_smoothing=1.0,  # disable smoothing so the effect is deterministic
+        )
+        scheme = MagicMock()
+
+        interp.step(self._frame_at(1.23, bass=0.0), scheme)
+        baseline = self.fixture1.set_dimmer.call_args[0][0]
+
+        random.seed(7)
+        interp = SlowBreath(
+            self.group,
+            self.args,
+            period_seconds=10.0,
+            low=0.3,
+            high=0.7,
+            bass_response=0.25,
+            bass_smoothing=1.0,
+        )
+        interp.step(self._frame_at(1.23, bass=1.0), scheme)
+        hot = self.fixture1.set_dimmer.call_args[0][0]
+
+        # Bass lift is 0.25 * (0.7 - 0.3) / 2 * 1.0 = 0.05 on the 0..1 scale
+        # → ~12.75 on the 0..255 scale. Allow a small clamp-related tolerance.
+        lift = hot - baseline
+        assert 10.0 <= lift <= 14.0
+
+    def test_slow_breath_bass_response_zero_disables_audio_reactivity(self):
+        random.seed(3)
+        interp = SlowBreath(
+            self.group,
+            self.args,
+            period_seconds=10.0,
+            low=0.3,
+            high=0.7,
+            bass_response=0.0,
+        )
+        scheme = MagicMock()
+        interp.step(self._frame_at(0.5, bass=0.0), scheme)
+        quiet = self.fixture1.set_dimmer.call_args[0][0]
+
+        random.seed(3)
+        interp = SlowBreath(
+            self.group,
+            self.args,
+            period_seconds=10.0,
+            low=0.3,
+            high=0.7,
+            bass_response=0.0,
+        )
+        interp.step(self._frame_at(0.5, bass=1.0), scheme)
+        loud = self.fixture1.set_dimmer.call_args[0][0]
+
+        assert abs(loud - quiet) < 1e-6

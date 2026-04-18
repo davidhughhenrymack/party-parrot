@@ -68,7 +68,7 @@ class TestDirector(unittest.TestCase):
         """Test that manual fixtures are rendered to DMX output when present"""
         from parrot.patch_bay import venues, get_manual_group
 
-        self.state.venue = venues.mtn_lotus
+        self.state.set_venue(venues.mtn_lotus)
 
         mock_dmx = MagicMock()
 

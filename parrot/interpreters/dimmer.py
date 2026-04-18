@@ -138,6 +138,54 @@ class DimmersBeatChase(InterpreterBase[T]):
 
 
 @beartype
+class SlowBreath(InterpreterBase[T]):
+    """Continuous, mostly-audio-agnostic dimmer breathing between ``low`` and ``high``.
+
+    A slow sine driven by ``frame.time`` is the primary motion, so the feel stays
+    buttery-smooth regardless of the signal graph. A small bass bias (scaled by
+    ``bass_response``) is added on top so bass hits gently lift the breath —
+    perceptible but always subordinate to the sine. Each fixture gets a random
+    phase offset so the group doesn't pulse in lockstep. Intended for dreamy modes
+    where ``GentlePulse`` still feels too snappy.
+    """
+
+    hype = 0
+
+    def __init__(
+        self,
+        group: list[T],
+        args: InterpreterArgs,
+        period_seconds: float = 10.0,
+        low: float = 0.25,
+        high: float = 0.85,
+        bass_response: float = 0.25,
+        bass_smoothing: float = 0.15,
+    ):
+        super().__init__(group, args)
+        self._omega = 2.0 * math.pi / max(period_seconds, 0.01)
+        self._low = float(low)
+        self._high = float(high)
+        # Fraction of the breath amplitude that a full-scale bass hit adds on top.
+        # Keep this small — the point is subtle reactivity, not a pulse.
+        self._bass_response = float(bass_response)
+        # Exponential smoothing factor per step (0 = frozen, 1 = no smoothing).
+        self._bass_alpha = clamp(float(bass_smoothing), 0.01, 1.0)
+        self._bass_smoothed: float = 0.0
+        self._phases = [random.uniform(0.0, 2.0 * math.pi) for _ in group]
+
+    def step(self, frame, scheme):
+        mid = (self._low + self._high) * 0.5
+        amp = (self._high - self._low) * 0.5
+        bass = clamp(float(frame[FrameSignal.freq_low]), 0.0, 1.0)
+        self._bass_smoothed += self._bass_alpha * (bass - self._bass_smoothed)
+        bass_lift = self._bass_response * amp * self._bass_smoothed
+        for i, fixture in enumerate(self.group):
+            s = math.sin(frame.time * self._omega + self._phases[i])
+            value = clamp(mid + amp * s + bass_lift, 0.0, 1.0)
+            fixture.set_dimmer(value * 255)
+
+
+@beartype
 class GentlePulse(InterpreterBase[T]):
     hype = 10
 

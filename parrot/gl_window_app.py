@@ -12,13 +12,12 @@ from typing import Any
 from parrot.audio.audio_analyzer import AudioAnalyzer
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
-from parrot.director.mode import Mode
+from parrot.director.mode import MODES_BY_HYPE, Mode
 from parrot.gl_display_mode import EditorDisplayMode
 from parrot.state import State
 from parrot.utils.dmx_utils import Universe, get_controller
 from parrot.vj.dmx_heatmap_renderer import DmxHeatmapRenderer
 from parrot.vj.vj_director import VJDirector
-from parrot.director.signal_states import SignalStates
 from parrot.utils.overlay_ui import OverlayUI
 from parrot.keyboard_handler import KeyboardHandler
 from parrot.utils.input_events import InputEvents
@@ -65,7 +64,9 @@ def run_gl_window_app(args):
 
     # Initialize state and components
     state = State()
-    signal_states = SignalStates()
+    # Use the single SignalStates owned by State so keyboard shortcuts, audio
+    # analyzer, and remote-control effect pushes all fire the same signals.
+    signal_states = state.signal_states
 
     runtime_client = None
     venue_service_url = getattr(args, "venue_service_url", None)
@@ -87,6 +88,12 @@ def run_gl_window_app(args):
 
     # Initialize director first (creates position manager)
     director = Director(state, vj_director)
+
+    # Remote control "shift" buttons come in over websocket; State queues
+    # them and fires these events on the main thread.
+    state.events.on_shift_lighting_only_request += director.shift_lighting_only
+    state.events.on_shift_color_scheme_request += director.shift_color_scheme
+    state.events.on_shift_vj_only_request += director.shift_vj_only
 
     # Initialize fixture renderer (uses director's position manager)
     from parrot.vj.nodes.fixture_visualization import FixtureVisualization
@@ -251,7 +258,7 @@ def run_gl_window_app(args):
                     if self is None:
                         return None
                     self.state = state_obj
-                    self.modes = list(Mode)
+                    self.modes = list(MODES_BY_HYPE)
                     self.vj_modes = list(VJMode)
                     self.venues_list = list(get_runtime_venues(self.state))
                     self.themes = themes

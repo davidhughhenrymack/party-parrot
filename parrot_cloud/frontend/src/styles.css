@@ -427,6 +427,11 @@ label {
   transform: scale(0.98);
 }
 
+.remote-shift-button {
+  background: linear-gradient(180deg, #7c3aed, #5b21b6);
+  border-color: #5b21b6;
+}
+
 .remote-compact-row {
   display: flex;
   align-items: center;
@@ -518,19 +523,6 @@ label {
   width: min(220px, 100%);
   margin: 0 auto 20px;
   border-radius: 16px;
-}
-
-.home-badge {
-  display: inline-flex;
-  margin-bottom: 16px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid #30363d;
-  color: #8ec5ff;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .home-hero h1 {
@@ -887,11 +879,17 @@ label {
   height: 100vh;
 }
 
-.floating-transform-panel {
+.floating-transform-stack {
   position: absolute;
   left: 14px;
   top: 14px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.floating-transform-panel {
   min-width: 240px;
   padding: 12px;
   border-radius: 18px;

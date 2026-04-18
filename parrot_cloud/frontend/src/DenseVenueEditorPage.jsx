@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createSceneController } from './DenseSceneController.js';
+import { isMovingHeadFixtureType } from './fixtureModels.js';
 import { isViewportWebGlDisabledForTests } from './viewportTestMode.js';
 
 const isTestMode = isViewportWebGlDisabledForTests();
@@ -1095,6 +1096,21 @@ export default function DenseVenueEditorPage({ venueId }) {
     await handleRenameFixtureGroup(oldName, raw);
   }
 
+  async function handleUngroupFixtureGroup(name) {
+    if (!venueSnapshot || !name?.trim()) {
+      return;
+    }
+    const fixtures = venueSnapshot.fixtures.filter((f) => f.group_name === name);
+    if (fixtures.length === 0) {
+      return;
+    }
+    let snapshot = venueSnapshot;
+    for (const f of fixtures) {
+      snapshot = await apiPatchFixture(venueSnapshot.summary.id, f.id, { group_name: null });
+    }
+    setVenueSnapshot(snapshot);
+  }
+
   function handleFixtureGroupHeaderClick(groupedFixtures) {
     setSelectedKind('fixture');
     const idSet = new Set(groupedFixtures.map((f) => f.id));
@@ -1222,6 +1238,20 @@ export default function DenseVenueEditorPage({ venueId }) {
       });
       setVenueSnapshot(snap);
     }
+  }
+
+  async function handleUpdateFixturePanTiltRange(field, value) {
+    if (!venueSnapshot || !selectedFixture) {
+      return;
+    }
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return;
+    }
+    const snap = await apiPatchFixture(venueSnapshot.summary.id, selectedFixture.id, {
+      [field]: numeric,
+    });
+    setVenueSnapshot(snap);
   }
 
   return (
@@ -1447,7 +1477,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                         {selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? (
                           <>
                             <button
-                              className="icon-button link-button"
+                              className="icon-button small-button link-button"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 setAddressModalOpen(true);
@@ -1467,7 +1497,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                               Clone
                             </button>
                             <button
-                              className="icon-button danger-button"
+                              className="icon-button small-button danger-button"
                               aria-label="Delete light"
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -1505,6 +1535,18 @@ export default function DenseVenueEditorPage({ venueId }) {
                           >
                             Rename
                           </button>
+                          <button
+                            type="button"
+                            className="small-button secondary-button dense-fixture-group-rename-button"
+                            aria-label={`Ungroup ${name}`}
+                            title="Clear group_name on every fixture in this group"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleUngroupFixtureGroup(name);
+                            }}
+                          >
+                            Ungroup
+                          </button>
                         </div>
                       </div>
                       <div className="dense-fixture-group-nested">
@@ -1530,7 +1572,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                               {selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? (
                                 <>
                                   <button
-                                    className="icon-button link-button"
+                                    className="icon-button small-button link-button"
                                     onClick={(event) => {
                                       event.stopPropagation();
                                       setAddressModalOpen(true);
@@ -1550,7 +1592,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                                     Clone
                                   </button>
                                   <button
-                                    className="icon-button danger-button"
+                                    className="icon-button small-button danger-button"
                                     aria-label="Delete light"
                                     onClick={(event) => {
                                       event.stopPropagation();
@@ -1696,27 +1738,64 @@ export default function DenseVenueEditorPage({ venueId }) {
           <div id="viewport" ref={viewportRef} />
 
           {selectedKind && !(selectedKind === 'fixture' && selectedFixtureIds.length === 0) ? (
-            <div className="floating-transform-panel">
-              <div className="dense-section-header">
-                <h3>{selectedKind === 'fixture' ? 'Fixture Rotation' : selectedKind === 'video_wall' ? 'Video Wall Rotation' : 'DJ Booth Rotation'}</h3>
+            <div className="floating-transform-stack">
+              <div className="floating-transform-panel">
+                <div className="dense-section-header">
+                  <h3>{selectedKind === 'fixture' ? 'Fixture Rotation' : selectedKind === 'video_wall' ? 'Video Wall Rotation' : 'DJ Booth Rotation'}</h3>
+                </div>
+                {['x', 'y', 'z'].map((axis) => {
+                  const radians = selectedKind === 'fixture'
+                    ? (selectedFixture?.[`rotation_${axis}`] || 0)
+                    : (selectedSceneObject?.[`rotation_${axis}`] || 0);
+                  return (
+                    <div key={axis} className="rotation-row">
+                      <span className={`rotation-axis rotation-axis-${axis}`}>{axis.toUpperCase()}</span>
+                      <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, -1)}>
+                        -45°
+                      </button>
+                      <span className="rotation-value">{Math.round(radiansToDegrees(radians))}°</span>
+                      <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, 1)}>
+                        +45°
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-              {['x', 'y', 'z'].map((axis) => {
-                const radians = selectedKind === 'fixture'
-                  ? (selectedFixture?.[`rotation_${axis}`] || 0)
-                  : (selectedSceneObject?.[`rotation_${axis}`] || 0);
-                return (
-                  <div key={axis} className="rotation-row">
-                    <span className={`rotation-axis rotation-axis-${axis}`}>{axis.toUpperCase()}</span>
-                    <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, -1)}>
-                      -45°
-                    </button>
-                    <span className="rotation-value">{Math.round(radiansToDegrees(radians))}°</span>
-                    <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, 1)}>
-                      +45°
-                    </button>
+
+              {selectedKind === 'fixture'
+                && selectedFixtureIds.length === 1
+                && selectedFixture
+                && isMovingHeadFixtureType(selectedFixture.fixture_type) ? (
+                <div className="floating-transform-panel">
+                  <div className="dense-section-header">
+                    <h3>Pan / Tilt Range</h3>
                   </div>
-                );
-              })}
+                  {[
+                    { key: 'pan_lower', label: 'Pan ↧', title: 'Pan lower bound (degrees)' },
+                    { key: 'pan_upper', label: 'Pan ↥', title: 'Pan upper bound (degrees)' },
+                    { key: 'tilt_lower', label: 'Tilt ↧', title: 'Tilt lower bound (degrees)' },
+                    { key: 'tilt_upper', label: 'Tilt ↥', title: 'Tilt upper bound (degrees)' },
+                  ].map(({ key, label, title }) => {
+                    const raw = selectedFixture.options?.[key];
+                    const value = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+                    return (
+                      <div key={key} className="rotation-row" title={title}>
+                        <span className="rotation-axis">{label}</span>
+                        <input
+                          type="number"
+                          className="compact-input"
+                          step="5"
+                          value={Math.round(value)}
+                          onChange={(event) => {
+                            void handleUpdateFixturePanTiltRange(key, event.target.value);
+                          }}
+                        />
+                        <span className="compact-suffix">°</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
           ) : null}
 

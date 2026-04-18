@@ -3,7 +3,7 @@
 import imgui
 from imgui.integrations.pyglet import create_renderer
 from beartype import beartype
-from parrot.director.mode import Mode
+from parrot.director.mode import MODES_BY_HYPE, Mode
 from parrot.vj.vj_mode import VJMode, vj_mode_menu_label
 from parrot.state import State
 from parrot.director.themes import themes
@@ -101,7 +101,7 @@ class OverlayUI:
             # Mode toggle buttons
             current_mode = self.state.mode
 
-            for mode in Mode:
+            for mode in MODES_BY_HYPE:
                 is_selected = current_mode == mode
                 if is_selected:
                     imgui.push_style_color(imgui.COLOR_BUTTON, 0.2, 0.6, 0.2, 1.0)

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 from parrot.director.frame import Frame, FrameSignal
-from parrot.director.mode_interpretations import get_interpreter
+from parrot.director.mode_dispatch import get_interpreter
 from parrot.director.mode import Mode
 from parrot.interpreters.base import InterpreterArgs
 from parrot.fixtures.led_par import Par
@@ -102,8 +102,89 @@ class TestModes(unittest.TestCase):
             # Should not crash when stepping
             interpreter.step(self.frame, self.scheme)
 
+    def test_sheer_lights_are_silenced_in_chill_and_rave_gentle(self):
+        """Sheer lights are an Ethereal/Rave feature only — chill and rave_gentle keep them off."""
+        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+            ChauvetIntimidatorHybrid140SR_19Ch,
+        )
+
+        for mode in (Mode.chill, Mode.rave_gentle):
+            sheer = ChauvetIntimidatorHybrid140SR_19Ch(1)
+            sheer.cloud_group_name = "sheer lights"
+            other = ChauvetIntimidatorHybrid140SR_19Ch(20)
+            other.cloud_group_name = None
+
+            interp = get_interpreter(mode, [sheer, other], self.args)
+            interp.step(self.frame, self.scheme)
+
+            assert sheer.get_dimmer() == 0, (
+                f"{mode}: sheer-grouped moving head should be Dimmer0, got {sheer.get_dimmer()}"
+            )
+
+    def test_rave_sheer_lights_randomize_prism_and_focus(self):
+        """Rave gives each sheer-grouped mover its own prism/focus — the group mustn't be uniform."""
+        import random as _random
+        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+            ChauvetIntimidatorHybrid140SR_19Ch,
+        )
+
+        # Seed so the test is deterministic but still exercises randomization.
+        _random.seed(12345)
+        movers = [
+            ChauvetIntimidatorHybrid140SR_19Ch(1 + i * 20) for i in range(8)
+        ]
+        for m in movers:
+            m.cloud_group_name = "sheer lights"
+
+        interp = get_interpreter(Mode.rave, movers, self.args)
+        interp.step(self.frame, self.scheme)
+
+        focus_values = {m.get_focus() for m in movers}
+        prism_states = {m.get_prism()[0] for m in movers}
+        assert len(focus_values) > 1, (
+            f"Expected varied focus across sheer movers, got {focus_values}"
+        )
+        assert prism_states == {True, False}, (
+            f"Expected both prism-on and prism-off across sheer movers, got {prism_states}"
+        )
+
+    def test_composite_interpreter_exposes_children_with_their_own_groups(self):
+        """CompositeInterpreter.children must each carry the matched sub-group.
+
+        The DMX lighting-tree printer relies on ``children`` (not the flat parent
+        group + the merged ``__str__``) so each partition prints its own row.
+        """
+        from parrot.director.mode_dispatch import CompositeInterpreter
+        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+            ChauvetIntimidatorHybrid140SR_19Ch,
+        )
+        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+
+        sheer = ChauvetIntimidatorHybrid140SR_19Ch(1)
+        sheer.cloud_group_name = "sheer lights"
+        rogue = ChauvetRogueBeamR2(20)
+        rogue.cloud_group_name = None
+        mirror = Mirrorball(40)
+
+        interp = get_interpreter(Mode.rave_gentle, [sheer, rogue, mirror], self.args)
+        assert isinstance(interp, CompositeInterpreter), (
+            "rave_gentle with mixed fixture classes should partition into a composite"
+        )
+        children = interp.children
+        # Every child's group must be a strict subset of the parent patch, and
+        # the union (by identity) must cover every fixture exactly once.
+        seen: list[int] = []
+        for child in children:
+            for f in child.group:
+                seen.append(id(f))
+            assert len(child.group) >= 1, "Composite children should never be empty"
+            assert len(child.group) < 3, (
+                f"Each child should be one partition, not the whole patch: {child.group}"
+            )
+        assert sorted(seen) == sorted([id(sheer), id(rogue), id(mirror)])
+
     def test_mirrorball_resolves_before_par_not_test_rig_cycle(self):
-        """Mirrorball subclasses Par; chill/test must use Mirrorball row (Dimmer0), not Par animations."""
+        """Mirrorball subclasses Par; mode must use the Mirrorball row, not Par animations."""
         mb = Mirrorball(88)
         chill = get_interpreter(Mode.chill, [mb], self.args)
         self.assertIsInstance(chill.interpreter, Dimmer0)
@@ -112,9 +193,8 @@ class TestModes(unittest.TestCase):
 
         mb2 = Mirrorball(89)
         test_interp = get_interpreter(Mode.test, [mb2], self.args)
-        self.assertIsInstance(test_interp.interpreter, Dimmer0)
         test_interp.step(self.frame, self.scheme)
-        self.assertEqual(mb2.get_dimmer(), 0)
+        self.assertEqual(mb2.get_dimmer(), 255)
 
 
 if __name__ == "__main__":

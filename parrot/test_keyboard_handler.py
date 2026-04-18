@@ -113,16 +113,17 @@ class TestKeyboardHandler:
 
         result = self.handler.on_key_release(pyglet.window.key.C, 0)
         assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.rave_gentle)
+        self.state.set_mode.assert_called_once_with(Mode.ethereal)
 
     def test_mode_navigate_down(self):
         """Test that D key navigates down lighting modes (towards blackout)"""
-        # Start at chill
+        # chill sits above test in the hype-sorted ordering, so stepping down
+        # lands on test rather than going straight to blackout.
         self.state.mode = Mode.chill
 
         result = self.handler.on_key_release(pyglet.window.key.D, 0)
         assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.blackout)
+        self.state.set_mode.assert_called_once_with(Mode.test)
 
     def test_mode_navigate_up_arrow(self):
         """Test that UP arrow key navigates up lighting modes (towards rave)"""
@@ -131,13 +132,36 @@ class TestKeyboardHandler:
 
         result = self.handler.on_key_press(pyglet.window.key.UP, 0)
         assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.rave_gentle)
+        self.state.set_mode.assert_called_once_with(Mode.ethereal)
 
     def test_mode_navigate_down_arrow(self):
         """Test that DOWN arrow key navigates down lighting modes (towards blackout)"""
-        # Start at chill
+        # chill sits above test in the hype-sorted ordering; stepping down
+        # lands on test first.
         self.state.mode = Mode.chill
 
+        result = self.handler.on_key_press(pyglet.window.key.DOWN, 0)
+        assert result is True
+        self.state.set_mode.assert_called_once_with(Mode.test)
+
+    def test_mode_ordering_matches_modes_by_hype(self):
+        """Handler navigates using the shared hype-ordered list."""
+        from parrot.director.mode import MODES_BY_HYPE
+
+        assert self.handler.modes == list(MODES_BY_HYPE)
+        assert self.handler.modes[0] == Mode.blackout
+        assert self.handler.modes[-1] == Mode.rave
+        assert Mode.test in self.handler.modes
+
+    def test_mode_navigate_up_from_test_goes_to_chill(self):
+        """``test`` is the first non-blackout mode; UP walks to chill."""
+        self.state.mode = Mode.test
+        result = self.handler.on_key_press(pyglet.window.key.UP, 0)
+        assert result is True
+        self.state.set_mode.assert_called_once_with(Mode.chill)
+
+    def test_mode_navigate_down_from_test_goes_to_blackout(self):
+        self.state.mode = Mode.test
         result = self.handler.on_key_press(pyglet.window.key.DOWN, 0)
         assert result is True
         self.state.set_mode.assert_called_once_with(Mode.blackout)
@@ -209,26 +233,26 @@ class TestKeyboardHandler:
 
     def test_vj_mode_navigate_right(self):
         """Test that RIGHT arrow key navigates to next VJ mode"""
-        # Start at zr_golden_age
-        self.state.vj_mode = VJMode.zr_golden_age
+        # Start at prom_dmack
+        self.state.vj_mode = VJMode.prom_dmack
 
         result = self.handler.on_key_press(pyglet.window.key.RIGHT, 0)
         assert result is True
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_music_vids)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_wufky)
 
     def test_vj_mode_navigate_left(self):
         """Test that LEFT arrow key navigates to previous VJ mode"""
-        # Start at zr_music_vids
-        self.state.vj_mode = VJMode.zr_music_vids
+        # Start at prom_wufky
+        self.state.vj_mode = VJMode.prom_wufky
 
         result = self.handler.on_key_press(pyglet.window.key.LEFT, 0)
         assert result is True
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_golden_age)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_dmack)
 
     def test_vj_mode_no_wrap_at_last(self):
         """Test that RIGHT arrow doesn't wrap at last VJ mode"""
         # Start at last mode
-        self.state.vj_mode = VJMode.zr_full_rave
+        self.state.vj_mode = VJMode.prom_thunderbunny
 
         result = self.handler.on_key_press(pyglet.window.key.RIGHT, 0)
         assert result is True
@@ -245,48 +269,42 @@ class TestKeyboardHandler:
         # Should not call set_vj_mode since we're at the beginning
         self.state.set_vj_mode.assert_not_called()
 
-    def test_vj_mode_navigate_includes_hiphop(self):
-        """Test that navigation includes the zr_hiphop mode"""
-        # Start at zr_music_vids
-        self.state.vj_mode = VJMode.zr_music_vids
+    def test_vj_mode_navigate_full_prom_chain(self):
+        """Arrows walk blackout → prom_dmack → prom_wufky → prom_mayhem → prom_thunderbunny."""
+        self.state.vj_mode = VJMode.prom_mayhem
 
-        # Navigate right to zr_hiphop
         result = self.handler.on_key_press(pyglet.window.key.RIGHT, 0)
         assert result is True
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_hiphop)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_thunderbunny)
 
-        # Reset mock
         self.state.set_vj_mode.reset_mock()
 
-        # Navigate left from zr_early_rave back to zr_hiphop
-        self.state.vj_mode = VJMode.zr_early_rave
+        self.state.vj_mode = VJMode.prom_thunderbunny
         result = self.handler.on_key_press(pyglet.window.key.LEFT, 0)
         assert result is True
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_hiphop)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_mayhem)
 
     def test_vj_mode_navigate_with_f_key(self):
-        """Test that F key navigates up VJ modes (towards zr_full_rave)"""
-        # Start at zr_hiphop
-        self.state.vj_mode = VJMode.zr_hiphop
+        """Test that F key navigates up VJ modes (towards the last prom mode)"""
+        self.state.vj_mode = VJMode.prom_wufky
 
         result = self.handler.on_key_release(pyglet.window.key.F, 0)
         assert result is True
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_early_rave)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_mayhem)
 
     def test_vj_mode_navigate_with_e_key(self):
         """Test that E key navigates down VJ modes (towards blackout)"""
-        # Start at zr_early_rave
-        self.state.vj_mode = VJMode.zr_early_rave
+        self.state.vj_mode = VJMode.prom_mayhem
 
         result = self.handler.on_key_release(pyglet.window.key.E, 0)
         assert result is True
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_hiphop)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_wufky)
 
     def test_blackout_toggle_enters_blackout(self):
         """Test that B key enters blackout mode and saves current modes"""
         # Set current modes
         self.state.mode = Mode.rave
-        self.state.vj_mode = VJMode.zr_full_rave
+        self.state.vj_mode = VJMode.prom_thunderbunny
 
         # Press B to enter blackout
         result = self.handler.on_key_press(pyglet.window.key.B, 0)
@@ -294,7 +312,7 @@ class TestKeyboardHandler:
 
         # Check that modes were saved and blackout was set
         assert self.handler.previous_mode == Mode.rave
-        assert self.handler.previous_vj_mode == VJMode.zr_full_rave
+        assert self.handler.previous_vj_mode == VJMode.prom_thunderbunny
         assert self.handler.blackout_active is True
         self.state.set_mode.assert_called_once_with(Mode.blackout)
         self.state.set_vj_mode.assert_called_once_with(VJMode.blackout)
@@ -304,7 +322,7 @@ class TestKeyboardHandler:
         # Set up: already in blackout with saved modes
         self.handler.blackout_active = True
         self.handler.previous_mode = Mode.chill
-        self.handler.previous_vj_mode = VJMode.zr_early_rave
+        self.handler.previous_vj_mode = VJMode.prom_wufky
         self.state.mode = Mode.blackout
         self.state.vj_mode = VJMode.blackout
 
@@ -315,19 +333,19 @@ class TestKeyboardHandler:
         # Check that modes were restored
         assert self.handler.blackout_active is False
         self.state.set_mode.assert_called_once_with(Mode.chill)
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_early_rave)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_wufky)
 
     def test_blackout_toggle_full_cycle(self):
         """Test a full blackout toggle cycle: enter then exit"""
         # Start in rave mode
         self.state.mode = Mode.rave
-        self.state.vj_mode = VJMode.zr_music_vids
+        self.state.vj_mode = VJMode.prom_mayhem
 
         # First press: enter blackout
         self.handler.on_key_press(pyglet.window.key.B, 0)
         assert self.handler.blackout_active is True
         assert self.handler.previous_mode == Mode.rave
-        assert self.handler.previous_vj_mode == VJMode.zr_music_vids
+        assert self.handler.previous_vj_mode == VJMode.prom_mayhem
 
         # Update mock state to reflect blackout
         self.state.mode = Mode.blackout
@@ -339,4 +357,4 @@ class TestKeyboardHandler:
         self.handler.on_key_press(pyglet.window.key.B, 0)
         assert self.handler.blackout_active is False
         self.state.set_mode.assert_called_once_with(Mode.rave)
-        self.state.set_vj_mode.assert_called_once_with(VJMode.zr_music_vids)
+        self.state.set_vj_mode.assert_called_once_with(VJMode.prom_mayhem)
