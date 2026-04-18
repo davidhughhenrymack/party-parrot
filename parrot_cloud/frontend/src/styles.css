@@ -931,6 +931,135 @@ label {
   font-size: 13px;
 }
 
+.pan-tilt-range-panel {
+  min-width: 280px;
+}
+
+.pan-tilt-range-panel .dense-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pan-tilt-selection-count {
+  color: #9ba8b4;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pan-tilt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pan-tilt-row-label {
+  width: 58px;
+  color: #c9d1d9;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pan-tilt-pan-sliders {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+}
+
+.pan-tilt-pan-sliders > .pan-tilt-slider {
+  flex: 1;
+  min-width: 0;
+}
+
+.pan-tilt-slider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pan-tilt-slider-compact-label {
+  color: #9ba8b4;
+  font-size: 13px;
+  width: 12px;
+  text-align: center;
+}
+
+.pan-tilt-slider-input {
+  flex: 1;
+  min-width: 0;
+  accent-color: #58a6ff;
+  margin: 0;
+}
+
+.pan-tilt-slider-value {
+  min-width: 52px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #c9d1d9;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pan-tilt-slider-value:hover {
+  border-color: #30363d;
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.pan-tilt-slider.mixed .pan-tilt-slider-value {
+  color: #f59e0b;
+  font-style: italic;
+}
+
+.pan-tilt-slider.warn .pan-tilt-slider-input {
+  accent-color: #ef4444;
+}
+
+.pan-tilt-slider.warn .pan-tilt-slider-value {
+  color: #ef4444;
+}
+
+.pan-tilt-slider-text-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pan-tilt-warning {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #fecaca;
+  font-size: 11px;
+  line-height: 1.35;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.pan-tilt-quick-presets {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #21262d;
+}
+
+.pan-tilt-quick-preset-button {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
 .floating-view-switcher {
   position: absolute;
   top: 14px;

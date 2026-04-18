@@ -7,8 +7,6 @@ from typing import List
 from colorama import Fore, Style, init
 from parrot.director.frame import Frame, FrameSignal
 
-from parrot.fixtures.led_par import Par
-from parrot.fixtures.motionstrip import Motionstrip
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
 from parrot.director.color_schemes import color_schemes
@@ -16,13 +14,9 @@ from parrot.director.color_scheme import ColorScheme
 
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.director.mode import Mode
-from parrot.fixtures.laser import Laser
-from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
-from parrot.fixtures.chauvet.derby import ChauvetDerby
-from .mode_dispatch import CompositeInterpreter, get_interpreter, mode_uses_group_matchers
+from .mode_dispatch import CompositeInterpreter, get_interpreter
 
 from parrot.utils.lerp import LerpAnimator
-from parrot.fixtures.moving_head import MovingHead
 from parrot.state import State
 from parrot.utils.color_utils import format_color_scheme
 from parrot.fixtures.position_manager import FixturePositionManager
@@ -32,6 +26,26 @@ SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
 
 HYPE_BUCKETS = [10, 40, 70]
+
+
+def _flatten_runtime_fixtures(top_level) -> list[FixtureBase]:
+    """Walk runtime patch entries into a flat list of individual fixtures.
+
+    ``ManualGroup`` is skipped entirely — those fixtures are driven by manual
+    UI sliders rather than interpreters. Nested ``FixtureGroup`` wrappers
+    (cloud-defined groups) are flattened; their membership is recovered later
+    via each fixture's ``cloud_group_name``, which the cloud already stamps
+    on every spec-built instance.
+    """
+    out: list[FixtureBase] = []
+    for entry in top_level:
+        if isinstance(entry, ManualGroup):
+            continue
+        if isinstance(entry, FixtureGroup):
+            out.extend(_flatten_runtime_fixtures(entry.fixtures))
+            continue
+        out.append(entry)
+    return out
 
 
 def _flatten_interpreter_rows(
@@ -81,54 +95,46 @@ class Director:
             self.vj_director.shift(self.state.vj_mode, threshold=1.0)
 
     def group_fixtures(self):
-        if mode_uses_group_matchers(self.state.mode):
-            self._group_fixtures_flat()
-            return
+        """Partition the runtime patch into one bucket per cloud group.
 
-        to_group = [
-            Par,
-            MovingHead,
-            Motionstrip,
-            Laser,
-            ChauvetRotosphere_28Ch,
-            ChauvetDerby,
-        ]
-        self.fixture_groups = []
+        Every fixture in the venue editor can be tagged with a cloud group
+        name (the "SHEER LIGHTS" / "TRACK" / "TRUSS MOVERS" pills in the
+        editor sidebar). Each distinct name becomes its own top-level
+        bucket here, so the mode DSL runs independently per group — two
+        separately-named groups of the same fixture class will therefore
+        get independent random picks, rather than collapsing onto a single
+        ``MovingHead`` row. Fixtures without a cloud group share a trailing
+        "ungrouped" bucket.
 
-        # Get all fixtures from the venue patch
-        all_fixtures = get_runtime_fixtures(self.state)
+        ``ManualGroup`` members are skipped entirely (they are driven by
+        manual UI sliders, not interpreters). Within each bucket
+        :func:`get_interpreter` handles any class-level partitioning via
+        :class:`CompositeInterpreter`, so a cloud group that mixes e.g. a
+        mirrorball with moving heads still dispatches each class to its own
+        interpreter pack.
+        """
+        self.fixture_groups: list[list[FixtureBase]] = []
+        self.fixture_group_names: list[str | None] = []
 
-        # First, collect any existing FixtureGroup instances
-        grouped_fixtures = []
-        ungrouped_fixtures = []
+        bucket_index: dict[str, int] = {}
+        ungrouped: list[FixtureBase] = []
 
-        for fixture in all_fixtures:
-            if isinstance(fixture, FixtureGroup):
-                # Skip manual groups - they should not be controlled by interpreters
-                if isinstance(fixture, ManualGroup):
-                    continue
-                self.fixture_groups.append(fixture.fixtures)
-                grouped_fixtures.extend(fixture.fixtures)
-            else:
-                ungrouped_fixtures.append(fixture)
+        for fixture in _flatten_runtime_fixtures(get_runtime_fixtures(self.state)):
+            raw = getattr(fixture, "cloud_group_name", None)
+            name = raw.strip() if isinstance(raw, str) and raw.strip() else None
+            if name is None:
+                ungrouped.append(fixture)
+                continue
+            key = name.casefold()
+            if key not in bucket_index:
+                bucket_index[key] = len(self.fixture_groups)
+                self.fixture_groups.append([])
+                self.fixture_group_names.append(name)
+            self.fixture_groups[bucket_index[key]].append(fixture)
 
-        # Then apply the existing algorithm to ungrouped fixtures
-        for cls in to_group:
-            fixtures = [i for i in ungrouped_fixtures if isinstance(i, cls)]
-            if len(fixtures) > 0:
-                self.fixture_groups.append(fixtures)
-
-    def _group_fixtures_flat(self) -> None:
-        """For modes whose DSL uses ``Group(...)`` matchers: pass the whole patch flat."""
-        merged: list[FixtureBase] = []
-        for fixture in get_runtime_fixtures(self.state):
-            if isinstance(fixture, FixtureGroup):
-                if isinstance(fixture, ManualGroup):
-                    continue
-                merged.extend(fixture.fixtures)
-            else:
-                merged.append(fixture)
-        self.fixture_groups = [merged] if merged else []
+        if ungrouped:
+            self.fixture_groups.append(ungrouped)
+            self.fixture_group_names.append(None)
 
     def format_fixture_names(self, fixtures):
         # Format fixtures
@@ -156,12 +162,16 @@ class Director:
     def print_lighting_tree(self, context: str = ""):
         """Print a tree representation of the lighting interpreters.
 
-        Group-matcher modes (ethereal, rave, rave_gentle, chill) produce a
+        The outer iteration is one entry per cloud group (plus an optional
+        "ungrouped" trailing bucket). Each bucket's interpreter may be a
         :class:`CompositeInterpreter` whose children each apply to a different
-        partitioned sub-group of the patch. Flatten those into one row per
-        child so each sub-group displays its own fixtures and interpreter,
-        rather than printing the whole patch against a ``child | child | child``
-        merged string.
+        class-partitioned sub-group; those are flattened into one row per
+        child so each sub-group displays its own fixtures and interpreter.
+
+        Group names are rendered as headers (``└── [GROUP NAME]``) so it is
+        obvious from the log which partition a given row belongs to and why
+        two otherwise-identical fixture classes may receive different
+        randomized picks.
         """
         result = "DMX Lighting Tree"
         if context:
@@ -172,18 +182,28 @@ class Director:
             result += "└── (no interpreters)\n"
             return result
 
-        rows: list[tuple[list[FixtureBase], str]] = []
-        for interpreter in self.interpreters:
-            rows.extend(_flatten_interpreter_rows(interpreter))
+        sections: list[tuple[str | None, list[tuple[list[FixtureBase], str]]]] = []
+        for name, interpreter in zip(self.fixture_group_names, self.interpreters):
+            rows = _flatten_interpreter_rows(interpreter)
+            if rows:
+                sections.append((name, rows))
 
-        for idx, (group, interpreter_str_raw) in enumerate(rows):
-            is_last = idx == len(rows) - 1
-            connector = "└── " if is_last else "├── "
-            fixture_str = self.format_fixture_names(group)
-            interpreter_str = re.sub(r"\x1b\[[0-9;]*m", "", interpreter_str_raw)
-            result += (
-                f"{connector}{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
-            )
+        for s_idx, (name, rows) in enumerate(sections):
+            is_last_section = s_idx == len(sections) - 1
+            section_connector = "└── " if is_last_section else "├── "
+            header_label = name if name is not None else "(ungrouped)"
+            result += f"{section_connector}{Fore.MAGENTA}[{header_label}]{Style.RESET_ALL}\n"
+
+            section_pipe = "    " if is_last_section else "│   "
+            for r_idx, (group, interpreter_str_raw) in enumerate(rows):
+                is_last_row = r_idx == len(rows) - 1
+                row_connector = "└── " if is_last_row else "├── "
+                fixture_str = self.format_fixture_names(group)
+                interpreter_str = re.sub(r"\x1b\[[0-9;]*m", "", interpreter_str_raw)
+                result += (
+                    f"{section_pipe}{row_connector}"
+                    f"{Fore.BLUE}{fixture_str}{Style.RESET_ALL} {interpreter_str}\n"
+                )
 
         return result
 

@@ -401,6 +401,15 @@ function createThreeSceneController({
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
+    // The screen mesh is a PlaneGeometry rotated ``-π/2`` around X so its
+    // normal faces the audience (+Y). That rotation sends the plane's
+    // original top edge (+Y, UV v=1) to world -Z — i.e. the bottom of the
+    // viewer's screen — so the default ``flipY=true`` upload leaves the VJ
+    // preview visually upside-down. Disable flipY once on the shared texture
+    // so JPEG row 0 maps to UV v=0 and the post-rotation image reads right
+    // side up. The placeholder pattern is rotationally symmetric so it is
+    // unaffected by the change.
+    texture.flipY = false;
     return texture;
   }
 

@@ -7,6 +7,41 @@ const isTestMode = isViewportWebGlDisabledForTests();
 const FEET_PER_METER = 3.280839895;
 const ROTATION_STEP_DEGREES = 45;
 
+// Moving-head pan/tilt geometry. Pan spans 540° physical (0–540 in stored
+// degrees); the UI treats 270° as "forward" and lets the user set left/right
+// deviations around that center. Tilt spans 270° physical (0–270).
+const PAN_MAX_DEG = 540;
+const PAN_CENTER_DEG = 270;
+const PAN_HALF_MAX_DEG = 270;
+const TILT_MAX_DEG = 270;
+
+const PAN_TILT_RANGE_KEYS = ['pan_lower', 'pan_upper', 'tilt_lower', 'tilt_upper'];
+
+const PAN_TILT_QUICK_PRESETS = {
+  // Narrow: 120° pan arc centered forward, tilt 0–70° (stays near the floor).
+  narrow: {
+    label: 'Narrow',
+    title: '120° pan arc centered forward · tilt 0–70°',
+    values: {
+      pan_lower: PAN_CENTER_DEG - 60,
+      pan_upper: PAN_CENTER_DEG + 60,
+      tilt_lower: 0,
+      tilt_upper: 70,
+    },
+  },
+  // Sky: full pan sweep, tilt 45–135° (beams away from the floor, up toward audience/sky).
+  sky: {
+    label: 'Sky',
+    title: 'Full pan sweep · tilt 45–135°',
+    values: {
+      pan_lower: 0,
+      pan_upper: PAN_MAX_DEG,
+      tilt_lower: 45,
+      tilt_upper: 135,
+    },
+  },
+};
+
 function labelizeRemoteMode(value) {
   return String(value)
     .replaceAll('_', ' ')
@@ -173,6 +208,280 @@ function computeNextSafeStartAddress(venueSnapshot, universe, fixtureTypeKey, fi
   return Math.min(Math.max(1, next), maxStart);
 }
 
+/**
+ * Single-axis slider with a clickable value readout that shows "Mixed" when
+ * values differ across a multi-selection. Clicking "Mixed" (or the plain
+ * value) swaps the readout for a number input so the user can type an exact
+ * override that commits to every selected fixture at once.
+ *
+ * Slider drags only commit on pointer-up / key-up so one drag is a single
+ * PATCH per fixture rather than one-per-tick — multi-select edits would
+ * otherwise storm the backend.
+ */
+function PanTiltMixedSlider({
+  compactLabel,
+  value,
+  isMixed,
+  min,
+  max,
+  warn,
+  title,
+  onCommit,
+}) {
+  const [editing, setEditing] = useState(false);
+  const [textDraft, setTextDraft] = useState('');
+  const [sliderDraft, setSliderDraft] = useState(Number.isFinite(value) ? value : min);
+  const draggingRef = useRef(false);
+
+  // Keep the slider in sync with the prop unless the user is in the middle of
+  // a drag or typing into the Mixed-click number field. A WebSocket snapshot
+  // arriving mid-drag (e.g. a peer edit on the same venue) would otherwise
+  // snap the thumb back to the server value and eat the in-flight gesture.
+  useEffect(() => {
+    if (!editing && !draggingRef.current) {
+      setSliderDraft(Number.isFinite(value) ? value : min);
+    }
+  }, [value, editing, min]);
+
+  const clamp = (v) => Math.max(min, Math.min(max, v));
+  const display = isMixed ? 'Mixed' : `${Math.round(sliderDraft)}°`;
+
+  if (editing) {
+    const commitTextAndExit = () => {
+      setEditing(false);
+      const n = Number(textDraft);
+      if (Number.isFinite(n)) {
+        void onCommit(clamp(n));
+      }
+    };
+    return (
+      <div className={`pan-tilt-slider${warn ? ' warn' : ''}`} title={title}>
+        {compactLabel ? <span className="pan-tilt-slider-compact-label">{compactLabel}</span> : null}
+        <input
+          type="number"
+          className="compact-input pan-tilt-slider-text-input"
+          autoFocus
+          value={textDraft}
+          min={min}
+          max={max}
+          step="5"
+          onChange={(event) => setTextDraft(event.target.value)}
+          onBlur={commitTextAndExit}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.currentTarget.blur();
+            } else if (event.key === 'Escape') {
+              setEditing(false);
+            }
+          }}
+        />
+        <span className="compact-suffix">°</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`pan-tilt-slider${warn ? ' warn' : ''}${isMixed ? ' mixed' : ''}`} title={title}>
+      {compactLabel ? <span className="pan-tilt-slider-compact-label">{compactLabel}</span> : null}
+      <input
+        type="range"
+        className="pan-tilt-slider-input"
+        min={min}
+        max={max}
+        step="1"
+        value={clamp(sliderDraft)}
+        onChange={(event) => setSliderDraft(Number(event.target.value))}
+        onPointerDown={() => {
+          draggingRef.current = true;
+        }}
+        onPointerUp={() => {
+          draggingRef.current = false;
+          void onCommit(clamp(sliderDraft));
+        }}
+        onPointerCancel={() => {
+          draggingRef.current = false;
+        }}
+        onKeyUp={(event) => {
+          if (
+            event.key === 'ArrowLeft'
+            || event.key === 'ArrowRight'
+            || event.key === 'ArrowUp'
+            || event.key === 'ArrowDown'
+            || event.key === 'Home'
+            || event.key === 'End'
+            || event.key === 'PageUp'
+            || event.key === 'PageDown'
+          ) {
+            void onCommit(clamp(sliderDraft));
+          }
+        }}
+      />
+      <button
+        type="button"
+        className="pan-tilt-slider-value"
+        onClick={() => {
+          setTextDraft(isMixed ? '' : String(Math.round(sliderDraft)));
+          setEditing(true);
+        }}
+        title={
+          isMixed
+            ? 'Values differ across selection — click to type one value for all'
+            : 'Click to type an exact value'
+        }
+      >
+        {display}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Summarize one of the four pan/tilt range keys across a selection: returns
+ * the common value (or ``null`` if none of the fixtures carries it), plus a
+ * ``isMixed`` flag when values disagree by more than half a degree. The
+ * half-degree tolerance absorbs harmless float round-trips through the API.
+ */
+function summarizePanTiltKey(fixtures, key) {
+  const values = [];
+  for (const f of fixtures) {
+    const raw = f?.options?.[key];
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric)) {
+      values.push(numeric);
+    }
+  }
+  if (values.length === 0) {
+    return { value: null, isMixed: false };
+  }
+  const first = values[0];
+  const isMixed = values.some((v) => Math.abs(v - first) > 0.5);
+  return { value: first, isMixed };
+}
+
+/**
+ * Pan / tilt range editor for one or more moving-head fixtures. Pan is
+ * presented as two deviation sliders around a fixed 270° forward center so
+ * the user can sweep beams symmetrically without doing arithmetic; tilt gets
+ * one slider per bound so a skylight-style ``tilt_lower > floor`` is obvious.
+ * The panel flags inverted bounds (upper < lower) in red rather than silently
+ * "fixing" them — the fixture will still behave weirdly live until the user
+ * resolves the inversion themselves.
+ */
+function PanTiltRangePanel({ fixtures, onPatch }) {
+  const panLower = summarizePanTiltKey(fixtures, 'pan_lower');
+  const panUpper = summarizePanTiltKey(fixtures, 'pan_upper');
+  const tiltLower = summarizePanTiltKey(fixtures, 'tilt_lower');
+  const tiltUpper = summarizePanTiltKey(fixtures, 'tilt_upper');
+
+  const panInverted =
+    !panLower.isMixed
+    && !panUpper.isMixed
+    && panLower.value !== null
+    && panUpper.value !== null
+    && panUpper.value < panLower.value;
+  const tiltInverted =
+    !tiltLower.isMixed
+    && !tiltUpper.isMixed
+    && tiltLower.value !== null
+    && tiltUpper.value !== null
+    && tiltUpper.value < tiltLower.value;
+
+  // Pan is edited as deviations from the 270° forward center. Negative
+  // deviations (e.g. pan_lower = 360 on some fixture defaults) clamp to 0 for
+  // the slider; if the user touches the slider the stored value becomes
+  // symmetric around 270°, which is the intent of this UI.
+  const leftDevValue =
+    panLower.value === null ? 0 : Math.max(0, PAN_CENTER_DEG - panLower.value);
+  const rightDevValue =
+    panUpper.value === null ? 0 : Math.max(0, panUpper.value - PAN_CENTER_DEG);
+
+  return (
+    <div className="floating-transform-panel pan-tilt-range-panel">
+      <div className="dense-section-header">
+        <h3>Pan / Tilt Range</h3>
+        {fixtures.length > 1 ? (
+          <span className="pan-tilt-selection-count">{fixtures.length} fixtures</span>
+        ) : null}
+      </div>
+
+      <div className="pan-tilt-row">
+        <span className="pan-tilt-row-label">Pan</span>
+        <div className="pan-tilt-pan-sliders">
+          <PanTiltMixedSlider
+            compactLabel="←"
+            title="Left deviation from forward (270°)"
+            value={leftDevValue}
+            isMixed={panLower.isMixed}
+            min={0}
+            max={PAN_HALF_MAX_DEG}
+            warn={panInverted}
+            onCommit={(dev) => onPatch({ pan_lower: PAN_CENTER_DEG - dev })}
+          />
+          <PanTiltMixedSlider
+            compactLabel="→"
+            title="Right deviation from forward (270°)"
+            value={rightDevValue}
+            isMixed={panUpper.isMixed}
+            min={0}
+            max={PAN_HALF_MAX_DEG}
+            warn={panInverted}
+            onCommit={(dev) => onPatch({ pan_upper: PAN_CENTER_DEG + dev })}
+          />
+        </div>
+      </div>
+      {panInverted ? (
+        <div className="pan-tilt-warning">
+          Pan lower {Math.round(panLower.value)}° is above upper {Math.round(panUpper.value)}°
+        </div>
+      ) : null}
+
+      <div className="pan-tilt-row">
+        <span className="pan-tilt-row-label">Tilt min</span>
+        <PanTiltMixedSlider
+          title="Tilt lower bound (0 = straight down in fixture frame)"
+          value={tiltLower.value === null ? 0 : tiltLower.value}
+          isMixed={tiltLower.isMixed}
+          min={0}
+          max={TILT_MAX_DEG}
+          warn={tiltInverted}
+          onCommit={(v) => onPatch({ tilt_lower: v })}
+        />
+      </div>
+      <div className="pan-tilt-row">
+        <span className="pan-tilt-row-label">Tilt max</span>
+        <PanTiltMixedSlider
+          title="Tilt upper bound"
+          value={tiltUpper.value === null ? 0 : tiltUpper.value}
+          isMixed={tiltUpper.isMixed}
+          min={0}
+          max={TILT_MAX_DEG}
+          warn={tiltInverted}
+          onCommit={(v) => onPatch({ tilt_upper: v })}
+        />
+      </div>
+      {tiltInverted ? (
+        <div className="pan-tilt-warning">
+          Tilt max {Math.round(tiltUpper.value)}° is below min {Math.round(tiltLower.value)}°
+        </div>
+      ) : null}
+
+      <div className="pan-tilt-quick-presets">
+        {Object.entries(PAN_TILT_QUICK_PRESETS).map(([key, preset]) => (
+          <button
+            key={key}
+            type="button"
+            className="small-button secondary-button pan-tilt-quick-preset-button"
+            title={preset.title}
+            onClick={() => void onPatch(preset.values)}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DenseVenueEditorPage({ venueId }) {
   const viewportRef = useRef(null);
   const sceneControllerRef = useRef(null);
@@ -255,6 +564,23 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
     return venueSnapshot.fixtures.find((fixture) => fixture.id === selectedFixtureId) ?? null;
   }, [venueSnapshot, selectedFixtureId]);
+
+  /**
+   * Subset of the current selection that is editable by the Pan/Tilt panel.
+   * Computing this once avoids re-filtering inside the render block and lets
+   * the panel's "Mixed" detection operate on exactly the fixtures that will
+   * receive the patch — non-moving-heads never contribute values and are
+   * never targeted by commits.
+   */
+  const selectedMovingHeadFixtures = useMemo(() => {
+    if (!venueSnapshot || selectedFixtureIds.length === 0) {
+      return [];
+    }
+    const idSet = new Set(selectedFixtureIds);
+    return venueSnapshot.fixtures.filter(
+      (f) => idSet.has(f.id) && isMovingHeadFixtureType(f.fixture_type),
+    );
+  }, [venueSnapshot, selectedFixtureIds]);
 
   const selectedSceneObject = useMemo(() => {
     if (!venueSnapshot || !selectedKind) {
@@ -1240,18 +1566,41 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
   }
 
-  async function handleUpdateFixturePanTiltRange(field, value) {
-    if (!venueSnapshot || !selectedFixture) {
+  /**
+   * Apply a partial pan/tilt range patch (any subset of the four keys) to every
+   * selected moving-head fixture. Non-moving-head fixtures in the selection are
+   * skipped silently so mixed selections don't poison the batch. The caller is
+   * expected to coalesce drags into a single commit (e.g. on pointer-up) rather
+   * than firing one request per slider tick.
+   */
+  async function handleUpdateFixturePanTiltRange(patch) {
+    if (!venueSnapshot || selectedFixtureIds.length === 0) {
       return;
     }
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) {
+    const cleaned = {};
+    for (const key of PAN_TILT_RANGE_KEYS) {
+      if (patch && key in patch) {
+        const numeric = Number(patch[key]);
+        if (Number.isFinite(numeric)) {
+          cleaned[key] = numeric;
+        }
+      }
+    }
+    if (Object.keys(cleaned).length === 0) {
       return;
     }
-    const snap = await apiPatchFixture(venueSnapshot.summary.id, selectedFixture.id, {
-      [field]: numeric,
+    const targetIds = selectedFixtureIds.filter((id) => {
+      const f = venueSnapshot.fixtures.find((x) => x.id === id);
+      return f && isMovingHeadFixtureType(f.fixture_type);
     });
-    setVenueSnapshot(snap);
+    if (targetIds.length === 0) {
+      return;
+    }
+    let snapshot = venueSnapshot;
+    for (const id of targetIds) {
+      snapshot = await apiPatchFixture(venueSnapshot.summary.id, id, cleaned);
+    }
+    setVenueSnapshot(snapshot);
   }
 
   return (
@@ -1762,39 +2111,11 @@ export default function DenseVenueEditorPage({ venueId }) {
                 })}
               </div>
 
-              {selectedKind === 'fixture'
-                && selectedFixtureIds.length === 1
-                && selectedFixture
-                && isMovingHeadFixtureType(selectedFixture.fixture_type) ? (
-                <div className="floating-transform-panel">
-                  <div className="dense-section-header">
-                    <h3>Pan / Tilt Range</h3>
-                  </div>
-                  {[
-                    { key: 'pan_lower', label: 'Pan ↧', title: 'Pan lower bound (degrees)' },
-                    { key: 'pan_upper', label: 'Pan ↥', title: 'Pan upper bound (degrees)' },
-                    { key: 'tilt_lower', label: 'Tilt ↧', title: 'Tilt lower bound (degrees)' },
-                    { key: 'tilt_upper', label: 'Tilt ↥', title: 'Tilt upper bound (degrees)' },
-                  ].map(({ key, label, title }) => {
-                    const raw = selectedFixture.options?.[key];
-                    const value = Number.isFinite(Number(raw)) ? Number(raw) : 0;
-                    return (
-                      <div key={key} className="rotation-row" title={title}>
-                        <span className="rotation-axis">{label}</span>
-                        <input
-                          type="number"
-                          className="compact-input"
-                          step="5"
-                          value={Math.round(value)}
-                          onChange={(event) => {
-                            void handleUpdateFixturePanTiltRange(key, event.target.value);
-                          }}
-                        />
-                        <span className="compact-suffix">°</span>
-                      </div>
-                    );
-                  })}
-                </div>
+              {selectedKind === 'fixture' && selectedMovingHeadFixtures.length > 0 ? (
+                <PanTiltRangePanel
+                  fixtures={selectedMovingHeadFixtures}
+                  onPatch={handleUpdateFixturePanTiltRange}
+                />
               ) : null}
             </div>
           ) : null}

@@ -164,19 +164,24 @@ def get_interpreter(
 ) -> InterpreterBase:
     """Pick the interpreter(s) for a group of fixtures under ``phrase``.
 
-    Modes with only fixture-class keys expect a homogeneous list; the first
-    matching class entry wins. Modes using :class:`Group` matchers receive the
-    flat patch and are partitioned across all keys in insertion order; any
-    leftover fixture gets :class:`Dimmer0`.
+    Runs the mode DSL against ``fixture_group`` as a partition pass: matchers
+    are visited most-specific first (``(Group, Class)`` → bare ``Group`` →
+    class, subclass-aware) and each one consumes whichever fixtures still
+    remain. Homogeneous inputs collapse to a single interpreter; heterogeneous
+    inputs (e.g. a cloud group mixing a mirrorball with moving heads) land on
+    :class:`CompositeInterpreter` so each class gets the pack declared for it,
+    rather than silently inheriting ``fixture_group[0]``'s interpreter.
+
+    The director calls this once per cloud group, so ``Group(...)`` matchers in
+    the DSL effectively re-scope to "the current bucket" — which is why
+    unrelated groups (TRACK vs TRUSS MOVERS) end up with independent random
+    picks rather than being lumped under one ``MovingHead`` row.
     """
+    if not fixture_group:
+        return Dimmer0(fixture_group, args)
+
     mapping = _mode_mapping(phrase)
     items = _sorted_items(mapping)
-
-    if not _mapping_has_group_matcher(mapping):
-        for key, options in items:
-            if fixture_group and _matcher_matches(key, fixture_group[0]):
-                return randomize(*options)(fixture_group, args)
-        return Dimmer0(fixture_group, args)
 
     children: list[InterpreterBase] = []
     remaining = list(fixture_group)
@@ -189,6 +194,8 @@ def get_interpreter(
         children.append(randomize(*options)(matched, args))
     if remaining:
         children.append(Dimmer0(remaining, args))
+    if not children:
+        return Dimmer0(fixture_group, args)
     if len(children) == 1:
         return children[0]
     return CompositeInterpreter(fixture_group, args, children)
