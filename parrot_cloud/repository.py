@@ -69,6 +69,29 @@ def _extract_pan_tilt_range(data: dict[str, object]) -> dict[str, float]:
     }
 
 
+def _hydrate_pan_tilt_range(
+    fixture_type: str,
+    stored_options: dict[str, object],
+) -> dict[str, object]:
+    """Return ``stored_options`` with any missing pan/tilt range keys filled.
+
+    Moving heads created before pan/tilt range defaults were introduced carry an
+    ``options`` blob that doesn't include these four keys, which caused the
+    venue editor UI to show all-zero ranges. On read we fill any missing key
+    from the type's :func:`pan_tilt_range_default_options`, so the editor and
+    runtime always see sensible bounds. This is a pure read-side hydration —
+    the DB row stays untouched until the user actually edits a field.
+    """
+    if not fixture_type_has_pan_tilt_range(fixture_type):
+        return stored_options
+    defaults = pan_tilt_range_default_options(fixture_type)
+    hydrated = dict(stored_options)
+    for key, default_value in defaults.items():
+        if key not in hydrated:
+            hydrated[key] = default_value
+    return hydrated
+
+
 def _merge_pan_tilt_range_into_options(
     existing_options: dict[str, object],
     explicit_options: dict[str, object] | None,
@@ -703,7 +726,9 @@ class VenueRepository:
                 name=fixture.name,
                 group_name=fixture.group_name,
                 is_manual=fixture.is_manual,
-                options=dict(fixture.options or {}),
+                options=_hydrate_pan_tilt_range(
+                    fixture.fixture_type, dict(fixture.options or {})
+                ),
             )
             for fixture in venue.fixtures
         )

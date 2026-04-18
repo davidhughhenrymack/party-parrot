@@ -60,11 +60,11 @@ from parrot.interpreters.move import (
 )
 from parrot.interpreters.movers import (
     FocusBig,
+    FocusSmall,
     MoverGobo,
     MoverNoGobo,
     MoverRandomGobo,
-    RandomFocus,
-    RandomPrism,
+    PrismOff,
     RotatePrism,
     RotatingGobo,
 )
@@ -220,9 +220,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
     },
     Mode.rave: {
-        # Rave sheer lights pulse with the rest of the rig but each fixture picks
-        # its own prism state and focus value so the beams read as an irregular,
-        # fractured starburst rather than a uniform grid.
+        # Rave sheer movers share one dimmer / color / move / gobo pick across the
+        # whole group, plus a random focus width (big vs. small beam) and a random
+        # prism state (spinning prism vs. off). Picking per-group rather than
+        # per-fixture keeps all the beams reading as one cohesive look, and each
+        # reshuffle flips the character of the rig in one decision.
         (Group("sheer lights"), MovingHead): [
             combo(
                 signal_switch(
@@ -247,6 +249,8 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
                     (90, MoverNoGobo),
                 ),
+                randomize(FocusBig, FocusSmall),
+                randomize(RotatePrism, PrismOff),
             )
         ],
         Group("sheer lights"): [Dimmer0],

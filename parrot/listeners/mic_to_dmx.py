@@ -128,8 +128,7 @@ class MicToDmx(object):
         self.frame_count = 0
 
     def quit(self):
-        # Save state before quitting
-        self.state.save_state()
+        # State is persisted by parrot_cloud's control_state DB; no local save needed.
         self.should_stop = True
 
         if self.runtime_client is not None:

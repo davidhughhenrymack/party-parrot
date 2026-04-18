@@ -367,3 +367,62 @@ def test_fixture_group_name_sets_runtime_fixture_group_key(client):
     by_id = {f["id"]: f for f in snap["fixtures"]}
     assert by_id["g-a"]["group_name"] == "Front wash"
     assert by_id["g-b"]["group_name"] == "Front wash"
+
+
+def test_group_name_wires_through_to_director_single_partition(client):
+    """End-to-end: editor ``group_name`` → FixtureGroup → one shared interpreter.
+
+    This pins the contract the director has long relied on: fixtures sharing a
+    ``group_name`` must arrive at the director as a single :class:`FixtureGroup`
+    so interpreter generation produces ONE interpreter across them rather than
+    one per fixture. Ungrouped fixtures of the same class coalesce into their
+    own class-level partition.
+    """
+    from parrot.fixtures.base import FixtureGroup
+    from parrot_cloud.fixture_catalog import build_runtime_fixture_groups
+    from parrot_cloud.repository import VenueRepository
+
+    created = client.post("/api/venues", json={"name": "Group wiring"})
+    assert created.status_code == 200
+    venue_id = created.get_json()["summary"]["id"]
+
+    for fid, addr in (("w-a", 1), ("w-b", 5), ("w-solo", 9)):
+        resp = client.post(
+            f"/api/venues/{venue_id}/fixtures",
+            json={
+                "id": fid,
+                "fixture_type": "par_rgb",
+                "address": addr,
+                "universe": "default",
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "options": {},
+            },
+        )
+        assert resp.status_code == 200
+
+    for fid in ("w-a", "w-b"):
+        pr = client.patch(
+            f"/api/venues/{venue_id}/fixtures/{fid}",
+            json={"group_name": "Front wash"},
+        )
+        assert pr.status_code == 200
+
+    snapshot = VenueRepository().get_venue_snapshot(venue_id)
+    runtime, _manual = build_runtime_fixture_groups(snapshot)
+
+    groups = [f for f in runtime if isinstance(f, FixtureGroup)]
+    loose = [f for f in runtime if not isinstance(f, FixtureGroup)]
+    assert len(groups) == 1, "grouped fixtures must be wrapped in a single FixtureGroup"
+    assert groups[0].name == "Front wash"
+    grouped_ids = {
+        getattr(child, "cloud_spec_id", None) for child in groups[0].fixtures
+    }
+    assert grouped_ids == {"w-a", "w-b"}
+    assert [getattr(f, "cloud_spec_id", None) for f in loose] == ["w-solo"]
+
+    # cloud_group_name must also be tagged on each member so DSL Group(...) matchers work.
+    for child in groups[0].fixtures:
+        assert child.cloud_group_name == "Front wash"
+    assert loose[0].cloud_group_name in (None, "")

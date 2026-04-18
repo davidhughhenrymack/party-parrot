@@ -122,30 +122,53 @@ class TestModes(unittest.TestCase):
             )
 
     def test_rave_sheer_lights_randomize_prism_and_focus(self):
-        """Rave gives each sheer-grouped mover its own prism/focus — the group mustn't be uniform."""
+        """Rave picks one focus and one prism state for the whole sheer group.
+
+        Per-group randomize (not per-fixture) means all sheer movers share the
+        chosen focus/prism, and rebuilding enough times visits both options in
+        each randomize call — that proves the DSL is actually picking, not frozen.
+        """
         import random as _random
         from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
             ChauvetIntimidatorHybrid140SR_19Ch,
         )
 
-        # Seed so the test is deterministic but still exercises randomization.
-        _random.seed(12345)
-        movers = [
-            ChauvetIntimidatorHybrid140SR_19Ch(1 + i * 20) for i in range(8)
-        ]
-        for m in movers:
-            m.cloud_group_name = "sheer lights"
+        focus_picks: set[float] = set()
+        prism_picks: set[bool] = set()
 
-        interp = get_interpreter(Mode.rave, movers, self.args)
-        interp.step(self.frame, self.scheme)
+        for seed in range(40):
+            _random.seed(seed)
+            movers = [
+                ChauvetIntimidatorHybrid140SR_19Ch(1 + i * 20) for i in range(6)
+            ]
+            for m in movers:
+                m.cloud_group_name = "sheer lights"
 
-        focus_values = {m.get_focus() for m in movers}
-        prism_states = {m.get_prism()[0] for m in movers}
-        assert len(focus_values) > 1, (
-            f"Expected varied focus across sheer movers, got {focus_values}"
+            interp = get_interpreter(Mode.rave, movers, self.args)
+            interp.step(self.frame, self.scheme)
+
+            focus_values = {m.get_focus() for m in movers}
+            prism_states = {m.get_prism()[0] for m in movers}
+
+            # Group-wise randomize: every mover in the group must agree.
+            assert len(focus_values) == 1, (
+                f"seed={seed}: expected one shared focus across the group, got {focus_values}"
+            )
+            assert len(prism_states) == 1, (
+                f"seed={seed}: expected one shared prism state across the group, got {prism_states}"
+            )
+
+            (focus,) = focus_values
+            (prism_on,) = prism_states
+            assert focus in (0.0, 1.0), f"seed={seed}: unexpected focus {focus}"
+            focus_picks.add(focus)
+            prism_picks.add(prism_on)
+
+        assert focus_picks == {0.0, 1.0}, (
+            f"randomize(FocusBig, FocusSmall) should visit both options; got {focus_picks}"
         )
-        assert prism_states == {True, False}, (
-            f"Expected both prism-on and prism-off across sheer movers, got {prism_states}"
+        assert prism_picks == {True, False}, (
+            f"randomize(RotatePrism, PrismOff) should visit both options; got {prism_picks}"
         )
 
     def test_composite_interpreter_exposes_children_with_their_own_groups(self):

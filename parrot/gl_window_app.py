@@ -712,9 +712,9 @@ def run_gl_window_app(args):
         for w in pyglet.app.windows:
             w.dispatch_events()
 
-    # Cleanup
+    # Cleanup. Runtime state (mode/vj_mode/venue) is persisted by parrot_cloud's
+    # control_state DB, so there's nothing to write locally on shutdown.
     print("\n👋 Shutting down...")
-    state.save_state()
     audio_analyzer.cleanup()
     vj_director.cleanup()
 

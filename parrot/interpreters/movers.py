@@ -81,6 +81,23 @@ class FocusBig(InterpreterBase[MovingHead]):
             fixture.set_focus(0.0)
 
 
+class FocusSmall(InterpreterBase[MovingHead]):
+    """Pin focus fully tight (small/sharp beam) on every fixture in the group.
+
+    Mirror of :class:`FocusBig`. Fixtures lacking a focus channel accept the
+    call; the DMX write is a no-op for them.
+    """
+
+    def __init__(self, group, args: InterpreterArgs):
+        super().__init__(group, args)
+        for fixture in self.group:
+            fixture.set_focus(1.0)
+
+    def step(self, frame, scheme):
+        for fixture in self.group:
+            fixture.set_focus(1.0)
+
+
 class RotatingGobo(InterpreterBase[MovingHead]):
     """Select a rotating-gobo-wheel slot and keep it spinning.
 

@@ -246,6 +246,50 @@ def test_update_fixture_merges_top_level_pan_tilt_range(venue_repository):
     assert fixture.options["tilt_upper"] == 270
 
 
+def test_legacy_moving_head_reads_get_pan_tilt_range_defaults(venue_repository):
+    """Fixtures stored before the pan/tilt range feature existed must read as defaults.
+
+    We simulate a legacy row by inserting a moving head with an ``options`` blob
+    that doesn't include any pan/tilt range keys, then reading the venue back
+    and asserting the UI sees the fixture-type defaults rather than zeros.
+    """
+    from parrot_cloud.database import create_session
+    from parrot_cloud.models import FixtureModel
+
+    active = venue_repository.get_active_venue_snapshot()
+    created = venue_repository.add_fixture(
+        active.summary.id,
+        {
+            "id": "legacy-hybrid",
+            "fixture_type": "chauvet_intimidator_hybrid_140sr",
+            "address": 300,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+        },
+    )
+    assert any(f.id == "legacy-hybrid" for f in created.fixtures)
+
+    # Drop the range keys from the DB row to mimic a pre-feature fixture.
+    session = create_session()
+    try:
+        row = session.get(FixtureModel, "legacy-hybrid")
+        assert row is not None
+        row.options = {"custom_marker": "legacy"}
+        session.commit()
+    finally:
+        session.close()
+
+    after = venue_repository.get_active_venue_snapshot()
+    legacy = next(f for f in after.fixtures if f.id == "legacy-hybrid")
+    assert legacy.options["custom_marker"] == "legacy"
+    assert legacy.options["pan_lower"] == 0
+    assert legacy.options["pan_upper"] == 540
+    assert legacy.options["tilt_lower"] == 0
+    assert legacy.options["tilt_upper"] == 270
+
+
 def test_non_moving_head_add_does_not_seed_pan_tilt_range(venue_repository):
     active = venue_repository.get_active_venue_snapshot()
     created = venue_repository.add_fixture(
