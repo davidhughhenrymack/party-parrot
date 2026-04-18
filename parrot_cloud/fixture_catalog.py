@@ -23,6 +23,7 @@ from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.chauvet.slimpar_pro_h import ChauvetSlimParProH_7Ch
 from parrot.fixtures.chauvet.slimpar_pro_q import ChauvetSlimParProQ_5Ch
 from parrot.fixtures.led_par import ParRGB, ParRGBAWU
+from parrot.fixtures.mirrorball import Mirrorball
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.uking.laser import FiveBeamLaser
@@ -306,6 +307,15 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             spec,
         ),
         dmx_address_width=36,
+    ),
+    "mirrorball": FixtureTypeDefinition(
+        key="mirrorball",
+        label="Mirrorball",
+        builder=lambda spec: _apply_transform(
+            Mirrorball(spec.address, universe=_parse_universe(spec.universe)),
+            spec,
+        ),
+        dmx_address_width=1,
     ),
 }
 

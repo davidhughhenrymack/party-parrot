@@ -21,7 +21,6 @@ class TestState:
         assert state.mode == Mode.chill  # Default mode
         assert state.hype == 30
         assert state.theme == themes[0]
-        assert state.manual_dimmer == 0
         assert state.hype_limiter is False
         assert state.show_waveform is True
         assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
@@ -82,17 +81,6 @@ class TestState:
 
         assert state.theme == new_theme
         mock_handler.assert_called_once_with(new_theme)
-
-    def test_set_manual_dimmer(self):
-        """Test setting manual dimmer triggers events."""
-        state = State()
-        mock_handler = Mock()
-        state.events.on_manual_dimmer_change += mock_handler
-
-        state.set_manual_dimmer(0.5)
-
-        assert state.manual_dimmer == 0.5
-        mock_handler.assert_called_once_with(0.5)
 
     def test_set_hype_limiter(self):
         """Test setting hype limiter triggers events."""

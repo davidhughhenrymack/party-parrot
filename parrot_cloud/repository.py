@@ -41,6 +41,10 @@ DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.08
 DISPLAY_MODE_VALUES = {"venue", "dmx_heatmap", "vj"}
 
 
+def _is_manual_dimmer_channel_type(fixture_type: str) -> bool:
+    return fixture_type == "manual_dimmer_channel"
+
+
 @contextmanager
 def _session_scope():
     session = create_session()
@@ -190,10 +194,6 @@ class VenueRepository:
             if "display_mode" in data and data["display_mode"] is not None:
                 control_state.display_mode = self._normalize_display_mode(
                     str(data["display_mode"])
-                )
-            if "manual_dimmer" in data and data["manual_dimmer"] is not None:
-                control_state.manual_dimmer = max(
-                    0.0, min(1.0, float(data["manual_dimmer"]))
                 )
             if "manual_fixture_dimmers" in data and data["manual_fixture_dimmers"] is not None:
                 incoming = data["manual_fixture_dimmers"]
@@ -385,11 +385,16 @@ class VenueRepository:
                 raise KeyError(f"Venue not found: {venue_id}")
 
             next_order = len(venue.fixtures)
+            fixture_type_str = str(fixture_data["fixture_type"])
+            if _is_manual_dimmer_channel_type(fixture_type_str):
+                is_manual = True
+            else:
+                is_manual = bool(fixture_data.get("is_manual", False))
             fixture = FixtureModel(
                 id=str(fixture_data.get("id", uuid.uuid4())),
                 venue_id=venue_id,
                 order_index=next_order,
-                fixture_type=str(fixture_data["fixture_type"]),
+                fixture_type=fixture_type_str,
                 name=(
                     None
                     if fixture_data.get("name") in (None, "")
@@ -400,7 +405,7 @@ class VenueRepository:
                     if fixture_data.get("group_name") in (None, "")
                     else str(fixture_data["group_name"])
                 ),
-                is_manual=bool(fixture_data.get("is_manual", False)),
+                is_manual=is_manual,
                 address=int(fixture_data["address"]),
                 universe=_normalize_universe(fixture_data.get("universe", "default")),
                 x=float(fixture_data.get("x", 0.0)),
@@ -427,6 +432,8 @@ class VenueRepository:
             fixture = session.get(FixtureModel, fixture_id)
             if fixture is None or fixture.venue_id != venue_id:
                 raise KeyError(f"Fixture not found: {fixture_id}")
+
+            old_fixture_type = fixture.fixture_type
 
             for key in (
                 "fixture_type",
@@ -459,6 +466,15 @@ class VenueRepository:
 
             if "options" in fixture_data:
                 fixture.options = dict(fixture_data["options"])
+
+            if _is_manual_dimmer_channel_type(fixture.fixture_type):
+                fixture.is_manual = True
+            elif (
+                _is_manual_dimmer_channel_type(old_fixture_type)
+                and not _is_manual_dimmer_channel_type(fixture.fixture_type)
+                and "is_manual" not in fixture_data
+            ):
+                fixture.is_manual = False
 
             self._touch_venue(venue)
             session.flush()
@@ -680,7 +696,6 @@ class VenueRepository:
             theme_name=control_state.theme_name,
             active_venue_id=control_state.active_venue_id,
             display_mode=self._normalize_display_mode(control_state.display_mode),
-            manual_dimmer=control_state.manual_dimmer,
             hype_limiter=control_state.hype_limiter,
             show_waveform=control_state.show_waveform,
             manual_fixture_dimmers=manual_fixture_dimmers,
@@ -701,7 +716,6 @@ class VenueRepository:
             theme_name="Rave",
             active_venue_id=active_venue.id if active_venue is not None else None,
             display_mode="dmx_heatmap",
-            manual_dimmer=0.0,
             manual_fixture_dimmers={},
             hype_limiter=False,
             show_waveform=True,

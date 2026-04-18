@@ -12,8 +12,6 @@ from parrot.api.web_server import (
     set_vj_mode,
     deploy_hype,
     get_hype_status,
-    get_manual_dimmer,
-    set_manual_dimmer,
     set_effect,
     start_web_server,
     state_instance,
@@ -198,82 +196,6 @@ class TestWebServer:
         assert data["active"] is True
         assert data["remaining"] > 0
         assert data["remaining"] <= 8  # HYPE_DURATION
-
-    def test_get_manual_dimmer_no_state(self):
-        """Test GET /api/manual_dimmer when state is not initialized."""
-        response = self.client.get("/api/manual_dimmer")
-        assert response.status_code == 200
-
-        data = json.loads(response.data)
-        assert data["value"] == 0
-        assert data["supported"] is False
-
-    def test_get_manual_dimmer_with_state(self):
-        """Test GET /api/manual_dimmer when state is initialized."""
-        import parrot.api.web_server as web_server_module
-
-        mock_state = Mock()
-        mock_state.manual_dimmer = 0.5
-        mock_state.venue = Mock()
-        web_server_module.state_instance = mock_state
-
-        with patch("parrot.venue_runtime.runtime_has_manual_dimmer", return_value=True):
-            response = self.client.get("/api/manual_dimmer")
-            assert response.status_code == 200
-
-            data = json.loads(response.data)
-            assert data["value"] == 0.5
-            assert data["supported"] is True
-
-    def test_set_manual_dimmer_no_state(self):
-        """Test POST /api/manual_dimmer when state is not initialized."""
-        response = self.client.post(
-            "/api/manual_dimmer", json={"value": 0.5}, content_type="application/json"
-        )
-        assert response.status_code == 200
-
-        data = json.loads(response.data)
-        assert data["success"] is False
-
-    def test_set_manual_dimmer_valid_value(self):
-        """Test POST /api/manual_dimmer with valid value."""
-        import parrot.api.web_server as web_server_module
-
-        mock_state = Mock()
-        web_server_module.state_instance = mock_state
-
-        response = self.client.post(
-            "/api/manual_dimmer", json={"value": 0.7}, content_type="application/json"
-        )
-        assert response.status_code == 200
-
-        data = json.loads(response.data)
-        assert data["success"] is True
-        assert data["value"] == 0.7
-        mock_state.set_manual_dimmer.assert_called_once_with(0.7)
-
-    def test_set_manual_dimmer_clamps_value(self):
-        """Test POST /api/manual_dimmer clamps values to 0-1 range."""
-        import parrot.api.web_server as web_server_module
-
-        mock_state = Mock()
-        web_server_module.state_instance = mock_state
-
-        # Test value > 1
-        response = self.client.post(
-            "/api/manual_dimmer", json={"value": 1.5}, content_type="application/json"
-        )
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data["value"] == 1.0
-
-        # Test value < 0
-        response = self.client.post(
-            "/api/manual_dimmer", json={"value": -0.5}, content_type="application/json"
-        )
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data["value"] == 0.0
 
     def test_set_effect_no_state(self):
         """Test POST /api/effect when state is not initialized."""

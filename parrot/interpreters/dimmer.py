@@ -1,9 +1,11 @@
 import math
 import random
 import scipy
+import time
 from typing import TypeVar
 from beartype import beartype
-from parrot.director.frame import FrameSignal
+from parrot.director.color_scheme import ColorScheme
+from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.utils.math import clamp
@@ -45,6 +47,28 @@ class DimmerFadeIn(InterpreterBase):
         for i in self.group:
             self.memory = clamp(self.memory + 255 / (self.fade_time * 30), 0, 255)
             i.set_dimmer(self.memory)
+
+
+@beartype
+class DimmerFadeInLinearSeconds(InterpreterBase[T]):
+    """Ramp dimmer 0→255 over ``seconds`` from interpreter construction (wall clock)."""
+
+    def __init__(
+        self,
+        group: list[T],
+        args: InterpreterArgs,
+        *,
+        seconds: float = 10.0,
+    ):
+        super().__init__(group, args)
+        self._seconds = max(float(seconds), 1e-9)
+        self._t0 = time.perf_counter()
+
+    def step(self, frame: Frame, scheme: ColorScheme) -> None:
+        elapsed = time.perf_counter() - self._t0
+        v = min(255.0, 255.0 * elapsed / self._seconds)
+        for f in self.group:
+            f.set_dimmer(v)
 
 
 @beartype

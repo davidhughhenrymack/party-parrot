@@ -529,20 +529,12 @@ def run_gl_window_app(args):
         # Schedule to check for web requests every 50ms
         pyglet.clock.schedule_interval(handle_web_requests, 0.05)
 
-    # Track time for delta time calculations
-    last_frame_time = time.perf_counter()
-
     # Track window size for resize detection
     last_window_size = window.size
     last_vj_preview_push_mono = -1000.0
 
     while not window.is_closing:
         current_time = time.perf_counter()
-        dt = current_time - last_frame_time
-        last_frame_time = current_time
-
-        # Update manual dimmer fade (progressive fade when M/K held)
-        keyboard_handler.update_manual_dimmer(dt)
 
         # Check if we should take screenshot
         if screenshot_mode and screenshot_time and current_time >= screenshot_time:

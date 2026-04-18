@@ -113,6 +113,7 @@ def test_dmx_address_width_for_fixture_helper():
     assert dmx_address_width_for_fixture("par_rgb", {}) == 7
     assert dmx_address_width_for_fixture("manual_dimmer_channel", {"width": 4}) == 4
     assert dmx_address_width_for_fixture("motionstrip_38", {}) == 38
+    assert dmx_address_width_for_fixture("mirrorball", {}) == 1
 
 
 def test_asset_endpoint_serves_dj_silhouette(client):
@@ -143,7 +144,6 @@ def test_control_state_endpoints(client):
         "/api/control-state",
         json={
             "mode": "rave",
-            "manual_dimmer": 0.25,
             "display_mode": "venue",
             "active_venue_id": new_active_venue_id,
         },
@@ -151,7 +151,6 @@ def test_control_state_endpoints(client):
 
     assert response.status_code == 200
     assert response.get_json()["mode"] == "rave"
-    assert response.get_json()["manual_dimmer"] == 0.25
     assert response.get_json()["display_mode"] == "venue"
     assert response.get_json()["active_venue_id"] == new_active_venue_id
 

@@ -252,12 +252,9 @@ class TestManualGroup:
 
     def test_initialization(self):
         """Test that a manual group initializes correctly"""
-        assert self.group.manual_dimmer == 0
         assert self.group.name == "Manual Control Group"
-        # Check that parent_group is set on fixtures
         assert self.fixture1.parent_group == self.group
         assert self.fixture2.parent_group == self.group
-        # Check that fixtures are initialized with white color for house lights
         from parrot.utils.colour import Color
 
         white = Color("white")
@@ -270,44 +267,28 @@ class TestManualGroup:
         group = ManualGroup([self.fixture1, self.fixture2], name="Custom Manual")
         assert group.name == "Custom Manual"
 
-    def test_manual_dimmer_setting(self):
-        """Test that manual dimmer setting affects all fixtures"""
-        self.group.set_manual_dimmer(0.5)
-        assert self.group.manual_dimmer == 0.5
-        # Fixtures store dimmer in 0-255 range
-        assert self.fixture1.get_dimmer() == 127.5  # 0.5 * 255
-        assert self.fixture2.get_dimmer() == 127.5
-        assert self.fixture1.values[0] == 127
-        assert self.fixture2.values[0] == 127
-
-    def test_get_dimmer_override(self):
-        """Test that get_dimmer returns manual dimmer value in 0-255 range"""
-        self.group.set_manual_dimmer(0.8)
-        # Group's get_dimmer returns 0-255 range for consistency with fixtures
-        assert self.group.get_dimmer() == 204.0  # 0.8 * 255
-
-    def test_render_applies_manual_dimmer(self):
-        """Test that render applies manual dimmer before rendering"""
-        dmx = MagicMock()
-        self.group.set_manual_dimmer(0.6)
-        self.group.render(dmx)
-
-        # Check that dimmer values were applied (in 0-255 range)
-        assert self.fixture1.dimmer_value == 153.0  # 0.6 * 255
-        assert self.fixture2.dimmer_value == 153.0
-        assert self.fixture1.values[0] == 153
-        assert self.fixture2.values[0] == 153
-
     def test_apply_manual_levels_per_fixture(self):
-        """Per-cloud-id dimmers with fallback for missing ids."""
+        """Each fixture picks up its own level; missing ids go to 0."""
         self.fixture1.cloud_spec_id = "a"
         self.fixture2.cloud_spec_id = "b"
-        self.group.apply_manual_levels({"a": 1.0, "b": 0.5}, fallback=0.25)
+        self.group.apply_manual_levels({"a": 1.0, "b": 0.5})
         assert self.fixture1.get_dimmer() == 255.0
         assert self.fixture2.get_dimmer() == 127.5
-        self.group.apply_manual_levels({}, fallback=0.4)
-        assert self.fixture1.get_dimmer() == 102.0
-        assert self.fixture2.get_dimmer() == 102.0
+        assert self.fixture1.values[0] == 255
+        assert self.fixture2.values[0] == 127
+        self.group.apply_manual_levels({"a": 0.25})
+        assert self.fixture1.get_dimmer() == pytest.approx(63.75)
+        assert self.fixture2.get_dimmer() == 0.0
+
+    def test_render_writes_dimmer_to_values(self):
+        """render propagates per-fixture dimmer into DMX value slots."""
+        dmx = MagicMock()
+        self.fixture1.cloud_spec_id = "a"
+        self.fixture2.cloud_spec_id = "b"
+        self.group.apply_manual_levels({"a": 0.6, "b": 0.2})
+        self.group.render(dmx)
+        assert self.fixture1.values[0] == 153
+        assert self.fixture2.values[0] == 51
 
 
 class TestColorWheelEntry:

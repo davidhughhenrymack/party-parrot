@@ -5,7 +5,9 @@ from parrot.director.mode_interpretations import get_interpreter
 from parrot.director.mode import Mode
 from parrot.interpreters.base import InterpreterArgs
 from parrot.fixtures.led_par import Par
+from parrot.fixtures.mirrorball import Mirrorball
 from parrot.fixtures.motionstrip import Motionstrip
+from parrot.interpreters.dimmer import Dimmer0
 from parrot.director.color_scheme import ColorScheme
 from parrot.utils.colour import Color
 import random
@@ -91,6 +93,7 @@ class TestModes(unittest.TestCase):
             Mode.rave_gentle,
             Mode.blackout,
             Mode.test,
+            Mode.ethereal,
         ]:
             # Test with Par fixtures
             interpreter = get_interpreter(mode, self.pars, self.args)
@@ -98,6 +101,20 @@ class TestModes(unittest.TestCase):
 
             # Should not crash when stepping
             interpreter.step(self.frame, self.scheme)
+
+    def test_mirrorball_resolves_before_par_not_test_rig_cycle(self):
+        """Mirrorball subclasses Par; chill/test must use Mirrorball row (Dimmer0), not Par animations."""
+        mb = Mirrorball(88)
+        chill = get_interpreter(Mode.chill, [mb], self.args)
+        self.assertIsInstance(chill.interpreter, Dimmer0)
+        chill.step(self.frame, self.scheme)
+        self.assertEqual(mb.get_dimmer(), 0)
+
+        mb2 = Mirrorball(89)
+        test_interp = get_interpreter(Mode.test, [mb2], self.args)
+        self.assertIsInstance(test_interp.interpreter, Dimmer0)
+        test_interp.step(self.frame, self.scheme)
+        self.assertEqual(mb2.get_dimmer(), 0)
 
 
 if __name__ == "__main__":

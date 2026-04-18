@@ -26,6 +26,7 @@ class TestGLOverlay(unittest.TestCase):
         self.assertIn("blackout", mode_names)
         self.assertIn("chill", mode_names)
         self.assertIn("test", mode_names)
+        self.assertIn("ethereal", mode_names)
 
     def test_keyboard_handler_logic(self):
         """Test the keyboard handler toggle logic"""

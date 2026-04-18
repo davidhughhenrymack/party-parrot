@@ -44,6 +44,29 @@ def test_seed_is_idempotent(venue_repository):
     )
 
 
+def test_manual_dimmer_channel_fixture_gets_is_manual(venue_repository):
+    active_snapshot = venue_repository.get_active_venue_snapshot()
+    created = venue_repository.add_fixture(
+        active_snapshot.summary.id,
+        {
+            "fixture_type": "manual_dimmer_channel",
+            "address": 1,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rotation_x": 0.0,
+            "rotation_y": 0.0,
+            "rotation_z": 0.0,
+            "options": {},
+        },
+    )
+    manual = next(
+        f for f in created.fixtures if f.fixture_type == "manual_dimmer_channel"
+    )
+    assert manual.is_manual is True
+
+
 def test_fixture_crud_updates_snapshot(venue_repository):
     active_snapshot = venue_repository.get_active_venue_snapshot()
 

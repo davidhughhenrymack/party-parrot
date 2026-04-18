@@ -15,7 +15,6 @@ export default function RemoteControlPage() {
     theme_name: 'Rave',
     display_mode: 'dmx_heatmap',
     active_venue_id: null,
-    manual_dimmer: 0,
     manual_fixture_dimmers: {},
     hype_limiter: false,
     show_waveform: true,
@@ -64,7 +63,6 @@ export default function RemoteControlPage() {
                 ...current,
                 ...incoming,
                 manual_fixture_dimmers: current.manual_fixture_dimmers,
-                manual_dimmer: current.manual_dimmer,
               };
             }
             return {
@@ -131,127 +129,37 @@ export default function RemoteControlPage() {
   }, []);
 
   const mfd = controlState.manual_fixture_dimmers || {};
-  const manualFallback = controlState.manual_dimmer ?? 0;
 
   return (
-    <div className="page-shell">
-      <div className="page-header">
-        <div>
-          <h1>Remote Control</h1>
-          <p className="panel-copy">Live controls are now served from Parrot Cloud and synced to the runtime over websocket.</p>
+    <div className="remote-shell">
+      <header className="remote-topbar">
+        <h1>Remote</h1>
+        <div className="remote-topbar-actions">
+          <button className="secondary-button chip" onClick={() => window.location.assign('/')}>Home</button>
+          <button className="secondary-button chip" onClick={() => window.location.assign('/editor')}>Editor</button>
         </div>
-        <div className="button-row compact-row">
-          <button className="secondary-button" onClick={() => window.location.assign('/')}>Home</button>
-          <button className="secondary-button" onClick={() => window.location.assign('/editor')}>Open Venue Editor</button>
-        </div>
-      </div>
+      </header>
 
-      <div className="remote-grid">
-        <section className="panel">
-          <h2>Venue</h2>
-          <div className="button-grid">
-            {venues.map((venue) => (
-              <button
-                key={venue.id}
-                className={controlState.active_venue_id === venue.id ? 'active-choice' : ''}
-                onClick={() => patchControlState({ active_venue_id: venue.id })}
-              >
-                {venue.name}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Lighting Mode</h2>
-          <div className="button-grid">
-            {config.available_modes.map((mode) => (
-              <button
-                key={mode}
-                className={controlState.mode === mode ? 'active-choice' : ''}
-                onClick={() => patchControlState({ mode })}
-              >
-                {labelize(mode)}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>VJ Mode</h2>
-          <div className="button-grid">
-            {config.available_vj_modes.map((mode) => (
-              <button
-                key={mode}
-                className={controlState.vj_mode === mode ? 'active-choice' : ''}
-                onClick={() => patchControlState({ vj_mode: mode })}
-              >
-                {formatVjModeLabel(mode)}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Color Scheme</h2>
-          <div className="button-grid">
-            {config.theme_names.map((themeName) => (
-              <button
-                key={themeName}
-                className={controlState.theme_name === themeName ? 'active-choice' : ''}
-                onClick={() => patchControlState({ theme_name: themeName })}
-              >
-                {themeName}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Display</h2>
-          <div className="button-grid">
-            {config.available_display_modes.map((displayMode) => (
-              <button
-                key={displayMode}
-                className={controlState.display_mode === displayMode ? 'active-choice' : ''}
-                onClick={() => patchControlState({ display_mode: displayMode })}
-              >
-                {formatDisplayModeLabel(displayMode)}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Effects</h2>
-          <div className="button-grid">
-            {config.effects.map((effect) => (
-              <button key={effect} onClick={() => postJson('/api/effect', { effect })}>
-                {labelize(effect)}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Manual lights</h2>
-          <p className="panel-copy">
-            {manualDimmerSupported
-              ? 'One dimmer per manual fixture in the active venue.'
-              : 'The active venue has no manual fixtures.'}
-          </p>
-          {manualFixtures.map((fixture) => (
-            <div key={fixture.id} className="remote-manual-slider-row">
-              <label className="remote-manual-slider-label" htmlFor={`manual-dim-${fixture.id}`}>
-                {fixture.name}
-              </label>
+      <section className="remote-hero-panel">
+        <h2 className="remote-hero-title">Manual lights</h2>
+        {manualDimmerSupported ? (
+          manualFixtures.map((fixture) => (
+            <div key={fixture.id} className="remote-fader-row">
+              <div className="remote-fader-labels">
+                <label className="remote-fader-name" htmlFor={`manual-dim-${fixture.id}`}>
+                  {fixture.name}
+                </label>
+                <div className="remote-fader-value">
+                  {manualDimmerPercentFor(mfd, fixture.id)}%
+                </div>
+              </div>
               <input
                 id={`manual-dim-${fixture.id}`}
+                className="remote-fader"
                 type="range"
                 min="0"
                 max="100"
-                value={manualDimmerPercentFor(mfd, manualFallback, fixture.id)}
-                disabled={!manualDimmerSupported}
+                value={manualDimmerPercentFor(mfd, fixture.id)}
                 onPointerDown={() => {
                   draggingFixtureIdRef.current = fixture.id;
                 }}
@@ -282,20 +190,96 @@ export default function RemoteControlPage() {
                   });
                 }}
               />
-              <div className="remote-stat">
-                {manualDimmerPercentFor(mfd, manualFallback, fixture.id)}%
-              </div>
             </div>
-          ))}
-        </section>
-      </div>
+          ))
+        ) : (
+          <p className="remote-hero-empty">The active venue has no manual fixtures.</p>
+        )}
+      </section>
+
+      <section className="remote-hero-panel">
+        <h2 className="remote-hero-title">Effects</h2>
+        {config.effects.length > 0 ? (
+          <div className="remote-effects-grid">
+            {config.effects.map((effect) => (
+              <button
+                key={effect}
+                className="remote-effect-button"
+                onClick={() => postJson('/api/effect', { effect })}
+              >
+                {labelize(effect)}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="remote-hero-empty">No effects configured.</p>
+        )}
+      </section>
+
+      <CompactSelector
+        label="Lighting"
+        options={config.available_modes}
+        value={controlState.mode}
+        format={labelize}
+        onSelect={(mode) => patchControlState({ mode })}
+      />
+      <CompactSelector
+        label="VJ"
+        options={config.available_vj_modes}
+        value={controlState.vj_mode}
+        format={formatVjModeLabel}
+        onSelect={(vj_mode) => patchControlState({ vj_mode })}
+      />
+      <CompactSelector
+        label="Color"
+        options={config.theme_names}
+        value={controlState.theme_name}
+        format={(v) => v}
+        onSelect={(theme_name) => patchControlState({ theme_name })}
+      />
+      <CompactSelector
+        label="Display"
+        options={config.available_display_modes}
+        value={controlState.display_mode}
+        format={formatDisplayModeLabel}
+        onSelect={(display_mode) => patchControlState({ display_mode })}
+      />
+      <CompactSelector
+        label="Venue"
+        options={venues.map((v) => v.id)}
+        value={controlState.active_venue_id}
+        format={(id) => venues.find((v) => v.id === id)?.name || id}
+        onSelect={(active_venue_id) => patchControlState({ active_venue_id })}
+      />
     </div>
   );
 }
 
-function manualDimmerPercentFor(manualFixtureDimmers, fallback01, fixtureId) {
+function CompactSelector({ label, options, value, format, onSelect }) {
+  if (!options || options.length === 0) {
+    return null;
+  }
+  return (
+    <section className="remote-compact-row">
+      <div className="remote-compact-label">{label}</div>
+      <div className="remote-chip-row">
+        {options.map((option) => (
+          <button
+            key={option}
+            className={`chip ${value === option ? 'chip-active' : ''}`}
+            onClick={() => onSelect(option)}
+          >
+            {format(option)}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function manualDimmerPercentFor(manualFixtureDimmers, fixtureId) {
   const raw = manualFixtureDimmers[fixtureId];
-  const v = raw !== undefined && raw !== null ? raw : fallback01;
+  const v = raw !== undefined && raw !== null ? raw : 0;
   return Math.round(Math.max(0, Math.min(1, v)) * 100);
 }
 
@@ -316,14 +300,14 @@ function formatVjModeLabel(mode) {
       .split('_')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
-    return `Zombie Rave · ${rest}`;
+    return `ZR · ${rest}`;
   }
   return labelize(mode);
 }
 
 function formatDisplayModeLabel(displayMode) {
   if (displayMode === 'dmx_heatmap') {
-    return 'DMX heatmap';
+    return 'Heatmap';
   }
   return labelize(displayMode);
 }

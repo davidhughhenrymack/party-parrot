@@ -1,6 +1,6 @@
 /**
  * Venue editor fixture geometry aligned with desktop OpenGL renderers:
- * parrot/vj/renderers/bulb.py, moving_head.py, motionstrip.py, laser.py
+ * parrot/vj/renderers/bulb.py, moving_head.py, mirrorball.py, motionstrip.py, laser.py
  *
  * FixtureRenderer uses cube_size = 0.8; body_size = cube_size * 0.4.
  * Three.js venue coords: X = audience left–right, Y = downstage–upstage, Z = height.
@@ -67,11 +67,43 @@ function laserDimensions() {
   };
 }
 
+/** @param {number} count @param {typeof import('three')} THREE */
+function mirrorballDirectionsTHREE(count, THREE) {
+  const out = [];
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < count; i += 1) {
+    const elev = 1 - (i / Math.max(1, count - 1)) * 2;
+    const r = Math.sqrt(Math.max(0, 1 - elev * elev));
+    const theta = golden * i;
+    const x = Math.cos(theta) * r;
+    const y = Math.sin(theta) * r;
+    out.push(new THREE.Vector3(x, y, elev).normalize());
+  }
+  return out;
+}
+
+function mirrorballModel() {
+  const bs = desktopBodySize();
+  const sphereRadius = bs * 0.9;
+  return {
+    kind: 'mirrorball',
+    sphereRadius,
+    beamCount: 36,
+    beamLength: 2.4,
+    beamConeRadius: bs * 0.07,
+    coneLength: 2.4,
+    coneRadius: bs * 0.2,
+  };
+}
+
 /**
  * Full visual description for cones, lens, and mesh construction.
  */
 export function resolveFixtureVisualModel(fixtureType) {
   const bs = desktopBodySize();
+  if (fixtureType === 'mirrorball') {
+    return mirrorballModel();
+  }
   if (fixtureType === 'motionstrip_38') {
     return {
       kind: 'motionstrip',
@@ -130,10 +162,47 @@ export function beamOriginMovingHeadAimLocal(model) {
 
 /**
  * @param {import('three').MeshStandardMaterial} bodyMaterial
- * @returns {{ aimGroup?: import('three').Group, headPivotGroup?: import('three').Group, stripPanGroup?: import('three').Group }}
+ * @returns {{ aimGroup?: import('three').Group, headPivotGroup?: import('three').Group, stripPanGroup?: import('three').Group, mirrorballBeamMaterials?: import('three').MeshBasicMaterial[], mirrorballBeamsGroup?: import('three').Group }}
  */
 export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, model, entityKey) {
   const userData = { entityKey };
+
+  if (model.kind === 'mirrorball') {
+    const r = model.sphereRadius;
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(r, 28, 20),
+      bodyMaterial
+    );
+    sphere.position.set(0, 0, r);
+    sphere.userData = userData;
+    runtimeAxesGroup.add(sphere);
+
+    const dirs = mirrorballDirectionsTHREE(model.beamCount, THREE);
+    const beamMaterials = [];
+    const L = model.beamLength;
+    const tipR = model.beamConeRadius;
+    const beamSpinGroup = new THREE.Group();
+    beamSpinGroup.position.set(0, 0, r);
+    beamSpinGroup.userData = userData;
+    runtimeAxesGroup.add(beamSpinGroup);
+    for (let i = 0; i < dirs.length; i += 1) {
+      const dir = dirs[i];
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xf8fafc,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      beamMaterials.push(mat);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(tipR, L, 6, 1, true), mat);
+      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      cone.position.copy(dir.clone().multiplyScalar(r - L / 2));
+      cone.userData = userData;
+      beamSpinGroup.add(cone);
+    }
+    return { mirrorballBeamMaterials: beamMaterials, mirrorballBeamsGroup: beamSpinGroup };
+  }
 
   if (model.kind === 'moving_head') {
     const base = new THREE.Mesh(
@@ -197,6 +266,9 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
 }
 
 export function beamOriginLocal(model) {
+  if (model.kind === 'mirrorball') {
+    return { y: 0, z: model.sphereRadius * 2 };
+  }
   if (model.kind === 'moving_head') {
     const halfDepth = model.headDepth * 0.5;
     return {
@@ -223,6 +295,9 @@ export function beamOriginLocal(model) {
 }
 
 export function lensRadiusForModel(model) {
+  if (model.kind === 'mirrorball') {
+    return model.sphereRadius * 0.12;
+  }
   if (model.kind === 'laser') {
     return desktopBodySize() * 0.15;
   }

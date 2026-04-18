@@ -130,31 +130,6 @@ def get_hype_status():
         return jsonify({"active": False, "remaining": 0})
 
 
-@app.route("/api/manual_dimmer", methods=["GET"])
-def get_manual_dimmer():
-    """Get the current manual dimmer value."""
-    if state_instance:
-        from parrot.venue_runtime import runtime_has_manual_dimmer
-
-        has_dimmer = runtime_has_manual_dimmer(state_instance)
-        return jsonify({"value": state_instance.manual_dimmer, "supported": has_dimmer})
-    return jsonify({"value": 0, "supported": False})
-
-
-@app.route("/api/manual_dimmer", methods=["POST"])
-def set_manual_dimmer():
-    """Set the manual dimmer value."""
-    if state_instance:
-        data = request.json
-        if "value" in data:
-            value = float(data["value"])
-            # Ensure value is between 0 and 1
-            value = max(0, min(1, value))
-            state_instance.set_manual_dimmer(value)
-            return jsonify({"success": True, "value": value})
-    return jsonify({"success": False, "error": "Invalid request"})
-
-
 @app.route("/api/manual_fixture_dimmers", methods=["POST"])
 def merge_manual_fixture_dimmers():
     """Merge per-fixture manual dimmer levels (0–1) by cloud fixture id."""

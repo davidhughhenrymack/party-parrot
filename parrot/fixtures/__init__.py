@@ -2,5 +2,6 @@ from .chauvet import *
 from .oultia import *
 from .uking import *
 from .led_par import *
+from .mirrorball import *
 from .motionstrip import *
 from .moving_head import *

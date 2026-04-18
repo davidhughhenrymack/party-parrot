@@ -574,6 +574,26 @@ function createThreeSceneController({
           entity.coneMaterial.opacity = Math.min(1, ro * mul);
         }
       }
+      if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
+        const ro = entity.runtimeMirrorballOpacity ?? 0;
+        if (ro <= 1e-5) {
+          for (const m of entity.mirrorballBeamMaterials) {
+            m.opacity = 0;
+          }
+        } else {
+          let mul = 1.0;
+          if (fixtureSelectionActive && !isSelected) {
+            mul *= 0.62;
+          }
+          if (isSelected) {
+            mul *= 1.28;
+          }
+          const o = Math.min(1, ro * mul);
+          for (const m of entity.mirrorballBeamMaterials) {
+            m.opacity = o;
+          }
+        }
+      }
     });
   }
 
@@ -960,6 +980,14 @@ function createThreeSceneController({
     if (entity.stripPanGroup && typeof vis.bar_pan_deg === 'number') {
       entity.stripPanGroup.rotation.x = THREE.MathUtils.degToRad(vis.bar_pan_deg);
     }
+    if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
+      const baseOp = dimClamped * 0.42;
+      entity.runtimeMirrorballOpacity = baseOp;
+      for (const m of entity.mirrorballBeamMaterials) {
+        m.color.setRGB(r, g, b);
+        m.opacity = baseOp;
+      }
+    }
   }
 
   function applyFixtureRuntimeState(payload) {
@@ -978,6 +1006,12 @@ function createThreeSceneController({
         if (entity.coneMaterial) {
           entity.runtimeConeOpacity = 0;
           entity.coneMaterial.opacity = 0;
+        }
+        if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
+          entity.runtimeMirrorballOpacity = 0;
+          for (const m of entity.mirrorballBeamMaterials) {
+            m.opacity = 0;
+          }
         }
         return;
       }
@@ -1007,51 +1041,57 @@ function createThreeSceneController({
     const placed = addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, profile, fixture.id);
     const beamParent =
       placed.headPivotGroup ?? placed.aimGroup ?? placed.stripPanGroup ?? runtimeAxesGroup;
-    let beam;
-    if (placed.headPivotGroup) {
-      beam = beamOriginMovingHeadAimLocal(profile);
-    } else if (placed.stripPanGroup) {
-      beam = { y: profile.bodyDepth * 0.7, z: profile.bodyHeight };
-    } else {
-      beam = beamOriginLocal(profile);
+
+    let coneMaterial = null;
+    let lensMaterial = null;
+    if (profile.kind !== 'mirrorball') {
+      let beam;
+      if (placed.headPivotGroup) {
+        beam = beamOriginMovingHeadAimLocal(profile);
+      } else if (placed.stripPanGroup) {
+        beam = { y: profile.bodyDepth * 0.7, z: profile.bodyHeight };
+      } else {
+        beam = beamOriginLocal(profile);
+      }
+
+      const coneLength = profile.coneLength;
+      const coneRadius = profile.coneRadius;
+      coneMaterial = new THREE.MeshBasicMaterial({
+        color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      // ConeGeometry: tip at +Y, base at -Y. Beam should be narrow at the lens and widen along the throw;
+      // flip 180° so the tip sits on the lens (same convention as ArrowHelper cone).
+      const coneMesh = new THREE.Mesh(
+        new THREE.ConeGeometry(coneRadius, coneLength, 24, 1, true),
+        coneMaterial
+      );
+      coneMesh.rotateX(Math.PI);
+      coneMesh.position.set(0, beam.y + coneLength / 2, beam.z);
+      coneMesh.userData = { entityKey: fixture.id };
+      beamParent.add(coneMesh);
+
+      lensMaterial = new THREE.MeshBasicMaterial({
+        color: fixture.is_manual ? 0xfbbf24 : 0xf8fafc,
+        transparent: true,
+        opacity: 0.95,
+      });
+      const lens = new THREE.Mesh(
+        new THREE.SphereGeometry(lensRadiusForModel(profile), 12, 12),
+        lensMaterial
+      );
+      lens.position.set(0, beam.y, beam.z);
+      lens.userData = { entityKey: fixture.id };
+      beamParent.add(lens);
+      secondaryMaterials.push(lensMaterial);
     }
 
-    const coneLength = profile.coneLength;
-    const coneRadius = profile.coneRadius;
-    const coneMaterial = new THREE.MeshBasicMaterial({
-      color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
-      transparent: true,
-      opacity: 0,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    // ConeGeometry: tip at +Y, base at -Y. Beam should be narrow at the lens and widen along the throw;
-    // flip 180° so the tip sits on the lens (same convention as ArrowHelper cone).
-    const coneMesh = new THREE.Mesh(
-      new THREE.ConeGeometry(coneRadius, coneLength, 24, 1, true),
-      coneMaterial
-    );
-    coneMesh.rotateX(Math.PI);
-    coneMesh.position.set(0, beam.y + coneLength / 2, beam.z);
-    coneMesh.userData = { entityKey: fixture.id };
-    beamParent.add(coneMesh);
-
-    const lensMaterial = new THREE.MeshBasicMaterial({
-      color: fixture.is_manual ? 0xfbbf24 : 0xf8fafc,
-      transparent: true,
-      opacity: 0.95,
-    });
-    const lens = new THREE.Mesh(
-      new THREE.SphereGeometry(lensRadiusForModel(profile), 12, 12),
-      lensMaterial
-    );
-    lens.position.set(0, beam.y, beam.z);
-    lens.userData = { entityKey: fixture.id };
-    beamParent.add(lens);
-    secondaryMaterials.push(lensMaterial);
-
+    const hitRadius = profile.kind === 'mirrorball' ? Math.max(0.55, profile.sphereRadius * 1.15) : 0.62;
     const hitMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.62, 16, 16),
+      new THREE.SphereGeometry(hitRadius, 16, 16),
       new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
@@ -1063,7 +1103,7 @@ function createThreeSceneController({
     group.add(hitMesh);
 
     sceneContent.add(group);
-    localState.entityMap.set(fixture.id, {
+    const entityBase = {
       type: 'fixture',
       fixture,
       group,
@@ -1072,12 +1112,25 @@ function createThreeSceneController({
       helperMaterial: null,
       coneMaterial,
       lensMaterial,
-      runtimeConeOpacity: 0,
       aimGroup: placed.aimGroup ?? null,
       headPivotGroup: placed.headPivotGroup ?? null,
       stripPanGroup: placed.stripPanGroup ?? null,
       profile,
-    });
+    };
+    if (profile.kind === 'mirrorball') {
+      localState.entityMap.set(fixture.id, {
+        ...entityBase,
+        mirrorballBeamMaterials: placed.mirrorballBeamMaterials ?? [],
+        mirrorballBeamsGroup: placed.mirrorballBeamsGroup ?? null,
+        runtimeMirrorballOpacity: 0,
+        runtimeConeOpacity: 0,
+      });
+    } else {
+      localState.entityMap.set(fixture.id, {
+        ...entityBase,
+        runtimeConeOpacity: 0,
+      });
+    }
   }
 
   function createVideoWallEntity(videoWall) {
@@ -1526,6 +1579,12 @@ function createThreeSceneController({
     }
     requestAnimationFrame(animate);
     orbitControls.update();
+    const mbSpin = performance.now() * 0.00012;
+    localState.entityMap.forEach((entity) => {
+      if (entity.type === 'fixture' && entity.mirrorballBeamsGroup) {
+        entity.mirrorballBeamsGroup.rotation.z = mbSpin;
+      }
+    });
     renderer.render(scene, localState.activeCamera);
   }
   animate();

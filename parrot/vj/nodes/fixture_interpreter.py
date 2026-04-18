@@ -12,11 +12,21 @@ from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
+from parrot.director.mode_interpretations import get_interpreter
 from parrot.fixtures.base import FixtureBase
-from parrot.interpreters.base import InterpreterBase
+from parrot.interpreters.base import InterpreterBase, InterpreterArgs
 
 
 InterpreterFactory = Callable[[Mode, List[FixtureBase]], Optional[InterpreterBase]]
+
+
+def create_fixture_interpreter(
+    mode: Mode,
+    fixtures: List[FixtureBase],
+    args: InterpreterArgs,
+) -> Optional[InterpreterBase]:
+    """Single entry point for lighting interpreters (including `Mode.ethereal`)."""
+    return get_interpreter(mode, fixtures, args)
 
 
 @dataclass
@@ -38,6 +48,12 @@ class FixtureInterpreterNode(
     InterpreterBase instance for the requested Mode. The interpreter is
     re-created on every generate() call so it can respond to Mode shifts in
     the wider render graph.
+
+    `Mode.ethereal` is defined in `parrot.director.mode_interpretations`: mirrorball
+    fades in; fixtures in the venue group named ``Sheer lights`` (case-insensitive)
+    get the Sheer look; everything else is dimmer 0. The VJ path passes the full
+    patch list and uses a composite interpreter; the main director partitions
+    into one interpreter per role.
     """
 
     def __init__(

@@ -7,8 +7,10 @@ from parrot.fixtures.led_par import ParRGB
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.motionstrip import Motionstrip38
+from parrot.fixtures.mirrorball import Mirrorball
 from parrot.vj.renderers.factory import create_renderer
 from parrot.vj.renderers.bulb import BulbRenderer
+from parrot.vj.renderers.mirrorball import MirrorballRenderer
 from parrot.vj.renderers.moving_head import MovingHeadRenderer
 from parrot.vj.renderers.laser import LaserRenderer
 from parrot.vj.renderers.motionstrip import MotionstripRenderer
@@ -42,6 +44,33 @@ def test_factory_creates_motionstrip_renderer():
     fixture = Motionstrip38(80, 0, 256)
     renderer = create_renderer(fixture)
     assert isinstance(renderer, MotionstripRenderer)
+
+
+def test_factory_creates_mirrorball_renderer():
+    fixture = Mirrorball(1)
+    renderer = create_renderer(fixture)
+    assert isinstance(renderer, MirrorballRenderer)
+
+
+def test_mirrorball_renderer_with_room():
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+
+    ctx = mgl.create_context(standalone=True)
+    room = Room3DRenderer(ctx, 800, 600)
+    fixture = Mirrorball(1)
+    fixture.set_color(Color("white"))
+    fixture.set_dimmer(255)
+    renderer = MirrorballRenderer(fixture, room_renderer=room)
+    renderer.set_position(100.0, 100.0)
+    fbo = ctx.framebuffer(color_attachments=[ctx.texture((800, 600), 3)])
+    fbo.use()
+    ctx.clear(0.0, 0.0, 0.0)
+    frame = Frame({signal: 0.0 for signal in FrameSignal})
+    frame.time = 0.0
+    renderer.render_opaque(ctx, (500.0, 500.0), frame)
+    renderer.render_emissive(ctx, (500.0, 500.0), frame)
+    fbo.release()
+    ctx.release()
 
 
 def test_bulb_renderer_size():

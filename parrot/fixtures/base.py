@@ -225,79 +225,30 @@ class FixtureGroup(FixtureBase):
 
 @beartype
 class ManualGroup(FixtureGroup):
-    """A group of fixtures that are only controlled manually, not by automatic interpreters."""
+    """A group of fixtures driven only by the remote's per-fixture dimmer sliders."""
 
     def __init__(
         self, fixtures, name="Manual Control Group", universe=Universe.default
     ):
-        """
-        Initialize a manual control fixture group.
-
-        Args:
-            fixtures: List of fixtures to include in the group
-            name: Optional name for the group
-            universe: Universe for the group (defaults to Universe.default)
-        """
         super().__init__(fixtures, name, universe)
-        self.manual_dimmer = 0
-
-        # Set the parent_group attribute on all fixtures and default to white
         for fixture in self.fixtures:
             fixture.parent_group = self
-            # Set default color to white for house lights/manual fixtures
             fixture.set_color(Color("white"))
 
-    def set_manual_dimmer(self, value):
-        """Set the dimmer value for all fixtures in the group.
-
-        Args:
-            value: Dimmer value in 0-1 range (will be converted to 0-255 for fixtures)
-        """
-        self.manual_dimmer = value
-        # Convert 0-1 range to 0-255 range for fixtures
-        dimmer_255 = value * 255
-        self.dimmer_value = dimmer_255
-
-        for fixture in self.fixtures:
-            # Set the dimmer value for each fixture (0-255 range)
-            fixture.set_dimmer(dimmer_255)
-            # For simple fixtures with just a dimmer channel, set the value directly
-            if fixture.width == 1:
-                fixture.values[0] = int(dimmer_255)
-
-    def apply_manual_levels(
-        self,
-        levels: dict[str, float],
-        fallback: float,
-    ) -> None:
-        """Set each manual fixture dimmer from ``levels[fixture.cloud_spec_id]`` or ``fallback``."""
-        max_v = 0.0
+    def apply_manual_levels(self, levels: dict[str, float]) -> None:
+        """Set each fixture's dimmer from ``levels[fixture.cloud_spec_id]`` (missing = 0)."""
         for fixture in self.fixtures:
             cid = getattr(fixture, "cloud_spec_id", None)
-            if cid is None:
-                v = float(fallback)
-            else:
-                raw = levels.get(str(cid))
-                v = float(fallback) if raw is None else float(raw)
-            v = max(0.0, min(1.0, v))
-            max_v = max(max_v, v)
+            raw = levels.get(str(cid)) if cid is not None else None
+            v = 0.0 if raw is None else max(0.0, min(1.0, float(raw)))
             dimmer_255 = v * 255.0
             fixture.set_dimmer(dimmer_255)
             fixture.dimmer_value = dimmer_255
             if fixture.width == 1:
                 fixture.values[0] = int(dimmer_255)
-        self.manual_dimmer = max_v
-        self.dimmer_value = max_v * 255.0
-
-    def get_dimmer(self):
-        """Override to return the manual dimmer value in 0-255 range."""
-        return self.manual_dimmer * 255
 
     def render(self, dmx):
-        """Override to ensure manual dimmer values are applied before rendering."""
         for fixture in self.fixtures:
             if fixture.width == 1:
                 fixture.values[0] = int(fixture.dimmer_value)
-
-        # Call the parent render method
         super().render(dmx)

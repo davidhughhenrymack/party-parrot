@@ -31,6 +31,30 @@ class MoveCircles(InterpreterBase):
 
 
 @beartype
+class MoveCirclesPhased(InterpreterBase):
+    """Pan/tilt circles with an independent random phase offset per fixture (no fan spread)."""
+
+    def __init__(
+        self,
+        group: list[FixtureBase],
+        args: InterpreterArgs,
+        multiplier: float = 0.18,
+    ):
+        super().__init__(group, args)
+        self.multiplier = multiplier
+        self._phase = [random.uniform(0.0, 2.0 * math.pi) for _ in group]
+
+    def __str__(self) -> str:
+        return f"🔄 {Fore.GREEN}CirclesPhased{Style.RESET_ALL}"
+
+    def step(self, frame, scheme):
+        for i, fixture in enumerate(self.group):
+            t = frame.time * self.multiplier + self._phase[i]
+            fixture.set_pan(math.cos(t) * 127 + 128)
+            fixture.set_tilt(math.sin(t) * 127 + 128)
+
+
+@beartype
 class MoveNod(InterpreterBase):
     def __init__(self, group: list[FixtureBase], args, multiplier=1, phase=math.pi / 3):
         super().__init__(group, args)

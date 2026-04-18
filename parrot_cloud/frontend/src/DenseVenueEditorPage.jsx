@@ -996,6 +996,7 @@ export default function DenseVenueEditorPage({ venueId }) {
     const centerX = dims.floor_width / 2;
     const rowStartX = centerX - ((qty - 1) * CLONE_LIGHT_OFFSET_X_M) / 2;
 
+    const isManualType = newFixtureValues.fixtureType === 'manual_dimmer_channel';
     let snap = venueSnapshot;
     for (let i = 0; i < qty; i += 1) {
       snap = await apiAddFixture(snap.summary.id, {
@@ -1008,6 +1009,7 @@ export default function DenseVenueEditorPage({ venueId }) {
         rotation_x: 0,
         rotation_y: 0,
         rotation_z: 0,
+        is_manual: isManualType,
         options: {},
       });
     }
@@ -1153,7 +1155,7 @@ export default function DenseVenueEditorPage({ venueId }) {
       rotation_z: fixture.rotation_z ?? 0,
       name: baseName ? `${baseName} copy` : null,
       group_name: fixture.group_name ?? null,
-      is_manual: fixture.is_manual ?? false,
+      is_manual: fixture.is_manual ?? fixture.fixture_type === 'manual_dimmer_channel',
       options: { ...(fixture.options || {}) },
     });
     setVenueSnapshot(snap);

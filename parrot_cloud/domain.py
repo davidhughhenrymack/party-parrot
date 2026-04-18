@@ -240,7 +240,6 @@ class ControlState:
     theme_name: str
     active_venue_id: str | None
     display_mode: str
-    manual_dimmer: float
     hype_limiter: bool
     show_waveform: bool
     manual_fixture_dimmers: dict[str, float] = field(default_factory=dict)
@@ -252,7 +251,6 @@ class ControlState:
             "theme_name": self.theme_name,
             "active_venue_id": self.active_venue_id,
             "display_mode": self.display_mode,
-            "manual_dimmer": self.manual_dimmer,
             "hype_limiter": self.hype_limiter,
             "show_waveform": self.show_waveform,
             "manual_fixture_dimmers": dict(self.manual_fixture_dimmers),
@@ -285,7 +283,6 @@ class ControlState:
                     "venue" if bool(data.get("show_fixture_mode", False)) else "dmx_heatmap",
                 )
             ),
-            manual_dimmer=float(data.get("manual_dimmer", 0.0)),
             hype_limiter=bool(data.get("hype_limiter", False)),
             show_waveform=bool(data.get("show_waveform", True)),
             manual_fixture_dimmers=manual_fixture_dimmers,

@@ -7,8 +7,10 @@ from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.moving_head import MovingHead
 from parrot.fixtures.laser import Laser
 from parrot.fixtures.motionstrip import Motionstrip
+from parrot.fixtures.mirrorball import Mirrorball
 from parrot.vj.renderers.base import FixtureRenderer
 from parrot.vj.renderers.bulb import BulbRenderer
+from parrot.vj.renderers.mirrorball import MirrorballRenderer
 from parrot.vj.renderers.moving_head import MovingHeadRenderer
 from parrot.vj.renderers.laser import LaserRenderer
 from parrot.vj.renderers.motionstrip import MotionstripRenderer
@@ -32,6 +34,8 @@ def create_renderer(
         return LaserRenderer(fixture, room_renderer)
     elif isinstance(fixture, Motionstrip):
         return MotionstripRenderer(fixture, room_renderer)
+    elif isinstance(fixture, Mirrorball):
+        return MirrorballRenderer(fixture, room_renderer)
     else:
         # Default to bulb renderer for all other fixtures
         return BulbRenderer(fixture, room_renderer)

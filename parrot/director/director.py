@@ -9,7 +9,7 @@ from parrot.director.frame import Frame, FrameSignal
 
 from parrot.fixtures.led_par import Par
 from parrot.fixtures.motionstrip import Motionstrip
-from parrot.fixtures.base import FixtureGroup, ManualGroup
+from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
 from parrot.director.color_schemes import color_schemes
 from parrot.director.color_scheme import ColorScheme
@@ -19,7 +19,7 @@ from parrot.director.mode import Mode
 from parrot.fixtures.laser import Laser
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
-from .mode_interpretations import get_interpreter
+from .mode_interpretations import get_interpreter, mode_uses_group_matchers
 
 from parrot.utils.lerp import LerpAnimator
 from parrot.fixtures.moving_head import MovingHead
@@ -67,6 +67,10 @@ class Director:
             self.vj_director.shift(self.state.vj_mode, threshold=1.0)
 
     def group_fixtures(self):
+        if mode_uses_group_matchers(self.state.mode):
+            self._group_fixtures_flat()
+            return
+
         to_group = [
             Par,
             MovingHead,
@@ -99,6 +103,18 @@ class Director:
             fixtures = [i for i in ungrouped_fixtures if isinstance(i, cls)]
             if len(fixtures) > 0:
                 self.fixture_groups.append(fixtures)
+
+    def _group_fixtures_flat(self) -> None:
+        """For modes whose DSL uses ``Group(...)`` matchers: pass the whole patch flat."""
+        merged: list[FixtureBase] = []
+        for fixture in get_runtime_fixtures(self.state):
+            if isinstance(fixture, FixtureGroup):
+                if isinstance(fixture, ManualGroup):
+                    continue
+                merged.extend(fixture.fixtures)
+            else:
+                merged.append(fixture)
+        self.fixture_groups = [merged] if merged else []
 
     def format_fixture_names(self, fixtures):
         # Format fixtures
@@ -314,10 +330,7 @@ class Director:
         # Get manual group and set its dimmer value
         manual_group = get_runtime_manual_group(self.state)
         if manual_group:
-            manual_group.apply_manual_levels(
-                self.state.manual_fixture_dimmers,
-                self.state.manual_dimmer,
-            )
+            manual_group.apply_manual_levels(self.state.manual_fixture_dimmers)
             manual_group.render(dmx)
 
         # Render all fixtures

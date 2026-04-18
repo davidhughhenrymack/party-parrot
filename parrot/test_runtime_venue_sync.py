@@ -66,7 +66,6 @@ def test_state_applies_runtime_bootstrap():
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",
-            manual_dimmer=0.4,
             hype_limiter=False,
             show_waveform=True,
         ),
@@ -79,7 +78,6 @@ def test_state_applies_runtime_bootstrap():
     assert state.runtime_patch is not None
     assert len(state.runtime_patch) == 1
     assert state.runtime_patch[0].address == 10
-    assert state.manual_dimmer == 0.4
     assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
 
 
@@ -136,7 +134,6 @@ def test_room_layout_uses_snapshot_floor_when_scene_objects_empty():
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",
-            manual_dimmer=0.4,
             hype_limiter=False,
             show_waveform=True,
         ),
@@ -209,7 +206,6 @@ def test_room_layout_uses_snapshot_floor_not_stale_scene_object_footprint():
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",
-            manual_dimmer=0.0,
             hype_limiter=False,
             show_waveform=True,
         ),

@@ -25,7 +25,6 @@ class State:
         self._hype = 30
         self._theme = themes[0]
         self._venue = venues.dmack
-        self._manual_dimmer = 0  # New property for manual control
         self._manual_fixture_dimmers: dict[str, float] = {}
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
@@ -34,7 +33,6 @@ class State:
         self._runtime_venue_snapshot: Optional[VenueSnapshot] = None
         self._runtime_patch = None
         self._runtime_manual_group = None
-        self._manual_dimmer_supported_override: Optional[bool] = None
         self._remote_control_state_updater: Optional[
             Callable[[dict[str, object]], None]
         ] = None
@@ -153,10 +151,6 @@ class State:
     def runtime_manual_group(self):
         return self._runtime_manual_group
 
-    @property
-    def manual_dimmer_supported_override(self) -> Optional[bool]:
-        return self._manual_dimmer_supported_override
-
     def set_remote_control_state_updater(
         self, handler: Callable[[dict[str, object]], None]
     ):
@@ -220,11 +214,6 @@ class State:
                 self._vj_mode = next_vj_mode
                 self.events.on_vj_mode_change(self._vj_mode)
 
-            next_manual_dimmer = float(control_state.manual_dimmer)
-            if self._manual_dimmer != next_manual_dimmer:
-                self._manual_dimmer = next_manual_dimmer
-                self.events.on_manual_dimmer_change(self._manual_dimmer)
-
             next_mfd = dict(control_state.manual_fixture_dimmers)
             if self._manual_fixture_dimmers != next_mfd:
                 self._manual_fixture_dimmers = next_mfd
@@ -275,29 +264,14 @@ class State:
             self._runtime_patch, self._runtime_manual_group = build_runtime_fixture_groups(
                 snapshot
             )
-        self._manual_dimmer_supported_override = any(
-            fixture.is_manual for fixture in snapshot.fixtures
-        )
         if venue_changed or structure_changed:
             self.events.on_venue_change(self._venue)
         else:
             self.events.on_runtime_scene_change(snapshot)
 
     @property
-    def manual_dimmer(self):
-        return self._manual_dimmer
-
-    @property
     def manual_fixture_dimmers(self) -> dict[str, float]:
         return self._manual_fixture_dimmers
-
-    def set_manual_dimmer(self, value):
-        if self._manual_dimmer == value:
-            return
-
-        self._manual_dimmer = value
-        self.events.on_manual_dimmer_change(self._manual_dimmer)
-        self._push_remote_control_state({"manual_dimmer": float(value)})
 
     def merge_manual_fixture_dimmers(self, patch: dict[str, float]) -> None:
         """Merge dimmer levels (0–1) by fixture id and sync to Parrot Cloud."""

@@ -67,12 +67,6 @@ def create_app() -> Flask:
     def broadcast_command(command_type: str, data: dict[str, object]) -> None:
         hub.broadcast({"type": command_type, "data": data})
 
-    def active_venue_supports_manual_dimmer() -> bool:
-        active_venue = repository.get_active_venue_snapshot()
-        if active_venue is None:
-            return False
-        return any(fixture.is_manual for fixture in active_venue.fixtures)
-
     @app.get("/")
     def index():
         return send_from_directory(app.static_folder, "index.html")
@@ -201,25 +195,6 @@ def create_app() -> Flask:
         control_state = repository.update_control_state({"vj_mode": data.get("vj_mode")})
         broadcast_control_state()
         return jsonify({"success": True, "vj_mode": control_state.vj_mode})
-
-    @app.get("/api/manual_dimmer")
-    def get_manual_dimmer():
-        control_state = repository.get_control_state()
-        return jsonify(
-            {
-                "value": control_state.manual_dimmer,
-                "supported": active_venue_supports_manual_dimmer(),
-            }
-        )
-
-    @app.post("/api/manual_dimmer")
-    def set_manual_dimmer():
-        data = request.get_json(force=True)
-        control_state = repository.update_control_state(
-            {"manual_dimmer": data.get("value", 0.0)}
-        )
-        broadcast_control_state()
-        return jsonify({"success": True, "value": control_state.manual_dimmer})
 
     @app.post("/api/effect")
     def trigger_effect():

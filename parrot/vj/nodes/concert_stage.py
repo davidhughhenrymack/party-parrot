@@ -20,9 +20,11 @@ from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
 from parrot.vj.nodes.text_renderer import TextRenderer, muro_font_path
 from parrot.vj.profiler import vj_profiler
 from parrot.fixtures.moving_head import MovingHead
-from parrot.director.mode_interpretations import get_interpreter
 from parrot.interpreters.base import InterpreterArgs
-from parrot.vj.nodes.fixture_interpreter import FixtureInterpreterNode
+from parrot.vj.nodes.fixture_interpreter import (
+    FixtureInterpreterNode,
+    create_fixture_interpreter,
+)
 from parrot.vj.nodes.moving_head_array_renderer import (
     MovingHeadArrayRenderer,
     MovingHeadPlacement,
@@ -158,20 +160,20 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         for idx, position in enumerate(offsets):
             forward = self.camera_target - position
             placements.append(MovingHeadPlacement(position=position, forward=forward))
-            fixtures.append(
-                ChauvetSpot160_12Ch(
-                    patch=200 + idx * 16,
-                    pan_lower=270,
-                    pan_upper=450,
-                    tilt_lower=0,
-                    tilt_upper=90,
-                )
+            head = ChauvetSpot160_12Ch(
+                patch=200 + idx * 16,
+                pan_lower=270,
+                pan_upper=450,
+                tilt_lower=0,
+                tilt_upper=90,
             )
+            head.cloud_group_name = "Sheer lights"
+            fixtures.append(head)
 
         def interpreter_factory(mode: Mode, group: list[MovingHead]):
             hype = 75 if mode == Mode.rave else 40
             args = InterpreterArgs(hype, True, 0, 100)
-            return get_interpreter(mode, group, args)
+            return create_fixture_interpreter(mode, group, args)
 
         interpreter_node = FixtureInterpreterNode(
             fixtures=fixtures,
