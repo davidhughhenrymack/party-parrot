@@ -7,6 +7,7 @@ from parrot_cloud.domain import (
     ControlState,
     FixtureSpec,
     RuntimeBootstrap,
+    SceneObjectSpec,
     VenueSnapshot,
     VenueSummary,
     VideoWallSpec,
@@ -152,3 +153,73 @@ def test_room_layout_uses_snapshot_floor_when_scene_objects_empty():
     assert layout["floor"]["depth"] == 18.25
     assert layout["floor"]["room_height"] == 9.0
     assert layout["video_wall"]["width"] == 10.0
+
+
+def test_room_layout_uses_snapshot_floor_not_stale_scene_object_footprint():
+    """Footprint must follow VenueSnapshot.floor_* even if floor scene object sizes differ."""
+    floor_obj = SceneObjectSpec(
+        id="venue-1:floor",
+        kind="floor",
+        x=0.0,
+        y=0.0,
+        z=-0.04,
+        width=10.0,
+        height=10.0,
+        depth=0.08,
+        options={"room_height": 8.0},
+    )
+    bootstrap = RuntimeBootstrap(
+        venues=(
+            VenueSummary(
+                id="venue-1",
+                slug="demo",
+                name="Demo Venue",
+                archived=False,
+                active=True,
+                revision=1,
+            ),
+        ),
+        active_venue=VenueSnapshot(
+            summary=VenueSummary(
+                id="venue-1",
+                slug="demo",
+                name="Demo Venue",
+                archived=False,
+                active=True,
+                revision=1,
+            ),
+            floor_width=30.0,
+            floor_depth=22.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=0.0,
+                y=0.0,
+                z=3.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(),
+            scene_objects=(floor_obj,),
+        ),
+        control_state=ControlState(
+            mode="chill",
+            vj_mode="prom_dmack",
+            theme_name="Rave",
+            active_venue_id="venue-1",
+            display_mode="dmx_heatmap",
+            manual_dimmer=0.0,
+            hype_limiter=False,
+            show_waveform=True,
+        ),
+    )
+    state = State()
+    state.apply_runtime_bootstrap(bootstrap)
+    vj_director = VJDirector(state)
+    director = Director(state, vj_director)
+    fx = FixtureVisualization(state, director.position_manager, vj_director)
+    layout = fx._build_room_scene_layout()
+    assert layout["floor"]["width"] == 30.0
+    assert layout["floor"]["depth"] == 22.0
+    assert layout["floor"]["room_height"] == 8.0

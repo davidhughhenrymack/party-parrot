@@ -23,10 +23,11 @@ const MOVING_HEAD_TYPES = new Set([
 
 function parLikeDimensions() {
   const bs = desktopBodySize();
+  // PAR / theatre can: long axis along beam (stage Y), roughly square cross-section (X × Z)
   return {
     bodyWidth: bs,
-    bodyDepth: bs * 0.3,
-    bodyHeight: bs,
+    bodyDepth: bs * 2.25,
+    bodyHeight: bs * 1.05,
   };
 }
 
@@ -115,12 +116,14 @@ export function resolveFixtureVisualModel(fixtureType) {
 }
 
 /**
- * Beam origin in moving-head head pivot group local space (rear face of head cuboid).
+ * Beam origin in moving-head headPivotGroup local space (lens slightly in front of +Y face).
  * @param {ReturnType<typeof resolveFixtureVisualModel>} model
  */
 export function beamOriginMovingHeadAimLocal(model) {
+  // Head mesh is centered on headPivotGroup; lens sits slightly in front of the +Y face.
+  const halfDepth = model.headDepth * 0.5;
   return {
-    y: model.headDepth * 1.1,
+    y: halfDepth + model.headDepth * 0.12,
     z: model.headHeight * 0.05,
   };
 }
@@ -144,12 +147,14 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
     const aimGroup = new THREE.Group();
     aimGroup.position.set(0, 0, model.baseHeight);
     const headPivotGroup = new THREE.Group();
-    headPivotGroup.position.set(0, -model.headDepth / 2, model.headOffsetZ);
+    // Pivot at the center of the yoke / base of the head (horizontal centerline), not the rear face,
+    // so pan/tilt rotate around the physical joint.
+    headPivotGroup.position.set(0, 0, model.headOffsetZ);
     const head = new THREE.Mesh(
       new THREE.BoxGeometry(model.headWidth, model.headDepth, model.headHeight),
       bodyMaterial
     );
-    head.position.set(0, model.headDepth / 2, 0);
+    head.position.set(0, 0, 0);
     head.userData = userData;
     headPivotGroup.add(head);
     aimGroup.add(headPivotGroup);
@@ -193,8 +198,9 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
 
 export function beamOriginLocal(model) {
   if (model.kind === 'moving_head') {
+    const halfDepth = model.headDepth * 0.5;
     return {
-      y: model.headDepth * 0.6,
+      y: halfDepth + model.headDepth * 0.12,
       z: model.baseHeight + model.headOffsetZ + model.headHeight * 0.05,
     };
   }
@@ -211,14 +217,17 @@ export function beamOriginLocal(model) {
     };
   }
   return {
-    y: model.bodyDepth * 0.7,
-    z: model.bodyHeight,
+    y: model.bodyDepth / 2,
+    z: model.bodyHeight / 2,
   };
 }
 
 export function lensRadiusForModel(model) {
   if (model.kind === 'laser') {
     return desktopBodySize() * 0.15;
+  }
+  if (model.kind === 'bulb') {
+    return desktopBodySize() * 0.42;
   }
   return desktopBodySize() * 0.25;
 }

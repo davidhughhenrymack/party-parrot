@@ -314,7 +314,10 @@ class Director:
         # Get manual group and set its dimmer value
         manual_group = get_runtime_manual_group(self.state)
         if manual_group:
-            manual_group.set_manual_dimmer(self.state.manual_dimmer)
+            manual_group.apply_manual_levels(
+                self.state.manual_fixture_dimmers,
+                self.state.manual_dimmer,
+            )
             manual_group.render(dmx)
 
         # Render all fixtures

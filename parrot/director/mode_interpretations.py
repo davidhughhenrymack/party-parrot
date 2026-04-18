@@ -51,7 +51,6 @@ from parrot.interpreters.dimmer import Dimmer0
 from parrot.interpreters.randomize import randomize, weighted_randomize
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.interpreters.bulbs import AllBulbs255, for_bulbs
-from parrot.director.mode_interpretations import with_args
 from parrot.interpreters.laser import LaserLatch
 from parrot.interpreters.spatial import (
     HardSpatialPulse,
@@ -62,7 +61,14 @@ from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.interpreters.signal import signal_switch
 from parrot.fixtures.led_par import Par
 from parrot.fixtures.chauvet.derby import ChauvetDerby
-from parrot.interpreters.move import MoveCircles, MoveNod, MoveFigureEight, MoveFan
+from parrot.interpreters.move import (
+    MoveCircleSync,
+    MoveCircles,
+    MoveFan,
+    MoveFigureEight,
+    MoveNod,
+)
+from parrot.interpreters.mode_test_interpreters import RigColorCycle
 
 
 mode_interpretations: Dict[
@@ -325,6 +331,15 @@ mode_interpretations: Dict[
                 ),
             ),
         ],
+    },
+    Mode.test: {
+        Par: [combo(Dimmer255, RigColorCycle)],
+        MovingHead: [combo(Dimmer255, RigColorCycle, MoveCircleSync, MoverNoGobo)],
+        Motionstrip: [combo(Dimmer255, RigColorCycle)],
+        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, for_bulbs(RigColorCycle))],
+        Laser: [combo(Dimmer255, RigColorCycle)],
+        ChauvetRotosphere_28Ch: [combo(Dimmer255, RigColorCycle)],
+        ChauvetDerby: [combo(Dimmer255, RigColorCycle)],
     },
 }
 

@@ -239,6 +239,8 @@ export default function DenseVenueEditorPage({ venueId }) {
   });
   const [liveLightingPulse, setLiveLightingPulse] = useState(false);
   const [vjPreviewUpdatedAt, setVjPreviewUpdatedAt] = useState(null);
+  /** Bumps when a new WebGL scene controller is mounted so VJ preview reloads onto the live controller. */
+  const [sceneControllerEpoch, setSceneControllerEpoch] = useState(0);
   const [editorMenuOpen, setEditorMenuOpen] = useState(false);
   const [editorMenuSection, setEditorMenuSection] = useState(null);
 
@@ -313,7 +315,7 @@ export default function DenseVenueEditorPage({ venueId }) {
     let disposed = false;
 
     async function initialize() {
-      sceneControllerRef.current = await createSceneController({
+      const controller = await createSceneController({
         viewportEl: viewportRef.current,
         isTestMode,
         onSelectionChange: handleSelectionChange,
@@ -412,6 +414,12 @@ export default function DenseVenueEditorPage({ venueId }) {
           }
         },
       });
+      if (disposed) {
+        controller.destroy();
+        return;
+      }
+      sceneControllerRef.current = controller;
+      setSceneControllerEpoch((n) => n + 1);
 
       const config = await fetchJson('/api/config');
       if (disposed) {
@@ -474,6 +482,7 @@ export default function DenseVenueEditorPage({ venueId }) {
       window.removeEventListener('click', handleWindowClick);
       wsRef.current?.close();
       sceneControllerRef.current?.destroy();
+      sceneControllerRef.current = null;
     };
   }, [venueId]);
 
@@ -573,7 +582,7 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
     const url = `/api/runtime/vj-preview?t=${encodeURIComponent(String(vjPreviewUpdatedAt))}`;
     sceneControllerRef.current?.applyVjPreviewUrl?.(url);
-  }, [vjPreviewUpdatedAt, venueSnapshot?.summary?.id]);
+  }, [vjPreviewUpdatedAt, venueSnapshot?.summary?.id, sceneControllerEpoch]);
 
   useEffect(() => {
     if (!editorMenuOpen) {
@@ -1219,13 +1228,30 @@ export default function DenseVenueEditorPage({ venueId }) {
         <aside className="dense-sidebar">
           <div className="panel dense-header-panel">
             <div className="dense-header-top" ref={editorMenuRef}>
-              <button
-                className="small-button secondary-button icon-only-button"
-                aria-label="Back to venues"
-                onClick={() => window.location.assign(withCurrentSearch('/venues'))}
-              >
-                ←
-              </button>
+              <div className="dense-header-leading">
+                <button
+                  className="small-button secondary-button icon-only-button"
+                  aria-label="Back to venues"
+                  onClick={() => window.location.assign(withCurrentSearch('/venues'))}
+                >
+                  ←
+                </button>
+                {venueSnapshot && controlState.active_venue_id === venueSnapshot.summary.id ? (
+                  <span
+                    className="dense-venue-active-badge"
+                    title={
+                      liveLightingPulse
+                        ? 'Active venue — receiving live lighting updates'
+                        : 'This venue is the active runtime venue'
+                    }
+                  >
+                    {liveLightingPulse ? (
+                      <span className="dense-live-pulse-dot" aria-hidden />
+                    ) : null}
+                    <span className="dense-venue-active-label">ACTIVE</span>
+                  </span>
+                ) : null}
+              </div>
               <div className="dense-editor-menu-wrap">
                 <button
                   type="button"
@@ -1242,6 +1268,18 @@ export default function DenseVenueEditorPage({ venueId }) {
                 </button>
                 {editorMenuOpen ? (
                   <div className="dense-editor-menu-dropdown" role="menu">
+                    <div className="dense-editor-menu-section">
+                      <a
+                        className="dense-editor-menu-heading dense-editor-menu-external-link"
+                        href={withCurrentSearch('/remote')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                        onClick={() => setEditorMenuOpen(false)}
+                      >
+                        Open remote control
+                      </a>
+                    </div>
                     {venueSnapshot && controlState.active_venue_id !== venueSnapshot.summary.id ? (
                       <div className="dense-editor-menu-section">
                         <button
@@ -1335,15 +1373,6 @@ export default function DenseVenueEditorPage({ venueId }) {
               </div>
             </div>
             <div className="dense-venue-name-row">
-              {venueSnapshot &&
-              controlState.active_venue_id === venueSnapshot.summary.id &&
-              liveLightingPulse ? (
-                <span
-                  className="dense-live-pulse-dot"
-                  title="Receiving live lighting updates"
-                  aria-hidden
-                />
-              ) : null}
               <textarea
                 id="venue-name-input"
                 className="venue-name-input"

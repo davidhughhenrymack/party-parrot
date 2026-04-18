@@ -19,12 +19,13 @@ class TestGLOverlay(unittest.TestCase):
     def test_mode_enum_iteration(self):
         """Test that we can iterate over Mode enum for UI buttons"""
         modes = list(Mode)
-        self.assertEqual(len(modes), 3)
+        self.assertGreaterEqual(len(modes), 3)
 
         mode_names = [mode.name for mode in modes]
         self.assertIn("rave", mode_names)
         self.assertIn("blackout", mode_names)
         self.assertIn("chill", mode_names)
+        self.assertIn("test", mode_names)
 
     def test_keyboard_handler_logic(self):
         """Test the keyboard handler toggle logic"""

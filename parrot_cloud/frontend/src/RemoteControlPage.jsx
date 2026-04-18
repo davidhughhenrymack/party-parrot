@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function RemoteControlPage() {
   const [config, setConfig] = useState({
@@ -16,13 +16,14 @@ export default function RemoteControlPage() {
     display_mode: 'dmx_heatmap',
     active_venue_id: null,
     manual_dimmer: 0,
+    manual_fixture_dimmers: {},
+    hype_limiter: false,
+    show_waveform: true,
   });
-  const [manualDimmerSupported, setManualDimmerSupported] = useState(false);
+  const [manualFixtures, setManualFixtures] = useState([]);
+  const draggingFixtureIdRef = useRef(null);
 
-  const manualDimmerPercent = useMemo(
-    () => Math.round((controlState.manual_dimmer || 0) * 100),
-    [controlState.manual_dimmer],
-  );
+  const manualDimmerSupported = manualFixtures.length > 0;
 
   useEffect(() => {
     let disposed = false;
@@ -56,15 +57,36 @@ export default function RemoteControlPage() {
         if (payload.type === 'bootstrap') {
           applyBootstrap(payload.data);
         } else if (payload.type === 'control_state') {
-          setControlState((current) => ({
-            ...current,
-            ...payload.data,
-          }));
+          setControlState((current) => {
+            const incoming = payload.data || {};
+            if (draggingFixtureIdRef.current) {
+              return {
+                ...current,
+                ...incoming,
+                manual_fixture_dimmers: current.manual_fixture_dimmers,
+                manual_dimmer: current.manual_dimmer,
+              };
+            }
+            return {
+              ...current,
+              ...incoming,
+              manual_fixture_dimmers:
+                incoming.manual_fixture_dimmers !== undefined
+                  ? { ...incoming.manual_fixture_dimmers }
+                  : current.manual_fixture_dimmers,
+            };
+          });
         } else if (payload.type === 'venues') {
           setVenues(payload.data?.venues || []);
         } else if (payload.type === 'venue_snapshot' && payload.data?.summary?.active) {
-          setManualDimmerSupported(
-            Boolean(payload.data?.fixtures?.some((fixture) => fixture.is_manual)),
+          const fixtures = payload.data.fixtures || [];
+          setManualFixtures(
+            fixtures
+              .filter((f) => f.is_manual)
+              .map((f) => ({
+                id: f.id,
+                name: f.name || f.fixture_type || 'Manual',
+              })),
           );
         }
       };
@@ -78,13 +100,20 @@ export default function RemoteControlPage() {
       setControlState((current) => ({
         ...current,
         ...bootstrap.control_state,
+        manual_fixture_dimmers: bootstrap.control_state?.manual_fixture_dimmers || {},
         active_venue_id:
           bootstrap.control_state?.active_venue_id ||
           bootstrap.active_venue?.summary?.id ||
           null,
       }));
-      setManualDimmerSupported(
-        Boolean(bootstrap.active_venue?.fixtures?.some((fixture) => fixture.is_manual)),
+      const fixtures = bootstrap.active_venue?.fixtures || [];
+      setManualFixtures(
+        fixtures
+          .filter((f) => f.is_manual)
+          .map((f) => ({
+            id: f.id,
+            name: f.name || f.fixture_type || 'Manual',
+          })),
       );
     }
 
@@ -100,6 +129,9 @@ export default function RemoteControlPage() {
       ws?.close();
     };
   }, []);
+
+  const mfd = controlState.manual_fixture_dimmers || {};
+  const manualFallback = controlState.manual_dimmer ?? 0;
 
   return (
     <div className="page-shell">
@@ -202,33 +234,69 @@ export default function RemoteControlPage() {
         </section>
 
         <section className="panel">
-          <h2>Manual Dimmer</h2>
+          <h2>Manual lights</h2>
           <p className="panel-copy">
-            {manualDimmerSupported ? 'Available for the current active venue.' : 'The current active venue has no manual dimmer fixtures.'}
+            {manualDimmerSupported
+              ? 'One dimmer per manual fixture in the active venue.'
+              : 'The active venue has no manual fixtures.'}
           </p>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={manualDimmerPercent}
-            disabled={!manualDimmerSupported}
-            onChange={(event) =>
-              setControlState((current) => ({
-                ...current,
-                manual_dimmer: Number(event.target.value) / 100,
-              }))
-            }
-            onMouseUp={(event) => postJson('/api/manual_dimmer', { value: Number(event.target.value) / 100 })}
-            onTouchEnd={(event) => {
-              const value = Number(event.target.value) / 100;
-              postJson('/api/manual_dimmer', { value });
-            }}
-          />
-          <div className="remote-stat">{manualDimmerPercent}%</div>
+          {manualFixtures.map((fixture) => (
+            <div key={fixture.id} className="remote-manual-slider-row">
+              <label className="remote-manual-slider-label" htmlFor={`manual-dim-${fixture.id}`}>
+                {fixture.name}
+              </label>
+              <input
+                id={`manual-dim-${fixture.id}`}
+                type="range"
+                min="0"
+                max="100"
+                value={manualDimmerPercentFor(mfd, manualFallback, fixture.id)}
+                disabled={!manualDimmerSupported}
+                onPointerDown={() => {
+                  draggingFixtureIdRef.current = fixture.id;
+                }}
+                onPointerUp={() => {
+                  draggingFixtureIdRef.current = null;
+                }}
+                onPointerCancel={() => {
+                  draggingFixtureIdRef.current = null;
+                }}
+                onInput={(event) => {
+                  const value01 = Number(event.target.value) / 100;
+                  setControlState((current) => ({
+                    ...current,
+                    manual_fixture_dimmers: {
+                      ...(current.manual_fixture_dimmers || {}),
+                      [fixture.id]: value01,
+                    },
+                  }));
+                  void patchControlState({
+                    manual_fixture_dimmers: { [fixture.id]: value01 },
+                  }).then((next) => {
+                    setControlState((current) => ({
+                      ...current,
+                      ...next,
+                      manual_fixture_dimmers:
+                        next.manual_fixture_dimmers || current.manual_fixture_dimmers,
+                    }));
+                  });
+                }}
+              />
+              <div className="remote-stat">
+                {manualDimmerPercentFor(mfd, manualFallback, fixture.id)}%
+              </div>
+            </div>
+          ))}
         </section>
       </div>
     </div>
   );
+}
+
+function manualDimmerPercentFor(manualFixtureDimmers, fallback01, fixtureId) {
+  const raw = manualFixtureDimmers[fixtureId];
+  const v = raw !== undefined && raw !== null ? raw : fallback01;
+  return Math.round(Math.max(0, Math.min(1, v)) * 100);
 }
 
 function labelize(value) {

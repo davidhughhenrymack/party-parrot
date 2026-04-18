@@ -234,6 +234,8 @@ function createThreeSceneController({
   let videoWallPlaceholderCanvas = null;
 
   const videoWallTexture = createVideoWallTexture();
+  /** @type {AbortController | null} */
+  let vjPreviewLoadAbortController = null;
   const djSilhouetteTexture = createDjSilhouetteTexture();
 
   function setMaterialDimmed(material, dimmed) {
@@ -403,8 +405,20 @@ function createThreeSceneController({
   }
 
   function resetVideoWallToPlaceholder() {
+    if (vjPreviewLoadAbortController) {
+      vjPreviewLoadAbortController.abort();
+      vjPreviewLoadAbortController = null;
+    }
     if (!videoWallPlaceholderCanvas) {
       return;
+    }
+    const prevImg = videoWallTexture.image;
+    if (
+      prevImg
+      && prevImg !== videoWallPlaceholderCanvas
+      && typeof prevImg.close === 'function'
+    ) {
+      prevImg.close();
     }
     const ctx = videoWallPlaceholderCanvas.getContext('2d');
     paintVideoWallPlaceholderCanvas(videoWallPlaceholderCanvas, ctx);
@@ -416,23 +430,76 @@ function createThreeSceneController({
   }
 
   function applyVjPreviewUrl(url) {
-    new THREE.TextureLoader().load(
-      url,
-      (loadedTex) => {
-        const img = loadedTex.image;
-        loadedTex.dispose();
-        videoWallTexture.image = img;
+    if (vjPreviewLoadAbortController) {
+      vjPreviewLoadAbortController.abort();
+    }
+    const ac = new AbortController();
+    vjPreviewLoadAbortController = ac;
+    void (async () => {
+      try {
+        const response = await fetch(url, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          signal: ac.signal,
+        });
+        if (!response.ok) {
+          if (!localState.destroyed) {
+            resetVideoWallToPlaceholder();
+          }
+          return;
+        }
+        const blob = await response.blob();
+        let decoded;
+        try {
+          decoded = await createImageBitmap(blob);
+        } catch {
+          decoded = await new Promise((resolve, reject) => {
+            const objectUrl = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+              URL.revokeObjectURL(objectUrl);
+              resolve(img);
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(objectUrl);
+              reject(new Error('vj preview image decode failed'));
+            };
+            img.src = objectUrl;
+          });
+        }
+        if (localState.destroyed || ac.signal.aborted) {
+          if (decoded && typeof decoded.close === 'function') {
+            decoded.close();
+          }
+          return;
+        }
+        const prevImg = videoWallTexture.image;
+        if (
+          prevImg
+          && prevImg !== videoWallPlaceholderCanvas
+          && typeof prevImg.close === 'function'
+        ) {
+          prevImg.close();
+        }
+        videoWallTexture.image = decoded;
         videoWallTexture.colorSpace = THREE.SRGBColorSpace;
         videoWallTexture.generateMipmaps = true;
         videoWallTexture.minFilter = THREE.LinearMipmapLinearFilter;
         videoWallTexture.magFilter = THREE.LinearFilter;
         videoWallTexture.needsUpdate = true;
-      },
-      undefined,
-      () => {
-        resetVideoWallToPlaceholder();
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          return;
+        }
+        if (!localState.destroyed) {
+          resetVideoWallToPlaceholder();
+        }
+      } finally {
+        if (vjPreviewLoadAbortController === ac) {
+          vjPreviewLoadAbortController = null;
+        }
       }
-    );
+    })();
   }
 
   function createDjSilhouetteTexture() {
@@ -871,13 +938,24 @@ function createThreeSceneController({
       );
       entity.lensMaterial.opacity = 0.35 + dimClamped * 0.58;
     }
-    const pivotGroup = entity.headPivotGroup ?? entity.aimGroup;
-    if (pivotGroup) {
+    if (entity.aimGroup && entity.headPivotGroup) {
       const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
       const tilt = typeof vis.tilt_deg === 'number' ? THREE.MathUtils.degToRad(vis.tilt_deg) : 0;
-      pivotGroup.rotation.order = 'ZXY';
-      pivotGroup.rotation.z = -pan;
-      pivotGroup.rotation.x = tilt;
+      entity.aimGroup.rotation.set(0, 0, 0);
+      entity.aimGroup.rotation.order = 'ZXY';
+      entity.aimGroup.rotation.z = -pan;
+      entity.headPivotGroup.rotation.set(0, 0, 0);
+      entity.headPivotGroup.rotation.order = 'ZXY';
+      entity.headPivotGroup.rotation.x = tilt;
+    } else {
+      const pivotGroup = entity.headPivotGroup ?? entity.aimGroup;
+      if (pivotGroup) {
+        const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
+        const tilt = typeof vis.tilt_deg === 'number' ? THREE.MathUtils.degToRad(vis.tilt_deg) : 0;
+        pivotGroup.rotation.order = 'ZXY';
+        pivotGroup.rotation.z = -pan;
+        pivotGroup.rotation.x = tilt;
+      }
     }
     if (entity.stripPanGroup && typeof vis.bar_pan_deg === 'number') {
       entity.stripPanGroup.rotation.x = THREE.MathUtils.degToRad(vis.bar_pan_deg);
@@ -1465,6 +1543,10 @@ function createThreeSceneController({
     applyFixtureRuntimeState,
     destroy() {
       localState.destroyed = true;
+      if (vjPreviewLoadAbortController) {
+        vjPreviewLoadAbortController.abort();
+        vjPreviewLoadAbortController = null;
+      }
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('resize', resizeRenderer);

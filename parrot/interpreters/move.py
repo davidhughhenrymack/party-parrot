@@ -74,6 +74,33 @@ class MoveFigureEight(InterpreterBase):
 
 
 @beartype
+class MoveCircleSync(InterpreterBase):
+    """Pan/tilt circle with identical motion on every fixture (no per-fixture phase / fanning)."""
+
+    def __init__(
+        self,
+        group: list[FixtureBase],
+        args: InterpreterArgs,
+        multiplier: float = 0.35,
+        phase: float = 0.0,
+    ):
+        super().__init__(group, args)
+        self.multiplier = multiplier
+        self.phase = phase
+
+    def __str__(self) -> str:
+        return f"🔄 {Fore.GREEN}CircleSync{Style.RESET_ALL}"
+
+    def step(self, frame, scheme):
+        t = frame.time * self.multiplier + self.phase
+        pan = math.cos(t) * 127 + 128
+        tilt = math.sin(t) * 127 + 128
+        for fixture in self.group:
+            fixture.set_pan(pan)
+            fixture.set_tilt(tilt)
+
+
+@beartype
 class MoveFan(InterpreterBase):
     def __init__(self, group: list[FixtureBase], args, multiplier=1, spread=1.0):
         super().__init__(group, args)

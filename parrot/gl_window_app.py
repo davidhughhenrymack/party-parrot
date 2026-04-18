@@ -561,11 +561,15 @@ def run_gl_window_app(args):
             print("🛑 Exiting after screenshot")
             break
 
+        # Drain venue/runtime queues every frame. Do not tie this to audio frames: when the
+        # analyzer returns None (no mic, silence, or startup), queued WebSocket snapshots would
+        # otherwise never apply and the 3D room would stay on Room3DRenderer defaults (10×10).
+        state.process_gui_updates()
+
         # Update audio at intervals
         if time.perf_counter() - last_audio_update >= audio_update_interval:
             frame = audio_analyzer.analyze_audio()
             if frame:
-                state.process_gui_updates()
                 director.step(frame)
                 director.render(dmx_ref["controller"])
                 if runtime_client is not None:

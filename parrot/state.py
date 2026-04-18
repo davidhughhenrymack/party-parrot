@@ -26,6 +26,7 @@ class State:
         self._theme = themes[0]
         self._venue = venues.dmack
         self._manual_dimmer = 0  # New property for manual control
+        self._manual_fixture_dimmers: dict[str, float] = {}
         self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
         self._editor_display_mode = EditorDisplayMode.DMX_HEATMAP
@@ -224,6 +225,10 @@ class State:
                 self._manual_dimmer = next_manual_dimmer
                 self.events.on_manual_dimmer_change(self._manual_dimmer)
 
+            next_mfd = dict(control_state.manual_fixture_dimmers)
+            if self._manual_fixture_dimmers != next_mfd:
+                self._manual_fixture_dimmers = next_mfd
+
             next_hype_limiter = bool(control_state.hype_limiter)
             if self._hype_limiter != next_hype_limiter:
                 self._hype_limiter = next_hype_limiter
@@ -282,6 +287,10 @@ class State:
     def manual_dimmer(self):
         return self._manual_dimmer
 
+    @property
+    def manual_fixture_dimmers(self) -> dict[str, float]:
+        return self._manual_fixture_dimmers
+
     def set_manual_dimmer(self, value):
         if self._manual_dimmer == value:
             return
@@ -289,6 +298,21 @@ class State:
         self._manual_dimmer = value
         self.events.on_manual_dimmer_change(self._manual_dimmer)
         self._push_remote_control_state({"manual_dimmer": float(value)})
+
+    def merge_manual_fixture_dimmers(self, patch: dict[str, float]) -> None:
+        """Merge dimmer levels (0–1) by fixture id and sync to Parrot Cloud."""
+        next_map = dict(self._manual_fixture_dimmers)
+        applied: dict[str, float] = {}
+        for k, v in patch.items():
+            key = str(k)
+            vv = max(0.0, min(1.0, float(v)))
+            if next_map.get(key) != vv:
+                next_map[key] = vv
+                applied[key] = vv
+        if not applied:
+            return
+        self._manual_fixture_dimmers = next_map
+        self._push_remote_control_state({"manual_fixture_dimmers": applied})
 
     @property
     def hype_limiter(self):

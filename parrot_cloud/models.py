@@ -116,6 +116,7 @@ class ControlStateModel(Base):
         String(32), nullable=False, default="dmx_heatmap"
     )
     manual_dimmer: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    manual_fixture_dimmers: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     hype_limiter: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     show_waveform: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     show_fixture_mode: Mapped[bool] = mapped_column(

@@ -14,6 +14,10 @@ from parrot.vj.renderers.base import (
 from parrot.director.frame import Frame
 import numpy as np
 
+# Typical moving-head tilt sweep is a little past 180° (front → up → back). DMX may report
+# up to ~270°; clamp before scaling so the proxy mesh/beam do not fold past a believable range.
+_MECHANICAL_TILT_MAX_DEG = 200.0
+
 
 @beartype
 class MovingHeadRenderer(FixtureRenderer):
@@ -25,10 +29,12 @@ class MovingHeadRenderer(FixtureRenderer):
     def _get_default_size(self) -> tuple[float, float]:
         return (40.0, 40.0)
 
-    def get_angles(self) -> tuple[float, float]:
-        """Return pan and tilt angles in radians"""
-        pan_rad = math.radians(self.fixture.get_pan_angle())
-        tilt_rad = math.radians(self.fixture.get_tilt_angle())
+    def _pan_tilt_radians_for_render(self) -> tuple[float, float]:
+        """Pan/tilt radians for mesh, bulb, and beam (same convention as historical renderer)."""
+        pan_deg = float(self.fixture.get_pan_angle())
+        tilt_deg = max(0.0, min(float(self.fixture.get_tilt_angle()), _MECHANICAL_TILT_MAX_DEG))
+        pan_rad = math.radians(pan_deg) * 0.5 + math.pi
+        tilt_rad = math.radians(tilt_deg) * 0.5
         return pan_rad, tilt_rad
 
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
@@ -39,78 +45,62 @@ class MovingHeadRenderer(FixtureRenderer):
         # Get 3D position (center of fixture)
         position_3d = self.get_3d_position(canvas_size)
 
-        # Render with local transforms
+        body_size = self.cube_size * 0.4
+        body_color = (0.3, 0.3, 0.3)
+        base_height = body_size * 0.42
+        moving_body_height = body_size * 0.5
+        moving_body_width = body_size * 0.5
+        moving_body_depth = body_size * 1.2
+        moving_body_y = base_height + moving_body_height / 2 + body_size * 0.3
+
+        pan_rad, tilt_rad = self._pan_tilt_radians_for_render()
+
+        y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+        x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
+        tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
+        moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
+
+        half_depth = moving_body_depth * 0.5
+        pivot_local = np.array([0.0, 0.0, half_depth], dtype=np.float32)
+        pivot_delta = quaternion_rotate_vector(
+            self.orientation,
+            pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
+        )
+        body_position = (
+            position_3d[0] + float(pivot_delta[0]),
+            position_3d[1] + float(pivot_delta[1]),
+            position_3d[2] + float(pivot_delta[2]),
+        )
+
+        # Fixed base at fixture position
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
-                body_size = self.cube_size * 0.4
-                body_color = (0.3, 0.3, 0.3)
-
-                # === FIXED BASE ===
-                # Base is shorter than the head and wider, sits on floor
-                base_height = body_size * 0.42
-                base_width = body_size * 1.2   # Wider than tall
-                base_depth = body_size * 0.8    # Slightly shorter in depth
-                
-                # Base sits on floor (y=0 to y=base_height)
+                base_width = body_size * 1.2
+                base_depth = body_size * 0.8
                 self.room_renderer.render_rectangular_box(
-                    0.0, base_height / 2, 0.0, body_color, base_width, base_height, base_depth
+                    0.0,
+                    base_height / 2,
+                    0.0,
+                    body_color,
+                    base_width,
+                    base_height,
+                    base_depth,
                 )
 
-                # === MOVING BODY ===
-                # Moving body (yoke + head) rotates with pan/tilt
-                pan_rad, tilt_rad = self.get_angles()
-                pan_rad *= 0.5
-                tilt_rad *= 0.5
-                pan_rad += math.pi
-
-                # Create quaternions for pan (around Y axis) and tilt (around X axis)
-                y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-                x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
-                
-                # Pan rotates around Y axis (horizontal rotation)
-                pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
-                
-                # Tilt rotates around X axis (vertical rotation)
-                tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
-                
-                # Compose rotations: first pan, then tilt
-                moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
-
-                # Moving body: shorter height, longer depth, square front face
-                moving_body_height = body_size * 0.5  # Shorter height
-                moving_body_width = body_size * 0.5   # Square front face (width = height)
-                moving_body_depth = body_size * 1.2   # Longer depth
-
-                # Position moving body higher on top of base
-                moving_body_y = base_height + moving_body_height / 2 + body_size * 0.3
-
-                # Rotate around the rear face of the head (opposite the lens on -Z), not the cuboid center
-                half_depth = moving_body_depth * 0.5
-                pivot_local = np.array(
-                    [0.0, 0.0, half_depth], dtype=np.float32
-                )
-                pivot_delta = quaternion_rotate_vector(
-                    self.orientation,
-                    pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
-                )
-                body_position = (
-                    position_3d[0] + float(pivot_delta[0]),
-                    position_3d[1] + float(pivot_delta[1]),
-                    position_3d[2] + float(pivot_delta[2]),
-                )
-
-                with self.room_renderer.local_position(body_position):
-                    with self.room_renderer.local_rotation(self.orientation):
-                        with self.room_renderer.local_rotation(moving_body_rotation):
-                            self.room_renderer.render_rectangular_box(
-                                0.0,
-                                moving_body_y,
-                                0.0,
-                                body_color,
-                                moving_body_width,
-                                moving_body_height,
-                                moving_body_depth,
-                            )
+        # Moving head: pan/tilt about the rear face of the head cuboid (not its center)
+        with self.room_renderer.local_position(body_position):
+            with self.room_renderer.local_rotation(self.orientation):
+                with self.room_renderer.local_rotation(moving_body_rotation):
+                    self.room_renderer.render_rectangular_box(
+                        0.0,
+                        moving_body_y,
+                        0.0,
+                        body_color,
+                        moving_body_width,
+                        moving_body_height,
+                        moving_body_depth,
+                    )
 
         # Render DMX address
         self.render_dmx_address(canvas_size)
@@ -120,89 +110,67 @@ class MovingHeadRenderer(FixtureRenderer):
         if self.room_renderer is None:
             return
 
-        # Get 3D position (center of fixture)
         position_3d = self.get_3d_position(canvas_size)
 
-        # Render with local transforms
-        with self.room_renderer.local_position(position_3d):
+        body_size = self.cube_size * 0.4
+        base_height = body_size * 0.42
+        moving_body_height = body_size * 0.5
+        moving_body_depth = body_size * 1.2
+
+        bulb_radius = body_size * 0.3
+        bulb_color = self.get_color()
+        dimmer = self.get_effective_dimmer(frame)
+
+        pan_rad, tilt_rad = self._pan_tilt_radians_for_render()
+
+        cos_tilt = math.cos(tilt_rad)
+        sin_tilt = math.sin(tilt_rad)
+        cos_pan = math.cos(pan_rad)
+        sin_pan = math.sin(pan_rad)
+
+        beam_dir_x = sin_pan * cos_tilt
+        beam_dir_y = -sin_tilt
+        beam_dir_z = cos_pan * cos_tilt
+        beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
+
+        y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+        x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
+        tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
+        moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
+
+        half_depth = moving_body_depth * 0.5
+        pivot_local = np.array([0.0, 0.0, half_depth], dtype=np.float32)
+        pivot_delta = quaternion_rotate_vector(
+            self.orientation,
+            pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
+        )
+        body_position = (
+            position_3d[0] + float(pivot_delta[0]),
+            position_3d[1] + float(pivot_delta[1]),
+            position_3d[2] + float(pivot_delta[2]),
+        )
+
+        with self.room_renderer.local_position(body_position):
             with self.room_renderer.local_rotation(self.orientation):
-                body_size = self.cube_size * 0.4
-                base_height = body_size * 0.42  # Match base height from render_opaque
-                moving_body_height = body_size * 0.5  # Match moving body height from render_opaque
-                moving_body_depth = body_size * 1.2
-                
-                # Bulb and beam are attached to moving body
-                bulb_radius = body_size * 0.3  # Increased size for visibility
-                bulb_distance = body_size * 0.7
-                bulb_color = self.get_color()
-                dimmer = self.get_effective_dimmer(frame)
+                with self.room_renderer.local_rotation(moving_body_rotation):
+                    bulb_y = (
+                        base_height
+                        + moving_body_height / 2
+                        + body_size * 0.3
+                        + body_size * 0.05
+                    )
+                    bulb_z = body_size * 0.6
 
-                # Calculate beam direction based on pan/tilt
-                pan_rad, tilt_rad = self.get_angles()
-                pan_rad *= 0.5
-                tilt_rad *= 0.5
-                pan_rad += math.pi
-
-                # Calculate beam direction vector
-                cos_tilt = math.cos(tilt_rad)
-                sin_tilt = math.sin(tilt_rad)
-                cos_pan = math.cos(pan_rad)
-                sin_pan = math.sin(pan_rad)
-
-                beam_dir_x = sin_pan * cos_tilt
-                beam_dir_y = -sin_tilt
-                beam_dir_z = cos_pan * cos_tilt
-                beam_direction = (beam_dir_x, beam_dir_y, beam_dir_z)
-
-                # Create quaternions for pan (around Y axis) and tilt (around X axis)
-                y_axis = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-                x_axis = np.array([1.0, 0.0, 0.0], dtype=np.float32)
-                
-                # Pan rotates around Y axis (horizontal rotation)
-                pan_quat = quaternion_from_axis_angle(y_axis, pan_rad)
-                
-                # Tilt rotates around X axis (vertical rotation)
-                tilt_quat = quaternion_from_axis_angle(x_axis, tilt_rad)
-                
-                # Compose rotations: first pan, then tilt
-                moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
-
-                half_depth = moving_body_depth * 0.5
-                pivot_local = np.array(
-                    [0.0, 0.0, half_depth], dtype=np.float32
-                )
-                pivot_delta = quaternion_rotate_vector(
-                    self.orientation,
-                    pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
-                )
-                body_position = (
-                    position_3d[0] + float(pivot_delta[0]),
-                    position_3d[1] + float(pivot_delta[1]),
-                    position_3d[2] + float(pivot_delta[2]),
-                )
-
-                # Render bulb and beam attached to moving body
-                with self.room_renderer.local_position(body_position):
-                    with self.room_renderer.local_rotation(self.orientation):
-                        with self.room_renderer.local_rotation(moving_body_rotation):
-                    # Bulb position relative to moving body (lower, at front face of moving body)
-                    # Beam comes from the front face of the moving body
-                    bulb_y = base_height + moving_body_height / 2 + body_size * 0.3 + body_size * 0.05
-                    bulb_z = body_size * 0.6  # Position at front face (positive Z = forward)
-                    
-                    # Boost brightness and saturate towards white at high dimmer
-                    # Brightness multiplier increases with dimmer to saturate towards white
-                    brightness_multiplier = 1.0 + dimmer * 2.0  # 1.0 at 0%, up to 3.0 at 100%
+                    brightness_multiplier = 1.0 + dimmer * 2.0
                     boosted_bulb_color = (
                         min(bulb_color[0] * brightness_multiplier, 1.0),
                         min(bulb_color[1] * brightness_multiplier, 1.0),
                         min(bulb_color[2] * brightness_multiplier, 1.0),
                     )
-                    
-                    # Increased alpha for better visibility - boost significantly
+
                     capped_alpha = min(dimmer * 1.5, 1.0)
 
-                    # Render bulb circle facing the beam direction (pure emission, no lighting)
                     self.room_renderer.render_emission_circle(
                         (0.0, bulb_y, bulb_z),
                         boosted_bulb_color,
@@ -211,19 +179,18 @@ class MovingHeadRenderer(FixtureRenderer):
                         alpha=capped_alpha,
                     )
 
-                            # Render cone beam if dimmer is significant
-                            if dimmer > 0.05:
-                                beam_length = 15.0
-                                beam_alpha = capped_alpha  # Use same alpha as bulb
-                                self.room_renderer.render_cone_beam(
-                                    0.0,
-                                    bulb_y,
-                                    bulb_z,
-                                    beam_direction,
-                                    boosted_bulb_color,
-                                    length=beam_length,
-                                    start_radius=bulb_radius * 0.3,
-                                    end_radius=bulb_radius * 1.2,
-                                    segments=16,
-                                    alpha=beam_alpha,
-                                )
+                    if dimmer > 0.05:
+                        beam_length = 15.0
+                        beam_alpha = capped_alpha
+                        self.room_renderer.render_cone_beam(
+                            0.0,
+                            bulb_y,
+                            bulb_z,
+                            beam_direction,
+                            boosted_bulb_color,
+                            length=beam_length,
+                            start_radius=bulb_radius * 0.3,
+                            end_radius=bulb_radius * 1.2,
+                            segments=16,
+                            alpha=beam_alpha,
+                        )

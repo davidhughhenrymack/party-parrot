@@ -185,15 +185,13 @@ class FixtureVisualization(GenerativeEffectBase):
                 y,
             )
 
-        # Venue editor persists floor size on the venue row and in the floor scene object.
-        # Use snapshot floor fields whenever the floor object is missing so the desktop
-        # room matches the central DB instead of Room3DRenderer defaults (10×10).
+        # VenueSnapshot.floor_* come from Parrot Cloud and match the venue editor DB; prefer them
+        # for footprint so the desktop room always matches the snapshot API (scene object width
+        # / height can lag rare sync edge cases).
         floor_width = max(float(snapshot.floor_width), 0.5)
         floor_depth = max(float(snapshot.floor_depth), 0.5)
         room_height = max(float(snapshot.floor_height), 0.5)
         if floor is not None:
-            floor_width = max(floor.width, 0.5)
-            floor_depth = max(floor.height, 0.5)
             room_height = float(floor.options.get("room_height", snapshot.floor_height))
 
         layout: dict[str, dict[str, float | tuple[float, float, float]]] = {

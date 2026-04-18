@@ -195,6 +195,14 @@ class VenueRepository:
                 control_state.manual_dimmer = max(
                     0.0, min(1.0, float(data["manual_dimmer"]))
                 )
+            if "manual_fixture_dimmers" in data and data["manual_fixture_dimmers"] is not None:
+                incoming = data["manual_fixture_dimmers"]
+                if not isinstance(incoming, dict):
+                    raise TypeError("manual_fixture_dimmers must be a JSON object")
+                merged = dict(control_state.manual_fixture_dimmers or {})
+                for k, v in incoming.items():
+                    merged[str(k)] = max(0.0, min(1.0, float(v)))
+                control_state.manual_fixture_dimmers = merged
             if "hype_limiter" in data:
                 control_state.hype_limiter = bool(data["hype_limiter"])
             if "show_waveform" in data:
@@ -658,6 +666,14 @@ class VenueRepository:
         )
 
     def _control_state_from_model(self, control_state: ControlStateModel) -> ControlState:
+        raw_mfd = getattr(control_state, "manual_fixture_dimmers", None) or {}
+        manual_fixture_dimmers: dict[str, float] = {}
+        if isinstance(raw_mfd, dict):
+            for k, v in raw_mfd.items():
+                try:
+                    manual_fixture_dimmers[str(k)] = max(0.0, min(1.0, float(v)))
+                except (TypeError, ValueError):
+                    continue
         return ControlState(
             mode=control_state.mode,
             vj_mode=parse_vj_mode_string(control_state.vj_mode).value,
@@ -667,6 +683,7 @@ class VenueRepository:
             manual_dimmer=control_state.manual_dimmer,
             hype_limiter=control_state.hype_limiter,
             show_waveform=control_state.show_waveform,
+            manual_fixture_dimmers=manual_fixture_dimmers,
         )
 
     def _get_or_create_control_state(self, session) -> ControlStateModel:
@@ -685,6 +702,7 @@ class VenueRepository:
             active_venue_id=active_venue.id if active_venue is not None else None,
             display_mode="dmx_heatmap",
             manual_dimmer=0.0,
+            manual_fixture_dimmers={},
             hype_limiter=False,
             show_waveform=True,
             show_fixture_mode=False,

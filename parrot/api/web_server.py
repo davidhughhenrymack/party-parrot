@@ -155,6 +155,30 @@ def set_manual_dimmer():
     return jsonify({"success": False, "error": "Invalid request"})
 
 
+@app.route("/api/manual_fixture_dimmers", methods=["POST"])
+def merge_manual_fixture_dimmers():
+    """Merge per-fixture manual dimmer levels (0–1) by cloud fixture id."""
+    if not state_instance:
+        return jsonify({"success": False, "error": "State not initialized"}), 400
+    data = request.json
+    if not isinstance(data, dict):
+        return jsonify({"success": False, "error": "Expected JSON object"}), 400
+    patch_raw = data.get("patch", data)
+    if not isinstance(patch_raw, dict):
+        return jsonify({"success": False, "error": "patch must be an object"}), 400
+    try:
+        patch = {str(k): float(v) for k, v in patch_raw.items()}
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Invalid dimmer values"}), 400
+    state_instance.merge_manual_fixture_dimmers(patch)
+    return jsonify(
+        {
+            "success": True,
+            "manual_fixture_dimmers": dict(state_instance.manual_fixture_dimmers),
+        }
+    )
+
+
 @app.route("/api/effect", methods=["POST"])
 def set_effect():
     """Set the current effect."""

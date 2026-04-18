@@ -265,18 +265,39 @@ class ManualGroup(FixtureGroup):
             if fixture.width == 1:
                 fixture.values[0] = int(dimmer_255)
 
+    def apply_manual_levels(
+        self,
+        levels: dict[str, float],
+        fallback: float,
+    ) -> None:
+        """Set each manual fixture dimmer from ``levels[fixture.cloud_spec_id]`` or ``fallback``."""
+        max_v = 0.0
+        for fixture in self.fixtures:
+            cid = getattr(fixture, "cloud_spec_id", None)
+            if cid is None:
+                v = float(fallback)
+            else:
+                raw = levels.get(str(cid))
+                v = float(fallback) if raw is None else float(raw)
+            v = max(0.0, min(1.0, v))
+            max_v = max(max_v, v)
+            dimmer_255 = v * 255.0
+            fixture.set_dimmer(dimmer_255)
+            fixture.dimmer_value = dimmer_255
+            if fixture.width == 1:
+                fixture.values[0] = int(dimmer_255)
+        self.manual_dimmer = max_v
+        self.dimmer_value = max_v * 255.0
+
     def get_dimmer(self):
         """Override to return the manual dimmer value in 0-255 range."""
         return self.manual_dimmer * 255
 
     def render(self, dmx):
-        """Override to ensure manual dimmer value is applied before rendering."""
-        # Apply the manual dimmer value to all fixtures (convert 0-1 to 0-255)
-        dimmer_255 = self.manual_dimmer * 255
+        """Override to ensure manual dimmer values are applied before rendering."""
         for fixture in self.fixtures:
-            fixture.dimmer_value = dimmer_255
             if fixture.width == 1:
-                fixture.values[0] = int(dimmer_255)
+                fixture.values[0] = int(fixture.dimmer_value)
 
         # Call the parent render method
         super().render(dmx)

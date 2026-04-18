@@ -298,6 +298,17 @@ class TestManualGroup:
         assert self.fixture1.values[0] == 153
         assert self.fixture2.values[0] == 153
 
+    def test_apply_manual_levels_per_fixture(self):
+        """Per-cloud-id dimmers with fallback for missing ids."""
+        self.fixture1.cloud_spec_id = "a"
+        self.fixture2.cloud_spec_id = "b"
+        self.group.apply_manual_levels({"a": 1.0, "b": 0.5}, fallback=0.25)
+        assert self.fixture1.get_dimmer() == 255.0
+        assert self.fixture2.get_dimmer() == 127.5
+        self.group.apply_manual_levels({}, fallback=0.4)
+        assert self.fixture1.get_dimmer() == 102.0
+        assert self.fixture2.get_dimmer() == 102.0
+
 
 class TestColorWheelEntry:
     def test_initialization(self):

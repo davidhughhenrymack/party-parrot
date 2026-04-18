@@ -243,6 +243,7 @@ class ControlState:
     manual_dimmer: float
     hype_limiter: bool
     show_waveform: bool
+    manual_fixture_dimmers: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> JsonDict:
         return {
@@ -254,10 +255,21 @@ class ControlState:
             "manual_dimmer": self.manual_dimmer,
             "hype_limiter": self.hype_limiter,
             "show_waveform": self.show_waveform,
+            "manual_fixture_dimmers": dict(self.manual_fixture_dimmers),
         }
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> "ControlState":
+        raw_mfd = data.get("manual_fixture_dimmers")
+        manual_fixture_dimmers: dict[str, float] = {}
+        if isinstance(raw_mfd, dict):
+            for k, v in raw_mfd.items():
+                try:
+                    manual_fixture_dimmers[str(k)] = max(
+                        0.0, min(1.0, float(v))
+                    )
+                except (TypeError, ValueError):
+                    continue
         return cls(
             mode=str(data.get("mode", "chill")),
             vj_mode=str(data.get("vj_mode", "prom_dmack")),
@@ -276,6 +288,7 @@ class ControlState:
             manual_dimmer=float(data.get("manual_dimmer", 0.0)),
             hype_limiter=bool(data.get("hype_limiter", False)),
             show_waveform=bool(data.get("show_waveform", True)),
+            manual_fixture_dimmers=manual_fixture_dimmers,
         )
 
 
