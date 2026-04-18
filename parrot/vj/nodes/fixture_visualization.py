@@ -31,7 +31,7 @@ from parrot.venue_runtime import get_runtime_fixtures, get_runtime_manual_group
 # Extra offset upstage (−venue y) beyond the table’s upstage face; 0 = silhouette flush to that edge.
 DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.0
 # Silhouette feet sit slightly below the table top; keep in sync with DenseSceneController.js.
-DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.02
+DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.08
 
 
 @beartype

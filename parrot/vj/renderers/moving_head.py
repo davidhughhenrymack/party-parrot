@@ -5,7 +5,12 @@ from typing import Optional, Any
 import math
 
 from parrot.fixtures.moving_head import MovingHead
-from parrot.vj.renderers.base import FixtureRenderer, quaternion_from_axis_angle, quaternion_multiply
+from parrot.vj.renderers.base import (
+    FixtureRenderer,
+    quaternion_from_axis_angle,
+    quaternion_multiply,
+    quaternion_rotate_vector,
+)
 from parrot.director.frame import Frame
 import numpy as np
 
@@ -41,8 +46,8 @@ class MovingHeadRenderer(FixtureRenderer):
                 body_color = (0.3, 0.3, 0.3)
 
                 # === FIXED BASE ===
-                # Base is shorter (less tall) and wider, sits on floor
-                base_height = body_size * 0.3  # Much shorter base
+                # Base is shorter than the head and wider, sits on floor
+                base_height = body_size * 0.42
                 base_width = body_size * 1.2   # Wider than tall
                 base_depth = body_size * 0.8    # Slightly shorter in depth
                 
@@ -71,20 +76,41 @@ class MovingHeadRenderer(FixtureRenderer):
                 # Compose rotations: first pan, then tilt
                 moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
 
-                # Render moving body (yoke + head) above the base
-                with self.room_renderer.local_rotation(moving_body_rotation):
-                    # Moving body: shorter height, longer depth, square front face
-                    moving_body_height = body_size * 0.5  # Shorter height
-                    moving_body_width = body_size * 0.5   # Square front face (width = height)
-                    moving_body_depth = body_size * 1.2   # Longer depth
-                    
-                    # Position moving body higher on top of base
-                    moving_body_y = base_height + moving_body_height / 2 + body_size * 0.3
-                    
-                    self.room_renderer.render_rectangular_box(
-                        0.0, moving_body_y, 0.0, body_color, 
-                        moving_body_width, moving_body_height, moving_body_depth
-                    )
+                # Moving body: shorter height, longer depth, square front face
+                moving_body_height = body_size * 0.5  # Shorter height
+                moving_body_width = body_size * 0.5   # Square front face (width = height)
+                moving_body_depth = body_size * 1.2   # Longer depth
+
+                # Position moving body higher on top of base
+                moving_body_y = base_height + moving_body_height / 2 + body_size * 0.3
+
+                # Rotate around the rear face of the head (opposite the lens on -Z), not the cuboid center
+                half_depth = moving_body_depth * 0.5
+                pivot_local = np.array(
+                    [0.0, 0.0, half_depth], dtype=np.float32
+                )
+                pivot_delta = quaternion_rotate_vector(
+                    self.orientation,
+                    pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
+                )
+                body_position = (
+                    position_3d[0] + float(pivot_delta[0]),
+                    position_3d[1] + float(pivot_delta[1]),
+                    position_3d[2] + float(pivot_delta[2]),
+                )
+
+                with self.room_renderer.local_position(body_position):
+                    with self.room_renderer.local_rotation(self.orientation):
+                        with self.room_renderer.local_rotation(moving_body_rotation):
+                            self.room_renderer.render_rectangular_box(
+                                0.0,
+                                moving_body_y,
+                                0.0,
+                                body_color,
+                                moving_body_width,
+                                moving_body_height,
+                                moving_body_depth,
+                            )
 
         # Render DMX address
         self.render_dmx_address(canvas_size)
@@ -101,8 +127,9 @@ class MovingHeadRenderer(FixtureRenderer):
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
                 body_size = self.cube_size * 0.4
-                base_height = body_size * 0.3  # Match base height from render_opaque
+                base_height = body_size * 0.42  # Match base height from render_opaque
                 moving_body_height = body_size * 0.5  # Match moving body height from render_opaque
+                moving_body_depth = body_size * 1.2
                 
                 # Bulb and beam are attached to moving body
                 bulb_radius = body_size * 0.3  # Increased size for visibility
@@ -140,8 +167,24 @@ class MovingHeadRenderer(FixtureRenderer):
                 # Compose rotations: first pan, then tilt
                 moving_body_rotation = quaternion_multiply(tilt_quat, pan_quat)
 
+                half_depth = moving_body_depth * 0.5
+                pivot_local = np.array(
+                    [0.0, 0.0, half_depth], dtype=np.float32
+                )
+                pivot_delta = quaternion_rotate_vector(
+                    self.orientation,
+                    pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
+                )
+                body_position = (
+                    position_3d[0] + float(pivot_delta[0]),
+                    position_3d[1] + float(pivot_delta[1]),
+                    position_3d[2] + float(pivot_delta[2]),
+                )
+
                 # Render bulb and beam attached to moving body
-                with self.room_renderer.local_rotation(moving_body_rotation):
+                with self.room_renderer.local_position(body_position):
+                    with self.room_renderer.local_rotation(self.orientation):
+                        with self.room_renderer.local_rotation(moving_body_rotation):
                     # Bulb position relative to moving body (lower, at front face of moving body)
                     # Beam comes from the front face of the moving body
                     bulb_y = base_height + moving_body_height / 2 + body_size * 0.3 + body_size * 0.05
@@ -168,19 +211,19 @@ class MovingHeadRenderer(FixtureRenderer):
                         alpha=capped_alpha,
                     )
 
-                    # Render cone beam if dimmer is significant
-                    if dimmer > 0.05:
-                        beam_length = 15.0
-                        beam_alpha = capped_alpha  # Use same alpha as bulb
-                        self.room_renderer.render_cone_beam(
-                            0.0,
-                            bulb_y,
-                            bulb_z,
-                            beam_direction,
-                            boosted_bulb_color,
-                            length=beam_length,
-                            start_radius=bulb_radius * 0.3,
-                            end_radius=bulb_radius * 1.2,
-                            segments=16,
-                            alpha=beam_alpha,
-                        )
+                            # Render cone beam if dimmer is significant
+                            if dimmer > 0.05:
+                                beam_length = 15.0
+                                beam_alpha = capped_alpha  # Use same alpha as bulb
+                                self.room_renderer.render_cone_beam(
+                                    0.0,
+                                    bulb_y,
+                                    bulb_z,
+                                    beam_direction,
+                                    boosted_bulb_color,
+                                    length=beam_length,
+                                    start_radius=bulb_radius * 0.3,
+                                    end_radius=bulb_radius * 1.2,
+                                    segments=16,
+                                    alpha=beam_alpha,
+                                )

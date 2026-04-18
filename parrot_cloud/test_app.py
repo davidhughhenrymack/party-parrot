@@ -298,3 +298,54 @@ def test_patch_video_wall_does_not_reset_dj_table_position(client):
     assert dj["x"] == 1.25
     assert dj["y"] == -4.5
     assert dj["z"] == 0.9
+
+
+def test_fixture_group_name_sets_runtime_fixture_group_key(client):
+    """group_name on fixtures is how the desktop builds FixtureGroup; API must persist it."""
+    created = client.post("/api/venues", json={"name": "Group Name Venue"})
+    assert created.status_code == 200
+    venue_id = created.get_json()["summary"]["id"]
+
+    a = client.post(
+        f"/api/venues/{venue_id}/fixtures",
+        json={
+            "id": "g-a",
+            "fixture_type": "par_rgb",
+            "address": 1,
+            "universe": "default",
+            "x": 1.0,
+            "y": 2.0,
+            "z": 3.0,
+            "options": {},
+        },
+    )
+    b = client.post(
+        f"/api/venues/{venue_id}/fixtures",
+        json={
+            "id": "g-b",
+            "fixture_type": "par_rgb",
+            "address": 5,
+            "universe": "default",
+            "x": 2.0,
+            "y": 2.0,
+            "z": 3.0,
+            "options": {},
+        },
+    )
+    assert a.status_code == 200
+    assert b.status_code == 200
+
+    pa = client.patch(
+        f"/api/venues/{venue_id}/fixtures/g-a",
+        json={"group_name": "Front wash"},
+    )
+    pb = client.patch(
+        f"/api/venues/{venue_id}/fixtures/g-b",
+        json={"group_name": "Front wash"},
+    )
+    assert pa.status_code == 200
+    assert pb.status_code == 200
+    snap = client.get(f"/api/venues/{venue_id}").get_json()
+    by_id = {f["id"]: f for f in snap["fixtures"]}
+    assert by_id["g-a"]["group_name"] == "Front wash"
+    assert by_id["g-b"]["group_name"] == "Front wash"

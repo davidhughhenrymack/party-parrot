@@ -32,6 +32,8 @@ def dmx_clamp_list(items):
 
 usb_path = "/dev/cu.usbserial-EN419206"
 
+_enttec_usb_not_found_logged = False
+
 
 @beartype
 def find_entec_port():
@@ -194,7 +196,10 @@ def get_entec_controller():
     # Try to find the Entec port
     port_path = find_entec_port()
     if port_path is None:
-        print("⚠️  Enttec USB DMX Pro not found — using mock DMX output.")
+        global _enttec_usb_not_found_logged
+        if not _enttec_usb_not_found_logged:
+            print("⚠️  Enttec USB DMX Pro not found — using mock DMX output.")
+            _enttec_usb_not_found_logged = True
         return MockDmxController()
 
     # Try to connect with the found port

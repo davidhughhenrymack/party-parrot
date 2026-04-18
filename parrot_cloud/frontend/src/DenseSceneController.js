@@ -34,6 +34,7 @@ export async function createSceneController({
   onSelectionChange,
   onFixtureContextMenu,
   onFixtureTransform,
+  onFixtureTransformsBatch,
   onVideoWallTransform,
   onSceneObjectTransform,
   onTransformDragStateChange,
@@ -57,6 +58,7 @@ export async function createSceneController({
       onSelectionChange,
       onFixtureContextMenu,
       onFixtureTransform,
+      onFixtureTransformsBatch,
       onVideoWallTransform,
       onSceneObjectTransform,
       onTransformDragStateChange,
@@ -75,6 +77,7 @@ function createThreeSceneController({
   onSelectionChange,
   onFixtureContextMenu,
   onFixtureTransform,
+  onFixtureTransformsBatch,
   onVideoWallTransform,
   onSceneObjectTransform,
   onTransformDragStateChange,
@@ -86,6 +89,10 @@ function createThreeSceneController({
     interactionMode: 'select',
     activeCamera: null,
     selectedEntityKey: null,
+    /** @type {string[]} */
+    selectedFixtureIds: [],
+    multiDragInitialPivot: null,
+    multiDragInitialPositions: null,
     entityMap: new Map(),
     dragSyncTimeoutId: null,
     lastFixtureDragSyncAt: 0,
@@ -98,8 +105,8 @@ function createThreeSceneController({
   /** Upstage of table back edge (venue −y), meters — matches runtime / repository default. */
   /** 0 = silhouette plane flush to the table’s upstage edge (local −Y). */
   const DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0;
-  /** Silhouette feet sit slightly below the table top surface (meters). */
-  const DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.02;
+  /** Extra downward offset (m) so feet sit on the table top; plane centering + texture padding read high at 0.02. */
+  const DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.08;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1b2430);
@@ -126,6 +133,37 @@ function createThreeSceneController({
   transformControls.setMode('translate');
   transformControls.setSpace('world');
   transformControls.size = 0.8;
+
+  /** three.js names the center handle `XYZ` (octahedron in translate, box in uniform scale). */
+  function hideTransformControlsCenterHandles(gizmoRoot) {
+    if (!gizmoRoot?.gizmo || !gizmoRoot?.picker) {
+      return;
+    }
+    for (const mode of ['translate', 'scale']) {
+      const vis = gizmoRoot.gizmo[mode];
+      const pick = gizmoRoot.picker[mode];
+      for (const group of [vis, pick]) {
+        if (!group?.children) {
+          continue;
+        }
+        for (const child of group.children) {
+          if (child.name === 'XYZ') {
+            child.visible = false;
+          }
+        }
+      }
+    }
+  }
+
+  const transformControlsGizmo = transformControls._gizmo;
+  if (transformControlsGizmo?.isTransformControlsGizmo) {
+    const origUpdateMatrixWorld = transformControlsGizmo.updateMatrixWorld.bind(transformControlsGizmo);
+    transformControlsGizmo.updateMatrixWorld = function updateMatrixWorldPatched(force) {
+      origUpdateMatrixWorld(force);
+      hideTransformControlsCenterHandles(this);
+    };
+  }
+
   scene.add(transformControls.getHelper());
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
@@ -175,6 +213,11 @@ function createThreeSceneController({
 
   const sceneContent = new THREE.Group();
   scene.add(sceneContent);
+
+  /** World-space pivot for translating multiple fixtures together (not cleared with sceneContent). */
+  const multiSelectPivot = new THREE.Group();
+  multiSelectPivot.name = 'multiFixturePivot';
+  scene.add(multiSelectPivot);
 
   const floorMaterial = new THREE.MeshStandardMaterial({
     color: 0x13202d,
@@ -398,13 +441,19 @@ function createThreeSceneController({
     return texture;
   }
 
+  /**
+   * Venue axes: x = audience-left (−) to audience-right (+), y = depth, z = height (AGENTS.md).
+   * The perspective camera sits on +venue Y with up = +Z; that view maps world −X to the
+   * screen's right. Negate x so stored venue x matches screen left/right and matches the
+   * desktop OpenGL room (venue x → room X without that flip).
+   */
   function toScenePosition(x, y, z) {
-    return new THREE.Vector3(x, y, z);
+    return new THREE.Vector3(-x, y, z);
   }
 
   function fromScenePosition(vector) {
     return {
-      x: vector.x,
+      x: -vector.x,
       y: vector.y,
       z: vector.z,
     };
@@ -422,21 +471,26 @@ function createThreeSceneController({
   }
 
   function applySelectionVisuals() {
-    const fixtureFocusedSelection =
-      localState.selectedEntityKey &&
-      localState.entityMap.get(localState.selectedEntityKey)?.type === 'fixture';
+    const fixtureSelectionActive =
+      localState.selectedFixtureIds.length > 0 ||
+      (localState.selectedEntityKey &&
+        localState.entityMap.get(localState.selectedEntityKey)?.type === 'fixture');
 
-    setMaterialDimmed(floorMaterial, fixtureFocusedSelection);
+    setMaterialDimmed(floorMaterial, fixtureSelectionActive);
+    const selectedFixtureSet = new Set(localState.selectedFixtureIds);
     localState.entityMap.forEach((entity, entityKey) => {
-      const isSelected = entityKey === localState.selectedEntityKey;
+      const isSelected =
+        entity.type === 'fixture'
+          ? selectedFixtureSet.has(entityKey)
+          : entityKey === localState.selectedEntityKey;
       entity.bodyMaterial.emissive?.setHex(isSelected ? 0x2563eb : 0x000000);
       entity.bodyMaterial.emissiveIntensity = isSelected ? 0.85 : 0.0;
-      setMaterialDimmed(entity.bodyMaterial, fixtureFocusedSelection && !isSelected);
+      setMaterialDimmed(entity.bodyMaterial, fixtureSelectionActive && !isSelected);
       (entity.secondaryMaterials || []).forEach((material) => {
-        setMaterialDimmed(material, fixtureFocusedSelection && !isSelected);
+        setMaterialDimmed(material, fixtureSelectionActive && !isSelected);
       });
       if (entity.helperMaterial) {
-        entity.helperMaterial.opacity = isSelected ? 0.22 : fixtureFocusedSelection ? 0.056 : 0.08;
+        entity.helperMaterial.opacity = isSelected ? 0.22 : fixtureSelectionActive ? 0.056 : 0.08;
       }
       if (entity.coneMaterial) {
         const ro = entity.runtimeConeOpacity ?? 0;
@@ -444,7 +498,7 @@ function createThreeSceneController({
           entity.coneMaterial.opacity = 0;
         } else {
           let mul = 1.0;
-          if (fixtureFocusedSelection && !isSelected) {
+          if (fixtureSelectionActive && !isSelected) {
             mul *= 0.62;
           }
           if (isSelected) {
@@ -456,40 +510,114 @@ function createThreeSceneController({
     });
   }
 
-  function clearSelection() {
+  function clearSelection(options = {}) {
+    const { notifyParent = true } = options;
     localState.selectedEntityKey = null;
+    localState.selectedFixtureIds = [];
     transformControls.detach();
+    multiSelectPivot.position.set(0, 0, 0);
     applySelectionVisuals();
-    onSelectionChange(null);
+    if (notifyParent) {
+      onSelectionChange(null);
+    }
   }
 
-  function setSelection(selection) {
-    if (!selection) {
-      clearSelection();
+  function computeFixtureSelectionCenter(fixtureIds) {
+    const center = new THREE.Vector3();
+    let n = 0;
+    fixtureIds.forEach((id) => {
+      const entity = localState.entityMap.get(id);
+      if (entity?.type === 'fixture') {
+        center.add(entity.group.position);
+        n += 1;
+      }
+    });
+    if (n === 0) {
+      return null;
+    }
+    center.multiplyScalar(1 / n);
+    return center;
+  }
+
+  function setFixtureSelection(fixtureIds, options = {}) {
+    const { notifyParent = true } = options;
+    const unique = [...new Set(fixtureIds)].filter((id) => {
+      const e = localState.entityMap.get(id);
+      return e && e.type === 'fixture';
+    });
+    if (unique.length === 0) {
+      clearSelection({ notifyParent });
       return;
     }
 
-    const entityKey =
-      selection.type === 'fixture'
-        ? selection.fixtureId
-        : selection.type === 'dj_booth'
-          ? 'dj_booth'
-          : 'video_wall';
+    localState.selectedFixtureIds = unique;
+    localState.selectedEntityKey = unique.length === 1 ? unique[0] : 'multi_fixture';
+
+    transformControls.detach();
+    if (unique.length === 1) {
+      const entity = localState.entityMap.get(unique[0]);
+      transformControls.attach(entity.group);
+    } else {
+      transformControls.setMode('translate');
+      const center = computeFixtureSelectionCenter(unique);
+      if (!center) {
+        clearSelection({ notifyParent });
+        return;
+      }
+      multiSelectPivot.position.copy(center);
+      multiSelectPivot.rotation.set(0, 0, 0);
+      transformControls.attach(multiSelectPivot);
+    }
+
+    applySelectionVisuals();
+    if (notifyParent) {
+      const fixtures = unique
+        .map((id) => localState.entityMap.get(id))
+        .filter(Boolean)
+        .map((e) => e.fixture);
+      onSelectionChange({ type: 'fixture', fixtureIds: unique, fixtures });
+    }
+  }
+
+  function setSelection(selection, options = {}) {
+    const { notifyParent = true } = options;
+    if (!selection) {
+      clearSelection({ notifyParent });
+      return;
+    }
+
+    if (selection.type === 'fixture') {
+      const ids =
+        Array.isArray(selection.fixtureIds) && selection.fixtureIds.length > 0
+          ? selection.fixtureIds
+          : selection.fixtureId
+            ? [selection.fixtureId]
+            : [];
+      if (ids.length === 0) {
+        clearSelection({ notifyParent });
+        return;
+      }
+      setFixtureSelection(ids, { notifyParent });
+      return;
+    }
+
+    localState.selectedFixtureIds = [];
+    const entityKey = selection.type === 'dj_booth' ? 'dj_booth' : 'video_wall';
     const entity = localState.entityMap.get(entityKey);
     if (!entity) {
-      clearSelection();
+      clearSelection({ notifyParent });
       return;
     }
 
     localState.selectedEntityKey = entityKey;
     transformControls.attach(entity.group);
     applySelectionVisuals();
-    if (entity.type === 'fixture') {
-      onSelectionChange({ type: 'fixture', fixture: entity.fixture });
-    } else if (entity.type === 'dj_booth') {
-      onSelectionChange({ type: 'dj_booth' });
-    } else {
-      onSelectionChange({ type: 'video_wall' });
+    if (notifyParent) {
+      if (entity.type === 'dj_booth') {
+        onSelectionChange({ type: 'dj_booth' });
+      } else {
+        onSelectionChange({ type: 'video_wall' });
+      }
     }
   }
 
@@ -553,6 +681,9 @@ function createThreeSceneController({
     if (!localState.isTransformDragging) {
       return;
     }
+    if (localState.selectedEntityKey === 'multi_fixture') {
+      return;
+    }
     const entity = localState.entityMap.get(localState.selectedEntityKey);
     if (!entity || entity.type !== 'fixture') {
       return;
@@ -609,7 +740,23 @@ function createThreeSceneController({
       return;
     }
     if (entity.type === 'fixture') {
-      setSelection({ type: 'fixture', fixtureId: entity.fixture.id });
+      const fid = entity.fixture.id;
+      if (event.metaKey || event.ctrlKey) {
+        const next = new Set(localState.selectedFixtureIds);
+        if (next.has(fid)) {
+          next.delete(fid);
+        } else {
+          next.add(fid);
+        }
+        const arr = [...next];
+        if (arr.length === 0) {
+          clearSelection();
+        } else {
+          setFixtureSelection(arr);
+        }
+      } else {
+        setSelection({ type: 'fixture', fixtureId: fid });
+      }
     } else if (entity.type === 'dj_booth') {
       setSelection({ type: 'dj_booth' });
     } else {
@@ -724,12 +871,13 @@ function createThreeSceneController({
       );
       entity.lensMaterial.opacity = 0.35 + dimClamped * 0.58;
     }
-    if (entity.aimGroup) {
+    const pivotGroup = entity.headPivotGroup ?? entity.aimGroup;
+    if (pivotGroup) {
       const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
       const tilt = typeof vis.tilt_deg === 'number' ? THREE.MathUtils.degToRad(vis.tilt_deg) : 0;
-      entity.aimGroup.rotation.order = 'ZXY';
-      entity.aimGroup.rotation.z = -pan;
-      entity.aimGroup.rotation.x = tilt;
+      pivotGroup.rotation.order = 'ZXY';
+      pivotGroup.rotation.z = -pan;
+      pivotGroup.rotation.x = tilt;
     }
     if (entity.stripPanGroup && typeof vis.bar_pan_deg === 'number') {
       entity.stripPanGroup.rotation.x = THREE.MathUtils.degToRad(vis.bar_pan_deg);
@@ -779,9 +927,10 @@ function createThreeSceneController({
     const secondaryMaterials = [];
 
     const placed = addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, profile, fixture.id);
-    const beamParent = placed.aimGroup ?? placed.stripPanGroup ?? runtimeAxesGroup;
+    const beamParent =
+      placed.headPivotGroup ?? placed.aimGroup ?? placed.stripPanGroup ?? runtimeAxesGroup;
     let beam;
-    if (placed.aimGroup) {
+    if (placed.headPivotGroup) {
       beam = beamOriginMovingHeadAimLocal(profile);
     } else if (placed.stripPanGroup) {
       beam = { y: profile.bodyDepth * 0.7, z: profile.bodyHeight };
@@ -847,6 +996,7 @@ function createThreeSceneController({
       lensMaterial,
       runtimeConeOpacity: 0,
       aimGroup: placed.aimGroup ?? null,
+      headPivotGroup: placed.headPivotGroup ?? null,
       stripPanGroup: placed.stripPanGroup ?? null,
       profile,
     });
@@ -1056,6 +1206,13 @@ function createThreeSceneController({
 
   function applyBootstrap(venueSnapshot) {
     const previousSelectedEntityKey = localState.selectedEntityKey;
+    const previousFixtureSelectionIds =
+      localState.selectedFixtureIds.length >= 2
+        ? [...localState.selectedFixtureIds]
+        : previousSelectedEntityKey &&
+            localState.entityMap.get(previousSelectedEntityKey)?.type === 'fixture'
+          ? [previousSelectedEntityKey]
+          : [];
     const previousVenueId = localState.venueSnapshot?.summary?.id ?? null;
     /** Keep orbit pose when the same venue is reloaded (e.g. after PATCH / WS); setView() resets camera by design. */
     let preservedOrbit = null;
@@ -1066,6 +1223,9 @@ function createThreeSceneController({
       preservedOrbit = {
         target: orbitControls.target.clone(),
         position: localState.activeCamera.position.clone(),
+        /** setView() forces orthoCamera.zoom = 1; restore after rebuild (top/front/side). */
+        orthoZoom:
+          localState.activeCamera === orthoCamera ? orthoCamera.zoom : null,
       };
     }
 
@@ -1074,6 +1234,7 @@ function createThreeSceneController({
     sceneContent.clear();
     localState.entityMap.clear();
     localState.selectedEntityKey = null;
+    localState.selectedFixtureIds = [];
     transformControls.detach();
 
     if (!venueSnapshot) {
@@ -1099,20 +1260,42 @@ function createThreeSceneController({
     if (preservedOrbit) {
       orbitControls.target.copy(preservedOrbit.target);
       localState.activeCamera.position.copy(preservedOrbit.position);
+      if (
+        preservedOrbit.orthoZoom != null
+        && localState.activeCamera === orthoCamera
+      ) {
+        orthoCamera.zoom = preservedOrbit.orthoZoom;
+        orthoCamera.updateProjectionMatrix();
+      }
       orbitControls.update();
     }
 
-    const restoreKey =
-      previousSelectedEntityKey != null ? String(previousSelectedEntityKey) : null;
-    if (restoreKey && localState.entityMap.has(restoreKey)) {
-      const entity = localState.entityMap.get(restoreKey);
-      localState.selectedEntityKey = restoreKey;
-      transformControls.attach(entity.group);
-      applySelectionVisuals();
+    const restoreIds =
+      previousVenueId !== null &&
+      venueSnapshot?.summary?.id === previousVenueId &&
+      previousFixtureSelectionIds.length > 0 &&
+      previousFixtureSelectionIds.every((id) => localState.entityMap.has(id))
+        ? previousFixtureSelectionIds
+        : null;
+
+    if (restoreIds) {
+      setFixtureSelection(restoreIds);
     } else {
-      applySelectionVisuals();
-      if (previousSelectedEntityKey) {
-        onSelectionChange(null);
+      const restoreKey =
+        previousSelectedEntityKey != null ? String(previousSelectedEntityKey) : null;
+      if (restoreKey && localState.entityMap.has(restoreKey)) {
+        const entity = localState.entityMap.get(restoreKey);
+        localState.selectedEntityKey = restoreKey;
+        if (entity.type === 'fixture') {
+          localState.selectedFixtureIds = [restoreKey];
+        }
+        transformControls.attach(entity.group);
+        applySelectionVisuals();
+      } else {
+        applySelectionVisuals();
+        if (previousSelectedEntityKey || previousFixtureSelectionIds.length) {
+          onSelectionChange(null);
+        }
       }
     }
   }
@@ -1122,16 +1305,46 @@ function createThreeSceneController({
       localState.isTransformDragging = true;
       orbitControls.enabled = false;
       renderer.domElement.style.cursor = 'grabbing';
+      if (localState.selectedEntityKey === 'multi_fixture') {
+        localState.multiDragInitialPivot = multiSelectPivot.position.clone();
+        localState.multiDragInitialPositions = new Map();
+        localState.selectedFixtureIds.forEach((id) => {
+          const ent = localState.entityMap.get(id);
+          if (ent?.type === 'fixture') {
+            localState.multiDragInitialPositions.set(id, ent.group.position.clone());
+          }
+        });
+      }
       onTransformDragStateChange?.(true);
       return;
     }
     localState.isTransformDragging = false;
+    localState.multiDragInitialPivot = null;
+    localState.multiDragInitialPositions = null;
     localState.suppressCanvasDeselectUntil = performance.now() + 320;
     syncInteractionMode();
     onTransformDragStateChange?.(false);
   });
 
   transformControls.addEventListener('objectChange', () => {
+    if (
+      localState.selectedEntityKey === 'multi_fixture' &&
+      localState.multiDragInitialPivot &&
+      localState.multiDragInitialPositions
+    ) {
+      const delta = new THREE.Vector3().subVectors(
+        multiSelectPivot.position,
+        localState.multiDragInitialPivot
+      );
+      localState.selectedFixtureIds.forEach((id) => {
+        const ent = localState.entityMap.get(id);
+        const initial = localState.multiDragInitialPositions.get(id);
+        if (ent?.type === 'fixture' && initial) {
+          ent.group.position.copy(initial).add(delta);
+        }
+      });
+      return;
+    }
     scheduleFixtureDragSync();
   });
 
@@ -1139,6 +1352,22 @@ function createThreeSceneController({
     if (!localState.selectedEntityKey) {
       return;
     }
+
+    if (localState.selectedEntityKey === 'multi_fixture' && onFixtureTransformsBatch) {
+      if (localState.dragSyncTimeoutId !== null) {
+        window.clearTimeout(localState.dragSyncTimeoutId);
+        localState.dragSyncTimeoutId = null;
+      }
+      const payloads = localState.selectedFixtureIds
+        .map((id) => localState.entityMap.get(id))
+        .filter((e) => e && e.type === 'fixture')
+        .map((e) => buildFixtureTransformPayload(e));
+      if (payloads.length > 0) {
+        await onFixtureTransformsBatch(payloads);
+      }
+      return;
+    }
+
     const entity = localState.entityMap.get(localState.selectedEntityKey);
     if (!entity) {
       return;

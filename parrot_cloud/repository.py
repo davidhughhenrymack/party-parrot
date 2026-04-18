@@ -37,7 +37,7 @@ DJ_TABLE_DEPTH_METERS = 1.2192
 DJ_TABLE_WIDTH_METERS = 2.4384
 # Silhouette is centered on the DJ table’s upstage edge; extra meters further upstage (optional).
 DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.0
-DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.02
+DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.08
 DISPLAY_MODE_VALUES = {"venue", "dmx_heatmap", "vj"}
 
 

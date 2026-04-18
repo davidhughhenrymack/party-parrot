@@ -91,12 +91,18 @@ class ChauvetMoverBase(MovingHead):
         super().set_color(closest.color)
 
     def set_gobo(self, name):
-        # Find in the gobo wheel
+        # Find in the gobo wheel; unknown names fall back so interpreters never crash the app.
         acceptable_gobos = [i for i in self.gobo_wheel if i.name == name]
-        if len(acceptable_gobos) == 0:
-            raise ValueError(f"Unknown gobo {name}")
-
-        gobo = acceptable_gobos[0]
+        if len(acceptable_gobos) > 0:
+            gobo = acceptable_gobos[0]
+        else:
+            open_gobos = [i for i in self.gobo_wheel if i.name == "open"]
+            if open_gobos:
+                gobo = open_gobos[0]
+            elif self.gobo_wheel:
+                gobo = self.gobo_wheel[0]
+            else:
+                return
         self.set("gobo_wheel", gobo.dmx_value)
 
     def set_strobe(self, value):

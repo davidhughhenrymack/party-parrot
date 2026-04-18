@@ -178,7 +178,7 @@ export default function DenseVenueEditorPage({ venueId }) {
   const wsRef = useRef(null);
   const venueRef = useRef(null);
   const videoWallLockedRef = useRef(false);
-  const selectedFixtureIdRef = useRef(null);
+  const selectedFixtureIdsRef = useRef([]);
   const transformDraggingRef = useRef(false);
   const pendingVenueSnapshotRef = useRef(null);
   const venueNameSaveTimerRef = useRef(null);
@@ -189,6 +189,8 @@ export default function DenseVenueEditorPage({ venueId }) {
   const livePulseHideTimerRef = useRef(null);
   const activeVenueIdRef = useRef(null);
   const editorMenuRef = useRef(null);
+  /** Index in `fixturesInPanelOrder` for Shift+click range selection (last plain click in the list). */
+  const fixtureListRangeAnchorIndexRef = useRef(-1);
 
   const [venueSummaries, setVenueSummaries] = useState([]);
   const [venueSnapshot, setVenueSnapshot] = useState(null);
@@ -198,7 +200,7 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [interactionMode, setInteractionMode] = useState('select');
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [selectedKind, setSelectedKind] = useState(null);
-  const [selectedFixtureId, setSelectedFixtureId] = useState(null);
+  const [selectedFixtureIds, setSelectedFixtureIds] = useState([]);
   const [venueNameDraft, setVenueNameDraft] = useState('');
   const [floorValues, setFloorValues] = useState({
     width: '',
@@ -240,6 +242,10 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [editorMenuOpen, setEditorMenuOpen] = useState(false);
   const [editorMenuSection, setEditorMenuSection] = useState(null);
 
+  /** Primary fixture for detail actions (last clicked in multi-select). */
+  const selectedFixtureId =
+    selectedFixtureIds.length > 0 ? selectedFixtureIds[selectedFixtureIds.length - 1] : null;
+
   const selectedFixture = useMemo(() => {
     if (!venueSnapshot || !selectedFixtureId) {
       return null;
@@ -265,6 +271,43 @@ export default function DenseVenueEditorPage({ venueId }) {
     [venueId, venueSummaries],
   );
 
+  const fixtureListGroups = useMemo(() => {
+    const fixtures = venueSnapshot?.fixtures || [];
+    const byName = new Map();
+    const ungrouped = [];
+    for (const f of fixtures) {
+      const gn = f.group_name?.trim();
+      if (!gn) {
+        ungrouped.push(f);
+      } else {
+        if (!byName.has(gn)) {
+          byName.set(gn, []);
+        }
+        byName.get(gn).push(f);
+      }
+    }
+    const groups = [...byName.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, items]) => ({
+        name,
+        fixtures: items.sort((x, y) => (x.name || x.fixture_type).localeCompare(y.name || y.fixture_type)),
+      }));
+    return { groups, ungrouped };
+  }, [venueSnapshot]);
+
+  const fixturesInPanelOrder = useMemo(() => {
+    const { ungrouped, groups } = fixtureListGroups;
+    const out = [...ungrouped];
+    for (const g of groups) {
+      out.push(...g.fixtures);
+    }
+    return out;
+  }, [fixtureListGroups]);
+
+  useEffect(() => {
+    fixtureListRangeAnchorIndexRef.current = -1;
+  }, [venueId]);
+
   useEffect(() => {
     document.body.dataset.testMode = isTestMode ? 'true' : 'false';
     let disposed = false;
@@ -276,7 +319,7 @@ export default function DenseVenueEditorPage({ venueId }) {
         onSelectionChange: handleSelectionChange,
         onFixtureContextMenu: ({ fixture, x, y }) => {
           setSelectedKind('fixture');
-          setSelectedFixtureId(fixture.id);
+          setSelectedFixtureIds([fixture.id]);
           setContextMenu({ visible: true, x, y });
         },
         onFixtureTransform: async (payload) => {
@@ -293,6 +336,35 @@ export default function DenseVenueEditorPage({ venueId }) {
           });
           if (!transformDraggingRef.current) {
             setVenueSnapshot(snapshot);
+          } else {
+            pendingVenueSnapshotRef.current = pickNewerVenueSnapshot(
+              pendingVenueSnapshotRef.current,
+              snapshot,
+            );
+          }
+        },
+        onFixtureTransformsBatch: async (payloads) => {
+          if (!venueRef.current || payloads.length === 0) {
+            return;
+          }
+          let snapshot = venueRef.current;
+          for (const payload of payloads) {
+            snapshot = await apiPatchFixture(venueRef.current.summary.id, payload.fixtureId, {
+              x: payload.x,
+              y: payload.y,
+              z: payload.z,
+              rotation_x: payload.rotation_x,
+              rotation_y: payload.rotation_y,
+              rotation_z: payload.rotation_z,
+            });
+          }
+          if (!transformDraggingRef.current) {
+            setVenueSnapshot(snapshot);
+          } else {
+            pendingVenueSnapshotRef.current = pickNewerVenueSnapshot(
+              pendingVenueSnapshotRef.current,
+              snapshot,
+            );
           }
         },
         onVideoWallTransform: async (payload) => {
@@ -552,7 +624,7 @@ export default function DenseVenueEditorPage({ venueId }) {
     if (interactionMode !== 'pan' && interactionMode !== 'rotate') {
       return;
     }
-    setSelectedFixtureId((currentId) => (currentId ? null : currentId));
+    setSelectedFixtureIds((ids) => (ids.length > 0 ? [] : ids));
     setSelectedKind((currentKind) => (currentKind === 'fixture' ? null : currentKind));
     setContextMenu((current) => ({ ...current, visible: false }));
   }, [interactionMode]);
@@ -693,13 +765,16 @@ export default function DenseVenueEditorPage({ venueId }) {
   }, [videoWallSizeValues, venueSnapshot]);
 
   useEffect(() => {
-    selectedFixtureIdRef.current = selectedFixtureId;
-    if (selectedFixtureId) {
-      sceneControllerRef.current?.setSelection({ type: 'fixture', fixtureId: selectedFixtureId });
+    selectedFixtureIdsRef.current = selectedFixtureIds;
+    if (selectedKind === 'fixture' && selectedFixtureIds.length > 0) {
+      sceneControllerRef.current?.setSelection(
+        { type: 'fixture', fixtureIds: selectedFixtureIds },
+        { notifyParent: false },
+      );
     } else if (selectedKind !== 'video_wall' && selectedKind !== 'dj_booth') {
-      sceneControllerRef.current?.setSelection(null);
+      sceneControllerRef.current?.setSelection(null, { notifyParent: false });
     }
-  }, [selectedFixtureId, selectedKind]);
+  }, [selectedFixtureIds, selectedKind]);
 
   function bumpLiveLightingPulse() {
     if (activeVenueIdRef.current !== venueId) {
@@ -785,12 +860,14 @@ export default function DenseVenueEditorPage({ venueId }) {
     try {
       const snapshot = await fetchJson(`/api/venues/${nextVenueId}`);
       setVenueSnapshot(snapshot);
-      if (
-        selectedFixtureIdRef.current &&
-        !snapshot.fixtures.some((fixture) => fixture.id === selectedFixtureIdRef.current)
-      ) {
-        setSelectedFixtureId(null);
-        setSelectedKind(null);
+      if (selectedFixtureIdsRef.current.length > 0) {
+        const missing = selectedFixtureIdsRef.current.some(
+          (id) => !snapshot.fixtures.some((fixture) => fixture.id === id),
+        );
+        if (missing) {
+          setSelectedFixtureIds([]);
+          setSelectedKind(null);
+        }
       }
     } catch (error) {
       console.error('Failed to load venue snapshot:', error);
@@ -801,15 +878,71 @@ export default function DenseVenueEditorPage({ venueId }) {
   function handleSelectionChange(selection) {
     if (!selection) {
       setSelectedKind(null);
-      setSelectedFixtureId(null);
+      setSelectedFixtureIds([]);
       return;
     }
-    setSelectedKind(selection.type);
     if (selection.type === 'fixture') {
-      setSelectedFixtureId(selection.fixture.id);
-    } else {
-      setSelectedFixtureId(null);
+      setSelectedKind('fixture');
+      const ids =
+        Array.isArray(selection.fixtureIds) && selection.fixtureIds.length > 0
+          ? selection.fixtureIds
+          : selection.fixtures?.map((f) => f.id) ??
+            (selection.fixture
+              ? [selection.fixture.id]
+              : []);
+      setSelectedFixtureIds(ids);
+      return;
     }
+    setSelectedFixtureIds([]);
+    setSelectedKind(selection.type);
+  }
+
+  function handleFixtureListRowClick(fixture, event) {
+    setSelectedKind('fixture');
+    const flat = fixturesInPanelOrder;
+    const clickedIndex = flat.findIndex((f) => f.id === fixture.id);
+    if (clickedIndex < 0) {
+      return;
+    }
+
+    const shiftRange =
+      event.shiftKey || (event.nativeEvent && typeof event.nativeEvent.getModifierState === 'function'
+        ? event.nativeEvent.getModifierState('Shift')
+        : false);
+
+    if (shiftRange) {
+      event.preventDefault();
+      let anchor = fixtureListRangeAnchorIndexRef.current;
+      if (anchor < 0 || anchor >= flat.length) {
+        anchor = selectedFixtureId
+          ? flat.findIndex((f) => f.id === selectedFixtureId)
+          : 0;
+        if (anchor < 0) {
+          anchor = 0;
+        }
+      }
+      const rangeStart = Math.min(anchor, clickedIndex);
+      const rangeEnd = Math.max(anchor, clickedIndex);
+      setSelectedFixtureIds(flat.slice(rangeStart, rangeEnd + 1).map((f) => f.id));
+      return;
+    }
+
+    if (event.metaKey || event.ctrlKey) {
+      event.preventDefault();
+      setSelectedFixtureIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(fixture.id)) {
+          next.delete(fixture.id);
+        } else {
+          next.add(fixture.id);
+        }
+        return [...next];
+      });
+      return;
+    }
+
+    fixtureListRangeAnchorIndexRef.current = clickedIndex;
+    setSelectedFixtureIds([fixture.id]);
   }
 
   function handleOpenAddFixtureModal() {
@@ -905,6 +1038,67 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
   }
 
+  async function handleGroupSelectedFixtures() {
+    if (!venueSnapshot || selectedFixtureIds.length < 2) {
+      return;
+    }
+    const base =
+      window.prompt('Group name', `Group ${fixtureListGroups.groups.length + 1}`)?.trim() ?? '';
+    if (!base) {
+      return;
+    }
+    let snapshot = venueSnapshot;
+    for (const id of selectedFixtureIds) {
+      snapshot = await apiPatchFixture(venueSnapshot.summary.id, id, { group_name: base });
+    }
+    setVenueSnapshot(snapshot);
+  }
+
+  async function handleRenameFixtureGroup(oldName, newName) {
+    if (!venueSnapshot || !oldName?.trim()) {
+      return;
+    }
+    const next = newName?.trim() ?? '';
+    if (!next || next === oldName) {
+      return;
+    }
+    const fixtures = venueSnapshot.fixtures.filter((f) => f.group_name === oldName);
+    if (fixtures.length === 0) {
+      return;
+    }
+    let snapshot = venueSnapshot;
+    for (const f of fixtures) {
+      snapshot = await apiPatchFixture(venueSnapshot.summary.id, f.id, { group_name: next });
+    }
+    setVenueSnapshot(snapshot);
+  }
+
+  async function handleRenameFixtureGroupPrompt(oldName) {
+    if (!venueSnapshot || !oldName?.trim()) {
+      return;
+    }
+    const raw = window.prompt('Rename group', oldName);
+    if (raw == null) {
+      return;
+    }
+    await handleRenameFixtureGroup(oldName, raw);
+  }
+
+  function handleFixtureGroupHeaderClick(groupedFixtures) {
+    setSelectedKind('fixture');
+    const idSet = new Set(groupedFixtures.map((f) => f.id));
+    const ordered = fixturesInPanelOrder.filter((f) => idSet.has(f.id));
+    if (ordered.length === 0) {
+      return;
+    }
+    setSelectedFixtureIds(ordered.map((f) => f.id));
+    const flat = fixturesInPanelOrder;
+    const firstIdx = flat.findIndex((f) => idSet.has(f.id));
+    if (firstIdx >= 0) {
+      fixtureListRangeAnchorIndexRef.current = firstIdx;
+    }
+  }
+
   async function handleSaveSelectedFixtureAddressing() {
     if (!venueSnapshot || !selectedFixture) {
       return;
@@ -924,8 +1118,11 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
     const snap = await apiDeleteFixture(venueSnapshot.summary.id, selectedFixture.id);
     setVenueSnapshot(snap);
-    setSelectedFixtureId(null);
-    setSelectedKind(null);
+    const nextIds = selectedFixtureIds.filter((id) => id !== selectedFixture.id);
+    setSelectedFixtureIds(nextIds);
+    if (nextIds.length === 0) {
+      setSelectedKind(null);
+    }
   }
 
   async function handleCloneFixture(fixture) {
@@ -968,12 +1165,24 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
     const deltaRadians = degreesToRadians(ROTATION_STEP_DEGREES * direction);
 
-    if (selectedKind === 'fixture' && selectedFixture) {
-      const nextRotation = normalizeRightAngleRadians((selectedFixture[`rotation_${axis}`] || 0) + deltaRadians);
-      const snap = await apiPatchFixture(venueSnapshot.summary.id, selectedFixture.id, {
-        [`rotation_${axis}`]: nextRotation,
-      });
-      setVenueSnapshot(snap);
+    if (selectedKind === 'fixture') {
+      if (selectedFixtureIds.length === 0) {
+        return;
+      }
+      let snapshot = venueSnapshot;
+      for (const id of selectedFixtureIds) {
+        const fixture = snapshot.fixtures.find((f) => f.id === id);
+        if (!fixture) {
+          continue;
+        }
+        const nextRotation = normalizeRightAngleRadians(
+          (fixture[`rotation_${axis}`] || 0) + deltaRadians,
+        );
+        snapshot = await apiPatchFixture(venueSnapshot.summary.id, id, {
+          [`rotation_${axis}`]: nextRotation,
+        });
+      }
+      setVenueSnapshot(snapshot);
       return;
     }
 
@@ -1160,6 +1369,15 @@ export default function DenseVenueEditorPage({ venueId }) {
                   Magic repatch
                 </button>
                 <button
+                  type="button"
+                  className="small-button secondary-button dense-group-fixtures-button"
+                  disabled={!venueSnapshot || selectedFixtureIds.length < 2}
+                  title="Cmd+click to toggle. Shift+click a second row for a range. Group sets FixtureGroup (group_name)."
+                  onClick={() => void handleGroupSelectedFixtures()}
+                >
+                  Group
+                </button>
+                <button
                   id="open-add-light-modal-button"
                   type="button"
                   className="small-button secondary-button icon-only-button dense-lights-add-button"
@@ -1175,61 +1393,152 @@ export default function DenseVenueEditorPage({ venueId }) {
               {(venueSnapshot?.fixtures || []).length === 0 ? (
                 <div className="fixture-empty-state">No lights yet. Tap + next to Lights.</div>
               ) : (
-                (venueSnapshot?.fixtures || []).map((fixture) => (
-                  <button
-                    key={fixture.id}
-                    className={`fixture-row dense-fixture-row${selectedFixtureId === fixture.id ? ' active-choice' : ''}`}
-                    onClick={() => {
-                      setSelectedKind('fixture');
-                      setSelectedFixtureId(fixture.id);
-                    }}
-                  >
-                    <span className="dense-fixture-main">
-                      <strong>{fixture.name || fixture.fixture_type}</strong>
-                      {fixture.name ? (
-                        <span className="fixture-row-meta">{fixture.fixture_type}</span>
-                      ) : null}
-                    </span>
-                    <span className="dense-fixture-actions">
-                      {selectedFixtureId === fixture.id ? (
-                        <>
+                <>
+                  {fixtureListGroups.ungrouped.map((fixture) => (
+                    <button
+                      key={fixture.id}
+                      type="button"
+                      className={`fixture-row dense-fixture-row${selectedFixtureIds.includes(fixture.id) ? ' active-choice' : ''}`}
+                      onMouseDown={(event) => {
+                        if (event.shiftKey || event.metaKey || event.ctrlKey) {
+                          event.preventDefault();
+                        }
+                      }}
+                      onClick={(event) => handleFixtureListRowClick(fixture, event)}
+                    >
+                      <span className="dense-fixture-main">
+                        <strong>{fixture.name || fixture.fixture_type}</strong>
+                        {fixture.name ? (
+                          <span className="fixture-row-meta">{fixture.fixture_type}</span>
+                        ) : null}
+                      </span>
+                      <span className="dense-fixture-actions">
+                        {selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? (
+                          <>
+                            <button
+                              className="icon-button link-button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setAddressModalOpen(true);
+                              }}
+                            >
+                              {`${fixture.universe}:${fixture.address}`}
+                            </button>
+                            <button
+                              type="button"
+                              className="icon-button small-button secondary-button"
+                              aria-label="Clone light"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void handleCloneFixture(fixture);
+                              }}
+                            >
+                              Clone
+                            </button>
+                            <button
+                              className="icon-button danger-button"
+                              aria-label="Delete light"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void handleRemoveFixture();
+                              }}
+                            >
+                              🗑
+                            </button>
+                          </>
+                        ) : (
+                          <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                  {fixtureListGroups.groups.map(({ name, fixtures: groupedFixtures }) => (
+                    <div key={name} className="dense-fixture-group-block">
+                      <div className="dense-fixture-group-header">
+                        <div className="dense-fixture-group-header-row">
                           <button
-                            className="icon-button link-button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setAddressModalOpen(true);
-                            }}
+                            type="button"
+                            className="dense-fixture-group-title-button"
+                            onClick={() => handleFixtureGroupHeaderClick(groupedFixtures)}
                           >
-                            {`${fixture.universe}:${fixture.address}`}
+                            {name}
                           </button>
                           <button
                             type="button"
-                            className="icon-button small-button secondary-button"
-                            aria-label="Clone light"
+                            className="small-button secondary-button dense-fixture-group-rename-button"
+                            aria-label={`Rename group ${name}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              void handleCloneFixture(fixture);
+                              void handleRenameFixtureGroupPrompt(name);
                             }}
                           >
-                            Clone
+                            Rename
                           </button>
+                        </div>
+                      </div>
+                      <div className="dense-fixture-group-nested">
+                        {groupedFixtures.map((fixture) => (
                           <button
-                            className="icon-button danger-button"
-                            aria-label="Delete light"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleRemoveFixture();
+                            key={fixture.id}
+                            type="button"
+                            className={`fixture-row dense-fixture-row dense-fixture-row-nested${selectedFixtureIds.includes(fixture.id) ? ' active-choice' : ''}`}
+                            onMouseDown={(event) => {
+                              if (event.shiftKey || event.metaKey || event.ctrlKey) {
+                                event.preventDefault();
+                              }
                             }}
+                            onClick={(event) => handleFixtureListRowClick(fixture, event)}
                           >
-                            🗑
+                            <span className="dense-fixture-main">
+                              <strong>{fixture.name || fixture.fixture_type}</strong>
+                              {fixture.name ? (
+                                <span className="fixture-row-meta">{fixture.fixture_type}</span>
+                              ) : null}
+                            </span>
+                            <span className="dense-fixture-actions">
+                              {selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? (
+                                <>
+                                  <button
+                                    className="icon-button link-button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setAddressModalOpen(true);
+                                    }}
+                                  >
+                                    {`${fixture.universe}:${fixture.address}`}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="icon-button small-button secondary-button"
+                                    aria-label="Clone light"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void handleCloneFixture(fixture);
+                                    }}
+                                  >
+                                    Clone
+                                  </button>
+                                  <button
+                                    className="icon-button danger-button"
+                                    aria-label="Delete light"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void handleRemoveFixture();
+                                    }}
+                                  >
+                                    🗑
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
+                              )}
+                            </span>
                           </button>
-                        </>
-                      ) : (
-                        <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
-                      )}
-                    </span>
-                  </button>
-                ))
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </div>
@@ -1355,7 +1664,7 @@ export default function DenseVenueEditorPage({ venueId }) {
 
           <div id="viewport" ref={viewportRef} />
 
-          {selectedKind ? (
+          {selectedKind && !(selectedKind === 'fixture' && selectedFixtureIds.length === 0) ? (
             <div className="floating-transform-panel">
               <div className="dense-section-header">
                 <h3>{selectedKind === 'fixture' ? 'Fixture Rotation' : selectedKind === 'video_wall' ? 'Video Wall Rotation' : 'DJ Booth Rotation'}</h3>
@@ -1366,7 +1675,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                   : (selectedSceneObject?.[`rotation_${axis}`] || 0);
                 return (
                   <div key={axis} className="rotation-row">
-                    <span className="rotation-axis">{axis.toUpperCase()}</span>
+                    <span className={`rotation-axis rotation-axis-${axis}`}>{axis.toUpperCase()}</span>
                     <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, -1)}>
                       -45°
                     </button>

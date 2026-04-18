@@ -480,6 +480,60 @@ label {
   margin-bottom: 0;
 }
 
+.dense-fixture-group-block {
+  margin-top: 10px;
+}
+
+.dense-fixture-group-header {
+  padding: 4px 2px 6px 8px;
+}
+
+.dense-fixture-group-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dense-fixture-group-title-button {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 0;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #8b9cad;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dense-fixture-group-title-button:hover {
+  color: #c9d1d9;
+}
+
+.dense-fixture-group-rename-button {
+  flex: 0 0 auto;
+}
+
+.dense-fixture-group-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-left: 2px solid #30363d;
+  margin-left: 6px;
+  padding-left: 4px;
+}
+
+.dense-fixture-row-nested {
+  margin-top: 4px;
+}
+
 .dense-fixture-row {
   margin-top: 0;
   padding: 8px 10px;
@@ -488,6 +542,8 @@ label {
   align-items: flex-start;
   align-content: flex-start;
   min-width: 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .dense-fixture-main {
@@ -589,9 +645,21 @@ label {
 
 .rotation-axis {
   width: 18px;
-  color: #9ba8b4;
   font-size: 12px;
   font-weight: 700;
+}
+
+/* Match three.js TransformControls gizmo (default matRed / matGreen / matBlue). */
+.rotation-axis.rotation-axis-x {
+  color: #ff0000;
+}
+
+.rotation-axis.rotation-axis-y {
+  color: #00ff00;
+}
+
+.rotation-axis.rotation-axis-z {
+  color: #0000ff;
 }
 
 .rotation-value {

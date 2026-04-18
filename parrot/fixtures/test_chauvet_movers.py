@@ -129,10 +129,10 @@ class TestChauvetMoverBase:
         self.mover.set_gobo("dots")
         assert self.mover.values[8] == 50  # Dots DMX value
 
-    def test_set_gobo_invalid(self):
-        """Test setting an invalid gobo raises error"""
-        with pytest.raises(ValueError, match="Unknown gobo"):
-            self.mover.set_gobo("invalid_gobo")
+    def test_set_gobo_invalid_falls_back_to_open(self):
+        """Unknown gobo names fall back to open (or first slot) instead of raising."""
+        self.mover.set_gobo("invalid_gobo")
+        assert self.mover.values[8] == 0  # open DMX value
 
     def test_set_strobe_low_value(self):
         """Test strobe setting with low value opens shutter"""

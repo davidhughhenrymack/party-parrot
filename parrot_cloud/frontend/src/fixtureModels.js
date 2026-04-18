@@ -32,7 +32,7 @@ function parLikeDimensions() {
 
 function movingHeadDimensions() {
   const bs = desktopBodySize();
-  const baseHeight = bs * 0.3;
+  const baseHeight = bs * 0.42;
   const headHeight = bs * 0.5;
   const headCenterZ = baseHeight + bs * 0.3 + headHeight / 2;
   return {
@@ -115,19 +115,19 @@ export function resolveFixtureVisualModel(fixtureType) {
 }
 
 /**
- * Beam origin in moving-head aim group local space (pivot at top of base).
+ * Beam origin in moving-head head pivot group local space (rear face of head cuboid).
  * @param {ReturnType<typeof resolveFixtureVisualModel>} model
  */
 export function beamOriginMovingHeadAimLocal(model) {
   return {
-    y: model.headDepth * 0.6,
-    z: model.headOffsetZ + model.headHeight * 0.05,
+    y: model.headDepth * 1.1,
+    z: model.headHeight * 0.05,
   };
 }
 
 /**
  * @param {import('three').MeshStandardMaterial} bodyMaterial
- * @returns {{ aimGroup?: import('three').Group, stripPanGroup?: import('three').Group }}
+ * @returns {{ aimGroup?: import('three').Group, headPivotGroup?: import('three').Group, stripPanGroup?: import('three').Group }}
  */
 export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, model, entityKey) {
   const userData = { entityKey };
@@ -143,15 +143,18 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
 
     const aimGroup = new THREE.Group();
     aimGroup.position.set(0, 0, model.baseHeight);
+    const headPivotGroup = new THREE.Group();
+    headPivotGroup.position.set(0, -model.headDepth / 2, model.headOffsetZ);
     const head = new THREE.Mesh(
       new THREE.BoxGeometry(model.headWidth, model.headDepth, model.headHeight),
       bodyMaterial
     );
-    head.position.set(0, 0, model.headOffsetZ);
+    head.position.set(0, model.headDepth / 2, 0);
     head.userData = userData;
-    aimGroup.add(head);
+    headPivotGroup.add(head);
+    aimGroup.add(headPivotGroup);
     runtimeAxesGroup.add(aimGroup);
-    return { aimGroup };
+    return { aimGroup, headPivotGroup };
   }
 
   if (model.kind === 'motionstrip') {
