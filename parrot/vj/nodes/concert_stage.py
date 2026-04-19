@@ -2,7 +2,7 @@
 
 import moderngl as mgl
 import numpy as np
-from typing import Optional
+from typing import Literal, Optional
 from beartype import beartype
 
 from dataclasses import dataclass
@@ -27,7 +27,9 @@ from parrot.vj.nodes.saturation_pulse import SaturationPulse
 from parrot.vj.nodes.brightness_pulse import BrightnessPulse
 from parrot.vj.nodes.camera_zoom import CameraZoom
 from parrot.vj.nodes.crt_mask import CRTMask
+from parrot.vj.nodes.nyancat_background import NyancatBackground
 from parrot.vj.nodes.bright_glow import BrightGlow
+from parrot.vj.nodes.circle_rainbow_background import CircleRainbowBackground
 from parrot.director.frame import FrameSignal
 from parrot.vj.profiler import vj_profiler
 from parrot.fixtures.moving_head import MovingHead
@@ -56,16 +58,18 @@ class _PromSceneSpec:
     `tint` drives `SparkleFieldEffect`'s palette. `video_fn_group`, when set,
     places a looping `VideoPlayer` (from `media/videos/<fn_group>/*/`) behind
     the sparkles with a music-video-style CRT effect stack; when `None` the
-    scene is sparkles-only on a black background.
+    scene is sparkles-only on a black background unless ``backdrop`` selects
+    a procedural background (e.g. circle rainbow or Nyancat shader).
     """
 
     dj_name: str
     tint: tuple[float, float, float]
     video_fn_group: str | None = None
+    backdrop: Literal["black", "circle_rainbow", "nyancat"] = "black"
 
 
-# Per-DJ prom scene recipes. DMACK gets the prom video backdrop; the other
-# DJs stay on the original sparkles-only layout for now.
+# Per-DJ prom scene recipes. DMACK gets the prom video backdrop; wufky gets
+# the Nyancat shader; mayhem gets circle rainbow; others default to black + sparkles.
 _PROM_SCENES: dict[VJMode, _PromSceneSpec] = {
     VJMode.prom_dmack: _PromSceneSpec(
         dj_name="dmack",
@@ -73,10 +77,14 @@ _PROM_SCENES: dict[VJMode, _PromSceneSpec] = {
         video_fn_group="prom",
     ),
     VJMode.prom_wufky: _PromSceneSpec(
-        dj_name="wufky", tint=(1.0, 0.25, 0.75)  # hot magenta
+        dj_name="wufky",
+        tint=(1.0, 0.25, 0.75),  # hot magenta
+        backdrop="nyancat",
     ),
     VJMode.prom_mayhem: _PromSceneSpec(
-        dj_name="mayhem", tint=(0.30, 0.55, 1.0)  # electric blue
+        dj_name="mayhem",
+        tint=(0.30, 0.55, 1.0),  # electric blue
+        backdrop="circle_rainbow",
     ),
     VJMode.prom_thunderbunny: _PromSceneSpec(
         dj_name="thunderbunny", tint=(0.50, 1.0, 0.35)  # neon green
@@ -170,16 +178,30 @@ def _build_prom_scene(
         bg_color=(0, 0, 0),
     )
 
-    if spec.video_fn_group is None:
+    if spec.video_fn_group is not None:
+        video_backdrop = _build_prom_video_backdrop(spec.video_fn_group)
         return LayerCompose(
-            LayerSpec(sparkles, BlendMode.NORMAL),
+            LayerSpec(video_backdrop, BlendMode.NORMAL),
+            LayerSpec(sparkles, BlendMode.ADDITIVE),
             LayerSpec(title, BlendMode.SCREEN),
         )
 
-    video_backdrop = _build_prom_video_backdrop(spec.video_fn_group)
+    if spec.backdrop == "nyancat":
+        return LayerCompose(
+            LayerSpec(NyancatBackground(), BlendMode.NORMAL),
+            LayerSpec(sparkles, BlendMode.ADDITIVE),
+            LayerSpec(title, BlendMode.SCREEN),
+        )
+
+    if spec.backdrop == "circle_rainbow":
+        return LayerCompose(
+            LayerSpec(CircleRainbowBackground(), BlendMode.NORMAL),
+            LayerSpec(sparkles, BlendMode.ADDITIVE),
+            LayerSpec(title, BlendMode.SCREEN),
+        )
+
     return LayerCompose(
-        LayerSpec(video_backdrop, BlendMode.NORMAL),
-        LayerSpec(sparkles, BlendMode.ADDITIVE),
+        LayerSpec(sparkles, BlendMode.NORMAL),
         LayerSpec(title, BlendMode.SCREEN),
     )
 

@@ -103,23 +103,20 @@ class TestModes(unittest.TestCase):
             interpreter.step(self.frame, self.scheme)
 
     def test_sheer_lights_are_silenced_in_chill(self):
-        """Sheer lights are an Ethereal/Rave feature only — chill keeps them off."""
+        """Sheer group stays dark in chill, including moving heads."""
         from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
             ChauvetIntimidatorHybrid140SR_19Ch,
         )
 
-        for mode in (Mode.chill,):
-            sheer = ChauvetIntimidatorHybrid140SR_19Ch(1)
-            sheer.cloud_group_name = "sheer lights"
-            other = ChauvetIntimidatorHybrid140SR_19Ch(20)
-            other.cloud_group_name = None
+        sheer = ChauvetIntimidatorHybrid140SR_19Ch(1)
+        sheer.cloud_group_name = "sheer lights"
+        other = ChauvetIntimidatorHybrid140SR_19Ch(20)
+        other.cloud_group_name = None
 
-            interp = get_interpreter(mode, [sheer, other], self.args)
-            interp.step(self.frame, self.scheme)
+        interp = get_interpreter(Mode.chill, [sheer, other], self.args)
+        interp.step(self.frame, self.scheme)
 
-            assert sheer.get_dimmer() == 0, (
-                f"{mode}: sheer-grouped moving head should be Dimmer0, got {sheer.get_dimmer()}"
-            )
+        assert sheer.get_dimmer() == 0
 
     def test_rave_sheer_lights_randomize_prism_and_focus(self):
         """Rave picks one focus and one prism state for the whole sheer group.

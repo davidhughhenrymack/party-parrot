@@ -1,7 +1,13 @@
 import pytest
 import math
-from unittest.mock import MagicMock, patch
-from parrot.interpreters.move import MoveCircles, MoveNod, MoveFigureEight, MoveFan
+from unittest.mock import MagicMock
+from parrot.interpreters.move import (
+    MoveCircles,
+    MoveFan,
+    MoveFigureEight,
+    MoveNod,
+    MoveSmoothWalk,
+)
 from parrot.interpreters.base import InterpreterArgs
 from parrot.fixtures.base import FixtureBase
 
@@ -171,3 +177,38 @@ class TestMoveInterpreters:
         interpreter = MoveFan(self.fixtures, self.args)
         str_repr = str(interpreter)
         assert "Fan" in str_repr
+
+    def test_move_smooth_walk_smoke(self):
+        """MoveSmoothWalk drives pan/tilt for every fixture."""
+        interpreter = MoveSmoothWalk(self.fixtures, self.args)
+        interpreter.step(self.frame, self.scheme)
+        self.fixture1.set_pan.assert_called_once()
+        self.fixture1.set_tilt.assert_called_once()
+        self.fixture2.set_pan.assert_called_once()
+        self.fixture2.set_tilt.assert_called_once()
+
+    def test_move_smooth_walk_per_step_delta_bounded(self):
+        """Sine composition should not teleport pan/tilt (no huge single-step jumps)."""
+        interpreter = MoveSmoothWalk(self.fixtures, self.args, multiplier=0.85)
+        t = 0.0
+        max_pan_delta = 0.0
+        max_tilt_delta = 0.0
+        prev_pan = None
+        prev_tilt = None
+        for _ in range(180):
+            self.frame.time = t
+            interpreter.step(self.frame, self.scheme)
+            pan = self.fixture1.set_pan.call_args[0][0]
+            tilt = self.fixture1.set_tilt.call_args[0][0]
+            if prev_pan is not None:
+                max_pan_delta = max(max_pan_delta, abs(pan - prev_pan))
+                max_tilt_delta = max(max_tilt_delta, abs(tilt - prev_tilt))
+            prev_pan = pan
+            prev_tilt = tilt
+            t += 1.0 / 60.0
+        assert max_pan_delta < 40.0
+        assert max_tilt_delta < 40.0
+
+    def test_move_smooth_walk_str(self):
+        interpreter = MoveSmoothWalk(self.fixtures, self.args)
+        assert "SmoothWalk" in str(interpreter)

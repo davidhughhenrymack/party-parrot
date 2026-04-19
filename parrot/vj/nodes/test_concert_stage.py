@@ -214,8 +214,11 @@ class TestConcertStage:
 
     def test_prom_dmack_has_video_backdrop_but_other_prom_scenes_do_not(self):
         """DMACK prom scene uses the `media/videos/prom/` folder as a music-video
-        backdrop behind the sparkles. Other prom DJs stay sparkle-only for now.
+        backdrop behind the sparkles. Wufky uses the Nyancat shader backdrop; mayhem
+        uses the CircleRainbow shader backdrop; other prom DJs stay sparkle-only on black.
         """
+        from parrot.vj.nodes.nyancat_background import NyancatBackground
+        from parrot.vj.nodes.circle_rainbow_background import CircleRainbowBackground
         from parrot.vj.nodes.video_player import VideoPlayer
         from parrot.vj.nodes.mode_switch import ModeSwitch
 
@@ -269,9 +272,30 @@ class TestConcertStage:
             prom_switch.mode_nodes[VJMode.prom_wufky.name]
         )
 
+        def collect_instances(root, cls):
+            found: list = []
+            stack = [root]
+            seen: set[int] = set()
+            while stack:
+                node = stack.pop()
+                if id(node) in seen:
+                    continue
+                seen.add(id(node))
+                if isinstance(node, cls):
+                    found.append(node)
+                stack.extend(getattr(node, "children", []) or [])
+                for v in getattr(node, "mode_nodes", {}).values():
+                    stack.append(v)
+            return found
+
         assert len(dmack_videos) == 1, "prom_dmack should mount exactly one prom video backdrop"
         assert dmack_videos[0].fn_group == "prom"
-        assert wufky_videos == [], "non-dmack prom scenes should stay sparkles-only"
+        assert wufky_videos == [], "prom_wufky should not use a VideoPlayer (Nyancat shader backdrop)"
+        wufky_scene = prom_switch.mode_nodes[VJMode.prom_wufky.name]
+        mayhem_scene = prom_switch.mode_nodes[VJMode.prom_mayhem.name]
+        assert len(collect_instances(wufky_scene, NyancatBackground)) == 1
+        assert len(collect_instances(mayhem_scene, CircleRainbowBackground)) == 1
+        assert collect_instances(mayhem_scene, VideoPlayer) == []
 
     def test_blackout_mode_configures_components(self):
         """Test that blackout mode switches to Black() nodes"""

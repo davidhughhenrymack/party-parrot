@@ -178,3 +178,56 @@ class MoveFan(InterpreterBase):
             )
             fixture.set_pan(pan)
             fixture.set_tilt(128)
+
+
+@beartype
+class MoveSmoothWalk(InterpreterBase):
+    """Smooth wandering via phase-offset sums of sines on pan and tilt.
+
+    Each axis uses two incommensurate frequencies so the beam draws a smooth
+    quasi-Lissajous path on a wall (C∞, no kinks). Pan and tilt use separate
+    phase ladders from :func:`_even_phase_spread` plus a fixed tilt offset so
+    fixtures fan across the group like :class:`MoveCircles` but with richer
+    2D curves than a single circle.
+
+    ``multiplier`` scales how fast paths evolve in time (lower = slower drift).
+    """
+
+    _W_SLOW = 1.0
+    _W_FAST = 0.618
+    _W_TILT_SLOW = 0.834
+    _W_TILT_FAST = 0.377
+    _A_MAJOR = 78.0
+    _A_MINOR = 42.0
+
+    def __init__(
+        self,
+        group: list[FixtureBase],
+        args: InterpreterArgs,
+        multiplier: float = 0.2,
+    ):
+        super().__init__(group, args)
+        self.multiplier = multiplier
+        self._phase_pan = _even_phase_spread(len(group))
+        self._phase_tilt = [p + math.pi * 0.5 for p in self._phase_pan]
+
+    def __str__(self) -> str:
+        return f"🚶 {Fore.GREEN}SmoothWalk{Style.RESET_ALL}"
+
+    def step(self, frame, scheme):
+        t = frame.time * self.multiplier
+        for i, fixture in enumerate(self.group):
+            phi = self._phase_pan[i]
+            psi = self._phase_tilt[i]
+            pan = (
+                128.0
+                + self._A_MAJOR * math.sin(self._W_SLOW * t + phi)
+                + self._A_MINOR * math.sin(self._W_FAST * 1.31 * t + phi + 0.7)
+            )
+            tilt = (
+                128.0
+                + self._A_MAJOR * math.sin(self._W_TILT_SLOW * t + psi)
+                + self._A_MINOR * math.sin(self._W_TILT_FAST * 1.27 * t + psi + 1.05)
+            )
+            fixture.set_pan(max(1.0, min(255.0, pan)))
+            fixture.set_tilt(max(1.0, min(255.0, tilt)))

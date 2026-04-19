@@ -35,18 +35,20 @@ scheme_standard = [
 
 
 def generate_pride_scheme() -> ColorScheme:
-    """Pick three distinct named pool colors, shuffle order, build a ``ColorScheme``.
+    """Pick three distinct named pool colors, build a ``ColorScheme``.
 
-    Uses :func:`random.sample` then :func:`random.shuffle` so fg / bg /
-    ``bg_contrast`` are a random permutation of three colors from
-    ``available_colors``.
+    Uses :func:`random.sample` for the triple, then assigns fg / bg /
+    ``bg_contrast`` in descending order of total RGB (``sum(color.rgb)``), so
+    brighter colors (e.g. white) are foreground and darker hues land in bg /
+    contrast roles.
     """
     names = random.sample(available_colors, 3)
-    random.shuffle(names)
+    colors = [Color(n) for n in names]
+    ordered = sorted(colors, key=lambda c: sum(c.rgb), reverse=True)
     return ColorScheme(
-        Color(names[0]),
-        Color(names[1]),
-        Color(names[2]),
+        ordered[0],
+        ordered[1],
+        ordered[2],
         allows_rainbow=True,
     )
 

@@ -8,8 +8,22 @@
 
 export const DESKTOP_CUBE_SIZE = 0.8;
 
+/** Venue editor 3D preview: stretch beam throw so cones read clearly at typical zoom. */
+const VENUE_EDITOR_BEAM_LENGTH_SCALE = 1.55;
+
 export function desktopBodySize() {
   return DESKTOP_CUBE_SIZE * 0.4;
+}
+
+function scaleVenueEditorBeamThrow(model) {
+  const s = VENUE_EDITOR_BEAM_LENGTH_SCALE;
+  if (typeof model.coneLength === 'number') {
+    model.coneLength *= s;
+  }
+  if (typeof model.beamLength === 'number') {
+    model.beamLength *= s;
+  }
+  return model;
 }
 
 const MOVING_HEAD_TYPES = new Set([
@@ -106,49 +120,49 @@ function mirrorballModel() {
 export function resolveFixtureVisualModel(fixtureType) {
   const bs = desktopBodySize();
   if (fixtureType === 'mirrorball') {
-    return mirrorballModel();
+    return scaleVenueEditorBeamThrow(mirrorballModel());
   }
   if (fixtureType === 'motionstrip_38') {
-    return {
+    return scaleVenueEditorBeamThrow({
       kind: 'motionstrip',
       ...motionstripDimensions(8),
       coneLength: 2.8,
       coneRadius: bs * 1.85,
-    };
+    });
   }
   if (fixtureType === 'chauvet_colorband_pix_36ch') {
-    return {
+    return scaleVenueEditorBeamThrow({
       kind: 'motionstrip',
       ...motionstripDimensions(12),
       coneLength: 2.8,
       coneRadius: bs * 2.0,
-    };
+    });
   }
   if (MOVING_HEAD_TYPES.has(fixtureType)) {
     const mh = movingHeadDimensions();
-    return {
+    return scaleVenueEditorBeamThrow({
       kind: 'moving_head',
       ...mh,
       coneLength: 10.4,
       coneRadius: bs * 0.58,
-    };
+    });
   }
   if (fixtureType === 'five_beam_laser' || fixtureType === 'two_beam_laser') {
     const lz = laserDimensions();
-    return {
+    return scaleVenueEditorBeamThrow({
       kind: 'laser',
       ...lz,
       coneLength: 5.0,
       coneRadius: bs * 0.38,
-    };
+    });
   }
   const par = parLikeDimensions();
-  return {
+  return scaleVenueEditorBeamThrow({
     kind: 'bulb',
     ...par,
     coneLength: 7.0,
     coneRadius: bs * 1.0,
-  };
+  });
 }
 
 /**

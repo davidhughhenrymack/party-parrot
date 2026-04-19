@@ -58,6 +58,7 @@ from parrot.interpreters.move import (
     MoveFan,
     MoveFigureEight,
     MoveNod,
+    MoveSmoothWalk,
 )
 from parrot.interpreters.movers import (
     FocusBig,
@@ -91,7 +92,7 @@ from parrot.interpreters.strobe import StrobeChannelSustained, StrobeHighSustain
 mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
     Mode.blackout: {},
     Mode.chill: {
-        # Sheer lights are an ethereal-mode-only feature; keep them dark elsewhere.
+        # Sheer lights are an ethereal-mode-only feature; keep them dark elsewhere (all types).
         Group("sheer lights"): [Dimmer0],
         Mirrorball: [Dimmer0],
         Par: [
@@ -118,7 +119,9 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     )
                 ),
                 ColorBg,
-                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                randomize(
+                    MoveCircles, MoveNod, MoveFigureEight, MoveFan, MoveSmoothWalk
+                ),
             )
         ],
         Motionstrip: [Dimmer0],
@@ -182,7 +185,13 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                             ),
                         ),
                         AnyColor,
-                        randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                        randomize(
+                            MoveCircles,
+                            MoveNod,
+                            MoveFigureEight,
+                            MoveFan,
+                            MoveSmoothWalk,
+                        ),
                         weighted_randomize(
                             (
                                 10,
@@ -249,7 +258,9 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     ),
                 ),
                 AnyColor,
-                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                randomize(
+                    MoveCircles, MoveNod, MoveFigureEight, MoveFan, MoveSmoothWalk
+                ),
                 weighted_randomize(
                     (10, MoverRandomGobo),
                     (90, MoverNoGobo),
@@ -379,7 +390,13 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                 ),
                             ),
                             AnyColor,
-                            randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                            randomize(
+                                MoveCircles,
+                                MoveNod,
+                                MoveFigureEight,
+                                MoveFan,
+                                MoveSmoothWalk,
+                            ),
                             weighted_randomize(
                                 (
                                     10,
@@ -444,7 +461,9 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     ),
                 ),
                 AnyColor,
-                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                randomize(
+                    MoveCircles, MoveNod, MoveFigureEight, MoveFan, MoveSmoothWalk
+                ),
                 weighted_randomize(
                     (10, MoverRandomGobo),
                     (90, MoverNoGobo),

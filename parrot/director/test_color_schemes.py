@@ -17,6 +17,15 @@ def test_generate_pride_scheme_allows_rainbow():
     assert generate_pride_scheme().allows_rainbow is True
 
 
+def test_generate_pride_scheme_orders_by_rgb_sum_descending():
+    for _ in range(200):
+        s = generate_pride_scheme()
+        fg_sum = sum(s.fg.rgb)
+        bg_sum = sum(s.bg.rgb)
+        bc_sum = sum(s.bg_contrast.rgb)
+        assert fg_sum >= bg_sum >= bc_sum
+
+
 def test_scheme_pride_length_matches_other_themes():
     assert len(scheme_pride) == 10
 
