@@ -56,7 +56,6 @@ from parrot.interpreters.mode_test_interpreters import (
 from parrot.interpreters.move import (
     MoveCircleSync,
     MoveCircles,
-    MoveCirclesPhased,
     MoveFan,
     MoveFigureEight,
     MoveNod,
@@ -411,7 +410,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 ),
                 ColorAlternateBg,
                 # Circles multiplier is 5x slower than the previous 0.16 for a drifty feel.
-                with_args("EtherealPhasedCircles", MoveCirclesPhased, multiplier=0.1),
+                with_args("EtherealPhasedCircles", MoveCircles, multiplier=0.1),
                 MoverRandomGobo,
                 with_args("EtherealRotatePrism", RotatePrism, rotate_speed=0.2),
                 with_args(

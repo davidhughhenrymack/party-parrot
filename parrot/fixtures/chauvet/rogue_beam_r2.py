@@ -75,6 +75,12 @@ gobo_wheel = [
 
 
 class ChauvetRogueBeamR2(ChauvetMoverBase):
+    # Rogue Beam R2 has no prism accessory and no variable-focus lens — the
+    # physical fixture ignores those DMX channels mechanically, so previews
+    # shouldn't splay-fan or narrow-beam it either.
+    supports_prism: bool = False
+    supports_focus: bool = False
+
     def __init__(
         self,
         patch,

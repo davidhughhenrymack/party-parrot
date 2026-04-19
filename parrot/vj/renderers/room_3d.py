@@ -941,8 +941,14 @@ class Room3DRenderer:
         cam_y = self.camera_height + self.camera_distance * math.sin(self.camera_tilt)
         view_pos = np.array([cam_x, cam_y, cam_z], dtype=np.float32)
 
-        # Set uniforms
-        self.shader["mvp"] = mvp.T.flatten()
+        # Bake the floor's model matrix into the MVP uniform. Every other
+        # renderer in this file feeds `projection * view * model` through the
+        # `mvp` uniform (the shader expects `gl_Position = mvp * position`);
+        # the floor had been uploading only `projection * view`, which left the
+        # base 10 × 10 quad unscaled so the room always drew as a square no
+        # matter what `floor_width` / `floor_depth` came from the snapshot.
+        mvp_with_model = mvp @ model
+        self.shader["mvp"] = mvp_with_model.T.flatten()
         self.shader["model"] = model.T.flatten()
         self.shader["viewPos"] = tuple(view_pos)
         self.shader["dirLightDir"] = tuple(self.directional_light_dir)

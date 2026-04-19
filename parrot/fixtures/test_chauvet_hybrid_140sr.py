@@ -6,6 +6,18 @@ from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
 )
 
 
+def test_hybrid_140sr_advertises_prism_and_focus():
+    """Hybrid 140SR has both a 7-facet prism and a variable-focus optic; the
+    rendering capability flags must stay True so desktop/web previews show
+    the splay fan and narrowing beam when interpreters engage them."""
+    m19 = ChauvetIntimidatorHybrid140SR_19Ch(1)
+    m13 = ChauvetIntimidatorHybrid140SR_13Ch(1)
+    assert m19.supports_prism is True
+    assert m19.supports_focus is True
+    assert m13.supports_prism is True
+    assert m13.supports_focus is True
+
+
 def test_hybrid_140sr_19ch_width_and_dimmer_channel():
     m = ChauvetIntimidatorHybrid140SR_19Ch(1)
     assert m.width == 19

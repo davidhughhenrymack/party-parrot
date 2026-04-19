@@ -362,6 +362,16 @@ class TestChauvetRogueBeamR2:
         assert self.rogue.strobe_shutter_lower == 16
         assert self.rogue.strobe_shutter_upper == 131
 
+    def test_rogue_beam_r2_does_not_advertise_prism_or_focus(self):
+        """Rogue Beam R2 is a no-prism / no-variable-focus fixture.
+
+        Renderers key off ``supports_prism`` / ``supports_focus`` to skip the
+        splay-fan and focus-width visuals, so those flags must stay False even
+        if interpreters drive `set_prism` / `set_focus` on the DMX side.
+        """
+        assert self.rogue.supports_prism is False
+        assert self.rogue.supports_focus is False
+
     def test_dimmer_upper_limit(self):
         """Test dimmer upper limit"""
         assert self.rogue.dimmer_upper == 200  # Custom dimmer limit

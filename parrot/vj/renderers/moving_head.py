@@ -218,11 +218,23 @@ class MovingHeadRenderer(FixtureRenderer):
                     if dimmer > 0.05:
                         beam_length = 15.0
                         beam_alpha = capped_alpha
-                        prism_on, prism_speed = self.fixture.get_prism()
-                        # Fixture focus modulates end_radius: tight focus → narrow beam,
-                        # wide focus → the original chunky cone. start_radius stays put
-                        # since the lens aperture doesn't visibly change with focus.
-                        focus_mult = _focus_width_multiplier(float(self.fixture.get_focus()))
+                        # `supports_prism` / `supports_focus` let fixtures without
+                        # a physical prism accessory (Chauvet Rogue Beam R2) or a
+                        # variable-focus optic render as a plain beam even when
+                        # interpreters drive the DMX values.
+                        if self.fixture.supports_prism:
+                            prism_on, prism_speed = self.fixture.get_prism()
+                        else:
+                            prism_on, prism_speed = False, 0.0
+                        if self.fixture.supports_focus:
+                            # Fixture focus modulates end_radius: tight focus → narrow
+                            # beam, wide focus → the original chunky cone. start_radius
+                            # stays put since the lens aperture doesn't visibly change.
+                            focus_mult = _focus_width_multiplier(
+                                float(self.fixture.get_focus())
+                            )
+                        else:
+                            focus_mult = _FOCUS_WIDE_MULT
 
                         if prism_on:
                             # Split the beam into N splayed copies around the central axis.

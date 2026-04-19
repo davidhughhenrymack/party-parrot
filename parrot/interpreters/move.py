@@ -1,41 +1,27 @@
 import math
-import random
 from beartype import beartype
 from parrot.interpreters.base import InterpreterBase, InterpreterArgs
 from parrot.fixtures.base import FixtureBase
 from colorama import Fore, Style
 
 
+def _even_phase_spread(n: int) -> list[float]:
+    """Evenly spaced phases around the unit circle: ``[i / N * 2π for i in 0..N]``.
+
+    Shared by every group-move interpreter in this module so that a group of
+    movers always visibly covers the whole cycle at once, regardless of group
+    size. Deterministic (no RNG) so regenerations look stable.
+    """
+    n = max(n, 1)
+    return [i / n * 2.0 * math.pi for i in range(n)]
+
+
 @beartype
 class MoveCircles(InterpreterBase):
-    def __init__(self, group: list[FixtureBase], args, multiplier=1, phase=None):
-        super().__init__(group, args)
-        self.multiplier = multiplier
-
-        if phase is None:
-            self.phase = random.choice([0, math.pi])
-        else:
-            self.phase = phase
-
-    def __str__(self):
-        return f"🔄 {Fore.GREEN}Circles{Style.RESET_ALL}"
-
-    def step(self, frame, scheme):
-        for idx, fixture in enumerate(self.group):
-            fixture.set_pan(
-                math.cos(frame.time * self.multiplier + self.phase * idx) * 127 + 128
-            )
-            fixture.set_tilt(
-                math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128
-            )
-
-
-@beartype
-class MoveCirclesPhased(InterpreterBase):
     """Pan/tilt circles with a deterministic phase offset per group index.
 
     Each fixture in the group gets an evenly spaced phase around the unit circle
-    (``i / N * 2π``), so the group traces the same circle but with fixtures
+    (``i / N * 2π``), so the group traces the same circle with fixtures
     equidistantly staggered in time. Deterministic phasing keeps the look stable
     across regenerations and avoids the occasional "all bunched up" roll that
     random phasing can produce with small groups.
@@ -45,15 +31,14 @@ class MoveCirclesPhased(InterpreterBase):
         self,
         group: list[FixtureBase],
         args: InterpreterArgs,
-        multiplier: float = 0.18,
+        multiplier: float = 1.0,
     ):
         super().__init__(group, args)
         self.multiplier = multiplier
-        n = max(len(group), 1)
-        self._phase = [i / n * 2.0 * math.pi for i in range(len(group))]
+        self._phase = _even_phase_spread(len(group))
 
-    def __str__(self) -> str:
-        return f"🔄 {Fore.GREEN}CirclesPhased{Style.RESET_ALL}"
+    def __str__(self):
+        return f"🔄 {Fore.GREEN}Circles{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
         for i, fixture in enumerate(self.group):
@@ -64,45 +49,61 @@ class MoveCirclesPhased(InterpreterBase):
 
 @beartype
 class MoveNod(InterpreterBase):
-    def __init__(self, group: list[FixtureBase], args, multiplier=1, phase=math.pi / 3):
+    """Tilt-only nod with an evenly spaced per-fixture phase.
+
+    Fixtures share one tilt oscillator but start at phases ``i / N * 2π`` around
+    its cycle, so the group covers a full up-down wave at any given moment
+    instead of nodding in unison. Pan stays centered.
+    """
+
+    def __init__(
+        self,
+        group: list[FixtureBase],
+        args: InterpreterArgs,
+        multiplier: float = 1.0,
+    ):
         super().__init__(group, args)
         self.multiplier = multiplier
-        self.phase = phase
+        self._phase = _even_phase_spread(len(group))
 
     def __str__(self):
         return f"⬆️⬇️ {Fore.GREEN}Nod{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
-        for idx, fixture in enumerate(self.group):
+        for i, fixture in enumerate(self.group):
             fixture.set_pan(128)
             fixture.set_tilt(
-                math.sin(frame.time * self.multiplier + self.phase * idx) * 127 + 128
+                math.sin(frame.time * self.multiplier + self._phase[i]) * 127 + 128
             )
 
 
 @beartype
 class MoveFigureEight(InterpreterBase):
-    def __init__(self, group: list[FixtureBase], args, multiplier=1, phase=None):
+    """Lissajous figure-eight with an evenly spaced per-fixture phase.
+
+    Pan follows ``sin(t)`` and tilt follows ``sin(2t)`` (pan period 2π is the
+    limiting cycle), so spreading phase as ``i / N * 2π`` staggers fixtures
+    evenly around the figure-eight path.
+    """
+
+    def __init__(
+        self,
+        group: list[FixtureBase],
+        args: InterpreterArgs,
+        multiplier: float = 1.0,
+    ):
         super().__init__(group, args)
         self.multiplier = multiplier
-
-        if phase is None:
-            self.phase = random.choice([0, math.pi])
-        else:
-            self.phase = phase
+        self._phase = _even_phase_spread(len(group))
 
     def __str__(self):
         return f"∞ {Fore.GREEN}FigureEight{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
-        for idx, fixture in enumerate(self.group):
-            # Figure eight pattern using Lissajous curve
-            t = frame.time * self.multiplier + self.phase * idx
-            # Scale down the amplitude to keep within 0-255 range
-            pan = math.sin(t) * 127 + 128
-            tilt = math.sin(2 * t) * 127 + 128
-            fixture.set_pan(pan)
-            fixture.set_tilt(tilt)
+        for i, fixture in enumerate(self.group):
+            t = frame.time * self.multiplier + self._phase[i]
+            fixture.set_pan(math.sin(t) * 127 + 128)
+            fixture.set_tilt(math.sin(2 * t) * 127 + 128)
 
 
 @beartype
@@ -134,26 +135,46 @@ class MoveCircleSync(InterpreterBase):
 
 @beartype
 class MoveFan(InterpreterBase):
-    def __init__(self, group: list[FixtureBase], args, multiplier=1, spread=1.0):
+    """Pan fan with a spatial amplitude AND a temporal phase spread.
+
+    Each fixture's pan swings with an amplitude proportional to its position
+    from the centre of the group (``rel_pos``), giving the classic fan open /
+    close look. On top of that we add an evenly spaced per-fixture phase (``i
+    / N * 2π``) so that at any single moment fixtures are at different points
+    in the oscillator instead of all crossing centre together — the fan breathes
+    as a wave through the group rather than snapping open and closed in unison.
+
+    With odd group sizes the geometric centre fixture still has ``rel_pos == 0``
+    so its pan collapses to 128 regardless of phase, preserving the old
+    "centre fixture stays put" behaviour.
+    """
+
+    def __init__(
+        self,
+        group: list[FixtureBase],
+        args: InterpreterArgs,
+        multiplier: float = 1.0,
+        spread: float = 1.0,
+    ):
         super().__init__(group, args)
         self.multiplier = multiplier
         self.spread = spread
+        self._phase = _even_phase_spread(len(group))
 
     def __str__(self):
         return f"↔️ {Fore.GREEN}Fan{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
-        # Calculate the middle index
         middle_idx = (len(self.group) - 1) / 2
 
         for idx, fixture in enumerate(self.group):
-            # Calculate position relative to middle (-1 to 1)
             rel_pos = (idx - middle_idx) / (middle_idx + 0.00001)
-            # Apply sine wave motion with spread
             pan = (
-                math.sin(frame.time * self.multiplier) * rel_pos * self.spread * 127
+                math.sin(frame.time * self.multiplier + self._phase[idx])
+                * rel_pos
+                * self.spread
+                * 127
                 + 128
             )
             fixture.set_pan(pan)
-            # Keep tilt centered
             fixture.set_tilt(128)

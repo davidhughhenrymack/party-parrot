@@ -4,6 +4,16 @@ from parrot.utils.dmx_utils import Universe
 
 
 class MovingHead(FixtureBase):
+    # Per-model rendering capabilities. Subclasses override these when the
+    # physical fixture genuinely has no prism or no variable-focus optic —
+    # the desktop and web renderers skip the matching visual effects so a
+    # fixture like the Chauvet Rogue Beam R2 (no prism accessory, no focus
+    # travel on its optic) doesn't fake a splay-fan or tight-beam look in
+    # preview. DMX-facing `set_prism` / `set_focus` still exist on every
+    # subclass so interpreters can remain uniform.
+    supports_prism: bool = True
+    supports_focus: bool = True
+
     def __init__(
         self,
         address,

@@ -64,10 +64,16 @@ def fixture_runtime_entry(fixture: FixtureBase) -> dict[str, Any] | None:
     if isinstance(fixture, MovingHead):
         entry["pan_deg"] = float(fixture.get_pan_angle())
         entry["tilt_deg"] = float(fixture.get_tilt_angle())
-        prism_on, prism_speed = fixture.get_prism()
-        entry["prism_on"] = bool(prism_on)
-        entry["prism_rotate_speed"] = float(prism_speed)
-        entry["focus"] = float(fixture.get_focus())
+        # Only publish prism/focus when the physical fixture actually supports
+        # them. Fixtures like the Chauvet Rogue Beam R2 lack a prism accessory
+        # and a variable-focus optic; omitting these keys lets the web
+        # preview fall back to its "no effect" defaults (plain wide beam).
+        if fixture.supports_prism:
+            prism_on, prism_speed = fixture.get_prism()
+            entry["prism_on"] = bool(prism_on)
+            entry["prism_rotate_speed"] = float(prism_speed)
+        if fixture.supports_focus:
+            entry["focus"] = float(fixture.get_focus())
     elif isinstance(fixture, Motionstrip):
         entry["bar_pan_deg"] = motionstrip_bar_pan_deg(fixture)
 

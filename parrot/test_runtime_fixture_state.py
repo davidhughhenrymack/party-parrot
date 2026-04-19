@@ -1,6 +1,7 @@
 """Tests for live fixture state serialization (Party Parrot Cloud preview)."""
 
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
+from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.led_par import ParRGB
 from parrot.runtime_fixture_state import (
@@ -66,6 +67,22 @@ def test_moving_head_prism_state_serialized():
     assert row is not None
     assert row["prism_on"] is True
     assert row["prism_rotate_speed"] == 0.4
+
+
+def test_rogue_beam_r2_omits_prism_and_focus():
+    """Rogue Beam R2 has no prism accessory and no variable-focus optic, so the
+    runtime payload must not publish those keys — the web preview's defaults
+    then render a plain beam regardless of DMX drive."""
+    rogue = ChauvetRogueBeamR2(patch=1)
+    rogue.cloud_spec_id = "rogue-1"
+    rogue.set_prism(True, 0.9)
+    rogue.set_focus(1.0)
+    row = fixture_runtime_entry(rogue)
+    assert row is not None
+    assert "pan_deg" in row
+    assert "prism_on" not in row
+    assert "prism_rotate_speed" not in row
+    assert "focus" not in row
 
 
 def test_motionstrip_bar_pan():

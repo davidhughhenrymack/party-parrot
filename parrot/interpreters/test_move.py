@@ -28,14 +28,13 @@ class TestMoveInterpreters:
 
     def test_move_circles(self):
         """Test MoveCircles interpreter"""
-        # Test with default phase
         interpreter = MoveCircles(self.fixtures, self.args)
 
-        # Test initial state
         assert interpreter.multiplier == 1
-        assert interpreter.phase in [0, math.pi]
+        # Deterministic per-fixture phase spread: i / N * 2π.
+        # With 2 fixtures this gives [0, π] so the pair is half a revolution apart.
+        assert interpreter._phase == [0.0, math.pi]
 
-        # Test step with time = 0
         interpreter.step(self.frame, self.scheme)
         self.fixture1.set_pan.assert_called_once()
         self.fixture1.set_tilt.assert_called_once()
@@ -46,11 +45,12 @@ class TestMoveInterpreters:
         """Test MoveNod interpreter"""
         interpreter = MoveNod(self.fixtures, self.args)
 
-        # Test initial state
         assert interpreter.multiplier == 1
-        assert interpreter.phase == math.pi / 3
+        # Deterministic per-fixture phase spread matches MoveCircles:
+        # with 2 fixtures the pair is half a cycle apart so they nod in
+        # opposition instead of in unison.
+        assert interpreter._phase == [0.0, math.pi]
 
-        # Test step with time = 0
         interpreter.step(self.frame, self.scheme)
         self.fixture1.set_pan.assert_called_once_with(128)
         self.fixture1.set_tilt.assert_called_once()
@@ -61,11 +61,10 @@ class TestMoveInterpreters:
         """Test MoveFigureEight interpreter"""
         interpreter = MoveFigureEight(self.fixtures, self.args)
 
-        # Test initial state
         assert interpreter.multiplier == 1
-        assert interpreter.phase in [0, math.pi]
+        # Deterministic phase spread — no more random {0, π} choice.
+        assert interpreter._phase == [0.0, math.pi]
 
-        # Test step with time = 0
         interpreter.step(self.frame, self.scheme)
         self.fixture1.set_pan.assert_called_once()
         self.fixture1.set_tilt.assert_called_once()
@@ -76,22 +75,45 @@ class TestMoveInterpreters:
         """Test MoveFan interpreter"""
         interpreter = MoveFan(self.fixtures, self.args)
 
-        # Test initial state
         assert interpreter.multiplier == 1
         assert interpreter.spread == 1.0
+        # Fan now also carries an even per-fixture phase on top of its
+        # spatial amplitude envelope.
+        assert interpreter._phase == [0.0, math.pi]
 
-        # Test step with time = 0
         interpreter.step(self.frame, self.scheme)
         self.fixture1.set_pan.assert_called_once()
         self.fixture1.set_tilt.assert_called_once_with(128)
         self.fixture2.set_pan.assert_called_once()
         self.fixture2.set_tilt.assert_called_once_with(128)
 
-    def test_move_circles_custom_phase(self):
-        """Test MoveCircles with custom phase"""
-        custom_phase = math.pi / 2
-        interpreter = MoveCircles(self.fixtures, self.args, phase=custom_phase)
-        assert interpreter.phase == custom_phase
+    def test_group_move_interpreters_spread_three_fixtures(self):
+        """Every group-move interpreter evenly spaces phase as i / N * 2π."""
+        fixture3 = MagicMock(spec=FixtureBase)
+        fixtures = [self.fixture1, self.fixture2, fixture3]
+        expected = [i / 3.0 * 2.0 * math.pi for i in range(3)]
+        for cls in (MoveCircles, MoveNod, MoveFigureEight, MoveFan):
+            interp = cls(fixtures, self.args)
+            assert interp._phase == pytest.approx(expected), (
+                f"{cls.__name__} did not produce even phase spread"
+            )
+
+    def test_move_circles_custom_multiplier(self):
+        """Test MoveCircles with custom multiplier"""
+        custom_multiplier = 0.18
+        interpreter = MoveCircles(
+            self.fixtures, self.args, multiplier=custom_multiplier
+        )
+        assert interpreter.multiplier == custom_multiplier
+
+    def test_move_circles_phase_spread_three_fixtures(self):
+        """Three fixtures should be evenly staggered at 0, 2π/3, 4π/3."""
+        fixture3 = MagicMock(spec=FixtureBase)
+        interpreter = MoveCircles(
+            [self.fixture1, self.fixture2, fixture3], self.args
+        )
+        expected = [i / 3.0 * 2.0 * math.pi for i in range(3)]
+        assert interpreter._phase == pytest.approx(expected)
 
     def test_move_nod_custom_multiplier(self):
         """Test MoveNod with custom multiplier"""
