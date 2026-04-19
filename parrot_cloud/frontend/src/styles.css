@@ -622,23 +622,35 @@ label {
 .dense-sidebar {
   height: 100vh;
   overflow-y: auto;
-  padding: 0 12px 12px;
+  padding: 8px 0 16px;
   background: #11161d;
   border-right: 1px solid #30363d;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
+/* Section dividers edge-to-edge; horizontal padding lives on each panel */
 .dense-sidebar .panel {
   background: transparent;
   border: 0;
-  border-top: 1px solid #30363d;
   border-radius: 0;
   margin: 0;
   box-shadow: none;
 }
 
+.dense-sidebar .panel ~ .panel {
+  border-top: 1px solid #30363d;
+}
+
 .dense-panel,
 .dense-header-panel {
-  padding: 10px 0;
+  padding: 10px 12px;
   margin-bottom: 0;
 }
 
@@ -687,8 +699,11 @@ label {
 
 .dense-section-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8c8c8c;
 }
 
 .dense-section-count {
@@ -704,19 +719,35 @@ label {
 .dense-lights-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.dense-magic-repatch-button {
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.dense-lights-add-button {
-  font-size: 22px;
-  font-weight: 600;
+/* Minimal + control (no chip background) */
+.dense-lights-add-icon {
+  width: auto;
+  min-width: 28px;
+  margin-top: 0;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  font-size: 18px;
+  font-weight: 400;
   line-height: 1;
+  color: #8b949e;
+  cursor: pointer;
+}
+
+.dense-lights-add-icon:hover:not(:disabled) {
+  color: #e6edf3;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+}
+
+.dense-lights-add-icon:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .dense-header-actions,
@@ -773,12 +804,25 @@ label {
   margin-bottom: 0;
 }
 
+.fixture-list.dense-fixture-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dense-sidebar .fixture-empty-state {
+  padding: 8px 0;
+  font-size: 12px;
+  color: #7a7a7a;
+  line-height: 1.45;
+}
+
 .dense-fixture-group-block {
   margin-top: 10px;
 }
 
 .dense-fixture-group-header {
-  padding: 4px 2px 6px 8px;
+  padding: 4px 0 6px;
 }
 
 .dense-fixture-group-header-row {
@@ -795,11 +839,11 @@ label {
   padding: 4px 0;
   text-align: left;
   font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: #8b9cad;
+  color: #8c8c8c;
   background: transparent;
   border: none;
   border-radius: 4px;
@@ -807,20 +851,15 @@ label {
 }
 
 .dense-fixture-group-title-button:hover {
-  color: #c9d1d9;
-}
-
-.dense-fixture-group-rename-button {
-  flex: 0 0 auto;
+  color: #b8b8b8;
 }
 
 .dense-fixture-group-nested {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-left: 2px solid #30363d;
-  margin-left: 6px;
-  padding-left: 4px;
+  margin-left: 12px;
+  padding-left: 0;
 }
 
 .dense-fixture-row-nested {
@@ -829,28 +868,68 @@ label {
 
 .dense-fixture-row {
   margin-top: 0;
-  padding: 8px 10px;
-  background: #161b22;
+  padding: 5px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   flex-wrap: wrap;
   align-items: flex-start;
   align-content: flex-start;
   min-width: 0;
   user-select: none;
   -webkit-user-select: none;
+  font-weight: 400;
+  color: #d0d0d0;
+  box-shadow: none;
+}
+
+/* Left edge lines up with section titles (e.g. LIGHTS); panel horizontal padding is the only inset */
+.dense-sidebar .dense-fixture-list .dense-fixture-row {
+  padding: 5px 8px 5px 0;
+}
+
+.dense-fixture-row:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+/* Figma-like selection: muted blue-gray pill, not saturated primary fill */
+.dense-sidebar .dense-fixture-row.active-choice {
+  background: rgba(94, 158, 214, 0.2);
+  color: #ececec;
+}
+
+.dense-sidebar .dense-fixture-row.active-choice:hover {
+  background: rgba(94, 158, 214, 0.26);
 }
 
 .dense-fixture-main {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   flex: 1 1 120px;
 }
 
-.dense-fixture-main strong {
+.dense-fixture-name {
   max-width: 100%;
   overflow-wrap: anywhere;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: #d4d4d4;
+}
+
+.dense-fixture-meta {
+  font-size: 10px;
+  font-weight: 400;
+  color: #6e6e6e;
+}
+
+.dense-sidebar .dense-fixture-actions .fixture-row-meta {
+  font-size: 10px;
+  font-weight: 400;
+  color: #6e6e6e;
 }
 
 .dense-fixture-actions {
@@ -933,6 +1012,20 @@ label {
   background: rgba(9, 13, 19, 0.84);
   border: 1px solid #30363d;
   backdrop-filter: blur(12px);
+}
+
+.floating-transform-panel-header {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.floating-transform-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .rotation-row {
@@ -1377,6 +1470,15 @@ label {
   background: rgba(88, 166, 255, 0.12);
 }
 
+.dense-editor-menu-heading:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dense-editor-menu-heading:disabled:hover {
+  background: transparent;
+}
+
 .dense-editor-menu-chevron {
   color: #9ba8b4;
   font-size: 12px;
@@ -1409,12 +1511,6 @@ label {
   width: auto;
   margin: 0;
   accent-color: #58a6ff;
-}
-
-.dense-editor-menu-section + .dense-editor-menu-section {
-  border-top: 1px solid #30363d;
-  margin-top: 6px;
-  padding-top: 8px;
 }
 
 .dense-editor-menu-make-active {

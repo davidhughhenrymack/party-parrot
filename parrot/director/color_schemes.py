@@ -57,15 +57,8 @@ scheme_pride = [generate_pride_scheme() for _ in range(10)]
 # plus white (repeats of that hue or white in fg / bg / bg_contrast).
 scheme_berlin = [
     ColorScheme(Color("white"), Color("red"), Color("red")),
-    ColorScheme(Color("red"), Color("white"), Color("red")),
-    ColorScheme(Color("red"), Color("red"), Color("white")),
-    ColorScheme(Color("white"), Color("purple"), Color("purple")),
-    ColorScheme(Color("purple"), Color("white"), Color("purple")),
-    ColorScheme(Color("purple"), Color("purple"), Color("white")),
-    ColorScheme(Color("white"), Color("magenta"), Color("magenta")),
-    ColorScheme(Color("magenta"), Color("magenta"), Color("white")),
     ColorScheme(Color("red"), Color("red"), Color("red")),
-    ColorScheme(Color("white"), Color("white"), Color("purple")),
+    ColorScheme(Color("white"), Color("blue"), Color("blue")),
 ]
 
 scheme_halloween = [

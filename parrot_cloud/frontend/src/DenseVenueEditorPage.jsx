@@ -599,7 +599,13 @@ export default function DenseVenueEditorPage({ venueId }) {
   /** Latest mode for async scene-controller init (ref can be null when interaction `useEffect` runs). */
   const interactionModeRef = useRef(interactionMode);
   interactionModeRef.current = interactionMode;
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    kind: 'fixture',
+    groupName: null,
+  });
   const [selectedKind, setSelectedKind] = useState(null);
   const [selectedFixtureIds, setSelectedFixtureIds] = useState([]);
   const [venueNameDraft, setVenueNameDraft] = useState('');
@@ -743,7 +749,13 @@ export default function DenseVenueEditorPage({ venueId }) {
         onFixtureContextMenu: ({ fixture, x, y }) => {
           setSelectedKind('fixture');
           setSelectedFixtureIds([fixture.id]);
-          setContextMenu({ visible: true, x, y });
+          setContextMenu({
+            visible: true,
+            x,
+            y,
+            kind: 'fixture',
+            groupName: null,
+          });
         },
         onFixtureTransform: async (payload) => {
           if (!venueRef.current) {
@@ -1779,6 +1791,23 @@ export default function DenseVenueEditorPage({ venueId }) {
                         Open remote control
                       </a>
                     </div>
+                    <div className="dense-editor-menu-section">
+                      <button
+                        type="button"
+                        id="magic-repatch-fixtures-button"
+                        className="dense-editor-menu-heading"
+                        role="menuitem"
+                        disabled={!venueSnapshot || (venueSnapshot.fixtures || []).length === 0}
+                        title="Repack DMX addresses from 1 with no gaps (per universe)"
+                        onClick={() => {
+                          void handleMagicRepatch();
+                          setEditorMenuOpen(false);
+                          setEditorMenuSection(null);
+                        }}
+                      >
+                        Magic repatch
+                      </button>
+                    </div>
                     {venueSnapshot && controlState.active_venue_id !== venueSnapshot.summary.id ? (
                       <div className="dense-editor-menu-section">
                         <button
@@ -1795,42 +1824,6 @@ export default function DenseVenueEditorPage({ venueId }) {
                         </button>
                       </div>
                     ) : null}
-                    <div className="dense-editor-menu-section">
-                      <button
-                        type="button"
-                        className="dense-editor-menu-heading"
-                        aria-expanded={editorMenuSection === 'lighting_mode'}
-                        onClick={() =>
-                          setEditorMenuSection((s) => (s === 'lighting_mode' ? null : 'lighting_mode'))
-                        }
-                      >
-                        Lighting mode
-                        <span className="dense-editor-menu-chevron" aria-hidden>
-                          ▸
-                        </span>
-                      </button>
-                      {editorMenuSection === 'lighting_mode' ? (
-                        <div className="dense-editor-menu-sub" role="group" aria-label="Lighting mode">
-                          {remoteConfig.available_modes.map((mode) => (
-                            <label key={mode} className="dense-editor-menu-option">
-                              <input
-                                type="radio"
-                                name="remote-lighting-mode"
-                                checked={controlState.mode === mode}
-                                onChange={() => {
-                                  void patchControlState({ mode }).then((next) => {
-                                    setControlState((current) => ({ ...current, ...next }));
-                                  });
-                                  setEditorMenuOpen(false);
-                                  setEditorMenuSection(null);
-                                }}
-                              />
-                              <span>{labelizeRemoteMode(mode)}</span>
-                            </label>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
                     <div className="dense-editor-menu-section">
                       <button
                         type="button"
@@ -1887,28 +1880,9 @@ export default function DenseVenueEditorPage({ venueId }) {
               <h3>Lights</h3>
               <div className="dense-lights-header-actions">
                 <button
-                  id="magic-repatch-fixtures-button"
-                  type="button"
-                  className="small-button secondary-button dense-magic-repatch-button"
-                  disabled={!venueSnapshot || (venueSnapshot.fixtures || []).length === 0}
-                  title="Repack DMX addresses from 1 with no gaps (per universe)"
-                  onClick={() => void handleMagicRepatch()}
-                >
-                  Magic repatch
-                </button>
-                <button
-                  type="button"
-                  className="small-button secondary-button dense-group-fixtures-button"
-                  disabled={!venueSnapshot || selectedFixtureIds.length < 2}
-                  title="Cmd+click to toggle. Shift+click a second row for a range. Group sets FixtureGroup (group_name)."
-                  onClick={() => void handleGroupSelectedFixtures()}
-                >
-                  Group
-                </button>
-                <button
                   id="open-add-light-modal-button"
                   type="button"
-                  className="small-button secondary-button icon-only-button dense-lights-add-button"
+                  className="dense-lights-add-icon"
                   aria-label="Add light"
                   disabled={!venueSnapshot}
                   onClick={() => handleOpenAddFixtureModal()}
@@ -1935,9 +1909,9 @@ export default function DenseVenueEditorPage({ venueId }) {
                       onClick={(event) => handleFixtureListRowClick(fixture, event)}
                     >
                       <span className="dense-fixture-main">
-                        <strong>{fixture.name || fixture.fixture_type}</strong>
+                        <span className="dense-fixture-name">{fixture.name || fixture.fixture_type}</span>
                         {fixture.name ? (
-                          <span className="fixture-row-meta">{fixture.fixture_type}</span>
+                          <span className="fixture-row-meta dense-fixture-meta">{fixture.fixture_type}</span>
                         ) : null}
                       </span>
                       <span className="dense-fixture-actions">
@@ -1982,7 +1956,19 @@ export default function DenseVenueEditorPage({ venueId }) {
                   ))}
                   {fixtureListGroups.groups.map(({ name, fixtures: groupedFixtures }) => (
                     <div key={name} className="dense-fixture-group-block">
-                      <div className="dense-fixture-group-header">
+                      <div
+                        className="dense-fixture-group-header"
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          setContextMenu({
+                            visible: true,
+                            x: event.clientX,
+                            y: event.clientY,
+                            kind: 'group',
+                            groupName: name,
+                          });
+                        }}
+                      >
                         <div className="dense-fixture-group-header-row">
                           <button
                             type="button"
@@ -1990,29 +1976,6 @@ export default function DenseVenueEditorPage({ venueId }) {
                             onClick={() => handleFixtureGroupHeaderClick(groupedFixtures)}
                           >
                             {name}
-                          </button>
-                          <button
-                            type="button"
-                            className="small-button secondary-button dense-fixture-group-rename-button"
-                            aria-label={`Rename group ${name}`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleRenameFixtureGroupPrompt(name);
-                            }}
-                          >
-                            Rename
-                          </button>
-                          <button
-                            type="button"
-                            className="small-button secondary-button dense-fixture-group-rename-button"
-                            aria-label={`Ungroup ${name}`}
-                            title="Clear group_name on every fixture in this group"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleUngroupFixtureGroup(name);
-                            }}
-                          >
-                            Ungroup
                           </button>
                         </div>
                       </div>
@@ -2030,9 +1993,9 @@ export default function DenseVenueEditorPage({ venueId }) {
                             onClick={(event) => handleFixtureListRowClick(fixture, event)}
                           >
                             <span className="dense-fixture-main">
-                              <strong>{fixture.name || fixture.fixture_type}</strong>
+                              <span className="dense-fixture-name">{fixture.name || fixture.fixture_type}</span>
                               {fixture.name ? (
-                                <span className="fixture-row-meta">{fixture.fixture_type}</span>
+                                <span className="fixture-row-meta dense-fixture-meta">{fixture.fixture_type}</span>
                               ) : null}
                             </span>
                             <span className="dense-fixture-actions">
@@ -2207,16 +2170,30 @@ export default function DenseVenueEditorPage({ venueId }) {
           {selectedKind && !(selectedKind === 'fixture' && selectedFixtureIds.length === 0) ? (
             <div className="floating-transform-stack">
               <div className="floating-transform-panel">
-                <div className="dense-section-header">
+                <div className="dense-section-header floating-transform-panel-header">
                   <h3>{selectedKind === 'fixture' ? 'Fixture Rotation' : selectedKind === 'video_wall' ? 'Video Wall Rotation' : 'DJ Booth Rotation'}</h3>
-                  <button
-                    type="button"
-                    className="small-button secondary-button"
-                    title="Clear current selection"
-                    onClick={() => handleSelectionChange(null)}
-                  >
-                    Deselect
-                  </button>
+                  <div className="floating-transform-panel-actions">
+                    {selectedKind === 'fixture' ? (
+                      <button
+                        type="button"
+                        id="group-selected-fixtures-button"
+                        className="small-button secondary-button"
+                        disabled={!venueSnapshot || selectedFixtureIds.length < 2}
+                        title="Cmd+click to toggle. Shift+click a second row for a range. Group sets FixtureGroup (group_name)."
+                        onClick={() => void handleGroupSelectedFixtures()}
+                      >
+                        Group
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="small-button secondary-button"
+                      title="Clear current selection"
+                      onClick={() => handleSelectionChange(null)}
+                    >
+                      Deselect
+                    </button>
+                  </div>
                 </div>
                 {['x', 'y', 'z'].map((axis) => {
                   const radians = selectedKind === 'fixture'
@@ -2335,18 +2312,47 @@ export default function DenseVenueEditorPage({ venueId }) {
         className={`context-menu${contextMenu.visible ? '' : ' hidden'}`}
         style={{ left: contextMenu.x, top: contextMenu.y }}
       >
-        <button
-          id="edit-address-button"
-          onClick={() => {
-            setContextMenu((current) => ({ ...current, visible: false }));
-            setAddressModalOpen(true);
-          }}
-        >
-          Edit DMX Addressing
-        </button>
-        <button id="remove-fixture-button" className="danger-button" onClick={handleRemoveFixture}>
-          Remove Fixture
-        </button>
+        {contextMenu.kind === 'group' && contextMenu.groupName ? (
+          <>
+            <button
+              type="button"
+              id="context-menu-rename-group"
+              onClick={() => {
+                const gn = contextMenu.groupName;
+                setContextMenu((current) => ({ ...current, visible: false }));
+                void handleRenameFixtureGroupPrompt(gn);
+              }}
+            >
+              Rename group
+            </button>
+            <button
+              type="button"
+              id="context-menu-ungroup"
+              onClick={() => {
+                const gn = contextMenu.groupName;
+                setContextMenu((current) => ({ ...current, visible: false }));
+                void handleUngroupFixtureGroup(gn);
+              }}
+            >
+              Ungroup
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              id="edit-address-button"
+              onClick={() => {
+                setContextMenu((current) => ({ ...current, visible: false }));
+                setAddressModalOpen(true);
+              }}
+            >
+              Edit DMX Addressing
+            </button>
+            <button id="remove-fixture-button" className="danger-button" onClick={handleRemoveFixture}>
+              Remove Fixture
+            </button>
+          </>
+        )}
       </div>
 
       <Modal
