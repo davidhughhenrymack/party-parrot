@@ -28,12 +28,7 @@ class ChauvetMoverBase(MovingHead):
         universe=Universe.default,
     ):
         super().__init__(patch, name, width, gobo_wheel, universe)
-        self.pan_lower = pan_lower / 540 * 255
-        self.pan_upper = pan_upper / 540 * 255
-        self.pan_range = self.pan_upper - self.pan_lower
-        self.tilt_lower = tilt_lower / 270 * 255
-        self.tilt_upper = tilt_upper / 270 * 255
-        self.tilt_range = self.tilt_upper - self.tilt_lower
+        self.set_pan_tilt_range(pan_lower, pan_upper, tilt_lower, tilt_upper)
         self.dimmer_upper = dimmer_upper
         self.dmx_layout = dmx_layout
         self.color_wheel = color_wheel
@@ -44,6 +39,27 @@ class ChauvetMoverBase(MovingHead):
 
         self.set_speed(speed_value)
         self.set_shutter_open()
+
+    def set_pan_tilt_range(
+        self,
+        pan_lower: float,
+        pan_upper: float,
+        tilt_lower: float,
+        tilt_upper: float,
+    ) -> None:
+        """Update mechanical pan/tilt limits in-place.
+
+        Arguments are in degrees (same convention as the constructor): pan in
+        [0, 540], tilt in [0, 270]. Recomputes the DMX-unit storage used by
+        ``set_pan`` / ``set_tilt`` so live venue-editor edits take effect on
+        the next frame without rebuilding the runtime scene.
+        """
+        self.pan_lower = float(pan_lower) / 540.0 * 255.0
+        self.pan_upper = float(pan_upper) / 540.0 * 255.0
+        self.pan_range = self.pan_upper - self.pan_lower
+        self.tilt_lower = float(tilt_lower) / 270.0 * 255.0
+        self.tilt_upper = float(tilt_upper) / 270.0 * 255.0
+        self.tilt_range = self.tilt_upper - self.tilt_lower
 
     def set(self, name, value):
         if name in self.dmx_layout:

@@ -57,12 +57,20 @@ class Motionstrip38(Motionstrip):
             [MotionstripBulb(6 + i * 4, universe) for i in range(8)],
             universe,
         )
-        self.pan_lower = pan_lower
-        self.pan_upper = pan_upper
-        self.pan_range = pan_upper - pan_lower
+        self.set_pan_range(pan_lower, pan_upper)
         self.invert_pan = invert_pan
         self.set_pan_speed(128)
         self.set_strobe(0)
+
+    def set_pan_range(self, pan_lower, pan_upper) -> None:
+        """Update mechanical pan limits (raw DMX units) in-place.
+
+        Lets venue-editor pan-range edits apply to the live runtime without a
+        scene rebuild (see `parrot_cloud.fixture_catalog.update_runtime_fixture_transforms`).
+        """
+        self.pan_lower = pan_lower
+        self.pan_upper = pan_upper
+        self.pan_range = pan_upper - pan_lower
 
     def set_dimmer(self, value):
         FixtureBase.set_dimmer(self, value)

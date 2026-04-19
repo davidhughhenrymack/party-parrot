@@ -5,11 +5,14 @@ Schema version 1 (see parrot_cloud.repository.VenueRepository.set_fixture_runtim
 - id: cloud fixture spec id (required)
 - dimmer: 0–1 master / fixture dimmer
 - rgb: [r,g,b] each 0–1 — aggregate color for simple fixtures
+- strobe: 0–1 strobe DMX value — the web consumer drives a 5–30 Hz on/off
+  gate identical to `FixtureRenderer.get_effective_dimmer` (see
+  parrot/vj/renderers/base.py) so cloud previews match the desktop.
 - pan_deg, tilt_deg: moving heads (degrees, fixture logical angles)
 - prism_on, prism_rotate_speed: moving heads — prism toggle + rotation [-1,1]
 - focus: moving heads — 0.0 = big/wide beam, 1.0 = tight/pinpoint
 - bar_pan_deg: pan for linear bars (matches MotionstripRenderer convention)
-- bulbs: optional list of { dimmer, rgb } per cell for multi-bulb fixtures
+- bulbs: optional list of { dimmer, rgb, strobe } per cell for multi-bulb fixtures
 """
 
 from __future__ import annotations
@@ -50,10 +53,12 @@ def fixture_runtime_entry(fixture: FixtureBase) -> dict[str, Any] | None:
     color = fixture.get_color()
     r, g, b = _color_rgb(color)
     dim = float(fixture.get_dimmer()) / 255.0
+    strobe = float(fixture.get_strobe()) / 255.0
     entry: dict[str, Any] = {
         "id": cid,
         "dimmer": dim,
         "rgb": [r, g, b],
+        "strobe": strobe,
     }
 
     if isinstance(fixture, MovingHead):
@@ -75,6 +80,7 @@ def fixture_runtime_entry(fixture: FixtureBase) -> dict[str, Any] | None:
                 {
                     "dimmer": float(bulb.get_dimmer()) / 255.0,
                     "rgb": [br, bg, bb],
+                    "strobe": float(bulb.get_strobe()) / 255.0,
                 }
             )
         entry["bulbs"] = bulbs

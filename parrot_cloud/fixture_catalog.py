@@ -8,6 +8,7 @@ import numpy as np
 from beartype import beartype
 
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
+from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
 from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
@@ -86,7 +87,33 @@ def _apply_transform(fixture: FixtureBase, spec: FixtureSpec) -> FixtureBase:
     fixture.cloud_fixture_type = spec.fixture_type
     fixture.cloud_group_name = spec.group_name
     fixture.cloud_is_manual = spec.is_manual
+    _apply_live_fixture_options(fixture, spec)
     return fixture
+
+
+def _apply_live_fixture_options(fixture: FixtureBase, spec: FixtureSpec) -> None:
+    """Sync mechanical pan/tilt limits onto an existing runtime fixture.
+
+    Used during in-place snapshot updates (see `update_runtime_fixture_transforms`)
+    so that changes to pan_lower/pan_upper/tilt_lower/tilt_upper in the venue
+    editor take effect on the next frame without a scene rebuild.
+    """
+    definition = FIXTURE_TYPES.get(spec.fixture_type)
+    defaults: dict[str, int | float | bool] = (
+        definition.default_options if definition is not None else {}
+    )
+    if isinstance(fixture, ChauvetMoverBase):
+        fixture.set_pan_tilt_range(
+            _option_float(spec, "pan_lower", float(defaults.get("pan_lower", 0.0))),
+            _option_float(spec, "pan_upper", float(defaults.get("pan_upper", 540.0))),
+            _option_float(spec, "tilt_lower", float(defaults.get("tilt_lower", 0.0))),
+            _option_float(spec, "tilt_upper", float(defaults.get("tilt_upper", 270.0))),
+        )
+    elif isinstance(fixture, Motionstrip38):
+        fixture.set_pan_range(
+            int(_option_float(spec, "pan_lower", float(defaults.get("pan_lower", 0.0)))),
+            int(_option_float(spec, "pan_upper", float(defaults.get("pan_upper", 255.0)))),
+        )
 
 
 FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {

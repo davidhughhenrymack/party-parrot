@@ -27,7 +27,19 @@ def test_fixture_runtime_entry_par_with_cloud():
     assert row["id"] == "fx-1"
     assert row["dimmer"] == 1.0
     assert row["rgb"] == [1.0, 0.0, 0.0]
+    assert row["strobe"] == 0.0
     assert "pan_deg" not in row
+
+
+def test_fixture_runtime_entry_reports_strobe():
+    par = ParRGB(1)
+    par.cloud_spec_id = "fx-strobe"
+    par.set_color(Color("white"))
+    par.set_dimmer(255)
+    par.set_strobe(204)
+    row = fixture_runtime_entry(par)
+    assert row is not None
+    assert row["strobe"] == 204 / 255.0
 
 
 def test_moving_head_angles():

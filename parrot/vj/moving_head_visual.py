@@ -19,9 +19,13 @@ import math
 
 from beartype import beartype
 
-# Same cap as `parrot/vj/renderers/moving_head.py` had inline — tilts beyond ~180° are rare;
-# clamping avoids the proxy head folding through the floor in preview.
-_MECHANICAL_TILT_MAX_DEG = 200.0
+# Chauvet-style moving heads have a 270° mechanical tilt sweep. The logical
+# `MovingHead.tilt_angle` (set by `ChauvetMoverBase.set_tilt`) is expressed in
+# that unsigned 0..270° space, where the mechanical *center* (=135°) is
+# "head pointing straight up from the base". DMX 0 / 255 correspond to the
+# two mechanical end-stops, i.e. -135° / +135° from that up-neutral position.
+_MECHANICAL_TILT_MAX_DEG = 270.0
+_MECHANICAL_TILT_NEUTRAL_DEG = 135.0
 
 
 @beartype
@@ -36,9 +40,16 @@ def pan_radians_for_render(pan_deg: float) -> float:
 
 @beartype
 def tilt_radians_for_render(tilt_deg: float) -> float:
-    """Radians for head tilt after clamping to a believable mechanical sweep."""
+    """Radians for head tilt in the desktop renderer (rotation around +X axis).
+
+    The head's local forward in `parrot/vj/renderers/moving_head.py` is +Z, and
+    the world "up" is +Y. Rotating +Z by -π/2 around +X gives +Y, so we want
+    ``tilt_rad = -π/2`` at the mechanical center (tilt_deg = 135°). The full
+    mechanical sweep (0°..270°) therefore maps to tilt_rad in
+    ``[-π/2 - 135°, -π/2 + 135°]`` — symmetric ±135° around straight up.
+    """
     td = max(0.0, min(float(tilt_deg), _MECHANICAL_TILT_MAX_DEG))
-    return math.radians(td) * 0.5
+    return math.radians(td - _MECHANICAL_TILT_NEUTRAL_DEG) - math.pi / 2.0
 
 
 @beartype
@@ -50,3 +61,9 @@ def aim_group_rotation_z_radians(pan_deg: float) -> float:
 @beartype
 def mechanical_tilt_max_deg() -> float:
     return _MECHANICAL_TILT_MAX_DEG
+
+
+@beartype
+def mechanical_tilt_neutral_deg() -> float:
+    """Logical tilt value (in `MovingHead.tilt_angle` space) meaning 'head straight up'."""
+    return _MECHANICAL_TILT_NEUTRAL_DEG

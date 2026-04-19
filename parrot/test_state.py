@@ -403,3 +403,67 @@ class TestState:
         assert original_fixture.x == 9.0
         assert original_fixture.y == 8.0
         assert original_fixture.z == 7.0
+
+    def test_runtime_scene_update_applies_pan_tilt_range_live(self):
+        """Editing a moving head's pan/tilt range in the venue editor must
+        take effect on the live runtime fixture on the next snapshot, without
+        requiring a scene rebuild (which would cost a re-sync / visual reset).
+        """
+        state = State()
+
+        def make_snapshot(revision: int, options: dict):
+            return VenueSnapshot(
+                summary=VenueSummary(
+                    id="venue-1",
+                    slug="demo",
+                    name="Demo Venue",
+                    archived=False,
+                    active=True,
+                    revision=revision,
+                ),
+                floor_width=20.0,
+                floor_depth=15.0,
+                floor_height=10.0,
+                video_wall=VideoWallSpec(
+                    x=10.0, y=1.0, z=3.0,
+                    width=10.0, height=6.0, depth=0.25,
+                    locked=False,
+                ),
+                fixtures=(
+                    FixtureSpec(
+                        id="spot-1",
+                        fixture_type="chauvet_spot_160",
+                        address=10,
+                        universe="default",
+                        x=1.0, y=2.0, z=3.0,
+                        options=options,
+                    ),
+                ),
+                scene_objects=(),
+            )
+
+        initial = make_snapshot(
+            1,
+            {"pan_lower": 360, "pan_upper": 540, "tilt_lower": 0, "tilt_upper": 90},
+        )
+        # Simulate the user dragging the pan/tilt range panel to the "Full"
+        # preset: full mechanical sweep.
+        updated = make_snapshot(
+            2,
+            {"pan_lower": 0, "pan_upper": 540, "tilt_lower": 0, "tilt_upper": 270},
+        )
+
+        state._apply_runtime_snapshot(initial)
+        live_fixture = state.runtime_patch[0]
+        initial_tilt_upper_dmx = live_fixture.tilt_upper
+
+        state._apply_runtime_snapshot(updated)
+
+        # Same fixture instance (in-place update, no scene rebuild).
+        assert state.runtime_patch[0] is live_fixture
+        # tilt_upper is stored in DMX-unit space (deg / 270 * 255). After the
+        # update the full 270° sweep should map to the full DMX range (255).
+        assert live_fixture.tilt_upper == pytest.approx(255.0)
+        assert live_fixture.tilt_upper != pytest.approx(initial_tilt_upper_dmx)
+        assert live_fixture.pan_lower == pytest.approx(0.0)
+        assert live_fixture.pan_upper == pytest.approx(255.0)

@@ -10,11 +10,36 @@ export function panRadiansForRender(panDeg) {
   return (Math.PI / 180) * Number(panDeg) * 0.5 + Math.PI;
 }
 
-/** @param {number} tiltDeg */
+/**
+ * Desktop-side tilt rotation (radians around +X). Mirrors the Python
+ * `tilt_radians_for_render` exactly — logical 135° = head straight up,
+ * full mechanical sweep 0°..270° → ±135° from up.
+ *
+ * The web venue editor's head has its local forward aligned with +Y (not
+ * the desktop's +Z), so `DenseSceneController` applies an equivalent but
+ * differently-offset rotation — see `tiltRadiansForWebHead` below.
+ *
+ * @param {number} tiltDeg
+ */
 export function tiltRadiansForRender(tiltDeg) {
-  const maxDeg = 200.0;
+  const maxDeg = MECHANICAL_TILT_MAX_DEG;
   const td = Math.max(0.0, Math.min(Number(tiltDeg), maxDeg));
-  return (Math.PI / 180) * td * 0.5;
+  return (Math.PI / 180) * (td - MECHANICAL_TILT_NEUTRAL_DEG) - Math.PI / 2;
+}
+
+/**
+ * Web-side tilt rotation for `headPivotGroup.rotation.x` (Three.js, head's
+ * local forward = +Y). At logical tilt = 135° the result is +π/2 so the beam
+ * points along the aimGroup's +Z (venue up), matching the desktop renderer.
+ *
+ * Equivalent to `radians(tilt_deg - 45)`.
+ *
+ * @param {number} tiltDeg
+ */
+export function tiltRadiansForWebHead(tiltDeg) {
+  const maxDeg = MECHANICAL_TILT_MAX_DEG;
+  const td = Math.max(0.0, Math.min(Number(tiltDeg), maxDeg));
+  return (Math.PI / 180) * (td - MECHANICAL_TILT_NEUTRAL_DEG) + Math.PI / 2;
 }
 
 /**
@@ -31,4 +56,10 @@ export function aimGroupRotationZRadians(panDeg) {
   return -(panRadiansForRender(panDeg) - Math.PI);
 }
 
-export const MECHANICAL_TILT_MAX_DEG = 200.0;
+export const MECHANICAL_TILT_MAX_DEG = 270.0;
+/**
+ * Logical tilt value meaning "head pointing straight up from the base" — the
+ * mechanical center of a Chauvet 270° tilt sweep (see
+ * `parrot/vj/moving_head_visual.py::mechanical_tilt_neutral_deg`).
+ */
+export const MECHANICAL_TILT_NEUTRAL_DEG = 135.0;

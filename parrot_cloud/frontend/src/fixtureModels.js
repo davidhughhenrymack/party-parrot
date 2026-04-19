@@ -93,9 +93,9 @@ function mirrorballModel() {
     kind: 'mirrorball',
     sphereRadius,
     beamCount: 36,
-    beamLength: 2.4,
+    beamLength: 7.2,
     beamConeRadius: bs * 0.07,
-    coneLength: 2.4,
+    coneLength: 7.2,
     coneRadius: bs * 0.2,
   };
 }
@@ -146,7 +146,7 @@ export function resolveFixtureVisualModel(fixtureType) {
   return {
     kind: 'bulb',
     ...par,
-    coneLength: 3.5,
+    coneLength: 7.0,
     coneRadius: bs * 1.0,
   };
 }

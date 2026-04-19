@@ -142,6 +142,61 @@ def test_moving_head_rotation_is_pan_then_tilt():
     assert np.allclose(via_composed, pan_last, atol=1e-5)
 
 
+def test_moving_head_at_dmx_127_with_full_tilt_points_up():
+    """End-to-end: a fixture with full mechanical tilt range, set to DMX tilt=127,
+    should render with the beam pointing straight up (world +Y).
+
+    Covers the ChauvetMoverBase.set_tilt → MovingHead.tilt_angle → renderer
+    pipeline including the +π pan offset. Pan is left at DMX=0 (logical pan=0).
+    """
+    import numpy as np
+    from parrot.vj.renderers.base import quaternion_rotate_vector
+
+    # Full mechanical sweep: tilt_lower=0° → DMX 0, tilt_upper=270° → DMX 255.
+    fixture = ChauvetSpot160_12Ch(1, tilt_lower=0.0, tilt_upper=270.0)
+    fixture.set_pan(0)
+    fixture.set_tilt(127)
+    renderer = MovingHeadRenderer(fixture)
+
+    local_forward = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    world_beam = quaternion_rotate_vector(
+        renderer._moving_body_rotation(), local_forward
+    )
+    # Beam should be (approximately) world +Y with small tolerance since DMX 127
+    # is very near (but not exactly) logical tilt 135°.
+    assert np.isclose(world_beam[0], 0.0, atol=5e-2)
+    assert np.isclose(world_beam[1], 1.0, atol=5e-2), (
+        f"expected beam up (+Y), got {world_beam}"
+    )
+    assert np.isclose(world_beam[2], 0.0, atol=5e-2)
+
+
+def test_moving_head_full_tilt_endpoints_symmetric_from_up():
+    """DMX 0 and DMX 255 (full range) should place the beam ±135° away from up."""
+    import math
+    import numpy as np
+    from parrot.vj.renderers.base import quaternion_rotate_vector
+
+    fixture = ChauvetSpot160_12Ch(1, tilt_lower=0.0, tilt_upper=270.0)
+    fixture.set_pan(0)
+    local_forward = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+
+    fixture.set_tilt(0)
+    beam_low = quaternion_rotate_vector(
+        MovingHeadRenderer(fixture)._moving_body_rotation(), local_forward
+    )
+    fixture.set_tilt(255)
+    beam_high = quaternion_rotate_vector(
+        MovingHeadRenderer(fixture)._moving_body_rotation(), local_forward
+    )
+
+    angle_low = math.degrees(math.acos(float(np.dot(beam_low, up))))
+    angle_high = math.degrees(math.acos(float(np.dot(beam_high, up))))
+    assert angle_low == pytest.approx(135.0, abs=1.5)
+    assert angle_high == pytest.approx(135.0, abs=1.5)
+
+
 def test_renderer_set_position():
     """Test that renderer position can be set"""
     fixture = ParRGB(1)

@@ -5,6 +5,7 @@ import {
   lensRadiusForModel,
   resolveFixtureVisualModel,
 } from './fixtureModels.js';
+import { tiltRadiansForWebHead } from './movingHeadPreviewMath.js';
 
 export function createNoopSceneController(
   viewportEl,
@@ -410,6 +411,17 @@ function createThreeSceneController({
     // side up. The placeholder pattern is rotationally symmetric so it is
     // unaffected by the change.
     texture.flipY = false;
+    // ``toScenePosition`` flips venue X into three.js -X so the default
+    // perspective camera (positioned audience-side at +Y, up=+Z) sees the
+    // stage from the audience POV — its world-right axis points to three.js
+    // -X. Because the video-wall plane has no parent rotation, the raw UV
+    // ``u=0..1`` would map to local -X..+X which corresponds to camera
+    // right..left — i.e. the preview image would read mirrored compared
+    // to the raw ``/api/runtime/vj-preview`` JPEG. Flip the texture
+    // horizontally to cancel that audience-view mirror.
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.repeat.x = -1;
+    texture.offset.x = 1;
     return texture;
   }
 
@@ -568,6 +580,7 @@ function createThreeSceneController({
       if (entity.helperMaterial) {
         entity.helperMaterial.opacity = isSelected ? 0.22 : fixtureSelectionActive ? 0.056 : 0.08;
       }
+      const strobeGate = entity.runtimeStrobeGate ?? 1;
       if (entity.coneMaterial) {
         const ro = entity.runtimeConeOpacity ?? 0;
         if (ro <= 1e-5) {
@@ -580,7 +593,7 @@ function createThreeSceneController({
           if (isSelected) {
             mul *= 1.28;
           }
-          entity.coneMaterial.opacity = Math.min(1, ro * mul);
+          entity.coneMaterial.opacity = Math.min(1, ro * mul) * strobeGate;
         }
       }
       if (entity.prismMaterials && entity.prismMaterials.length > 0 && entity.prismOn) {
@@ -588,10 +601,13 @@ function createThreeSceneController({
         let mul = 1.0;
         if (fixtureSelectionActive && !isSelected) mul *= 0.62;
         if (isSelected) mul *= 1.28;
-        const op = Math.min(1, baseRo * mul);
+        const op = Math.min(1, baseRo * mul) * strobeGate;
         for (const m of entity.prismMaterials) {
           m.opacity = op;
         }
+      }
+      if (entity.lensMaterial && typeof entity.runtimeLensOpacity === 'number') {
+        entity.lensMaterial.opacity = entity.runtimeLensOpacity * strobeGate;
       }
       if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
         const ro = entity.runtimeMirrorballOpacity ?? 0;
@@ -607,7 +623,7 @@ function createThreeSceneController({
           if (isSelected) {
             mul *= 1.28;
           }
-          const o = Math.min(1, ro * mul);
+          const o = Math.min(1, ro * mul) * strobeGate;
           for (const m of entity.mirrorballBeamMaterials) {
             m.opacity = o;
           }
@@ -959,6 +975,14 @@ function createThreeSceneController({
     const r = Math.min(1, rgb[0] * dimClamped);
     const g = Math.min(1, rgb[1] * dimClamped);
     const b = Math.min(1, rgb[2] * dimClamped);
+    // `strobe` mirrors the desktop renderer: when dimmer>0 and strobe>0, the
+    // beam toggles on/off at 5–30 Hz (see FixtureRenderer.get_effective_dimmer
+    // in parrot/vj/renderers/base.py). The gating itself happens in the
+    // animate() loop — here we just record the base strobe amount so the
+    // per-frame tick knows whether/how fast to flicker.
+    entity.runtimeStrobe = typeof vis.strobe === 'number'
+      ? Math.max(0, Math.min(1, vis.strobe))
+      : 0;
     // Intentionally do NOT recolour `entity.bodyMaterial` — the housing keeps
     // its neutral dark shell. DMX colour is visible through the beam and lens
     // materials below.
@@ -969,7 +993,8 @@ function createThreeSceneController({
         Math.min(1, b * 1.15)
       );
       entity.runtimeConeOpacity = dimClamped * CONE_OPACITY_AT_FULL_DIM;
-      entity.coneMaterial.opacity = entity.runtimeConeOpacity;
+      entity.coneMaterial.opacity =
+        entity.runtimeConeOpacity * (entity.runtimeStrobeGate ?? 1);
     }
     const prismOn = vis.prism_on === true;
     const prismSpeed =
@@ -1016,7 +1041,9 @@ function createThreeSceneController({
         Math.min(1, g + 0.12),
         Math.min(1, b + 0.12)
       );
-      entity.lensMaterial.opacity = 0.35 + dimClamped * 0.58;
+      entity.runtimeLensOpacity = 0.35 + dimClamped * 0.58;
+      entity.lensMaterial.opacity =
+        entity.runtimeLensOpacity * (entity.runtimeStrobeGate ?? 1);
     }
     if (entity.aimGroup && entity.headPivotGroup) {
       // Pan-then-tilt kinematics: `aimGroup` is the parent (yoke pan around
@@ -1025,8 +1052,13 @@ function createThreeSceneController({
       // mechanics. See fixtureModels.js for the matching comment and
       // parrot/vj/renderers/moving_head.py::_moving_body_rotation for the
       // desktop equivalent.
+      // Tilt convention: logical tilt_deg = 135° means "head straight up"
+      // (mechanical center of a Chauvet 270° sweep). See
+      // `movingHeadPreviewMath.tiltRadiansForWebHead` and
+      // `parrot/vj/moving_head_visual.tilt_radians_for_render` — the desktop
+      // renderer and the web preview agree on which logical tilt value = up.
       const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
-      const tilt = typeof vis.tilt_deg === 'number' ? THREE.MathUtils.degToRad(vis.tilt_deg) : 0;
+      const tilt = typeof vis.tilt_deg === 'number' ? tiltRadiansForWebHead(vis.tilt_deg) : 0;
       entity.aimGroup.rotation.set(0, 0, 0);
       entity.aimGroup.rotation.order = 'ZXY';
       entity.aimGroup.rotation.z = -pan;
@@ -1043,7 +1075,7 @@ function createThreeSceneController({
       const pivotGroup = entity.headPivotGroup ?? entity.aimGroup;
       if (pivotGroup) {
         const pan = typeof vis.pan_deg === 'number' ? THREE.MathUtils.degToRad(vis.pan_deg) : 0;
-        const tilt = typeof vis.tilt_deg === 'number' ? THREE.MathUtils.degToRad(vis.tilt_deg) : 0;
+        const tilt = typeof vis.tilt_deg === 'number' ? tiltRadiansForWebHead(vis.tilt_deg) : 0;
         pivotGroup.rotation.order = 'ZXY';
         pivotGroup.rotation.z = -pan;
         pivotGroup.rotation.x = tilt;
@@ -1053,7 +1085,7 @@ function createThreeSceneController({
       entity.stripPanGroup.rotation.x = THREE.MathUtils.degToRad(vis.bar_pan_deg);
     }
     if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
-      const baseOp = dimClamped * 0.42;
+      const baseOp = dimClamped * 0.14;
       entity.runtimeMirrorballOpacity = baseOp;
       // Mirrorball now has a dimmer + RGB DMX footprint — tint the reflected
       // sparkles with the fixture's raw color (not the dim-pre-multiplied
@@ -1062,9 +1094,10 @@ function createThreeSceneController({
       const br = Math.min(1, rgb[0] + 0.08);
       const bg = Math.min(1, rgb[1] + 0.08);
       const bb = Math.min(1, rgb[2] + 0.08);
+      const gatedOp = baseOp * (entity.runtimeStrobeGate ?? 1);
       for (const m of entity.mirrorballBeamMaterials) {
         m.color.setRGB(br, bg, bb);
-        m.opacity = baseOp;
+        m.opacity = gatedOp;
       }
     }
   }
@@ -1082,6 +1115,8 @@ function createThreeSceneController({
       }
       const vis = byId.get(String(entity.fixture.id));
       if (!vis || !Array.isArray(vis.rgb) || vis.rgb.length < 3) {
+        entity.runtimeStrobe = 0;
+        entity.runtimeStrobeGate = 1;
         if (entity.coneMaterial) {
           entity.runtimeConeOpacity = 0;
           entity.coneMaterial.opacity = 0;
@@ -1717,6 +1752,10 @@ function createThreeSceneController({
     const mbSpin = now * 0.00012;
     // Prism splay group rotation: rotate_speed in [-1,1] → ~0.5 Hz at full speed.
     const prismPhase = now * 0.001 * Math.PI;
+    // Strobe gate: mirrors `FixtureRenderer.get_effective_dimmer` in
+    // parrot/vj/renderers/base.py — strobe 0..1 maps to 5..30 Hz on/off.
+    const timeSec = now / 1000;
+    let strobeGateChanged = false;
     localState.entityMap.forEach((entity) => {
       if (entity.type === 'fixture' && entity.mirrorballBeamsGroup) {
         entity.mirrorballBeamsGroup.rotation.z = mbSpin;
@@ -1729,7 +1768,22 @@ function createThreeSceneController({
       ) {
         entity.prismGroup.rotation.y = prismPhase * entity.prismRotateSpeed;
       }
+      if (entity.type === 'fixture') {
+        const strobe = entity.runtimeStrobe ?? 0;
+        let gate = 1;
+        if (strobe > 0) {
+          const hz = 5.0 + strobe * 25.0;
+          gate = Math.floor(timeSec * hz) % 2 === 1 ? 1 : 0;
+        }
+        if ((entity.runtimeStrobeGate ?? 1) !== gate) {
+          entity.runtimeStrobeGate = gate;
+          strobeGateChanged = true;
+        }
+      }
     });
+    if (strobeGateChanged) {
+      applySelectionVisuals();
+    }
     renderer.render(scene, localState.activeCamera);
   }
   animate();
