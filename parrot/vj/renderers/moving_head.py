@@ -5,6 +5,7 @@ from typing import Optional, Any
 import math
 
 from parrot.fixtures.moving_head import MovingHead
+from parrot.vj.moving_head_visual import pan_radians_for_render, tilt_radians_for_render
 from parrot.vj.renderers.base import (
     FixtureRenderer,
     quaternion_from_axis_angle,
@@ -13,10 +14,6 @@ from parrot.vj.renderers.base import (
 )
 from parrot.director.frame import Frame
 import numpy as np
-
-# Typical moving-head tilt sweep is a little past 180° (front → up → back). DMX may report
-# up to ~270°; clamp before scaling so the proxy mesh/beam do not fold past a believable range.
-_MECHANICAL_TILT_MAX_DEG = 200.0
 
 # Prism rendering: 7-facet prism. Sub-beams are splayed well off the central
 # axis (so the fan is clearly visible, not a tight bundle) and each is drawn
@@ -50,11 +47,9 @@ class MovingHeadRenderer(FixtureRenderer):
         return (40.0, 40.0)
 
     def _pan_tilt_radians_for_render(self) -> tuple[float, float]:
-        """Pan/tilt radians for mesh, bulb, and beam (same convention as historical renderer)."""
-        pan_deg = float(self.fixture.get_pan_angle())
-        tilt_deg = max(0.0, min(float(self.fixture.get_tilt_angle()), _MECHANICAL_TILT_MAX_DEG))
-        pan_rad = math.radians(pan_deg) * 0.5 + math.pi
-        tilt_rad = math.radians(tilt_deg) * 0.5
+        """Pan/tilt radians for mesh, bulb, and beam — see `parrot.vj.moving_head_visual`."""
+        pan_rad = pan_radians_for_render(float(self.fixture.get_pan_angle()))
+        tilt_rad = tilt_radians_for_render(float(self.fixture.get_tilt_angle()))
         return pan_rad, tilt_rad
 
     def _moving_body_rotation(self) -> np.ndarray:
@@ -117,6 +112,25 @@ class MovingHeadRenderer(FixtureRenderer):
                     base_width,
                     base_height,
                     base_depth,
+                )
+
+                # Neutral-pan indicator: lighter grey slab on the base “front” in
+                # `room_3d` box space (face normal −Z; see `render_rectangular_box`).
+                # Parrot Cloud’s Z-up base puts the same marker on the −venue-Y face;
+                # see `parrot.vj.moving_head_visual` + AGENTS.md. Pan/tilt for mesh/beam
+                # use `pan_radians_for_render` / `tilt_radians_for_render` only.
+                screen_color = (0.65, 0.65, 0.65)
+                screen_thickness = base_depth * 0.08
+                screen_width = base_width * 0.55
+                screen_height = base_height * 0.55
+                self.room_renderer.render_rectangular_box(
+                    0.0,
+                    base_height / 2,
+                    -(base_depth / 2 + screen_thickness / 2),
+                    screen_color,
+                    screen_width,
+                    screen_height,
+                    screen_thickness,
                 )
 
         # Moving head: pan/tilt about the rear face of the head cuboid (not its center)

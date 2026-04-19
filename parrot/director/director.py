@@ -159,7 +159,7 @@ class Director:
         
         return "; ".join(parts)
 
-    def print_lighting_tree(self, context: str = ""):
+    def print_lighting_tree(self, mode_name: str | None = None):
         """Print a tree representation of the lighting interpreters.
 
         The outer iteration is one entry per cloud group (plus an optional
@@ -168,15 +168,13 @@ class Director:
         class-partitioned sub-group; those are flattened into one row per
         child so each sub-group displays its own fixtures and interpreter.
 
-        Group names are rendered as headers (``└── [GROUP NAME]``) so it is
-        obvious from the log which partition a given row belongs to and why
-        two otherwise-identical fixture classes may receive different
+        Group names are rendered as plain headers (``└── GROUP NAME``) so it
+        is obvious from the log which partition a given row belongs to and
+        why two otherwise-identical fixture classes may receive different
         randomized picks.
         """
-        result = "DMX Lighting Tree"
-        if context:
-            result += f" ({context})"
-        result += ":\n"
+        name_for_header = (mode_name or self.state.mode.name).capitalize()
+        result = f"{name_for_header} interpretation:\n"
 
         if not self.interpreters:
             result += "└── (no interpreters)\n"
@@ -191,8 +189,8 @@ class Director:
         for s_idx, (name, rows) in enumerate(sections):
             is_last_section = s_idx == len(sections) - 1
             section_connector = "└── " if is_last_section else "├── "
-            header_label = name if name is not None else "(ungrouped)"
-            result += f"{section_connector}{Fore.MAGENTA}[{header_label}]{Style.RESET_ALL}\n"
+            header_label = name if name is not None else "ungrouped"
+            result += f"{section_connector}{Fore.MAGENTA}{header_label}{Style.RESET_ALL}\n"
 
             section_pipe = "    " if is_last_section else "│   "
             for r_idx, (group, interpreter_str_raw) in enumerate(rows):
@@ -227,7 +225,7 @@ class Director:
             for idx, group in enumerate(self.fixture_groups)
         ]
 
-        print(self.print_lighting_tree(f"after initialization to {self.state.mode.name}"))
+        print(self.print_lighting_tree(self.state.mode.name))
 
     def generate_all(self):
         """Generate both lighting interpreters and VJ visuals"""
@@ -317,7 +315,7 @@ class Director:
         self.shift_count += 1
 
         # Print the tree structure after shift
-        print(self.print_lighting_tree(f"after shift #{self.shift_count} to {self.state.mode.name}"))
+        print(self.print_lighting_tree(self.state.mode.name))
 
     def shift_vj_only(self):
         """Full shift of VJ visuals only (no lighting changes) - complete regeneration"""
@@ -338,7 +336,7 @@ class Director:
         self.shift_count += 1
 
         # Print the tree structure after shift
-        print(self.print_lighting_tree(f"after shift #{self.shift_count} to {self.state.mode.name}"))
+        print(self.print_lighting_tree(self.state.mode.name))
 
     def step(self, frame: Frame):
         self.last_frame = frame
@@ -389,4 +387,4 @@ class Director:
         print(f"mode changed to: {mode.name}")
         # Regenerate lighting interpreters only (VJ is independent)
         self.generate_interpreters()
-        print(self.print_lighting_tree(f"after mode change to {mode.name}"))
+        print(self.print_lighting_tree(mode.name))

@@ -116,14 +116,14 @@ class TestKeyboardHandler:
         self.state.set_mode.assert_called_once_with(Mode.ethereal)
 
     def test_mode_navigate_down(self):
-        """Test that D key navigates down lighting modes (towards blackout)"""
-        # chill sits above test in the hype-sorted ordering, so stepping down
-        # lands on test rather than going straight to blackout.
+        """Test that D key navigates down lighting modes (towards test)"""
+        # ``test`` is the lowest-hype entry; stepping down from chill lands on
+        # blackout, which sits just below chill in the ordering.
         self.state.mode = Mode.chill
 
         result = self.handler.on_key_release(pyglet.window.key.D, 0)
         assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.test)
+        self.state.set_mode.assert_called_once_with(Mode.blackout)
 
     def test_mode_navigate_up_arrow(self):
         """Test that UP arrow key navigates up lighting modes (towards rave)"""
@@ -135,36 +135,37 @@ class TestKeyboardHandler:
         self.state.set_mode.assert_called_once_with(Mode.ethereal)
 
     def test_mode_navigate_down_arrow(self):
-        """Test that DOWN arrow key navigates down lighting modes (towards blackout)"""
-        # chill sits above test in the hype-sorted ordering; stepping down
-        # lands on test first.
+        """Test that DOWN arrow key navigates down lighting modes (towards test)"""
+        # blackout sits between chill and test in the ordering, so stepping
+        # DOWN from chill lands on blackout.
         self.state.mode = Mode.chill
 
         result = self.handler.on_key_press(pyglet.window.key.DOWN, 0)
         assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.test)
+        self.state.set_mode.assert_called_once_with(Mode.blackout)
 
     def test_mode_ordering_matches_modes_by_hype(self):
         """Handler navigates using the shared hype-ordered list."""
         from parrot.director.mode import MODES_BY_HYPE
 
         assert self.handler.modes == list(MODES_BY_HYPE)
-        assert self.handler.modes[0] == Mode.blackout
+        assert self.handler.modes[0] == Mode.test
         assert self.handler.modes[-1] == Mode.rave
-        assert Mode.test in self.handler.modes
+        assert Mode.blackout in self.handler.modes
 
-    def test_mode_navigate_up_from_test_goes_to_chill(self):
-        """``test`` is the first non-blackout mode; UP walks to chill."""
+    def test_mode_navigate_up_from_test_goes_to_blackout(self):
+        """``test`` is the lowest-hype mode; UP walks to blackout."""
         self.state.mode = Mode.test
         result = self.handler.on_key_press(pyglet.window.key.UP, 0)
         assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.chill)
+        self.state.set_mode.assert_called_once_with(Mode.blackout)
 
-    def test_mode_navigate_down_from_test_goes_to_blackout(self):
+    def test_mode_navigate_down_from_test_stays_at_test(self):
+        """``test`` is the floor of the hype ladder; DOWN must not wrap."""
         self.state.mode = Mode.test
         result = self.handler.on_key_press(pyglet.window.key.DOWN, 0)
         assert result is True
-        self.state.set_mode.assert_called_once_with(Mode.blackout)
+        self.state.set_mode.assert_not_called()
 
     def test_mode_no_wrap_at_highest(self):
         """Test that C doesn't wrap at highest lighting mode (rave)"""
@@ -177,13 +178,11 @@ class TestKeyboardHandler:
         self.state.set_mode.assert_not_called()
 
     def test_mode_no_wrap_at_lowest(self):
-        """Test that D doesn't wrap at lowest lighting mode (blackout)"""
-        # Start at blackout
-        self.state.mode = Mode.blackout
+        """Test that D doesn't wrap at lowest lighting mode (test)"""
+        self.state.mode = Mode.test
 
         result = self.handler.on_key_release(pyglet.window.key.D, 0)
         assert result is True
-        # Should not call set_mode since we're at the bottom
         self.state.set_mode.assert_not_called()
 
     def test_mode_up_arrow_no_wrap_at_highest(self):
@@ -197,13 +196,11 @@ class TestKeyboardHandler:
         self.state.set_mode.assert_not_called()
 
     def test_mode_down_arrow_no_wrap_at_lowest(self):
-        """Test that DOWN arrow doesn't wrap at lowest lighting mode (blackout)"""
-        # Start at blackout
-        self.state.mode = Mode.blackout
+        """Test that DOWN arrow doesn't wrap at lowest lighting mode (test)"""
+        self.state.mode = Mode.test
 
         result = self.handler.on_key_press(pyglet.window.key.DOWN, 0)
         assert result is True
-        # Should not call set_mode since we're at the bottom
         self.state.set_mode.assert_not_called()
 
     def test_n_key_shifts_lighting_only(self):

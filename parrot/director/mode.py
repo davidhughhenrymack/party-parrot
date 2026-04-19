@@ -10,11 +10,13 @@ Mode = Enum(
 # Canonical ordering of lighting modes by hype/intensity, lowest to highest.
 # This is the single source of truth for UI listings (remote + desktop) and
 # for up/down keyboard navigation. Keep it in sync with ``Mode`` — every mode
-# must appear exactly once. ``test`` slots just above ``blackout`` because it
-# is a diagnostic/calm checkout rig, not a dance look.
+# must appear exactly once. ``test`` sits at the very bottom (below
+# ``blackout``) so operators can step DOWN into a diagnostic checkout rig
+# from blackout, and never accidentally land in ``test`` while walking the
+# hype ladder up from the stage-dark state.
 MODES_BY_HYPE: list[Mode] = [
-    Mode.blackout,
     Mode.test,
+    Mode.blackout,
     Mode.chill,
     Mode.ethereal,
     Mode.rave_gentle,

@@ -13,6 +13,11 @@ from parrot.runtime_fixture_state import build_fixture_runtime_payload
 from parrot.state import State
 from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
 
+# Minimum time between POSTs to /api/runtime/fixture-state. ~30 Hz matches the
+# desktop GL audio step (~30ms) so web fixture visuals track DMX without the
+# old 10 Hz cap.
+FIXTURE_RUNTIME_PUSH_MIN_INTERVAL_S = 1.0 / 30.0
+
 
 def _to_websocket_url(base_url: str) -> str:
     parsed = urlparse(base_url)
@@ -63,7 +68,7 @@ class RuntimeVenueClient:
         if patch is None:
             return
         now = time.monotonic()
-        if now - self._last_fixture_push_mono < 0.1:
+        if now - self._last_fixture_push_mono < FIXTURE_RUNTIME_PUSH_MIN_INTERVAL_S:
             return
         payload = build_fixture_runtime_payload(patch, self.state.runtime_manual_group)
         encoded = json.dumps(payload, separators=(",", ":"), sort_keys=True)

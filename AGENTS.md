@@ -8,6 +8,8 @@
   - `z`: height above the floor in meters
 - Floor scene objects are centered at `x = 0`, `y = 0`.
 - Fixture and scene-object rotations are stored in radians as `rotation_x`, `rotation_y`, `rotation_z`.
+  - These are applied on the venue editor’s Three.js fixture root in **default Euler order** (`'XYZ'`). After `position = (-venue_x, venue_y, venue_z)`, local axes are right-handed with **Z = height** (venue `z`). They describe how the **housing** sits in the room; they are **not** DMX pan/tilt (those come from live/runtime state on moving heads).
+- **Moving-head preview (critical):** Logical pan/tilt from the fixture model (`pan_deg`, `tilt_deg` in runtime JSON) are converted to mesh motion by **`parrot/vj/moving_head_visual.py`** (golden source). The web bundle duplicates the same numbers in **`parrot_cloud/frontend/src/movingHeadPreviewMath.js`** — keep them identical. Preview uses a **0.5×** scale on angles (historical VJ proxy), plus a fixed pan offset in the desktop renderer that the web `aimGroup.rotation.z` algebra cancels so both views match in venue space. The **grey base marker** is the “neutral pan reference” face: OpenGL room boxes label **−Z** as that face; the Z-up web base puts the same marker on the **−venue-Y** face (toward upstage / decreasing venue `y`).
 - Party Parrot runtime is the source of truth for fixture body shapes and beam conventions. When updating editor visuals, match:
   - generic fixtures: shallow rectangular body
   - moving heads: short base plus deeper moving head body

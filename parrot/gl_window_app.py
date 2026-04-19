@@ -57,7 +57,8 @@ def _encode_texture_rgb_as_jpeg(tex: Any) -> bytes | None:
     img = Image.frombuffer(mode, (w, h), raw, "raw", mode, 0, 1)
     if mode != "RGB":
         img = img.convert("RGB")
-    img = img.transpose(Image.FLIP_TOP_BOTTOM)
+    # moderngl returns this VJ FBO's bytes already top-down, so no vertical flip
+    # is needed to get a naturally-oriented JPEG for the web preview.
     max_w = 1280
     if w > max_w:
         nh = max(2, int(round(h * (max_w / w))))

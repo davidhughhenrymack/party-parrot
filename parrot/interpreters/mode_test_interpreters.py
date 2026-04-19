@@ -34,44 +34,69 @@ class RigColorCycle(InterpreterBase):
 class PanTiltAxisCheck(InterpreterBase):
     """Pan/tilt axis check for rig debugging.
 
-    Visits each DMX extreme one axis at a time, returning to the mid-range
-    ``(pan=127, tilt=127)`` between each extreme so you can reason about one
-    degree of freedom per step:
+    Walks each of the four DMX extremes one at a time, linearly interpolating
+    between positions so the motion is easy to follow on a physical fixture.
+    One excursion for a single extreme has four equal-length phases:
 
-        (127, 127) → (127, 255)  tilt up
-                   → (127, 127)  center
-                   → (127,   0)  tilt down
-                   → (127, 127)  center
-                   → (  0, 127)  pan left
-                   → (127, 127)  center
-                   → (255, 127)  pan right
-                   → (127, 127)  center
+        0   : hold at home (127, 127)          for ``HOLD_SECONDS``
+        1   : lerp home → extreme              over ``TRAVEL_SECONDS``
+        2   : hold at extreme                  for ``HOLD_SECONDS``
+        3   : lerp extreme → home              over ``TRAVEL_SECONDS``
 
-    Each state holds for ``SECONDS_PER_STEP`` so the movement is easy to see on
-    physical fixtures. All fixtures in the group move in sync.
+    The four extremes are visited in order ``tilt up → tilt down → pan left →
+    pan right``; after the fourth excursion the cycle loops. All fixtures in
+    the group move in sync.
     """
 
-    SECONDS_PER_STEP = 1.5
-
-    # (pan, tilt) per step. Order matches the docstring above so the rig walks
-    # tilt-up, tilt-down, pan-left, pan-right with a recenter between each.
-    SEQUENCE = (
-        (127, 127),
-        (127, 255),
-        (127, 127),
-        (127, 0),
-        (127, 127),
-        (0, 127),
-        (127, 127),
-        (255, 127),
+    HOME = (127, 127)
+    EXTREMES = (
+        (127, 255),  # tilt up
+        (127, 0),    # tilt down
+        (0, 127),    # pan left
+        (255, 127),  # pan right
     )
+
+    HOLD_SECONDS = 1.0
+    TRAVEL_SECONDS = 1.0
 
     def __str__(self) -> str:
         return "🧭 PanTiltAxisCheck"
 
+    @classmethod
+    def _cycle_seconds(cls) -> float:
+        """Duration of one (hold-home → travel-out → hold-extreme → travel-back) excursion."""
+        return 2 * cls.HOLD_SECONDS + 2 * cls.TRAVEL_SECONDS
+
+    @classmethod
+    def position_at(cls, t: float) -> tuple[float, float]:
+        """Resolve pan/tilt at absolute time ``t`` so tests can verify every phase."""
+        cycle = cls._cycle_seconds()
+        total = cycle * len(cls.EXTREMES)
+        t_mod = t % total
+        idx = int(t_mod // cycle)
+        local = t_mod - idx * cycle
+        target = cls.EXTREMES[idx]
+        hold = cls.HOLD_SECONDS
+        travel = cls.TRAVEL_SECONDS
+
+        if local < hold:
+            return (float(cls.HOME[0]), float(cls.HOME[1]))
+        if local < hold + travel:
+            u = (local - hold) / travel
+            return (
+                float(cls.HOME[0] + (target[0] - cls.HOME[0]) * u),
+                float(cls.HOME[1] + (target[1] - cls.HOME[1]) * u),
+            )
+        if local < hold + travel + hold:
+            return (float(target[0]), float(target[1]))
+        u = (local - hold - travel - hold) / travel
+        return (
+            float(target[0] + (cls.HOME[0] - target[0]) * u),
+            float(target[1] + (cls.HOME[1] - target[1]) * u),
+        )
+
     def step(self, frame: Frame, scheme: ColorScheme) -> None:
-        idx = int(frame.time / self.SECONDS_PER_STEP) % len(self.SEQUENCE)
-        pan, tilt = self.SEQUENCE[idx]
+        pan, tilt = self.position_at(frame.time)
         for fixture in self.group:
             fixture.set_pan(pan)
             fixture.set_tilt(tilt)

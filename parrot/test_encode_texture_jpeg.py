@@ -56,9 +56,9 @@ def test_encode_rgba_texture_matches_unsheared_source() -> None:
     jpeg = _encode_texture_rgb_as_jpeg(tex)
     assert jpeg is not None
     decoded = np.asarray(_decode_jpeg(jpeg))
-    # Encoder flips vertically to match GL → screen orientation; compare against
-    # the flipped source. JPEG is lossy so we only require rough equality.
-    expected = np.flipud(pixels[:, :, :3])
+    # Encoder keeps rows as-is (moderngl already returns top-down); JPEG is
+    # lossy so we only require rough equality.
+    expected = pixels[:, :, :3]
     diff = np.abs(decoded.astype(int) - expected.astype(int)).mean()
     assert diff < 15, f"JPEG RGBA→RGB roundtrip diverged: mean diff {diff:.2f}"
 
@@ -69,7 +69,7 @@ def test_encode_rgb_texture_still_works() -> None:
     jpeg = _encode_texture_rgb_as_jpeg(tex)
     assert jpeg is not None
     decoded = np.asarray(_decode_jpeg(jpeg))
-    expected = np.flipud(pixels)
+    expected = pixels
     diff = np.abs(decoded.astype(int) - expected.astype(int)).mean()
     assert diff < 15
 

@@ -12,6 +12,34 @@ import requests
 DEFAULT_SERVICE_URL = "http://127.0.0.1:4041"
 
 
+def _active_venue_editor_url(base_url: str) -> str:
+    """Resolve the URL that drops the user straight into the active venue editor.
+
+    The React app (``App.jsx``) routes ``/venues/<id>`` to the dense editor for
+    that venue. We read the runtime bootstrap to find the currently active
+    venue id and construct the editor URL; on any failure we fall back to the
+    service root so the browser still opens something useful.
+    """
+
+    try:
+        response = requests.get(f"{base_url}/api/bootstrap", timeout=1.5)
+        if not response.ok:
+            return base_url
+        payload = response.json()
+        control_state = payload.get("control_state") or {}
+        venue_id = control_state.get("active_venue_id")
+        if isinstance(venue_id, str) and venue_id:
+            return f"{base_url}/venues/{venue_id}"
+        active_venue = payload.get("active_venue") or {}
+        summary = active_venue.get("summary") or {}
+        fallback_id = summary.get("id")
+        if isinstance(fallback_id, str) and fallback_id:
+            return f"{base_url}/venues/{fallback_id}"
+    except Exception:
+        pass
+    return base_url
+
+
 def _open_venue_service_when_ready(base_url: str) -> None:
     """Wait for the venue editor HTTP service, then open it once."""
 
@@ -20,7 +48,7 @@ def _open_venue_service_when_ready(base_url: str) -> None:
             try:
                 response = requests.get(f"{base_url}/api/health", timeout=0.5)
                 if response.ok:
-                    webbrowser.open(base_url)
+                    webbrowser.open(_active_venue_editor_url(base_url))
                     return
             except Exception:
                 pass

@@ -106,7 +106,7 @@ function createThreeSceneController({
   /** 0 = silhouette plane flush to the table’s upstage edge (local −Y). */
   const DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0;
   /** Extra downward offset (m) so feet sit on the table top; plane centering + texture padding read high at 0.02. */
-  const DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.08;
+  const DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.22;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1b2430);
@@ -959,7 +959,9 @@ function createThreeSceneController({
     const r = Math.min(1, rgb[0] * dimClamped);
     const g = Math.min(1, rgb[1] * dimClamped);
     const b = Math.min(1, rgb[2] * dimClamped);
-    entity.bodyMaterial.color.setRGB(r, g, b);
+    // Intentionally do NOT recolour `entity.bodyMaterial` — the housing keeps
+    // its neutral dark shell. DMX colour is visible through the beam and lens
+    // materials below.
     if (entity.coneMaterial) {
       entity.coneMaterial.color.setRGB(
         Math.min(1, r * 1.15),
@@ -1108,8 +1110,11 @@ function createThreeSceneController({
     group.add(runtimeAxesGroup);
     const profile = resolveFixtureVisualModel(fixture.fixture_type);
 
+    // Housing stays a neutral dark colour at all times. DMX colour only drives
+    // the beam cone, the lens bulb, and (via selection) the emissive tint —
+    // matching how real moving heads / PARs look from the audience.
     const bodyMaterial = new THREE.MeshStandardMaterial({
-      color: fixture.is_manual ? 0xf59e0b : 0xef4444,
+      color: fixture.is_manual ? 0x3d3620 : 0x2d333d,
       metalness: 0.08,
       roughness: 0.56,
     });

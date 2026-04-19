@@ -16,6 +16,12 @@ GRID_H = 16
 # Top band as a fraction of framebuffer height (title + subtitle).
 HEADER_HEIGHT_FRAC = 0.11
 
+# Grid quad in NDC: shrink and center below the header (1 = full width/height of grid band).
+HEATMAP_NDC_SCALE = 0.68
+
+# Per-cell: fraction of cell left as background gap on each side (square fill is centered).
+CELL_GAP_FRAC = 0.09
+
 
 def _channel_rgb(value: int) -> tuple[float, float, float]:
     x = max(0, min(255, int(value))) / 255.0
@@ -108,16 +114,19 @@ class DmxHeatmapRenderer:
         out vec3 out_color;
         uniform sampler2D data_tex;
         uniform vec2 grid_size;
+        uniform vec3 bg_color;
+        uniform float cell_gap;
         void main() {
             // Match PIL/header orientation: CPU row 0 is top of grid; GL v_uv.y=0 is bottom of quad.
             vec2 uv = vec2(v_uv.x, 1.0 - v_uv.y);
             vec2 cell = floor(uv * grid_size);
-            vec2 center = (cell + 0.5) / grid_size;
-            vec3 c = texture(data_tex, center).rgb;
             vec2 f = fract(uv * grid_size);
-            float edge = max(step(0.88, f.x), step(0.88, f.y));
-            c *= 1.0 - edge * 0.45;
-            out_color = c;
+            if (f.x < cell_gap || f.x > 1.0 - cell_gap || f.y < cell_gap || f.y > 1.0 - cell_gap) {
+                out_color = bg_color;
+            } else {
+                vec2 center = (cell + 0.5) / grid_size;
+                out_color = texture(data_tex, center).rgb;
+            }
         }
         """
         self._prog = context.program(vertex_shader=vertex, fragment_shader=fragment)
@@ -176,6 +185,17 @@ class DmxHeatmapRenderer:
         verts = (x0, y0, 0.0, 0.0, x1, y0, 1.0, 0.0, x0, y1, 0.0, 1.0, x1, y1, 1.0, 1.0)
         vbo.write(struct.pack("16f", *verts))
 
+    @staticmethod
+    def _grid_quad_ndc_centered(y_split: float, scale: float) -> tuple[float, float, float, float]:
+        """NDC bounds (x0, y0, x1, y1) for the heatmap, centered in [-1,1] × [-1, y_split]."""
+        x_lo, x_hi = -1.0, 1.0
+        y_lo, y_hi = -1.0, y_split
+        cx = (x_lo + x_hi) * 0.5
+        cy = (y_lo + y_hi) * 0.5
+        half_w = (x_hi - x_lo) * 0.5 * scale
+        half_h = (y_hi - y_lo) * 0.5 * scale
+        return cx - half_w, cy - half_h, cx + half_w, cy + half_h
+
     def render(
         self, context: mgl.Context, snapshot_512: list[int], width: int, height: int
     ) -> mgl.Framebuffer | None:
@@ -202,18 +222,22 @@ class DmxHeatmapRenderer:
         header_h = max(1, int(round(height * HEADER_HEIGHT_FRAC)))
         y_split = 1.0 - (2.0 * header_h / float(height))
 
-        self._write_quad_vbo(self._vbo, -1.0, -1.0, 1.0, y_split)
+        gx0, gy0, gx1, gy1 = self._grid_quad_ndc_centered(y_split, HEATMAP_NDC_SCALE)
+        self._write_quad_vbo(self._vbo, gx0, gy0, gx1, gy1)
         self._write_quad_vbo(self._header_vbo, -1.0, y_split, 1.0, 1.0)
 
         self._ensure_header_texture(context, width, height)
         assert self._header_tex is not None
 
+        bg = (0.02, 0.02, 0.06)
         self._fbo.use()
-        self._fbo.clear(0.02, 0.02, 0.06)
+        self._fbo.clear(*bg)
 
         self._data_tex.use(0)
         self._prog["data_tex"].value = 0
         self._prog["grid_size"].value = (float(GRID_W), float(GRID_H))
+        self._prog["bg_color"].value = bg
+        self._prog["cell_gap"].value = float(CELL_GAP_FRAC)
         self._vao.render(mgl.TRIANGLE_STRIP)
 
         self._header_tex.use(0)

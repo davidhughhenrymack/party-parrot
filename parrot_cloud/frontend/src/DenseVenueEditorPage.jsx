@@ -10,7 +10,13 @@ const ROTATION_STEP_DEGREES = 45;
 // Moving-head pan/tilt geometry. Pan spans 540° physical (0–540 in stored
 // degrees); the UI treats 270° as "forward" and lets the user set left/right
 // deviations around that center. Tilt spans 270° physical (0–270).
+const PAN_MIN_DEG = 0;
 const PAN_MAX_DEG = 540;
+/** Full mechanical pan sweep in stored degrees (same convention as fixture runtime / `fixture_catalog`). */
+const PAN_RANGE_FULL_DEG = Object.freeze({
+  pan_lower: PAN_MIN_DEG,
+  pan_upper: PAN_MAX_DEG,
+});
 const PAN_CENTER_DEG = 270;
 const PAN_HALF_MAX_DEG = 270;
 const TILT_MAX_DEG = 270;
@@ -29,15 +35,25 @@ const PAN_TILT_QUICK_PRESETS = {
       tilt_upper: 70,
     },
   },
-  // Sky: full pan sweep, tilt 45–135° (beams away from the floor, up toward audience/sky).
+  // Sky: full mechanical pan (0°–540° stored), tilt 45–135° (beams up / away from floor).
   sky: {
     label: 'Sky',
-    title: 'Full pan sweep · tilt 45–135°',
+    title: `Pan ${PAN_MIN_DEG}°–${PAN_MAX_DEG}° (full sweep) · tilt 45°–135°`,
     values: {
-      pan_lower: 0,
-      pan_upper: PAN_MAX_DEG,
+      ...PAN_RANGE_FULL_DEG,
       tilt_lower: 45,
       tilt_upper: 135,
+    },
+  },
+  // Full: unrestricted mechanical range — pan 0°–540° and tilt 0°–270°. Use
+  // when the operator wants the fixture to roam anywhere its yoke can reach.
+  full: {
+    label: 'Full',
+    title: `Pan ${PAN_MIN_DEG}°–${PAN_MAX_DEG}° · tilt 0°–${TILT_MAX_DEG}° (full mechanical range)`,
+    values: {
+      ...PAN_RANGE_FULL_DEG,
+      tilt_lower: 0,
+      tilt_upper: TILT_MAX_DEG,
     },
   },
 };
@@ -227,6 +243,7 @@ function PanTiltMixedSlider({
   warn,
   title,
   onCommit,
+  reversed = false,
 }) {
   const [editing, setEditing] = useState(false);
   const [textDraft, setTextDraft] = useState('');
@@ -246,6 +263,14 @@ function PanTiltMixedSlider({
   const clamp = (v) => Math.max(min, Math.min(max, v));
   const display = isMixed ? 'Mixed' : `${Math.round(sliderDraft)}°`;
 
+  // In `reversed` mode we mirror the entire control with `transform: scaleX(-1)`
+  // in CSS. That flips the thumb position, the accent-color fill region, and
+  // the drag coordinate mapping in one go, so stored `sliderDraft` still runs
+  // natively low→high and onChange keeps its usual semantics.
+  const labelNode = compactLabel
+    ? <span className="pan-tilt-slider-compact-label">{compactLabel}</span>
+    : null;
+
   if (editing) {
     const commitTextAndExit = () => {
       setEditing(false);
@@ -254,9 +279,8 @@ function PanTiltMixedSlider({
         void onCommit(clamp(n));
       }
     };
-    return (
-      <div className={`pan-tilt-slider${warn ? ' warn' : ''}`} title={title}>
-        {compactLabel ? <span className="pan-tilt-slider-compact-label">{compactLabel}</span> : null}
+    const textCluster = (
+      <>
         <input
           type="number"
           className="compact-input pan-tilt-slider-text-input"
@@ -265,6 +289,7 @@ function PanTiltMixedSlider({
           min={min}
           max={max}
           step="5"
+          size={4}
           onChange={(event) => setTextDraft(event.target.value)}
           onBlur={commitTextAndExit}
           onKeyDown={(event) => {
@@ -276,61 +301,75 @@ function PanTiltMixedSlider({
           }}
         />
         <span className="compact-suffix">°</span>
+      </>
+    );
+    return (
+      <div className={`pan-tilt-slider${warn ? ' warn' : ''}${reversed ? ' reversed' : ''}`} title={title}>
+        {reversed ? textCluster : labelNode}
+        {reversed ? labelNode : textCluster}
       </div>
     );
   }
 
-  return (
-    <div className={`pan-tilt-slider${warn ? ' warn' : ''}${isMixed ? ' mixed' : ''}`} title={title}>
-      {compactLabel ? <span className="pan-tilt-slider-compact-label">{compactLabel}</span> : null}
-      <input
-        type="range"
-        className="pan-tilt-slider-input"
-        min={min}
-        max={max}
-        step="1"
-        value={clamp(sliderDraft)}
-        onChange={(event) => setSliderDraft(Number(event.target.value))}
-        onPointerDown={() => {
-          draggingRef.current = true;
-        }}
-        onPointerUp={() => {
-          draggingRef.current = false;
+  const valueButton = (
+    <button
+      type="button"
+      className="pan-tilt-slider-value"
+      onClick={() => {
+        setTextDraft(isMixed ? '' : String(Math.round(sliderDraft)));
+        setEditing(true);
+      }}
+      title={
+        isMixed
+          ? 'Values differ across selection — click to type one value for all'
+          : 'Click to type an exact value'
+      }
+    >
+      {display}
+    </button>
+  );
+
+  const rangeInput = (
+    <input
+      type="range"
+      className="pan-tilt-slider-input"
+      min={min}
+      max={max}
+      step="1"
+      value={clamp(sliderDraft)}
+      onChange={(event) => setSliderDraft(Number(event.target.value))}
+      onPointerDown={() => {
+        draggingRef.current = true;
+      }}
+      onPointerUp={() => {
+        draggingRef.current = false;
+        void onCommit(clamp(sliderDraft));
+      }}
+      onPointerCancel={() => {
+        draggingRef.current = false;
+      }}
+      onKeyUp={(event) => {
+        if (
+          event.key === 'ArrowLeft'
+          || event.key === 'ArrowRight'
+          || event.key === 'ArrowUp'
+          || event.key === 'ArrowDown'
+          || event.key === 'Home'
+          || event.key === 'End'
+          || event.key === 'PageUp'
+          || event.key === 'PageDown'
+        ) {
           void onCommit(clamp(sliderDraft));
-        }}
-        onPointerCancel={() => {
-          draggingRef.current = false;
-        }}
-        onKeyUp={(event) => {
-          if (
-            event.key === 'ArrowLeft'
-            || event.key === 'ArrowRight'
-            || event.key === 'ArrowUp'
-            || event.key === 'ArrowDown'
-            || event.key === 'Home'
-            || event.key === 'End'
-            || event.key === 'PageUp'
-            || event.key === 'PageDown'
-          ) {
-            void onCommit(clamp(sliderDraft));
-          }
-        }}
-      />
-      <button
-        type="button"
-        className="pan-tilt-slider-value"
-        onClick={() => {
-          setTextDraft(isMixed ? '' : String(Math.round(sliderDraft)));
-          setEditing(true);
-        }}
-        title={
-          isMixed
-            ? 'Values differ across selection — click to type one value for all'
-            : 'Click to type an exact value'
         }
-      >
-        {display}
-      </button>
+      }}
+    />
+  );
+
+  return (
+    <div className={`pan-tilt-slider${warn ? ' warn' : ''}${isMixed ? ' mixed' : ''}${reversed ? ' reversed' : ''}`} title={title}>
+      {reversed ? valueButton : labelNode}
+      {rangeInput}
+      {reversed ? labelNode : valueButton}
     </div>
   );
 }
@@ -409,12 +448,13 @@ function PanTiltRangePanel({ fixtures, onPatch }) {
         <div className="pan-tilt-pan-sliders">
           <PanTiltMixedSlider
             compactLabel="←"
-            title="Left deviation from forward (270°)"
+            title="Left deviation from forward (270°) — slider is reversed so dragging left grows the leftward arc"
             value={leftDevValue}
             isMixed={panLower.isMixed}
             min={0}
             max={PAN_HALF_MAX_DEG}
             warn={panInverted}
+            reversed
             onCommit={(dev) => onPatch({ pan_lower: PAN_CENTER_DEG - dev })}
           />
           <PanTiltMixedSlider
@@ -507,7 +547,10 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [fixtureTypes, setFixtureTypes] = useState([]);
   const [supportedUniverses, setSupportedUniverses] = useState([]);
   const [currentView, setCurrentView] = useState('perspective');
-  const [interactionMode, setInteractionMode] = useState('select');
+  const [interactionMode, setInteractionMode] = useState('rotate');
+  /** Latest mode for async scene-controller init (ref can be null when interaction `useEffect` runs). */
+  const interactionModeRef = useRef(interactionMode);
+  interactionModeRef.current = interactionMode;
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [selectedKind, setSelectedKind] = useState(null);
   const [selectedFixtureIds, setSelectedFixtureIds] = useState([]);
@@ -746,6 +789,7 @@ export default function DenseVenueEditorPage({ venueId }) {
         return;
       }
       sceneControllerRef.current = controller;
+      controller.setInteractionMode(interactionModeRef.current);
       setSceneControllerEpoch((n) => n + 1);
 
       const config = await fetchJson('/api/config');
@@ -898,6 +942,15 @@ export default function DenseVenueEditorPage({ venueId }) {
     sceneControllerRef.current?.setView(currentView);
   }, [currentView]);
 
+  // Orthographic views (top/front/side) orbit awkwardly; if the user was orbiting
+  // in perspective, switch to pan when entering those views.
+  useEffect(() => {
+    if (currentView === 'perspective') {
+      return;
+    }
+    setInteractionMode((mode) => (mode === 'rotate' ? 'pan' : mode));
+  }, [currentView]);
+
   useEffect(() => {
     activeVenueIdRef.current = controlState.active_venue_id;
   }, [controlState.active_venue_id]);
@@ -931,6 +984,7 @@ export default function DenseVenueEditorPage({ venueId }) {
       return undefined;
     }
     lastRuntimeFixtureJsonRef.current = '';
+    const fixtureStatePollMs = Math.round(1000 / 30);
     const intervalId = window.setInterval(() => {
       const controller = sceneControllerRef.current;
       if (!controller || document.hidden) {
@@ -948,7 +1002,7 @@ export default function DenseVenueEditorPage({ venueId }) {
           bumpLiveLightingPulse();
         })
         .catch(() => {});
-    }, 100);
+    }, fixtureStatePollMs);
     return () => window.clearInterval(intervalId);
   }, [venueId]);
 
@@ -1757,7 +1811,7 @@ export default function DenseVenueEditorPage({ venueId }) {
               <textarea
                 id="venue-name-input"
                 className="venue-name-input"
-                rows="2"
+                rows="1"
                 value={venueNameDraft}
                 onChange={(event) => setVenueNameDraft(event.target.value)}
               />
@@ -2124,15 +2178,15 @@ export default function DenseVenueEditorPage({ venueId }) {
             <div className="tool-radio-group" role="radiogroup" aria-label="Viewport tool">
               <button
                 type="button"
-                className={`tool-chip${interactionMode === 'select' ? ' active' : ''}`}
-                aria-checked={interactionMode === 'select'}
-                aria-keyshortcuts="v"
-                title="Select and drag fixtures (V)"
-                onClick={() => setInteractionMode('select')}
+                className={`tool-chip${interactionMode === 'rotate' ? ' active' : ''}`}
+                aria-checked={interactionMode === 'rotate'}
+                aria-keyshortcuts="r"
+                title="Orbit the view (R)"
+                onClick={() => setInteractionMode('rotate')}
               >
-                <ViewportToolIcon mode="select" />
-                <span className="tool-chip-label">Cursor</span>
-                <kbd className="tool-chip-kbd">V</kbd>
+                <ViewportToolIcon mode="rotate" />
+                <span className="tool-chip-label">Rotate</span>
+                <kbd className="tool-chip-kbd">R</kbd>
               </button>
               <button
                 type="button"
@@ -2148,17 +2202,38 @@ export default function DenseVenueEditorPage({ venueId }) {
               </button>
               <button
                 type="button"
-                className={`tool-chip${interactionMode === 'rotate' ? ' active' : ''}`}
-                aria-checked={interactionMode === 'rotate'}
-                aria-keyshortcuts="r"
-                title="Orbit the view (R)"
-                onClick={() => setInteractionMode('rotate')}
+                className={`tool-chip${interactionMode === 'select' ? ' active' : ''}`}
+                aria-checked={interactionMode === 'select'}
+                aria-keyshortcuts="v"
+                title="Select and drag fixtures (V)"
+                onClick={() => setInteractionMode('select')}
               >
-                <ViewportToolIcon mode="rotate" />
-                <span className="tool-chip-label">Rotate</span>
-                <kbd className="tool-chip-kbd">R</kbd>
+                <ViewportToolIcon mode="select" />
+                <span className="tool-chip-label">Cursor</span>
+                <kbd className="tool-chip-kbd">V</kbd>
               </button>
             </div>
+            <label className="floating-bottom-bar-mode">
+              <span className="floating-bottom-bar-mode-label">Mode</span>
+              <select
+                className="floating-bottom-bar-mode-select"
+                aria-label="Lighting mode"
+                value={controlState.mode}
+                disabled={remoteConfig.available_modes.length === 0}
+                onChange={(event) => {
+                  const nextMode = event.target.value;
+                  void patchControlState({ mode: nextMode }).then((next) => {
+                    setControlState((current) => ({ ...current, ...next }));
+                  });
+                }}
+              >
+                {remoteConfig.available_modes.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {labelizeRemoteMode(mode)}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </main>
       </div>

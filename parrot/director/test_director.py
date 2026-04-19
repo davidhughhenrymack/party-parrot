@@ -240,9 +240,10 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
         self.assertNotIn("PanTiltAxisCheck", leaf_names)
 
     def test_test_mode_interpreter_drives_all_pan_tilt_extremes(self):
-        """Drive the mover interpreter directly across the full
-        ``PanTiltAxisCheck.SEQUENCE`` and verify every moving head receives
-        each extreme pose. This is the property the user actually observed
+        """Drive the mover interpreter across one full ``PanTiltAxisCheck``
+        cycle, sampling the hold-at-extreme phase for each of the four
+        extremes plus a home-hold phase, and verify every moving head
+        receives every extreme pose. This is the property the user observed
         was missing on the rig (no movement at all).
 
         We bypass ``Director.step`` here because ``Frame.__mul__`` rebuilds
@@ -272,19 +273,27 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
         )
         scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
 
-        # Step the interpreter across one full sequence period so every pose
-        # (center + four extremes) is visited regardless of perf_counter drift.
-        base_time = 0.0
-        for step_idx in range(len(PanTiltAxisCheck.SEQUENCE)):
+        hold = PanTiltAxisCheck.HOLD_SECONDS
+        travel = PanTiltAxisCheck.TRAVEL_SECONDS
+        cycle = 2 * hold + 2 * travel
+
+        # Sample one mid-hold tick at home for excursion 0, plus mid-extreme
+        # hold for each of the four excursions. That exercises the center
+        # pose and every DMX extreme.
+        sample_times = [hold / 2.0]
+        for i in range(len(PanTiltAxisCheck.EXTREMES)):
+            sample_times.append(i * cycle + hold + travel + hold / 2.0)
+
+        for t in sample_times:
             frame = Frame(
                 {signal: 0.1 for signal in FrameSignal},
                 {signal.name: [0.1] * 4 for signal in FrameSignal},
             )
-            frame.time = base_time + step_idx * PanTiltAxisCheck.SECONDS_PER_STEP + 0.1
+            frame.time = t
             mover_interp.step(frame, scheme)
 
-        expected_pans = {pan for pan, _ in PanTiltAxisCheck.SEQUENCE}
-        expected_tilts = {tilt for _, tilt in PanTiltAxisCheck.SEQUENCE}
+        expected_pans = {127.0} | {float(pan) for pan, _ in PanTiltAxisCheck.EXTREMES}
+        expected_tilts = {127.0} | {float(tilt) for _, tilt in PanTiltAxisCheck.EXTREMES}
         for m in movers:
             self.assertEqual(
                 pan_seen[id(m)], expected_pans,
@@ -378,9 +387,12 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
             ],
         )
         tree = director.print_lighting_tree()
-        self.assertIn("[track]", tree)
-        self.assertIn("[truss movers]", tree)
-        self.assertIn("[(ungrouped)]", tree)
+        self.assertIn("track", tree)
+        self.assertIn("truss movers", tree)
+        self.assertIn("ungrouped", tree)
+        self.assertNotIn("[track]", tree)
+        self.assertNotIn("(ungrouped)", tree)
+        self.assertIn("Rave interpretation:", tree)
 
 
 if __name__ == "__main__":

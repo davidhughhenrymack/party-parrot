@@ -75,37 +75,64 @@ class TestTestModeInterpreters(unittest.TestCase):
         self.assertIn("RigColorCycle", str(interp))
         interp.step(_empty_frame(0.0), self.scheme)
 
-    def test_pan_tilt_axis_check_visits_each_extreme(self):
-        """Visits (127,127) between each (tilt up / down / pan left / right)."""
+    def test_pan_tilt_axis_check_hold_travel_phases(self):
+        """Each excursion holds at home, lerps to the extreme, holds, and lerps back.
+
+        Samples the four phases for the first excursion (tilt up) plus the
+        hold-at-extreme for each of the four extremes to prove the sequence
+        visits all of them.
+        """
+        hold = PanTiltAxisCheck.HOLD_SECONDS
+        travel = PanTiltAxisCheck.TRAVEL_SECONDS
+        cycle = 2 * hold + 2 * travel
+
+        # Phase checks for the first excursion (home → tilt-up → home).
+        self.assertEqual(PanTiltAxisCheck.position_at(hold / 2), (127.0, 127.0))
+        # midway through the out-travel: halfway between (127,127) and (127,255)
+        self.assertEqual(
+            PanTiltAxisCheck.position_at(hold + travel / 2),
+            (127.0, 127.0 + (255 - 127) * 0.5),
+        )
+        # hold at the extreme:
+        self.assertEqual(
+            PanTiltAxisCheck.position_at(hold + travel + hold / 2), (127.0, 255.0)
+        )
+        # midway through the return-travel: halfway between (127,255) and (127,127)
+        self.assertEqual(
+            PanTiltAxisCheck.position_at(hold + travel + hold + travel / 2),
+            (127.0, 255.0 + (127 - 255) * 0.5),
+        )
+
+        # Hold-at-extreme sample for each of the four excursions (tilt up,
+        # tilt down, pan left, pan right) — one tick into the extreme hold.
+        for i, extreme in enumerate(PanTiltAxisCheck.EXTREMES):
+            t = i * cycle + hold + travel + hold / 2
+            self.assertEqual(
+                PanTiltAxisCheck.position_at(t),
+                (float(extreme[0]), float(extreme[1])),
+            )
+
+    def test_pan_tilt_axis_check_step_interpolates_on_fixtures(self):
+        """step() should push the interpolated pan/tilt to every fixture in the group."""
         mh = MagicMock(spec=MovingHead)
         checker = PanTiltAxisCheck([mh], self.args)
-        step = PanTiltAxisCheck.SECONDS_PER_STEP
-        # Sample the middle of each step so integer truncation can't ride a
-        # boundary. Expected sequence matches PanTiltAxisCheck.SEQUENCE.
-        expected = [
-            (127, 127),
-            (127, 255),
-            (127, 127),
-            (127, 0),
-            (127, 127),
-            (0, 127),
-            (127, 127),
-            (255, 127),
-        ]
-        for i, (pan, tilt) in enumerate(expected):
-            mh.reset_mock()
-            checker.step(_empty_frame(i * step + step * 0.5), self.scheme)
-            mh.set_pan.assert_called_once_with(pan)
-            mh.set_tilt.assert_called_once_with(tilt)
+        hold = PanTiltAxisCheck.HOLD_SECONDS
+        travel = PanTiltAxisCheck.TRAVEL_SECONDS
+        # Mid-travel-out on the first extreme (tilt up): tilt should be 50% between 127 and 255.
+        checker.step(_empty_frame(hold + travel * 0.5), self.scheme)
+        mh.set_pan.assert_called_once_with(127.0)
+        mh.set_tilt.assert_called_once_with(127.0 + (255 - 127) * 0.5)
 
     def test_pan_tilt_axis_check_wraps_modulo(self):
-        """After one full cycle, the next step is back at (127, 127)."""
+        """After one full cycle, time t = cycle is back at home start-of-hold."""
         mh = MagicMock(spec=MovingHead)
         checker = PanTiltAxisCheck([mh], self.args)
-        cycle = PanTiltAxisCheck.SECONDS_PER_STEP * len(PanTiltAxisCheck.SEQUENCE)
-        checker.step(_empty_frame(cycle + 0.1), self.scheme)
-        mh.set_pan.assert_called_once_with(127)
-        mh.set_tilt.assert_called_once_with(127)
+        full_cycle = (
+            2 * PanTiltAxisCheck.HOLD_SECONDS + 2 * PanTiltAxisCheck.TRAVEL_SECONDS
+        ) * len(PanTiltAxisCheck.EXTREMES)
+        checker.step(_empty_frame(full_cycle + 0.1), self.scheme)
+        mh.set_pan.assert_called_once_with(127.0)
+        mh.set_tilt.assert_called_once_with(127.0)
 
     def test_get_interpreter_test_mode_moving_head_uses_axis_check(self):
         from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
