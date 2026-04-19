@@ -129,7 +129,7 @@ export function resolveFixtureVisualModel(fixtureType) {
     return {
       kind: 'moving_head',
       ...mh,
-      coneLength: 6.5,
+      coneLength: 10.4,
       coneRadius: bs * 0.58,
     };
   }

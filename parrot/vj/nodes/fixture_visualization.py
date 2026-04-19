@@ -632,10 +632,12 @@ class FixtureVisualization(GenerativeEffectBase):
         context.clear(0.0, 0.0, 0.0)
         # Don't clear depth - use depth from opaque pass for occlusion
 
-        # Disable depth testing entirely for beams so they blend additively
-        # Depth writes are already disabled, but we also disable depth testing
-        # so beams don't occlude each other - they should all blend additively
-        context.disable(context.DEPTH_TEST)
+        # Keep depth-test enabled against the opaque pass's depth buffer so the
+        # floor, DJ booth, and fixture bodies occlude beams that would otherwise
+        # punch through them. Depth writes stay disabled so beams never occlude
+        # each other - overlapping beams blend additively regardless of draw order.
+        context.enable(context.DEPTH_TEST)
+        context.depth_func = "<"
         context.depth_mask = False
 
         # Enable additive blending for emissive materials

@@ -2145,6 +2145,14 @@ export default function DenseVenueEditorPage({ venueId }) {
               <div className="floating-transform-panel">
                 <div className="dense-section-header">
                   <h3>{selectedKind === 'fixture' ? 'Fixture Rotation' : selectedKind === 'video_wall' ? 'Video Wall Rotation' : 'DJ Booth Rotation'}</h3>
+                  <button
+                    type="button"
+                    className="small-button secondary-button"
+                    title="Clear current selection"
+                    onClick={() => handleSelectionChange(null)}
+                  >
+                    Deselect
+                  </button>
                 </div>
                 {['x', 'y', 'z'].map((axis) => {
                   const radians = selectedKind === 'fixture'

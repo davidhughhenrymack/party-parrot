@@ -1986,9 +1986,12 @@ class Room3DRenderer:
         # Use additive blending so overlapping beams brighten each other
         self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE
 
-        # Disable depth testing and writes so beams don't occlude each other
-        # All beams should blend additively regardless of their relative positions
-        self.ctx.disable(mgl.DEPTH_TEST)
+        # Keep depth writes off so beams never occlude each other, but leave
+        # the depth-test state as the caller configured it. The caller enables
+        # depth-test against the opaque depth buffer so that solid geometry
+        # (floor, fixture bodies, DJ booth) occludes beam fragments that lie
+        # behind them, while beam-on-beam overlap still blends additively
+        # because no beam writes into the depth buffer.
         self.ctx.depth_mask = False
 
         # Render cone (no cleanup - buffers are cached)

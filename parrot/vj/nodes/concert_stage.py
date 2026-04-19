@@ -65,7 +65,8 @@ def _build_prom_scene(
 ) -> BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]:
     """Sparkle field + DJ-name title in Muro, composed with SCREEN blend."""
     # Longer names (like "thunderbunny") need a smaller font to fit on screen.
-    font_size = 440 if len(dj_name) <= 6 else 240
+    # Sized so the 12-char "thunderbunny" stays inside the frame with margin.
+    font_size = 360 if len(dj_name) <= 6 else 180
     sparkles = SparkleFieldEffect(tint=tint)
     title = TextRenderer(
         text=dj_name,

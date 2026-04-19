@@ -270,7 +270,15 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
             )
         ],
         Group("sheer lights"): [Dimmer0],
-        Mirrorball: [Dimmer0],
+        # Mirrorball stays dark most of the time in rave mode; ~10% of
+        # reshuffles bring it in as a beat-triggered StabPulse tinted with the
+        # scheme foreground colour for a sudden spotlight-on-the-disco-ball hit.
+        Mirrorball: [
+            weighted_randomize(
+                (10, combo(StabPulse, ColorFg)),
+                (90, Dimmer0),
+            )
+        ],
         Par: [
             combo(
                 signal_switch(
@@ -289,7 +297,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         HardSpatialPulse,
                         HardSpatialCenterOutPulse,
                         DimmersBeatChase,
-                        SlowDecay,
                         GentlePulse,
                         DimmerFadeLatched,
                         SequenceDimmers,
@@ -303,8 +310,16 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 ),
                 randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
                 weighted_randomize(
-                    (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
+                    (10, MoverRandomGobo),
                     (90, MoverNoGobo),
+                ),
+                weighted_randomize(
+                    (10, FocusBig),
+                    (90, FocusSmall),
+                ),
+                weighted_randomize(
+                    (10, RotatePrism),
+                    (90, PrismOff),
                 ),
             )
         ],
