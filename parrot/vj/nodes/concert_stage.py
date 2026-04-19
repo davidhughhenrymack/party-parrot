@@ -5,6 +5,8 @@ import numpy as np
 from typing import Optional
 from beartype import beartype
 
+from dataclasses import dataclass
+
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode
 from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
@@ -18,6 +20,15 @@ from parrot.vj.nodes.sparkle_field_effect import SparkleFieldEffect
 from parrot.vj.nodes.stage_blinders import StageBlinders
 from parrot.vj.nodes.laser_scan_heads import LaserScanHeads
 from parrot.vj.nodes.text_renderer import TextRenderer, muro_font_path
+from parrot.vj.nodes.video_player import VideoPlayer
+from parrot.vj.nodes.rgb_shift_effect import RGBShiftEffect
+from parrot.vj.nodes.scanlines_effect import ScanlinesEffect
+from parrot.vj.nodes.saturation_pulse import SaturationPulse
+from parrot.vj.nodes.brightness_pulse import BrightnessPulse
+from parrot.vj.nodes.camera_zoom import CameraZoom
+from parrot.vj.nodes.crt_mask import CRTMask
+from parrot.vj.nodes.bright_glow import BrightGlow
+from parrot.director.frame import FrameSignal
 from parrot.vj.profiler import vj_profiler
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
@@ -37,12 +48,39 @@ from parrot.vj.vj_mode import VJMode
 #   from parrot.vj.nodes.zombie_rave_stage import build_zombie_rave_bundle
 
 
-# Per-DJ prom scene tints (RGB, 0..1). Each drives SparkleFieldEffect's palette.
-_PROM_SCENES: dict[VJMode, tuple[str, tuple[float, float, float]]] = {
-    VJMode.prom_dmack: ("dmack", (1.0, 0.72, 0.18)),           # warm gold
-    VJMode.prom_wufky: ("wufky", (1.0, 0.25, 0.75)),           # hot magenta
-    VJMode.prom_mayhem: ("mayhem", (0.30, 0.55, 1.0)),         # electric blue
-    VJMode.prom_thunderbunny: ("thunderbunny", (0.50, 1.0, 0.35)),  # neon green
+@beartype
+@dataclass(frozen=True)
+class _PromSceneSpec:
+    """Per-DJ prom scene recipe.
+
+    `tint` drives `SparkleFieldEffect`'s palette. `video_fn_group`, when set,
+    places a looping `VideoPlayer` (from `media/videos/<fn_group>/*/`) behind
+    the sparkles with a music-video-style CRT effect stack; when `None` the
+    scene is sparkles-only on a black background.
+    """
+
+    dj_name: str
+    tint: tuple[float, float, float]
+    video_fn_group: str | None = None
+
+
+# Per-DJ prom scene recipes. DMACK gets the prom video backdrop; the other
+# DJs stay on the original sparkles-only layout for now.
+_PROM_SCENES: dict[VJMode, _PromSceneSpec] = {
+    VJMode.prom_dmack: _PromSceneSpec(
+        dj_name="dmack",
+        tint=(1.0, 0.72, 0.18),  # warm gold
+        video_fn_group="prom",
+    ),
+    VJMode.prom_wufky: _PromSceneSpec(
+        dj_name="wufky", tint=(1.0, 0.25, 0.75)  # hot magenta
+    ),
+    VJMode.prom_mayhem: _PromSceneSpec(
+        dj_name="mayhem", tint=(0.30, 0.55, 1.0)  # electric blue
+    ),
+    VJMode.prom_thunderbunny: _PromSceneSpec(
+        dj_name="thunderbunny", tint=(0.50, 1.0, 0.35)  # neon green
+    ),
 }
 
 
@@ -59,25 +97,89 @@ def _blackout_aware_overlay(
 
 
 @beartype
-def _build_prom_scene(
-    dj_name: str,
-    tint: tuple[float, float, float],
+def _build_prom_video_backdrop(
+    fn_group: str,
 ) -> BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]:
-    """Sparkle field + DJ-name title in Muro, composed with SCREEN blend."""
+    """Looping prom-footage backdrop with a gentle CRT / music-video effect stack.
+
+    Modeled on the halloween ``zr_music_vids`` pipeline (see
+    ``parrot/vj/nodes/zombie_rave_stage.py::create_crt_video_pipeline``) but
+    tuned softer, since the sparkle field and Muro title sit on top of it —
+    the video has to read as a *backdrop*, not the focal point.
+    """
+    video = VideoPlayer(fn_group=fn_group)
+    with_rgb_shift = RGBShiftEffect(
+        video, shift_strength=0.004, signal=FrameSignal.freq_high
+    )
+    with_scanlines = ScanlinesEffect(
+        with_rgb_shift,
+        scanline_intensity=0.18,
+        scanline_count=420.0,
+        signal=FrameSignal.sustained_low,
+    )
+    with_saturation = SaturationPulse(
+        with_scanlines,
+        base_saturation=1.15,
+        intensity=0.4,
+        signal=FrameSignal.sustained_low,
+    )
+    # Keep base brightness low so sparkles + title stay legible on top.
+    with_brightness = BrightnessPulse(
+        with_saturation,
+        intensity=0.4,
+        base_brightness=0.45,
+        signal=FrameSignal.sustained_low,
+    )
+    with_zoom = CameraZoom(
+        with_brightness,
+        max_zoom=1.2,
+        zoom_speed=1.8,
+        return_speed=1.2,
+        blur_intensity=0.15,
+        signal=FrameSignal.sustained_low,
+    )
+    with_crt = CRTMask(with_zoom)
+    return BrightGlow(
+        with_crt,
+        brightness_threshold=0.7,
+        blur_radius=8,
+        glow_intensity=0.12,
+    )
+
+
+@beartype
+def _build_prom_scene(
+    spec: _PromSceneSpec,
+) -> BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]:
+    """Optional video backdrop → sparkle field → DJ title in Muro.
+
+    Sparkles render as black + colored specks, so stacking them with
+    `BlendMode.ADDITIVE` lets the prom video read through where sparkles
+    are dark. Title uses `SCREEN` the same way (white-on-black).
+    """
     # Longer names (like "thunderbunny") need a smaller font to fit on screen.
     # Sized so the 12-char "thunderbunny" stays inside the frame with margin.
-    font_size = 360 if len(dj_name) <= 6 else 180
-    sparkles = SparkleFieldEffect(tint=tint)
+    font_size = 360 if len(spec.dj_name) <= 6 else 180
+    sparkles = SparkleFieldEffect(tint=spec.tint)
     title = TextRenderer(
-        text=dj_name,
+        text=spec.dj_name,
         font_name="Muro",
         font_path=muro_font_path(),
         font_size=font_size,
         text_color=(255, 245, 200),
         bg_color=(0, 0, 0),
     )
+
+    if spec.video_fn_group is None:
+        return LayerCompose(
+            LayerSpec(sparkles, BlendMode.NORMAL),
+            LayerSpec(title, BlendMode.SCREEN),
+        )
+
+    video_backdrop = _build_prom_video_backdrop(spec.video_fn_group)
     return LayerCompose(
-        LayerSpec(sparkles, BlendMode.NORMAL),
+        LayerSpec(video_backdrop, BlendMode.NORMAL),
+        LayerSpec(sparkles, BlendMode.ADDITIVE),
         LayerSpec(title, BlendMode.SCREEN),
     )
 
@@ -114,8 +216,8 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
         prom_scene_nodes: dict[
             str, BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]
         ] = {
-            vj_mode.name: _build_prom_scene(dj_name, tint)
-            for vj_mode, (dj_name, tint) in _PROM_SCENES.items()
+            vj_mode.name: _build_prom_scene(spec)
+            for vj_mode, spec in _PROM_SCENES.items()
         }
 
         mode_switch = ModeSwitch(

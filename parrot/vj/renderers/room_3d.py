@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from parrot.fixtures.base import FixtureBase
 from parrot.vj.renderers.base import FixtureRenderer
+from parrot.vj.venue_axis import venue_rotation_to_desktop_quaternion
 from parrot.director.frame import Frame
 from parrot.utils.input_events import InputEvents
 
@@ -756,20 +757,16 @@ class Room3DRenderer:
     def _quaternion_from_euler_xyz(
         self, rotation_x: float, rotation_y: float, rotation_z: float
     ) -> np.ndarray:
-        half_x = rotation_x * 0.5
-        half_y = rotation_y * 0.5
-        half_z = rotation_z * 0.5
-        sin_x, cos_x = math.sin(half_x), math.cos(half_x)
-        sin_y, cos_y = math.sin(half_y), math.cos(half_y)
-        sin_z, cos_z = math.sin(half_z), math.cos(half_z)
-        return np.array(
-            [
-                sin_x * cos_y * cos_z - cos_x * sin_y * sin_z,
-                cos_x * sin_y * cos_z + sin_x * cos_y * sin_z,
-                cos_x * cos_y * sin_z - sin_x * sin_y * cos_z,
-                cos_x * cos_y * cos_z + sin_x * sin_y * sin_z,
-            ],
-            dtype=np.float32,
+        """Build a desktop-space orientation quaternion from venue Euler angles.
+
+        Scene objects (DJ booth, floor, video wall) store rotations in the
+        same venue-space `rotation_x/y/z` convention as fixtures. The
+        venue-Z-up ↔ desktop-Y-up remap + intrinsic-XYZ composition lives
+        in `parrot.vj.venue_axis` — delegate there so every code path
+        agrees. See AGENTS.md "Venue ↔ desktop axis mapping".
+        """
+        return venue_rotation_to_desktop_quaternion(
+            rotation_x, rotation_y, rotation_z
         )
 
     def _rotate_vector(

@@ -212,6 +212,67 @@ class TestConcertStage:
         ]:
             assert "ConcertStage" in tree
 
+    def test_prom_dmack_has_video_backdrop_but_other_prom_scenes_do_not(self):
+        """DMACK prom scene uses the `media/videos/prom/` folder as a music-video
+        backdrop behind the sparkles. Other prom DJs stay sparkle-only for now.
+        """
+        from parrot.vj.nodes.video_player import VideoPlayer
+        from parrot.vj.nodes.mode_switch import ModeSwitch
+
+        stage = ConcertStage()
+
+        def find_prom_mode_switch(root):
+            # BFS over `children` (layer composition) and `mode_nodes` dicts
+            # (ModeSwitch), since ModeSwitch hides per-mode children from
+            # `all_inputs`. Skip the blackout-aware overlay ModeSwitches
+            # (where every lit mode shares a single effect instance) and
+            # return the one that actually gives each prom mode a distinct
+            # scene.
+            stack = [root]
+            while stack:
+                node = stack.pop()
+                if (
+                    isinstance(node, ModeSwitch)
+                    and VJMode.prom_dmack.name in node.mode_nodes
+                    and node.mode_nodes[VJMode.prom_dmack.name]
+                    is not node.mode_nodes.get(VJMode.prom_wufky.name)
+                ):
+                    return node
+                stack.extend(getattr(node, "children", []) or [])
+                for v in getattr(node, "mode_nodes", {}).values():
+                    stack.append(v)
+            return None
+
+        prom_switch = find_prom_mode_switch(stage.mode_switch)
+        assert prom_switch is not None, "prom ModeSwitch not found in stage"
+
+        def collect_video_players(root):
+            found: list[VideoPlayer] = []
+            stack = [root]
+            seen: set[int] = set()
+            while stack:
+                node = stack.pop()
+                if id(node) in seen:
+                    continue
+                seen.add(id(node))
+                if isinstance(node, VideoPlayer):
+                    found.append(node)
+                stack.extend(getattr(node, "children", []) or [])
+                for v in getattr(node, "mode_nodes", {}).values():
+                    stack.append(v)
+            return found
+
+        dmack_videos = collect_video_players(
+            prom_switch.mode_nodes[VJMode.prom_dmack.name]
+        )
+        wufky_videos = collect_video_players(
+            prom_switch.mode_nodes[VJMode.prom_wufky.name]
+        )
+
+        assert len(dmack_videos) == 1, "prom_dmack should mount exactly one prom video backdrop"
+        assert dmack_videos[0].fn_group == "prom"
+        assert wufky_videos == [], "non-dmack prom scenes should stay sparkles-only"
+
     def test_blackout_mode_configures_components(self):
         """Test that blackout mode switches to Black() nodes"""
         stage = ConcertStage()

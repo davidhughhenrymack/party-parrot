@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 import math
 from typing import Callable
 
-import numpy as np
 from beartype import beartype
 
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
@@ -29,7 +28,7 @@ from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.oultia.laser import TwoBeamLaser
 from parrot.fixtures.uking.laser import FiveBeamLaser
 from parrot.utils.dmx_utils import Universe
-from parrot.vj.renderers.base import quaternion_from_axis_angle, quaternion_multiply
+from parrot.vj.venue_axis import venue_rotation_to_desktop_quaternion
 from parrot_cloud.domain import FixtureSpec, VenueSnapshot
 
 
@@ -67,20 +66,14 @@ def _option_float(spec: FixtureSpec, key: str, default: float) -> float:
     return float(spec.options.get(key, default))
 
 
-def _rotation_to_quaternion(
-    rotation_x: float, rotation_y: float, rotation_z: float
-) -> np.ndarray:
-    x_quat = quaternion_from_axis_angle(np.array([1.0, 0.0, 0.0]), rotation_x)
-    y_quat = quaternion_from_axis_angle(np.array([0.0, 1.0, 0.0]), rotation_y)
-    z_quat = quaternion_from_axis_angle(np.array([0.0, 0.0, 1.0]), rotation_z)
-    return quaternion_multiply(z_quat, quaternion_multiply(y_quat, x_quat))
-
-
 def _apply_transform(fixture: FixtureBase, spec: FixtureSpec) -> FixtureBase:
     fixture.x = spec.x
     fixture.y = spec.y
     fixture.z = spec.z
-    fixture.orientation = _rotation_to_quaternion(
+    # Golden source for the venue(Z-up) ↔ desktop(Y-up) rotation remap.
+    # See `parrot/vj/venue_axis.py` and AGENTS.md "Venue ↔ desktop axis
+    # mapping" — do not rebuild the quaternion inline here.
+    fixture.orientation = venue_rotation_to_desktop_quaternion(
         spec.rotation_x, spec.rotation_y, spec.rotation_z
     )
     fixture.cloud_spec_id = spec.id
