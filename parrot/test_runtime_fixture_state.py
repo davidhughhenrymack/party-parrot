@@ -4,6 +4,7 @@ from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.led_par import ParRGB
+from parrot.director.color_scheme import ColorScheme
 from parrot.runtime_fixture_state import (
     build_fixture_runtime_payload,
     fixture_runtime_entry,
@@ -105,3 +106,17 @@ def test_build_payload_flattens_fixture_group():
     payload = build_fixture_runtime_payload([g], None)
     ids = {f["id"] for f in payload["fixtures"]}
     assert ids == {"a", "b"}
+
+
+def test_build_payload_includes_color_palette_when_scheme_passed():
+    a = ParRGB(1)
+    a.cloud_spec_id = "a"
+    scheme = ColorScheme(Color("red"), Color("green"), Color("blue"))
+    payload = build_fixture_runtime_payload([a], None, color_scheme=scheme)
+    assert "color_palette" in payload
+    pal = payload["color_palette"]
+    assert len(pal) == 3
+    for slot in pal:
+        assert len(slot) == 3
+        for c in slot:
+            assert 0.0 <= c <= 1.0

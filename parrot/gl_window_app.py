@@ -599,7 +599,9 @@ def run_gl_window_app(args):
                 director.step(frame)
                 director.render(dmx_ref["controller"])
                 if runtime_client is not None:
-                    runtime_client.maybe_push_fixture_runtime_state()
+                    runtime_client.maybe_push_fixture_runtime_state(
+                        director.scheme.render()
+                    )
             last_audio_update = time.perf_counter()
 
         # Get VJ frame data

@@ -7,12 +7,16 @@ Schema version 1 (see parrot_cloud.repository.VenueRepository.set_fixture_runtim
 - rgb: [r,g,b] each 0–1 — aggregate color for simple fixtures
 - strobe: 0–1 strobe DMX value — the web consumer drives a 5–30 Hz on/off
   gate identical to `FixtureRenderer.get_effective_dimmer` (see
-  parrot/vj/renderers/base.py) so cloud previews match the desktop.
+    parrot/vj/renderers/base.py) so cloud previews match the desktop.
 - pan_deg, tilt_deg: moving heads (degrees, fixture logical angles)
 - prism_on, prism_rotate_speed: moving heads — prism toggle + rotation [-1,1]
 - focus: moving heads — 0.0 = big/wide beam, 1.0 = tight/pinpoint
 - bar_pan_deg: pan for linear bars (matches MotionstripRenderer convention)
 - bulbs: optional list of { dimmer, rgb, strobe } per cell for multi-bulb fixtures
+
+Top-level (alongside ``fixtures``), when the desktop pushes live state:
+- color_palette: optional ``[[r,g,b],[r,g,b],[r,g,b]]`` — current ``ColorScheme``
+  fg / bg / bg_contrast, each channel 0–1, for venue editor swatches.
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ from beartype import beartype
 from parrot.fixtures.base import FixtureBase, FixtureGroup, FixtureWithBulbs
 from parrot.fixtures.motionstrip import Motionstrip, Motionstrip38
 from parrot.fixtures.moving_head import MovingHead
+from parrot.director.color_scheme import ColorScheme
 
 
 def _color_rgb(color: Any) -> tuple[float, float, float]:
@@ -113,13 +118,31 @@ def iter_leaf_fixtures(
 
 
 @beartype
+def _color_scheme_to_palette_payload(scheme: ColorScheme) -> list[list[float]]:
+    """Three RGB triples (fg, bg, bg_contrast), channels 0–1."""
+    return [
+        [float(scheme.fg.red), float(scheme.fg.green), float(scheme.fg.blue)],
+        [float(scheme.bg.red), float(scheme.bg.green), float(scheme.bg.blue)],
+        [
+            float(scheme.bg_contrast.red),
+            float(scheme.bg_contrast.green),
+            float(scheme.bg_contrast.blue),
+        ],
+    ]
+
+
+@beartype
 def build_fixture_runtime_payload(
     runtime_patch: list[FixtureBase] | None,
     manual_group: Any | None,
+    color_scheme: ColorScheme | None = None,
 ) -> dict[str, Any]:
     fixtures: list[dict[str, Any]] = []
     for fixture in iter_leaf_fixtures(runtime_patch, manual_group):
         row = fixture_runtime_entry(fixture)
         if row is not None:
             fixtures.append(row)
-    return {"version": 1, "fixtures": fixtures}
+    payload: dict[str, Any] = {"version": 1, "fixtures": fixtures}
+    if color_scheme is not None:
+        payload["color_palette"] = _color_scheme_to_palette_payload(color_scheme)
+    return payload

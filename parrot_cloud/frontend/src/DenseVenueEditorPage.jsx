@@ -76,6 +76,54 @@ async function patchControlState(body) {
   return response.json();
 }
 
+/** Default RGB triples (fg / bg / contrast) when no live desktop palette is available. */
+const DEFAULT_EDITOR_COLOR_PALETTE = [
+  [0.18, 0.22, 0.3],
+  [0.32, 0.38, 0.46],
+  [0.48, 0.52, 0.58],
+];
+
+function readColorPaletteFromFixturePayload(data) {
+  const p = data?.color_palette;
+  if (!Array.isArray(p) || p.length !== 3) {
+    return null;
+  }
+  const out = [];
+  for (const slot of p) {
+    if (!Array.isArray(slot) || slot.length < 3) {
+      return null;
+    }
+    out.push([
+      Math.max(0, Math.min(1, Number(slot[0]))),
+      Math.max(0, Math.min(1, Number(slot[1]))),
+      Math.max(0, Math.min(1, Number(slot[2]))),
+    ]);
+  }
+  return out;
+}
+
+function rgbTripleToCss(rgb) {
+  if (!Array.isArray(rgb) || rgb.length < 3) {
+    return 'rgb(100, 116, 139)';
+  }
+  const r = Math.round(Math.max(0, Math.min(1, rgb[0])) * 255);
+  const g = Math.round(Math.max(0, Math.min(1, rgb[1])) * 255);
+  const b = Math.round(Math.max(0, Math.min(1, rgb[2])) * 255);
+  return `rgb(${r},${g},${b})`;
+}
+
+async function postShiftTarget(target) {
+  const response = await fetch('/api/shift', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target }),
+  });
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  return response.json();
+}
+
 function ViewportToolIcon({ mode }) {
   if (mode === 'select') {
     return (
@@ -584,7 +632,10 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [remoteConfig, setRemoteConfig] = useState({
     available_modes: [],
     theme_names: [],
+    shift_targets: [],
   });
+  /** Live fg/bg/bg_contrast from desktop fixture-state push; null until first valid `color_palette`. */
+  const [liveColorPalette, setLiveColorPalette] = useState(null);
   const [controlState, setControlState] = useState({
     mode: 'chill',
     theme_name: 'Rave',
@@ -801,6 +852,7 @@ export default function DenseVenueEditorPage({ venueId }) {
       setRemoteConfig({
         available_modes: config.available_modes || [],
         theme_names: config.theme_names || [],
+        shift_targets: config.shift_targets || [],
       });
       setNewFixtureValues((current) => ({
         ...current,
@@ -998,6 +1050,10 @@ export default function DenseVenueEditorPage({ venueId }) {
           }
           lastRuntimeFixtureJsonRef.current = enc;
           fixtureRuntimeStateRef.current = data;
+          {
+            const pal = readColorPaletteFromFixturePayload(data);
+            setLiveColorPalette(pal);
+          }
           controller.applyFixtureRuntimeState(data);
           bumpLiveLightingPulse();
         })
@@ -1202,6 +1258,10 @@ export default function DenseVenueEditorPage({ venueId }) {
         setVjPreviewUpdatedAt(u != null ? u : null);
       } else if (payload.type === 'fixture_runtime_state') {
         fixtureRuntimeStateRef.current = payload.data;
+        {
+          const pal = readColorPaletteFromFixturePayload(payload.data);
+          setLiveColorPalette(pal);
+        }
         sceneControllerRef.current?.applyFixtureRuntimeState(payload.data);
         bumpLiveLightingPulse();
       } else if (payload.type === 'venues') {
@@ -1231,6 +1291,10 @@ export default function DenseVenueEditorPage({ venueId }) {
       version: 1,
       fixtures: [],
     };
+    {
+      const pal = readColorPaletteFromFixturePayload(fixtureRuntimeStateRef.current);
+      setLiveColorPalette(pal);
+    }
     setControlState((current) => ({
       ...current,
       ...(nextBootstrap.control_state || {}),
@@ -2242,6 +2306,26 @@ export default function DenseVenueEditorPage({ venueId }) {
                 ))}
               </select>
             </label>
+            <button
+              type="button"
+              className="floating-bottom-bar-palette"
+              title="Shift colors"
+              aria-label="Shift colors"
+              disabled={!remoteConfig.shift_targets?.includes('color_scheme')}
+              onClick={() => {
+                void postShiftTarget('color_scheme').catch(() => {});
+              }}
+            >
+              <span className="floating-bottom-bar-palette-swatches" aria-hidden="true">
+                {(liveColorPalette ?? DEFAULT_EDITOR_COLOR_PALETTE).map((rgb, i) => (
+                  <span
+                    key={i}
+                    className="floating-bottom-bar-palette-swatch"
+                    style={{ background: rgbTripleToCss(rgb) }}
+                  />
+                ))}
+              </span>
+            </button>
           </div>
         </main>
       </div>

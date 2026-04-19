@@ -9,6 +9,7 @@ import requests
 import websocket
 from beartype import beartype
 
+from parrot.director.color_scheme import ColorScheme
 from parrot.runtime_fixture_state import build_fixture_runtime_payload
 from parrot.state import State
 from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
@@ -61,7 +62,9 @@ class RuntimeVenueClient:
         with self._vj_preview_cond:
             self._vj_preview_cond.notify_all()
 
-    def maybe_push_fixture_runtime_state(self) -> None:
+    def maybe_push_fixture_runtime_state(
+        self, color_scheme: ColorScheme | None = None
+    ) -> None:
         if self._stop_event.is_set():
             return
         patch = self.state.runtime_patch
@@ -70,7 +73,9 @@ class RuntimeVenueClient:
         now = time.monotonic()
         if now - self._last_fixture_push_mono < FIXTURE_RUNTIME_PUSH_MIN_INTERVAL_S:
             return
-        payload = build_fixture_runtime_payload(patch, self.state.runtime_manual_group)
+        payload = build_fixture_runtime_payload(
+            patch, self.state.runtime_manual_group, color_scheme=color_scheme
+        )
         encoded = json.dumps(payload, separators=(",", ":"), sort_keys=True)
         with self._fixture_push_lock:
             if encoded == self._last_fixture_payload_json:
@@ -171,8 +176,13 @@ class RuntimeVenueClient:
                 control_state = ControlState.from_dict(dict(payload.get("data", {})))
                 self.state.queue_runtime_control_state(control_state)
             elif message_type == "effect":
-                effect = str(payload.get("data", {}).get("effect", ""))
-                if effect:
+                d = payload.get("data", {}) or {}
+                effect = str(d.get("effect", ""))
+                if not effect:
+                    return
+                if "value" in d:
+                    self.state.queue_runtime_effect(effect, float(d["value"]))
+                else:
                     self.state.queue_runtime_effect(effect)
             elif message_type == "shift_lighting_only":
                 self.state.queue_runtime_shift("lighting_only")

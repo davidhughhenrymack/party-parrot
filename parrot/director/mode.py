@@ -3,7 +3,7 @@ from enum import Enum
 
 Mode = Enum(
     "Mode",
-    ["rave", "blackout", "chill", "rave_gentle", "test", "ethereal"],
+    ["rave", "blackout", "chill", "test", "ethereal", "stroby"],
 )
 
 
@@ -13,14 +13,15 @@ Mode = Enum(
 # must appear exactly once. ``test`` sits at the very bottom (below
 # ``blackout``) so operators can step DOWN into a diagnostic checkout rig
 # from blackout, and never accidentally land in ``test`` while walking the
-# hype ladder up from the stage-dark state.
+# hype ladder up from the stage-dark state. ``ethereal`` comes before
+# ``chill`` (lower hype than chill).
 MODES_BY_HYPE: list[Mode] = [
     Mode.test,
     Mode.blackout,
-    Mode.chill,
     Mode.ethereal,
-    Mode.rave_gentle,
+    Mode.chill,
     Mode.rave,
+    Mode.stroby,
 ]
 
 assert set(MODES_BY_HYPE) == set(Mode), (

@@ -167,7 +167,25 @@ class TestWebServer:
         data = json.loads(response.data)
         assert data["success"] is True
         assert data["effect"] == "strobe"
-        mock_state.set_effect_thread_safe.assert_called_once_with("strobe")
+        mock_state.set_effect_thread_safe.assert_called_once_with("strobe", value=None)
+
+    def test_set_effect_explicit_value(self):
+        """POST body may include ``value`` for hold / release (mobile remote)."""
+        import parrot.api.web_server as web_server_module
+
+        mock_state = Mock()
+        web_server_module.state_instance = mock_state
+
+        response = self.client.post(
+            "/api/effect",
+            json={"effect": "pulse", "value": 0},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        mock_state.set_effect_thread_safe.assert_called_once_with("pulse", value=0.0)
 
     def test_set_effect_exception(self):
         """Test POST /api/effect when set_effect_thread_safe raises exception."""

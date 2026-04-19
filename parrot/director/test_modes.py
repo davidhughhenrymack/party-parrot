@@ -90,7 +90,7 @@ class TestModes(unittest.TestCase):
         for mode in [
             Mode.rave,
             Mode.chill,
-            Mode.rave_gentle,
+            Mode.stroby,
             Mode.blackout,
             Mode.test,
             Mode.ethereal,
@@ -102,13 +102,13 @@ class TestModes(unittest.TestCase):
             # Should not crash when stepping
             interpreter.step(self.frame, self.scheme)
 
-    def test_sheer_lights_are_silenced_in_chill_and_rave_gentle(self):
-        """Sheer lights are an Ethereal/Rave feature only — chill and rave_gentle keep them off."""
+    def test_sheer_lights_are_silenced_in_chill(self):
+        """Sheer lights are an Ethereal/Rave feature only — chill keeps them off."""
         from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
             ChauvetIntimidatorHybrid140SR_19Ch,
         )
 
-        for mode in (Mode.chill, Mode.rave_gentle):
+        for mode in (Mode.chill,):
             sheer = ChauvetIntimidatorHybrid140SR_19Ch(1)
             sheer.cloud_group_name = "sheer lights"
             other = ChauvetIntimidatorHybrid140SR_19Ch(20)
@@ -234,9 +234,9 @@ class TestModes(unittest.TestCase):
         rogue.cloud_group_name = None
         mirror = Mirrorball(40)
 
-        interp = get_interpreter(Mode.rave_gentle, [sheer, rogue, mirror], self.args)
+        interp = get_interpreter(Mode.rave, [sheer, rogue, mirror], self.args)
         assert isinstance(interp, CompositeInterpreter), (
-            "rave_gentle with mixed fixture classes should partition into a composite"
+            "rave with mixed fixture classes should partition into a composite"
         )
         children = interp.children
         # Every child's group must be a strict subset of the parent patch, and
@@ -250,6 +250,46 @@ class TestModes(unittest.TestCase):
                 f"Each child should be one partition, not the whole patch: {child.group}"
             )
         assert sorted(seen) == sorted([id(sheer), id(rogue), id(mirror)])
+
+    def test_rave_moving_head_and_par_pools_include_freq_high_variants(self):
+        """Rave mode should keep highs (hats/snares/vocals) in play, not just bass.
+
+        Sweeps many seeds over the rave ``MovingHead`` and ``Par`` randomize
+        pools. Each pool must land on a ``*High`` variant (``GentlePulseHigh`` /
+        ``StabPulseHigh``) at least once — this guards against regressions
+        that silently drop the freq_high entries and leave the rig reacting
+        only to freq_low / freq_all (which is kick-dominated in dance music).
+        """
+        import random as _random
+        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+        from parrot.fixtures.led_par import ParRGB
+
+        trials = 200
+        mh_high_hits = 0
+        par_high_hits = 0
+        for seed in range(trials):
+            _random.seed(seed)
+            movers = [ChauvetRogueBeamR2(1 + i * 20) for i in range(3)]
+            for m in movers:
+                m.cloud_group_name = None
+            mh_interp = get_interpreter(Mode.rave, movers, self.args)
+            if "High" in str(mh_interp):
+                mh_high_hits += 1
+
+            _random.seed(seed + 10_000)
+            pars = [ParRGB(100 + i * 8) for i in range(3)]
+            par_interp = get_interpreter(Mode.rave, pars, self.args)
+            if "High" in str(par_interp):
+                par_high_hits += 1
+
+        assert mh_high_hits > 0, (
+            "rave MovingHead pool never picked a freq_high-signalled variant "
+            f"across {trials} seeds — highs have no reliable home in the rig"
+        )
+        assert par_high_hits > 0, (
+            "rave Par pool never picked a freq_high-signalled variant "
+            f"across {trials} seeds"
+        )
 
     def test_mirrorball_resolves_before_par_not_test_rig_cycle(self):
         """Mirrorball subclasses Par; mode must use the Mirrorball row, not Par animations."""

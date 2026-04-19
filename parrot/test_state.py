@@ -148,6 +148,26 @@ class TestState:
             {},
         )
 
+    def test_set_effect_hold_no_auto_release(self):
+        """Explicit ``value=1`` stays high until ``value=0`` (mobile remote hold)."""
+        import time
+
+        from parrot.director.frame import FrameSignal
+
+        state = State()
+        state.signal_states.set_signal = Mock()
+
+        state.set_effect_thread_safe("strobe", value=1.0)
+        state.signal_states.set_signal.assert_called_once_with(FrameSignal.strobe, 1.0)
+        time.sleep(0.45)
+        assert state.signal_states.set_signal.call_count == 1
+
+        state.set_effect_thread_safe("strobe", value=0.0)
+        assert state.signal_states.set_signal.call_args_list[-1] == (
+            (FrameSignal.strobe, 0.0),
+            {},
+        )
+
     def test_process_gui_updates_empty_queue(self):
         """Test processing GUI updates with empty queue."""
         state = State()

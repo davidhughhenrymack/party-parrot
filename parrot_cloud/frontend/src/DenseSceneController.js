@@ -983,6 +983,8 @@ function createThreeSceneController({
     entity.runtimeStrobe = typeof vis.strobe === 'number'
       ? Math.max(0, Math.min(1, vis.strobe))
       : 0;
+    // Matches `FixtureRenderer.get_effective_dimmer`: strobe only modulates output when dimmer > 0.
+    entity.runtimeDimmerForStrobe = dimClamped;
     // Intentionally do NOT recolour `entity.bodyMaterial` — the housing keeps
     // its neutral dark shell. DMX colour is visible through the beam and lens
     // materials below.
@@ -1116,6 +1118,7 @@ function createThreeSceneController({
       const vis = byId.get(String(entity.fixture.id));
       if (!vis || !Array.isArray(vis.rgb) || vis.rgb.length < 3) {
         entity.runtimeStrobe = 0;
+        entity.runtimeDimmerForStrobe = 0;
         entity.runtimeStrobeGate = 1;
         if (entity.coneMaterial) {
           entity.runtimeConeOpacity = 0;
@@ -1770,8 +1773,9 @@ function createThreeSceneController({
       }
       if (entity.type === 'fixture') {
         const strobe = entity.runtimeStrobe ?? 0;
+        const dimForStrobe = entity.runtimeDimmerForStrobe ?? 0;
         let gate = 1;
-        if (strobe > 0) {
+        if (strobe > 0 && dimForStrobe > 0) {
           const hz = 5.0 + strobe * 25.0;
           gate = Math.floor(timeSec * hz) % 2 === 1 ? 1 : 0;
         }

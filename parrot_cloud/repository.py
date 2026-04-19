@@ -178,6 +178,10 @@ class VenueRepository:
                     float(max(0.0, min(1.0, float(rgb[1])))),
                     float(max(0.0, min(1.0, float(rgb[2])))),
                 ]
+            if "strobe" in item and item["strobe"] is not None:
+                entry["strobe"] = float(max(0.0, min(1.0, float(item["strobe"]))))
+            if "focus" in item and item["focus"] is not None:
+                entry["focus"] = float(max(0.0, min(1.0, float(item["focus"]))))
             for key in ("pan_deg", "tilt_deg", "bar_pan_deg"):
                 if key in item and item[key] is not None:
                     entry[key] = float(item[key])
@@ -202,12 +206,31 @@ class VenueRepository:
                             float(max(0.0, min(1.0, float(br[1])))),
                             float(max(0.0, min(1.0, float(br[2])))),
                         ]
+                    if "strobe" in bulb and bulb["strobe"] is not None:
+                        b["strobe"] = float(max(0.0, min(1.0, float(bulb["strobe"]))))
                     if b:
                         bulbs.append(b)
                 if bulbs:
                     entry["bulbs"] = bulbs
             normalized.append(entry)
-        self._fixture_runtime_state = {"version": version, "fixtures": normalized}
+        out: dict[str, object] = {"version": version, "fixtures": normalized}
+        palette_raw = data.get("color_palette")
+        if isinstance(palette_raw, list) and len(palette_raw) == 3:
+            triple: list[list[float]] = []
+            for slot in palette_raw:
+                if not isinstance(slot, list) or len(slot) < 3:
+                    triple = []
+                    break
+                triple.append(
+                    [
+                        float(max(0.0, min(1.0, float(slot[0])))),
+                        float(max(0.0, min(1.0, float(slot[1])))),
+                        float(max(0.0, min(1.0, float(slot[2])))),
+                    ]
+                )
+            if len(triple) == 3:
+                out["color_palette"] = triple
+        self._fixture_runtime_state = out
         return self.get_fixture_runtime_state()
 
     def get_vj_preview_jpeg(self) -> bytes | None:

@@ -330,7 +330,9 @@ class MicToDmx(object):
 
         self.director.render(self.dmx)
         if self.runtime_client is not None:
-            self.runtime_client.maybe_push_fixture_runtime_state()
+            self.runtime_client.maybe_push_fixture_runtime_state(
+                self.director.scheme.render()
+            )
 
     def calc_bpm_spec(self, raw_timeseries):
 

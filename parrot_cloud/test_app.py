@@ -45,16 +45,22 @@ def test_runtime_fixture_state_post_broadcast_shape(client):
                     "id": "test-fixture",
                     "dimmer": 0.5,
                     "rgb": [1.0, 0.0, 0.0],
+                    "strobe": 0.75,
+                    "focus": 0.4,
                     "pan_deg": 10.0,
                     "tilt_deg": -5.0,
                 }
             ],
+            "color_palette": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
         },
     )
     assert response.status_code == 200
     data = response.get_json()
     assert data["fixtures"][0]["id"] == "test-fixture"
     assert data["fixtures"][0]["dimmer"] == 0.5
+    assert data["fixtures"][0]["strobe"] == 0.75
+    assert data["fixtures"][0]["focus"] == 0.4
+    assert data["color_palette"] == [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
 
 
 def test_runtime_vj_preview_post_and_get(client):

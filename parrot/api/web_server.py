@@ -126,12 +126,15 @@ def set_effect():
         return jsonify({"error": "Missing effect parameter"}), 400
 
     effect = data["effect"]
+    value = None
+    if "value" in data:
+        value = float(data["value"])
     try:
         # Return success immediately to make the web UI responsive
-        response = jsonify({"success": True, "effect": effect})
+        response = jsonify({"success": True, "effect": effect, "value": value})
 
         # Use the thread-safe method to set the effect (after preparing the response)
-        state_instance.set_effect_thread_safe(effect)
+        state_instance.set_effect_thread_safe(effect, value=value)
 
         return response
     except Exception as e:

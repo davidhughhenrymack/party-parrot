@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from parrot.director.frame import FrameSignal
 from parrot.director.mode import Mode
 from parrot.director.mode_dispatch import Group, Matcher
 from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
@@ -54,7 +55,6 @@ from parrot.interpreters.mode_test_interpreters import (
     RigColorCycle,
 )
 from parrot.interpreters.move import (
-    MoveCircleSync,
     MoveCircles,
     MoveFan,
     MoveFigureEight,
@@ -86,7 +86,7 @@ from parrot.interpreters.spatial import (
     HardSpatialPulse,
     SoftSpatialPulse,
 )
-from parrot.interpreters.strobe import StrobeHighSustained
+from parrot.interpreters.strobe import StrobeChannelSustained, StrobeHighSustained
 
 
 mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
@@ -143,84 +143,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ],
         ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
     },
-    Mode.rave_gentle: {
-        Group("sheer lights"): [Dimmer0],
-        Mirrorball: [Dimmer0],
-        Par: [
-            combo(
-                signal_switch(
-                    randomize(
-                        SequenceFadeDimmers,
-                        GentlePulse,
-                        Twinkle,
-                    )
-                ),
-                ColorBg,
-            )
-        ],
-        MovingHead: [
-            combo(
-                signal_switch(
-                    randomize(
-                        SequenceFadeDimmers,
-                        GentlePulse,
-                        VerySlowDecay,
-                        SlowSustained,
-                        SoftSpatialPulse,
-                    )
-                ),
-                ColorBg,
-                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
-            )
-        ],
-        Motionstrip: [
-            combo(
-                signal_switch(
-                    randomize(
-                        combo(
-                            randomize(
-                                SequenceFadeDimmers,
-                                GentlePulse,
-                                Twinkle,
-                            ),
-                            AllBulbs255,
-                        ),
-                        combo(
-                            Dimmer255,
-                            for_bulbs(
-                                randomize(
-                                    SequenceFadeDimmers,
-                                    GentlePulse,
-                                    Twinkle,
-                                )
-                            ),
-                        ),
-                    ),
-                ),
-                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
-                randomize(MoveCircles, MoveFan),
-            ),
-        ],
-        ChauvetColorBandPiX_36Ch: [
-            combo(
-                signal_switch(
-                    randomize(
-                        for_bulbs(SequenceFadeDimmers),
-                        for_bulbs(GentlePulse),
-                        VerySlowDecay,
-                        SlowSustained,
-                        for_bulbs(Twinkle),
-                    )
-                ),
-                ColorBg,
-            )
-        ],
-        Laser: [signal_switch(Dimmer0)],
-        ChauvetRotosphere_28Ch: [
-            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
-        ],
-        ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
-    },
     Mode.rave: {
         # Rave sheer movers share one dimmer / color / move / gobo pick across the
         # whole group, plus a random focus width (big vs. small beam) and a random
@@ -243,10 +165,20 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                 HardSpatialCenterOutPulse,
                                 DimmersBeatChase,
                                 GentlePulse,
+                                with_args(
+                                    "GentlePulseHigh",
+                                    GentlePulse,
+                                    signal=FrameSignal.freq_high,
+                                ),
                                 DimmerFadeLatched,
                                 SequenceDimmers,
                                 SequenceFadeDimmers,
                                 StabPulse,
+                                with_args(
+                                    "StabPulseHigh",
+                                    StabPulse,
+                                    signal=FrameSignal.freq_high,
+                                ),
                                 LightningStab,
                             ),
                         ),
@@ -283,6 +215,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 signal_switch(
                     randomize(
                         StabPulse,
+                        with_args(
+                            "StabPulseHigh",
+                            StabPulse,
+                            signal=FrameSignal.freq_high,
+                        ),
                         LightningStab,
                     ),
                 ),
@@ -297,10 +234,20 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         HardSpatialCenterOutPulse,
                         DimmersBeatChase,
                         GentlePulse,
+                        with_args(
+                            "GentlePulseHigh",
+                            GentlePulse,
+                            signal=FrameSignal.freq_high,
+                        ),
                         DimmerFadeLatched,
                         SequenceDimmers,
                         SequenceFadeDimmers,
                         StabPulse,
+                        with_args(
+                            "StabPulseHigh",
+                            StabPulse,
+                            signal=FrameSignal.freq_high,
+                        ),
                         LightningStab,
                     ),
                 ),
@@ -330,6 +277,16 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         combo(DimmersBeatChase, AllBulbs255),
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                         combo(Dimmer255, for_bulbs(StabPulse)),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "StabPulseHigh",
+                                    StabPulse,
+                                    signal=FrameSignal.freq_high,
+                                )
+                            ),
+                        ),
                         combo(LightningStab, for_bulbs(LightningStab)),
                     ),
                 ),
@@ -351,6 +308,17 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                     "GentlePulseTrigger0.1",
                                     GentlePulse,
                                     trigger_level=0.1,
+                                )
+                            ),
+                        ),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "GentlePulseHigh",
+                                    GentlePulse,
+                                    signal=FrameSignal.freq_high,
+                                    trigger_level=0.2,
                                 )
                             ),
                         ),
@@ -390,6 +358,214 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     Dimmer0,
                 ),
             ),
+        ],
+    },
+    # Stroby: rave-like energy with only short / pulsy dimmer interpreters, plus
+    # ``randomize(StrobeChannelSustained, Noop)`` so some partitions get strobed DMX.
+    Mode.stroby: {
+        (Group("sheer lights"), MovingHead): [
+            combo(
+                weighted_randomize(
+                    (
+                        30,
+                        combo(
+                            signal_switch(
+                                randomize(
+                                    HardSpatialPulse,
+                                    HardSpatialCenterOutPulse,
+                                    DimmersBeatChase,
+                                    GentlePulse,
+                                    with_args(
+                                        "GentlePulseHigh",
+                                        GentlePulse,
+                                        signal=FrameSignal.freq_high,
+                                    ),
+                                    StabPulse,
+                                    with_args(
+                                        "StabPulseHigh",
+                                        StabPulse,
+                                        signal=FrameSignal.freq_high,
+                                    ),
+                                    LightningStab,
+                                ),
+                            ),
+                            weighted_randomize(
+                                (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
+                            ),
+                            randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                            weighted_randomize(
+                                (
+                                    10,
+                                    with_args("StarburstGobo", MoverGobo, gobo="starburst"),
+                                ),
+                                (90, MoverNoGobo),
+                            ),
+                            randomize(FocusBig, FocusSmall),
+                            randomize(RotatePrism, PrismOff),
+                        ),
+                    ),
+                    (70, Dimmer0),
+                ),
+                randomize(StrobeChannelSustained, Noop),
+            )
+        ],
+        Group("sheer lights"): [
+            combo(Dimmer0, randomize(StrobeChannelSustained, Noop)),
+        ],
+        Mirrorball: [
+            combo(
+                weighted_randomize(
+                    (10, combo(StabPulse, ColorFg)),
+                    (90, Dimmer0),
+                ),
+                randomize(StrobeChannelSustained, Noop),
+            )
+        ],
+        Par: [
+            combo(
+                signal_switch(
+                    randomize(
+                        StabPulse,
+                        with_args(
+                            "StabPulseHigh",
+                            StabPulse,
+                            signal=FrameSignal.freq_high,
+                        ),
+                        LightningStab,
+                    ),
+                ),
+                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
+                randomize(StrobeChannelSustained, Noop),
+            )
+        ],
+        MovingHead: [
+            combo(
+                signal_switch(
+                    randomize(
+                        HardSpatialPulse,
+                        HardSpatialCenterOutPulse,
+                        DimmersBeatChase,
+                        GentlePulse,
+                        with_args(
+                            "GentlePulseHigh",
+                            GentlePulse,
+                            signal=FrameSignal.freq_high,
+                        ),
+                        StabPulse,
+                        with_args(
+                            "StabPulseHigh",
+                            StabPulse,
+                            signal=FrameSignal.freq_high,
+                        ),
+                        LightningStab,
+                    ),
+                ),
+                weighted_randomize(
+                    (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
+                ),
+                randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
+                weighted_randomize(
+                    (10, MoverRandomGobo),
+                    (90, MoverNoGobo),
+                ),
+                weighted_randomize(
+                    (10, FocusBig),
+                    (90, FocusSmall),
+                ),
+                weighted_randomize(
+                    (10, RotatePrism),
+                    (90, PrismOff),
+                ),
+                randomize(StrobeChannelSustained, Noop),
+            )
+        ],
+        Motionstrip: [
+            combo(
+                signal_switch(
+                    randomize(
+                        combo(DimmersBeatChase, AllBulbs255),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                        combo(Dimmer255, for_bulbs(StabPulse)),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "StabPulseHigh",
+                                    StabPulse,
+                                    signal=FrameSignal.freq_high,
+                                )
+                            ),
+                        ),
+                        combo(LightningStab, for_bulbs(LightningStab)),
+                    ),
+                ),
+                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                randomize(MoveCircles, MoveFan),
+                randomize(StrobeChannelSustained, Noop),
+            )
+        ],
+        ChauvetColorBandPiX_36Ch: [
+            combo(
+                signal_switch(
+                    randomize(
+                        combo(DimmersBeatChase, AllBulbs255),
+                        combo(Dimmer255, for_bulbs(DimmersBeatChase)),
+                        combo(Dimmer255, for_bulbs(StabPulse)),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "StabPulseHigh",
+                                    StabPulse,
+                                    signal=FrameSignal.freq_high,
+                                )
+                            ),
+                        ),
+                        combo(
+                            Dimmer255,
+                            for_bulbs(
+                                with_args(
+                                    "GentlePulseHigh",
+                                    GentlePulse,
+                                    signal=FrameSignal.freq_high,
+                                    trigger_level=0.2,
+                                )
+                            ),
+                        ),
+                    ),
+                ),
+                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                randomize(StrobeChannelSustained, Noop),
+            )
+        ],
+        Laser: [
+            combo(signal_switch(LaserLatch), randomize(StrobeChannelSustained, Noop)),
+            combo(StrobeHighSustained, randomize(StrobeChannelSustained, Noop)),
+        ],
+        ChauvetRotosphere_28Ch: [
+            combo(
+                RotosphereSpinColor,
+                randomize(
+                    for_bulbs(StabPulse),
+                    for_bulbs(GentlePulse),
+                    LightningStab,
+                ),
+                randomize(StrobeChannelSustained, Noop),
+            ),
+            combo(
+                for_bulbs(ColorRainbow),
+                Spin,
+                StabPulse,
+                randomize(StrobeChannelSustained, Noop),
+            ),
+        ],
+        ChauvetDerby: [
+            combo(
+                randomize(Spin, Noop),
+                randomize(ColorAlternateBg, ColorFg),
+                randomize(StabPulse, LightningStab, GentlePulse, Dimmer0),
+                randomize(StrobeChannelSustained, Noop),
+            )
         ],
     },
     Mode.ethereal: {

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from beartype import beartype
+from dataclasses import dataclass
 from typing import Optional, Any
 import math
 
@@ -14,6 +15,70 @@ from parrot.vj.renderers.base import (
 )
 from parrot.director.frame import Frame
 import numpy as np
+
+
+@beartype
+@dataclass(frozen=True)
+class _MovingHeadDimensions:
+    """Body dimensions for a moving head in desktop renderer local coords.
+
+    Layout mirrors Parrot Cloud's ``movingHeadDimensions`` in
+    ``parrot_cloud/frontend/src/fixtureModels.js`` so the web preview and the
+    desktop OpenGL view stay visually consistent.
+    """
+
+    base_width: float
+    base_height: float
+    base_depth: float
+    moving_body_width: float
+    moving_body_height: float
+    moving_body_depth: float
+    head_pivot_y: float  # yoke-top pivot in fixture-local (pre-orientation) Y
+
+
+@beartype
+def _moving_head_dimensions(cube_size: float) -> _MovingHeadDimensions:
+    body_size = cube_size * 0.4
+    base_height = body_size * 0.42
+    moving_body_height = body_size * 0.5
+    return _MovingHeadDimensions(
+        base_width=body_size * 1.2,
+        base_height=base_height,
+        base_depth=body_size * 0.8,
+        moving_body_width=body_size * 0.5,
+        moving_body_height=moving_body_height,
+        moving_body_depth=body_size * 1.2,
+        # Pivot y = top of base + shoulder gap + half head height; matches web's
+        # ``baseHeight + headOffsetZ`` (which is itself ``baseHeight + bs*0.3 +
+        # headHeight/2``). Rotating pan/tilt around this pivot keeps the head
+        # sitting on top of the base at rest, upright for floor movers and
+        # hanging below the base for truss-flipped movers.
+        head_pivot_y=base_height + body_size * 0.3 + moving_body_height / 2,
+    )
+
+
+@beartype
+def _head_pivot_world(
+    position_3d: tuple[float, float, float],
+    orientation: np.ndarray,
+    dims: _MovingHeadDimensions,
+) -> tuple[float, float, float]:
+    """Where to place ``local_position`` so pan/tilt rotates around the head pivot.
+
+    ``Room3DRenderer.local_position`` REPLACES the current position (it does
+    not compose), so we have to collapse the fixture-root translation and the
+    pivot offset into a single world coordinate. The pivot offset
+    ``(0, head_pivot_y, 0)`` lives in the fixture-local (pre-orientation)
+    frame — rotating it by ``self.orientation`` carries it into the room's
+    world frame before adding to ``position_3d``.
+    """
+    local_pivot = np.array([0.0, dims.head_pivot_y, 0.0], dtype=np.float32)
+    rotated = quaternion_rotate_vector(orientation, local_pivot)
+    return (
+        position_3d[0] + float(rotated[0]),
+        position_3d[1] + float(rotated[1]),
+        position_3d[2] + float(rotated[2]),
+    )
 
 # Prism rendering: 7-facet prism. Sub-beams are splayed well off the central
 # axis (so the fan is clearly visible, not a tight bundle) and each is drawn
@@ -74,44 +139,23 @@ class MovingHeadRenderer(FixtureRenderer):
         if self.room_renderer is None:
             return
 
-        # Get 3D position (center of fixture)
         position_3d = self.get_3d_position(canvas_size)
 
-        body_size = self.cube_size * 0.4
+        dims = _moving_head_dimensions(self.cube_size)
         body_color = (0.3, 0.3, 0.3)
-        base_height = body_size * 0.42
-        moving_body_height = body_size * 0.5
-        moving_body_width = body_size * 0.5
-        moving_body_depth = body_size * 1.2
-        moving_body_y = base_height + moving_body_height / 2 + body_size * 0.3
-
         moving_body_rotation = self._moving_body_rotation()
-
-        half_depth = moving_body_depth * 0.5
-        pivot_local = np.array([0.0, 0.0, half_depth], dtype=np.float32)
-        pivot_delta = quaternion_rotate_vector(
-            self.orientation,
-            pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
-        )
-        body_position = (
-            position_3d[0] + float(pivot_delta[0]),
-            position_3d[1] + float(pivot_delta[1]),
-            position_3d[2] + float(pivot_delta[2]),
-        )
 
         # Fixed base at fixture position
         with self.room_renderer.local_position(position_3d):
             with self.room_renderer.local_rotation(self.orientation):
-                base_width = body_size * 1.2
-                base_depth = body_size * 0.8
                 self.room_renderer.render_rectangular_box(
                     0.0,
-                    base_height / 2,
+                    dims.base_height / 2,
                     0.0,
                     body_color,
-                    base_width,
-                    base_height,
-                    base_depth,
+                    dims.base_width,
+                    dims.base_height,
+                    dims.base_depth,
                 )
 
                 # Neutral-pan indicator: lighter grey slab on the base “front” in
@@ -120,34 +164,42 @@ class MovingHeadRenderer(FixtureRenderer):
                 # see `parrot.vj.moving_head_visual` + AGENTS.md. Pan/tilt for mesh/beam
                 # use `pan_radians_for_render` / `tilt_radians_for_render` only.
                 screen_color = (0.65, 0.65, 0.65)
-                screen_thickness = base_depth * 0.08
-                screen_width = base_width * 0.55
-                screen_height = base_height * 0.55
+                screen_thickness = dims.base_depth * 0.08
+                screen_width = dims.base_width * 0.55
+                screen_height = dims.base_height * 0.55
                 self.room_renderer.render_rectangular_box(
                     0.0,
-                    base_height / 2,
-                    -(base_depth / 2 + screen_thickness / 2),
+                    dims.base_height / 2,
+                    -(dims.base_depth / 2 + screen_thickness / 2),
                     screen_color,
                     screen_width,
                     screen_height,
                     screen_thickness,
                 )
 
-        # Moving head: pan/tilt about the rear face of the head cuboid (not its center)
-        with self.room_renderer.local_position(body_position):
+        # Head: rotate pan/tilt AROUND the yoke pivot (at the head's center in the
+        # fixture-local frame), matching Parrot Cloud's `headPivotGroup` — not
+        # around the fixture origin. Previous code offset the head inside the
+        # rotated body frame, so the rest -π/2 tilt flung the head box below the
+        # base for floor movers and above the yoke for truss-flipped fixtures
+        # (see `_head_pivot_world`).
+        pivot_world = _head_pivot_world(position_3d, self.orientation, dims)
+        with self.room_renderer.local_position(pivot_world):
             with self.room_renderer.local_rotation(self.orientation):
                 with self.room_renderer.local_rotation(moving_body_rotation):
+                    # Head box centered on the pivot with long axis +Z; the rest
+                    # tilt of -π/2 rotates +Z → +Y so the beam exits the TOP of
+                    # the head and the box stands upright above the base.
                     self.room_renderer.render_rectangular_box(
                         0.0,
-                        moving_body_y,
+                        -dims.moving_body_height / 2,
                         0.0,
                         body_color,
-                        moving_body_width,
-                        moving_body_height,
-                        moving_body_depth,
+                        dims.moving_body_width,
+                        dims.moving_body_height,
+                        dims.moving_body_depth,
                     )
 
-        # Render DMX address
         self.render_dmx_address(canvas_size)
 
     def render_emissive(self, context, canvas_size: tuple[float, float], frame: Frame):
@@ -157,47 +209,28 @@ class MovingHeadRenderer(FixtureRenderer):
 
         position_3d = self.get_3d_position(canvas_size)
 
+        dims = _moving_head_dimensions(self.cube_size)
         body_size = self.cube_size * 0.4
-        base_height = body_size * 0.42
-        moving_body_height = body_size * 0.5
-        moving_body_depth = body_size * 1.2
-
         bulb_radius = body_size * 0.3
         bulb_color = self.get_color()
         dimmer = self.get_effective_dimmer(frame)
 
         moving_body_rotation = self._moving_body_rotation()
 
-        # Beam + bulb render *inside* the moving-body transform stack (see the
-        # nested ``local_rotation`` contexts below), so their direction/normal
-        # must be expressed in the body's local frame. The body's long axis is
-        # +Z locally, so the beam shines straight out of the head along +Z and
-        # the room rotation stack carries it to the right world direction.
+        # Bulb/beam origin is expressed in the yoke-pivot frame, on the head's
+        # front face (+Z locally). After the rest -π/2 tilt around X, +Z maps
+        # to +Y so the lens sits on top of the head. The beam normal uses the
+        # same +Z local direction, which the nested rotation stack steers to
+        # the correct world aim.
+        lens_extension = body_size * 0.05
+        bulb_local = (0.0, 0.0, dims.moving_body_depth / 2 + lens_extension)
         beam_direction = (0.0, 0.0, 1.0)
 
-        half_depth = moving_body_depth * 0.5
-        pivot_local = np.array([0.0, 0.0, half_depth], dtype=np.float32)
-        pivot_delta = quaternion_rotate_vector(
-            self.orientation,
-            pivot_local - quaternion_rotate_vector(moving_body_rotation, pivot_local),
-        )
-        body_position = (
-            position_3d[0] + float(pivot_delta[0]),
-            position_3d[1] + float(pivot_delta[1]),
-            position_3d[2] + float(pivot_delta[2]),
-        )
+        pivot_world = _head_pivot_world(position_3d, self.orientation, dims)
 
-        with self.room_renderer.local_position(body_position):
+        with self.room_renderer.local_position(pivot_world):
             with self.room_renderer.local_rotation(self.orientation):
                 with self.room_renderer.local_rotation(moving_body_rotation):
-                    bulb_y = (
-                        base_height
-                        + moving_body_height / 2
-                        + body_size * 0.3
-                        + body_size * 0.05
-                    )
-                    bulb_z = body_size * 0.6
-
                     brightness_multiplier = 1.0 + dimmer * 2.0
                     boosted_bulb_color = (
                         min(bulb_color[0] * brightness_multiplier, 1.0),
@@ -208,7 +241,7 @@ class MovingHeadRenderer(FixtureRenderer):
                     capped_alpha = min(dimmer * 1.5, 1.0)
 
                     self.room_renderer.render_emission_circle(
-                        (0.0, bulb_y, bulb_z),
+                        bulb_local,
                         boosted_bulb_color,
                         bulb_radius,
                         normal=beam_direction,
@@ -254,9 +287,9 @@ class MovingHeadRenderer(FixtureRenderer):
                                     beam_direction, _PRISM_SPLAY_DEG, theta
                                 )
                                 self.room_renderer.render_cone_beam(
-                                    0.0,
-                                    bulb_y,
-                                    bulb_z,
+                                    bulb_local[0],
+                                    bulb_local[1],
+                                    bulb_local[2],
                                     dir_splayed,
                                     boosted_bulb_color,
                                     length=beam_length,
@@ -267,9 +300,9 @@ class MovingHeadRenderer(FixtureRenderer):
                                 )
                         else:
                             self.room_renderer.render_cone_beam(
-                                0.0,
-                                bulb_y,
-                                bulb_z,
+                                bulb_local[0],
+                                bulb_local[1],
+                                bulb_local[2],
                                 beam_direction,
                                 boosted_bulb_color,
                                 length=beam_length,

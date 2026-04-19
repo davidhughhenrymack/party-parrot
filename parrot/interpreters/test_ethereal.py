@@ -37,13 +37,13 @@ def test_group_matcher_is_case_insensitive() -> None:
 def test_mode_uses_group_matchers_for_modes_that_silence_sheer_lights() -> None:
     """Any mode with a ``Group(...)`` key in its DSL flips into group-aware dispatch.
 
-    Ethereal drives sheer lights; chill / rave / rave_gentle explicitly turn them
+    Ethereal drives sheer lights; chill / rave explicitly turn them
     off — all four use group matchers. Blackout and test don't reference groups.
     """
     assert mode_uses_group_matchers(Mode.ethereal) is True
     assert mode_uses_group_matchers(Mode.chill) is True
     assert mode_uses_group_matchers(Mode.rave) is True
-    assert mode_uses_group_matchers(Mode.rave_gentle) is True
+    assert mode_uses_group_matchers(Mode.stroby) is True
     assert mode_uses_group_matchers(Mode.blackout) is False
     assert mode_uses_group_matchers(Mode.test) is False
 

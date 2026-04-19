@@ -21,6 +21,8 @@ export default function RemoteControlPage() {
     show_waveform: true,
   });
   const [manualFixtures, setManualFixtures] = useState([]);
+  /** Live fg/bg/bg_contrast from desktop `fixture_runtime_state.color_palette`. */
+  const [liveColorPalette, setLiveColorPalette] = useState(null);
   const draggingFixtureIdRef = useRef(null);
 
   const manualDimmerSupported = manualFixtures.length > 0;
@@ -76,6 +78,9 @@ export default function RemoteControlPage() {
                   : current.manual_fixture_dimmers,
             };
           });
+        } else if (payload.type === 'fixture_runtime_state') {
+          const pal = readColorPaletteFromFixturePayload(payload.data);
+          setLiveColorPalette(pal);
         } else if (payload.type === 'venues') {
           setVenues(payload.data?.venues || []);
         } else if (payload.type === 'venue_snapshot' && payload.data?.summary?.active) {
@@ -115,6 +120,10 @@ export default function RemoteControlPage() {
             name: f.name || f.fixture_type || 'Manual',
           })),
       );
+      {
+        const pal = readColorPaletteFromFixturePayload(bootstrap.fixture_runtime_state);
+        setLiveColorPalette(pal);
+      }
     }
 
     initialize().catch((error) => {
@@ -204,13 +213,7 @@ export default function RemoteControlPage() {
         {config.effects.length > 0 ? (
           <div className="remote-effects-grid">
             {config.effects.map((effect) => (
-              <button
-                key={effect}
-                className="remote-effect-button"
-                onClick={() => postJson('/api/effect', { effect })}
-              >
-                {labelize(effect)}
-              </button>
+              <RemoteEffectButton key={effect} effect={effect} label={labelize(effect)} />
             ))}
           </div>
         ) : (
@@ -225,10 +228,29 @@ export default function RemoteControlPage() {
             {config.shift_targets.map((target) => (
               <button
                 key={target}
-                className="remote-effect-button remote-shift-button"
+                type="button"
+                className={`remote-effect-button remote-shift-button${
+                  target === 'color_scheme' ? ' remote-shift-colors' : ''
+                }`}
+                aria-label={formatShiftLabel(target)}
                 onClick={() => postJson('/api/shift', { target })}
               >
-                {formatShiftLabel(target)}
+                {target === 'color_scheme' ? (
+                  <span className="remote-shift-colors-inner">
+                    <span className="remote-shift-swatches" aria-hidden="true">
+                      {(liveColorPalette ?? DEFAULT_REMOTE_COLOR_PALETTE).map((rgb, i) => (
+                        <span
+                          key={i}
+                          className="remote-shift-swatch"
+                          style={{ background: rgbTripleToCss(rgb) }}
+                        />
+                      ))}
+                    </span>
+                    <span className="remote-shift-label">{formatShiftLabel(target)}</span>
+                  </span>
+                ) : (
+                  formatShiftLabel(target)
+                )}
               </button>
             ))}
           </div>
@@ -271,6 +293,49 @@ export default function RemoteControlPage() {
         onSelect={(active_venue_id) => patchControlState({ active_venue_id })}
       />
     </div>
+  );
+}
+
+/** Short tap = legacy pulse (~0.35s server-side); hold = signal stays at 1 until release. */
+const REMOTE_EFFECT_TAP_MS = 280;
+
+function RemoteEffectButton({ effect, label }) {
+  const downAtRef = useRef(0);
+
+  return (
+    <button
+      type="button"
+      className="remote-effect-button"
+      style={{ touchAction: 'manipulation' }}
+      onPointerDown={(e) => {
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+        downAtRef.current = performance.now();
+        void postJson('/api/effect', { effect, value: 1 });
+      }}
+      onPointerUp={(e) => {
+        if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+        const dt = performance.now() - downAtRef.current;
+        if (dt < REMOTE_EFFECT_TAP_MS) {
+          void postJson('/api/effect', { effect });
+        } else {
+          void postJson('/api/effect', { effect, value: 0 });
+        }
+      }}
+      onPointerCancel={(e) => {
+        if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+        void postJson('/api/effect', { effect, value: 0 });
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -329,6 +394,42 @@ const SHIFT_LABELS = {
   color_scheme: 'Shift Colors',
   vj_only: 'Shift VJ',
 };
+
+/** Fallback when desktop has not yet pushed `color_palette` on fixture runtime state. */
+const DEFAULT_REMOTE_COLOR_PALETTE = [
+  [0.18, 0.22, 0.3],
+  [0.32, 0.38, 0.46],
+  [0.48, 0.52, 0.58],
+];
+
+function readColorPaletteFromFixturePayload(data) {
+  const p = data?.color_palette;
+  if (!Array.isArray(p) || p.length !== 3) {
+    return null;
+  }
+  const out = [];
+  for (const slot of p) {
+    if (!Array.isArray(slot) || slot.length < 3) {
+      return null;
+    }
+    out.push([
+      Math.max(0, Math.min(1, Number(slot[0]))),
+      Math.max(0, Math.min(1, Number(slot[1]))),
+      Math.max(0, Math.min(1, Number(slot[2]))),
+    ]);
+  }
+  return out;
+}
+
+function rgbTripleToCss(rgb) {
+  if (!Array.isArray(rgb) || rgb.length < 3) {
+    return 'rgb(100, 116, 139)';
+  }
+  const r = Math.round(Math.max(0, Math.min(1, rgb[0])) * 255);
+  const g = Math.round(Math.max(0, Math.min(1, rgb[1])) * 255);
+  const b = Math.round(Math.max(0, Math.min(1, rgb[2])) * 255);
+  return `rgb(${r},${g},${b})`;
+}
 
 function formatShiftLabel(target) {
   return SHIFT_LABELS[target] || `Shift ${labelize(target)}`;

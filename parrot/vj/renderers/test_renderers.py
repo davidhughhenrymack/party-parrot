@@ -258,6 +258,66 @@ def test_moving_head_full_tilt_endpoints_symmetric_from_up():
     assert angle_high == pytest.approx(135.0, abs=1.5)
 
 
+def test_moving_head_floor_vs_truss_base_head_stacking():
+    """Regression: on a floor mover the head sits ABOVE the base, and on a
+    truss-flipped (rotation_x=π) mover the head hangs BELOW the base.
+
+    The old renderer placed the head at an offset inside the rotated body
+    frame, so the rest -π/2 tilt flung the head to y≈−0.18 (below the floor)
+    for floor movers and y≈+9.55 (above the ceiling pivot) for truss movers —
+    visually making the base appear upside-down vs. the web preview. The new
+    renderer pivots pan/tilt around the yoke center, matching Parrot Cloud's
+    ``headPivotGroup``.
+    """
+    import math
+    import numpy as np
+    from parrot.vj.renderers.moving_head import (
+        _moving_head_dimensions,
+        _head_pivot_world,
+    )
+    from parrot.vj.renderers.base import quaternion_rotate_vector
+    from parrot.vj.venue_axis import venue_rotation_to_desktop_quaternion
+
+    fixture = ChauvetSpot160_12Ch(1)
+    renderer = MovingHeadRenderer(fixture)
+    dims = _moving_head_dimensions(renderer.cube_size)
+
+    # Base center in pre-orientation fixture-local frame. ``render_rectangular_box``
+    # treats its ``y`` argument as the box BOTTOM, so the base rendered at
+    # ``y = base_height/2`` spans [base_height/2, 3*base_height/2] → center at
+    # y = base_height.
+    base_center_local = np.array([0.0, dims.base_height, 0.0], dtype=np.float32)
+
+    # Floor mover at z=0.016m, rotation=0
+    pos_floor = (0.0, 0.016, 3.0)
+    orient_floor = venue_rotation_to_desktop_quaternion(0.0, 0.0, 0.0)
+    base_floor = np.array(pos_floor) + quaternion_rotate_vector(
+        orient_floor, base_center_local
+    )
+    head_floor = np.array(_head_pivot_world(pos_floor, orient_floor, dims))
+    assert head_floor[1] > base_floor[1], (
+        f"floor mover head (y={head_floor[1]:.3f}) must sit ABOVE base "
+        f"(y={base_floor[1]:.3f})"
+    )
+
+    # Truss mover at z=9.36m, rotation_x=π (upside-down)
+    pos_truss = (0.0, 9.36, 3.0)
+    orient_truss = venue_rotation_to_desktop_quaternion(math.pi, 0.0, 0.0)
+    base_truss = np.array(pos_truss) + quaternion_rotate_vector(
+        orient_truss, base_center_local
+    )
+    head_truss = np.array(_head_pivot_world(pos_truss, orient_truss, dims))
+    assert head_truss[1] < base_truss[1], (
+        f"truss mover head (y={head_truss[1]:.3f}) must hang BELOW base "
+        f"(y={base_truss[1]:.3f})"
+    )
+
+    # Sanity: the head should also stay within a reasonable vertical band of
+    # the fixture pivot (not flung hundreds of millimetres away as before).
+    assert abs(head_floor[1] - pos_floor[1]) < 0.5
+    assert abs(head_truss[1] - pos_truss[1]) < 0.5
+
+
 def test_renderer_set_position():
     """Test that renderer position can be set"""
     fixture = ParRGB(1)

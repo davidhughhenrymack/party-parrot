@@ -300,7 +300,7 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             fixtures.append(head)
 
         def interpreter_factory(mode: Mode, group: list[MovingHead]):
-            hype = 75 if mode == Mode.rave else 40
+            hype = 75 if mode in (Mode.rave, Mode.stroby) else 40
             args = InterpreterArgs(hype, True, 0, 100)
             return create_fixture_interpreter(mode, group, args)
 

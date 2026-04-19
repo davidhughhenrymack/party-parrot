@@ -1,8 +1,9 @@
 import queue
 import threading
-from typing import Callable, Optional
+from typing import Callable, Optional, cast
 from events import Events
 from beartype import beartype
+from parrot.director.frame import FrameSignal
 from parrot.director.mode import Mode
 from parrot.vj.vj_mode import VJMode, parse_vj_mode_string
 from parrot.director.themes import themes, get_theme_by_name
@@ -46,6 +47,8 @@ class State:
         from parrot.director.signal_states import SignalStates
 
         self.signal_states = SignalStates()
+        # Auto-release timers for one-shot remote pulses (see ``set_effect_thread_safe``).
+        self._effect_release_timers: dict[FrameSignal, threading.Timer] = {}
 
 
     @property
@@ -75,16 +78,37 @@ class State:
         event = getattr(self.events, f"on_shift_{target}_request")
         event()
 
-    def set_effect_thread_safe(self, effect: str):
-        """Fire a one-shot FrameSignal from the remote control (key press + auto-release)."""
-        from parrot.director.frame import FrameSignal
+    def _cancel_effect_release_timer(self, signal: FrameSignal) -> None:
+        timer = self._effect_release_timers.pop(signal, None)
+        if timer is not None:
+            timer.cancel()
 
+    def _release_effect_signal_after_pulse(self, signal: FrameSignal) -> None:
+        self._effect_release_timers.pop(signal, None)
+        self.signal_states.set_signal(signal, 0.0)
+
+    def set_effect_thread_safe(self, effect: str, value: Optional[float] = None):
+        """Drive a FrameSignal from the remote / websocket.
+
+        * ``value is None`` — one-shot pulse (1.0 for ~0.35s), same as a quick tap
+          when the mobile UI sends the legacy pulse request.
+        * ``value is 1.0`` or ``0.0`` — explicit hold / release (no timer). Used
+          when the remote holds a button: high until ``value=0``.
+        """
         signal = FrameSignal[effect]
-        self.signal_states.set_signal(signal, 1.0)
-        # Remote has no key-up event; release after a short hold so signals don't stick on.
-        threading.Timer(
-            0.35, lambda: self.signal_states.set_signal(signal, 0.0)
-        ).start()
+        self._cancel_effect_release_timer(signal)
+
+        if value is None:
+            self.signal_states.set_signal(signal, 1.0)
+            timer = threading.Timer(
+                0.35,
+                lambda s=signal: self._release_effect_signal_after_pulse(s),
+            )
+            self._effect_release_timers[signal] = timer
+            timer.start()
+        else:
+            v = max(0.0, min(1.0, float(value)))
+            self.signal_states.set_signal(signal, v)
 
     @property
     def vj_mode(self):
@@ -194,8 +218,8 @@ class State:
     def queue_runtime_control_state(self, control_state: ControlState):
         self._gui_update_queue.put(("runtime_control_state", control_state))
 
-    def queue_runtime_effect(self, effect: str):
-        self._gui_update_queue.put(("runtime_effect", effect))
+    def queue_runtime_effect(self, effect: str, value: Optional[float] = None):
+        self._gui_update_queue.put(("runtime_effect", (effect, value)))
 
     def queue_runtime_shift(self, target: str):
         """Queue a remote-triggered ``director.shift_<target>()`` request.
@@ -373,7 +397,8 @@ class State:
                 elif update_type == "runtime_control_state":
                     self._apply_control_state(value)
                 elif update_type == "runtime_effect":
-                    self.set_effect_thread_safe(value)
+                    eff, val = cast(tuple[str, Optional[float]], value)
+                    self.set_effect_thread_safe(eff, value=val)
                 elif update_type == "runtime_shift":
                     self._dispatch_shift(value)
 

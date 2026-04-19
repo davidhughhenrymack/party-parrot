@@ -247,10 +247,13 @@ def create_app() -> Flask:
 
     @app.post("/api/effect")
     def trigger_effect():
-        data = request.get_json(force=True)
+        data = request.get_json(force=True) or {}
         effect = str(data.get("effect", ""))
-        broadcast_command("effect", {"effect": effect})
-        return jsonify({"success": True, "effect": effect})
+        payload: dict[str, object] = {"effect": effect}
+        if "value" in data:
+            payload["value"] = float(data["value"])
+        broadcast_command("effect", payload)
+        return jsonify({"success": True, **payload})
 
     @app.post("/api/shift")
     def trigger_shift():
