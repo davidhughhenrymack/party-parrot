@@ -217,6 +217,29 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
     base.userData = userData;
     runtimeAxesGroup.add(base);
 
+    // Neutral-pan reference marker: lighter grey panel on the −venue-Y face of
+    // the base — matches `MovingHeadRenderer`'s desktop screen on the room-box
+    // −Z face (see AGENTS.md "grey base marker" and
+    // parrot/vj/renderers/moving_head.py). The marker does NOT rotate with
+    // live pan/tilt; it lives on the stationary base so a designer can always
+    // see which way upstream/upstage is for this fixture. Rotating a plane
+    // by +π/2 around X sends its +Z normal to −Y, so the front face points
+    // out from the base's upstream side.
+    const panelMaterial = new THREE.MeshStandardMaterial({
+      color: 0xa6a6a6,
+      metalness: 0.05,
+      roughness: 0.72,
+      side: THREE.DoubleSide,
+    });
+    const panel = new THREE.Mesh(
+      new THREE.PlaneGeometry(model.baseWidth * 0.55, model.baseHeight * 0.55),
+      panelMaterial
+    );
+    panel.rotation.x = Math.PI / 2;
+    panel.position.set(0, -(model.baseDepth / 2 + 0.002), model.baseHeight / 2);
+    panel.userData = userData;
+    runtimeAxesGroup.add(panel);
+
     // Real moving-head kinematics: the yoke PANS around the vertical axis
     // first, then the head TILTS around the yoke's (now-panned) horizontal
     // axis. We model this as parent(pan) -> child(tilt) so Three.js composes

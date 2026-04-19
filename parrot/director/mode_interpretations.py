@@ -243,7 +243,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                 HardSpatialPulse,
                                 HardSpatialCenterOutPulse,
                                 DimmersBeatChase,
-                                SlowDecay,
                                 GentlePulse,
                                 DimmerFadeLatched,
                                 SequenceDimmers,
@@ -257,7 +256,10 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         ),
                         randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
                         weighted_randomize(
-                            (10, with_args("StarburstGobo", MoverGobo, gobo="starburst")),
+                            (
+                                10,
+                                with_args("StarburstGobo", MoverGobo, gobo="starburst"),
+                            ),
                             (90, MoverNoGobo),
                         ),
                         randomize(FocusBig, FocusSmall),
