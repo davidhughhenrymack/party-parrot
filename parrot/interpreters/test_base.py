@@ -1,12 +1,13 @@
 import pytest
 import math
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from parrot.interpreters.base import (
     InterpreterBase,
     InterpreterArgs,
     acceptable_test,
     with_args,
     Noop,
+    AnyColor,
     ColorFg,
     ColorAlternateBg,
     ColorBg,
@@ -300,6 +301,85 @@ class TestColorBg:
         interpreter = ColorBg(self.group, self.args)
         str_repr = str(interpreter)
         assert "Bg" in str_repr
+
+
+class TestAnyColor:
+    def setup_method(self):
+        self.fixture1 = MagicMock(spec=FixtureBase)
+        self.fixture2 = MagicMock(spec=FixtureBase)
+        self.group = [self.fixture1, self.fixture2]
+        self.args = InterpreterArgs(
+            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
+        )
+        self.scheme = ColorScheme(
+            fg=Color("red"),
+            bg=Color("blue"),
+            bg_contrast=Color("green"),
+            allows_rainbow=True,
+        )
+
+    def test_any_color_has_no_rainbow_flag(self):
+        assert AnyColor.has_rainbow is False
+
+    def test_any_color_acceptable_without_rainbow_args(self):
+        args = InterpreterArgs(hype=35, allow_rainbows=False, min_hype=0, max_hype=100)
+        assert AnyColor.acceptable(args) is True
+
+    def test_any_color_solid_slots_assigned_at_init(self):
+        with patch("parrot.interpreters.base.random.random", return_value=1.0), patch(
+            "parrot.interpreters.base.random.choice", return_value="fg"
+        ) as chooser:
+            interpreter = AnyColor(self.group, self.args)
+            frame = Frame({})
+            frame.time = 0.0
+            interpreter.step(frame, self.scheme)
+            interpreter.step(frame, self.scheme)
+        assert chooser.call_count == 2
+        c = Color("red")
+        self.fixture1.set_color.assert_called_with(c)
+        self.fixture2.set_color.assert_called_with(c)
+
+    def test_any_color_per_fixture_slots(self):
+        with patch("parrot.interpreters.base.random.random", return_value=1.0), patch(
+            "parrot.interpreters.base.random.choice", side_effect=["fg", "bg"]
+        ):
+            interpreter = AnyColor(self.group, self.args)
+            frame = Frame({})
+            interpreter.step(frame, self.scheme)
+        self.fixture1.set_color.assert_called_with(Color("red"))
+        self.fixture2.set_color.assert_called_with(Color("blue"))
+
+    def test_any_color_rainbow_branch_delegates(self):
+        with patch("parrot.interpreters.base.random.random", return_value=0.0):
+            interpreter = AnyColor(self.group, self.args)
+            frame0 = Frame({})
+            frame0.time = 0.0
+            frame1 = Frame({})
+            frame1.time = 3.0
+            interpreter.step(frame0, self.scheme)
+            interpreter.step(frame1, self.scheme)
+        c0 = self.fixture1.set_color.call_args_list[0][0][0]
+        c1 = self.fixture1.set_color.call_args_list[1][0][0]
+        assert c0.hue != c1.hue
+
+    def test_any_color_wants_rainbow_falls_back_when_scheme_disallows(self):
+        scheme_no_rb = ColorScheme(
+            fg=Color("red"),
+            bg=Color("blue"),
+            bg_contrast=Color("green"),
+            allows_rainbow=False,
+        )
+        with patch("parrot.interpreters.base.random.random", return_value=0.0), patch(
+            "parrot.interpreters.base.random.choice", side_effect=["fg", "bg"]
+        ):
+            interpreter = AnyColor(self.group, self.args)
+            interpreter.step(Frame({}), scheme_no_rb)
+        self.fixture1.set_color.assert_called_once_with(Color("red"))
+        self.fixture2.set_color.assert_called_once_with(Color("blue"))
+
+    def test_any_color_str(self):
+        interpreter = AnyColor(self.group, self.args)
+        assert "AnyColor" in str(interpreter)
 
 
 class TestColorRainbow:

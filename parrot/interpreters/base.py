@@ -1,8 +1,7 @@
 from collections import namedtuple
-from enum import Enum
 import math
 import random
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 from beartype import beartype
 from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase
@@ -121,6 +120,68 @@ class ColorBg(InterpreterBase):
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
             fixture.set_color(scheme.bg)
+
+
+@beartype
+class AnyColor(InterpreterBase):
+    """Per-fixture solid slot (``fg`` / ``bg`` / ``bg_contrast``) or all-rainbow.
+
+    At construction, each fixture is assigned a solid color slot chosen uniformly
+    from ``fg``, ``bg``, and ``bg_contrast``. Independently, with probability
+    ``p_rainbow_all`` the whole group is assigned to cycling rainbow; on the
+    first :meth:`step`, that applies only when :attr:`ColorScheme.allows_rainbow`
+    and interpreter args allow rainbows (otherwise the per-fixture solid slots
+    are used). Rainbow output is delegated to :class:`ColorRainbow`.
+    """
+
+    hype = 35
+
+    _SOLID_SLOTS: tuple[str, str, str] = ("fg", "bg", "bg_contrast")
+
+    def __init__(
+        self,
+        group,
+        args,
+        color_speed: float = 0.08,
+        color_phase_spread: float = 0.2,
+        p_rainbow_all: float = 0.2,
+    ):
+        super().__init__(group, args)
+        self._rainbow = ColorRainbow(group, args, color_speed, color_phase_spread)
+        self.p_rainbow_all = p_rainbow_all
+        self._wants_all_rainbow = random.random() < p_rainbow_all
+        self._fixture_slots = [
+            random.choice(self._SOLID_SLOTS) for _ in group
+        ]
+        self._mode: Literal["unset", "rainbow", "solid"] = "unset"
+
+    def __str__(self):
+        return f"🎨{Fore.MAGENTA}AnyColor{Style.RESET_ALL}"
+
+    def step(self, frame: Frame, scheme: ColorScheme) -> None:
+        if self._mode == "unset":
+            if (
+                self._wants_all_rainbow
+                and scheme.allows_rainbow
+                and self.interpreter_args.allow_rainbows
+            ):
+                self._mode = "rainbow"
+            else:
+                self._mode = "solid"
+        if self._mode == "rainbow":
+            self._rainbow.step(frame, scheme)
+            return
+        for fixture, slot in zip(self.group, self._fixture_slots, strict=True):
+            if slot == "fg":
+                color = scheme.fg
+            elif slot == "bg":
+                color = scheme.bg
+            else:
+                color = scheme.bg_contrast
+            fixture.set_color(color)
+
+    def exit(self, frame: Frame, scheme: ColorScheme) -> None:
+        self._rainbow.exit(frame, scheme)
 
 
 @beartype

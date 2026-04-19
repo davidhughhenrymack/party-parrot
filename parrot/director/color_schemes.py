@@ -43,23 +43,29 @@ def generate_pride_scheme() -> ColorScheme:
     """
     names = random.sample(available_colors, 3)
     random.shuffle(names)
-    return ColorScheme(Color(names[0]), Color(names[1]), Color(names[2]))
+    return ColorScheme(
+        Color(names[0]),
+        Color(names[1]),
+        Color(names[2]),
+        allows_rainbow=True,
+    )
 
 
 scheme_pride = [generate_pride_scheme() for _ in range(10)]
 
-# Red / purple / magenta club palette (was generated from red–purple keys + mono/bright).
+# Red / purple / magenta club palette: each scheme uses at most one chromatic hue
+# plus white (repeats of that hue or white in fg / bg / bg_contrast).
 scheme_berlin = [
-    ColorScheme(Color("white"), Color("red"), Color("purple")),
-    ColorScheme(Color("white"), Color("purple"), Color("red")),
-    ColorScheme(Color("red"), Color("purple"), Color("purple")),
-    ColorScheme(Color("purple"), Color("red"), Color("magenta")),
-    ColorScheme(Color("white"), Color("magenta"), Color("purple")),
-    ColorScheme(Color("magenta"), Color("purple"), Color("red")),
-    ColorScheme(Color("red"), Color("red"), Color("purple")),
-    ColorScheme(Color("purple"), Color("purple"), Color("blue")),
     ColorScheme(Color("white"), Color("red"), Color("red")),
-    ColorScheme(Color("blue"), Color("purple"), Color("magenta")),
+    ColorScheme(Color("red"), Color("white"), Color("red")),
+    ColorScheme(Color("red"), Color("red"), Color("white")),
+    ColorScheme(Color("white"), Color("purple"), Color("purple")),
+    ColorScheme(Color("purple"), Color("white"), Color("purple")),
+    ColorScheme(Color("purple"), Color("purple"), Color("white")),
+    ColorScheme(Color("white"), Color("magenta"), Color("magenta")),
+    ColorScheme(Color("magenta"), Color("magenta"), Color("white")),
+    ColorScheme(Color("red"), Color("red"), Color("red")),
+    ColorScheme(Color("white"), Color("white"), Color("purple")),
 ]
 
 scheme_halloween = [

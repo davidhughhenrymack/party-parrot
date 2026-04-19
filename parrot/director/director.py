@@ -243,10 +243,13 @@ class Director:
     def shift_color_scheme(self):
         s = random.choice(self.state.theme.color_scheme)
         st = s.to_list()
-        ct = self.scheme.render().to_list()
+        current = self.scheme.render()
+        ct = current.to_list()
         idx = random.randint(0, 2)
         ct[idx] = st[idx]
-        new_scheme = ColorScheme.from_list(ct)
+        new_scheme = ColorScheme.from_list(
+            ct, allows_rainbow=current.allows_rainbow or s.allows_rainbow
+        )
         self.scheme.push(new_scheme)
         print(f"Shifting to {format_color_scheme(new_scheme)}")
 

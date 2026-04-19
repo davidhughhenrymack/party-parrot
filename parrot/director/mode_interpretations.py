@@ -21,10 +21,9 @@ from parrot.fixtures.mirrorball import Mirrorball
 from parrot.fixtures.motionstrip import Motionstrip
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import (
+    AnyColor,
     ColorAlternateBg,
     ColorBg,
-    ColorFg,
-    ColorRainbow,
     InterpreterBase,
     Noop,
     with_args,
@@ -182,9 +181,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                 LightningStab,
                             ),
                         ),
-                        weighted_randomize(
-                            (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
-                        ),
+                        AnyColor,
                         randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
                         weighted_randomize(
                             (
@@ -206,7 +203,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         # scheme foreground colour for a sudden spotlight-on-the-disco-ball hit.
         Mirrorball: [
             weighted_randomize(
-                (10, combo(StabPulse, ColorFg)),
+                (10, combo(StabPulse, AnyColor)),
                 (90, Dimmer0),
             )
         ],
@@ -223,7 +220,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
+                AnyColor,
             ),
         ],
         MovingHead: [
@@ -251,9 +248,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                weighted_randomize(
-                    (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
-                ),
+                AnyColor,
                 randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
                 weighted_randomize(
                     (10, MoverRandomGobo),
@@ -290,7 +285,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         combo(LightningStab, for_bulbs(LightningStab)),
                     ),
                 ),
-                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                for_bulbs(AnyColor),
                 randomize(MoveCircles, MoveFan),
             ),
         ],
@@ -325,7 +320,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                     ),
                 ),
-                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                for_bulbs(AnyColor),
             ),
         ],
         Laser: [signal_switch(LaserLatch), StrobeHighSustained],
@@ -341,7 +336,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 ),
             ),
             combo(
-                for_bulbs(ColorRainbow),
+                for_bulbs(AnyColor),
                 Spin,
                 VerySlowDecay,
             ),
@@ -349,7 +344,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ChauvetDerby: [
             combo(
                 randomize(Spin, Noop),
-                randomize(ColorAlternateBg, ColorFg),
+                AnyColor,
                 randomize(
                     GentlePulse,
                     DimmerFadeLatched,
@@ -374,12 +369,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                     HardSpatialPulse,
                                     HardSpatialCenterOutPulse,
                                     DimmersBeatChase,
-                                    GentlePulse,
-                                    with_args(
-                                        "GentlePulseHigh",
-                                        GentlePulse,
-                                        signal=FrameSignal.freq_high,
-                                    ),
                                     StabPulse,
                                     with_args(
                                         "StabPulseHigh",
@@ -389,14 +378,14 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                     LightningStab,
                                 ),
                             ),
-                            weighted_randomize(
-                                (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
-                            ),
+                            AnyColor,
                             randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
                             weighted_randomize(
                                 (
                                     10,
-                                    with_args("StarburstGobo", MoverGobo, gobo="starburst"),
+                                    with_args(
+                                        "StarburstGobo", MoverGobo, gobo="starburst"
+                                    ),
                                 ),
                                 (90, MoverNoGobo),
                             ),
@@ -415,7 +404,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         Mirrorball: [
             combo(
                 weighted_randomize(
-                    (10, combo(StabPulse, ColorFg)),
+                    (10, combo(StabPulse, AnyColor)),
                     (90, Dimmer0),
                 ),
                 randomize(StrobeChannelSustained, Noop),
@@ -434,7 +423,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                randomize(ColorAlternateBg, ColorBg, ColorRainbow),
+                AnyColor,
                 randomize(StrobeChannelSustained, Noop),
             )
         ],
@@ -445,12 +434,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         HardSpatialPulse,
                         HardSpatialCenterOutPulse,
                         DimmersBeatChase,
-                        GentlePulse,
-                        with_args(
-                            "GentlePulseHigh",
-                            GentlePulse,
-                            signal=FrameSignal.freq_high,
-                        ),
                         StabPulse,
                         with_args(
                             "StabPulseHigh",
@@ -460,9 +443,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                weighted_randomize(
-                    (70, ColorFg), (25, ColorAlternateBg), (5, ColorRainbow)
-                ),
+                AnyColor,
                 randomize(MoveCircles, MoveNod, MoveFigureEight, MoveFan),
                 weighted_randomize(
                     (10, MoverRandomGobo),
@@ -499,7 +480,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         combo(LightningStab, for_bulbs(LightningStab)),
                     ),
                 ),
-                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                for_bulbs(AnyColor),
                 randomize(MoveCircles, MoveFan),
                 randomize(StrobeChannelSustained, Noop),
             )
@@ -534,7 +515,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         ),
                     ),
                 ),
-                randomize(ColorFg, ColorAlternateBg, ColorBg, for_bulbs(ColorRainbow)),
+                for_bulbs(AnyColor),
                 randomize(StrobeChannelSustained, Noop),
             )
         ],
@@ -553,7 +534,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 randomize(StrobeChannelSustained, Noop),
             ),
             combo(
-                for_bulbs(ColorRainbow),
+                for_bulbs(AnyColor),
                 Spin,
                 StabPulse,
                 randomize(StrobeChannelSustained, Noop),
@@ -562,7 +543,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ChauvetDerby: [
             combo(
                 randomize(Spin, Noop),
-                randomize(ColorAlternateBg, ColorFg),
+                AnyColor,
                 randomize(StabPulse, LightningStab, GentlePulse, Dimmer0),
                 randomize(StrobeChannelSustained, Noop),
             )
