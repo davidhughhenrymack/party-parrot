@@ -80,8 +80,39 @@ def random_color():
     return key
 
 
+def _is_white(color: Color) -> bool:
+    """True for fully-desaturated near-white colors.
+
+    Using hex equality is too brittle (hue-rotating a white color still leaves
+    it white but may produce `#fefefe`-style rounding). A saturation/luminance
+    check matches every visually-white result that comes out of the Color
+    library.
+    """
+    return color.saturation < 0.05 and color.luminance > 0.95
+
+
+def _enforce_at_most_one_white(scheme: ColorScheme) -> ColorScheme:
+    """Return a `ColorScheme` with at most one white slot.
+
+    Pride uses this so schemes never get washed out to a monochrome white rig.
+    If two or three slots land on white, the extras are replaced with a
+    saturated, randomly-hued color so the rig still reads as "pride" —
+    colorful — rather than "all spotlights blanked to white".
+    """
+    slots = [scheme.fg, scheme.bg, scheme.bg_contrast]
+    white_indices = [i for i, c in enumerate(slots) if _is_white(c)]
+    if len(white_indices) <= 1:
+        return scheme
+    for i in white_indices[1:]:
+        slots[i] = random_color()
+    return ColorScheme(slots[0], slots[1], slots[2])
+
+
 scheme_random = [
-    generate_random_scheme(Color(random.choice(available_colors))) for _ in range(10)
+    _enforce_at_most_one_white(
+        generate_random_scheme(Color(random.choice(available_colors)))
+    )
+    for _ in range(10)
 ]
 
 scheme_berlin = [
