@@ -73,6 +73,67 @@ def test_mirrorball_renderer_with_room():
     ctx.release()
 
 
+def test_emission_circle_blends_additively_over_beams():
+    """Emission circles must NOT darken pixels already lit by beams.
+
+    Regression: ``render_emission_circle`` used to flip blend mode to
+    ``SRC_ALPHA, ONE_MINUS_SRC_ALPHA`` (or leave blending off entirely for
+    opaque bulbs), which, in the emissive pass, let a later bulb draw
+    overwrite pixels that earlier beams had additively lit. Visually this
+    looked like e.g. a mirrorball beam "darkening" a moving-head beam
+    wherever it crossed the fixture's bulb disc.
+
+    We simulate pass 2 (`SRC_ALPHA, ONE` blending, no depth test) by
+    pre-filling the emissive framebuffer with a known bright color, then
+    drawing a colored emission circle over it and asserting pixels inside
+    the circle are strictly ≥ the pre-fill on every channel (additive can
+    only brighten).
+    """
+    from parrot.vj.renderers.room_3d import Room3DRenderer
+
+    ctx = mgl.create_context(standalone=True)
+    width, height = 128, 128
+    room = Room3DRenderer(ctx, width, height)
+
+    tex = ctx.texture((width, height), 3)
+    fbo = ctx.framebuffer(color_attachments=[tex])
+    fbo.use()
+    # Pre-fill with a dim non-zero color - this represents accumulated beam
+    # contribution from an earlier renderer in the emissive pass.
+    prefill = (0.4, 0.1, 0.05)
+    ctx.clear(*prefill)
+
+    # Draw an emission circle centered on the framebuffer. This call must
+    # leave every pixel it touches no dimmer than `prefill` on any channel.
+    room.render_emission_circle(
+        position=(0.0, 0.0, 0.0),
+        color=(0.2, 0.3, 0.4),
+        radius=0.3,
+        normal=(0.0, 0.0, 1.0),
+        alpha=0.6,
+    )
+
+    import numpy as np
+
+    raw = np.frombuffer(tex.read(), dtype=np.uint8).reshape((height, width, 3))
+    prefill_u8 = np.array([int(round(c * 255)) for c in prefill], dtype=np.int16)
+    diff = raw.astype(np.int16) - prefill_u8  # per-pixel per-channel delta
+    # Any pixel where all channels exactly match pre-fill is outside the
+    # circle; pixels inside the circle must be >= pre-fill on every channel
+    # (slack of 1 for rounding).
+    assert diff.min() >= -1, (
+        f"emission circle darkened the framebuffer: min delta={diff.min()} "
+        "(expected >= -1 since additive blending can't reduce any channel)"
+    )
+    # Sanity check: at least some pixels actually got brighter — i.e. the
+    # circle was drawn, the test isn't trivially passing on an empty draw.
+    assert diff.max() > 5, "emission circle draw didn't noticeably change any pixel"
+
+    fbo.release()
+    tex.release()
+    ctx.release()
+
+
 def test_bulb_renderer_size():
     """Test that BulbRenderer returns correct size"""
     fixture = ParRGB(1)

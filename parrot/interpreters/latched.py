@@ -41,7 +41,7 @@ class DimmerFadeLatched(InterpreterBase):
         self,
         group,
         args: InterpreterArgs,
-        signal=FrameSignal.sustained_low,
+        signal=FrameSignal.freq_high,
         latch_time=0.5,
         condition_on=lambda x: x > 0.55,
         condition_off=lambda x: x < 0.2,

@@ -1603,16 +1603,20 @@ class Room3DRenderer:
 
         self.emission_shader["mvp"] = mvp_with_model.T.flatten()
 
-        # Enable blending for transparency if alpha < 1.0
-        if alpha < 1.0:
-            self.ctx.enable(mgl.BLEND)
-            self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE_MINUS_SRC_ALPHA
+        # Emission circles live in the emissive pass, where everything has to
+        # blend additively so overlapping luminous things (bulbs, beams) only
+        # brighten each other. The previous `SRC_ALPHA, ONE_MINUS_SRC_ALPHA`
+        # here (and the no-blend path when ``alpha == 1``) let a bulb draw
+        # *overwrite* pixels that earlier additive beams had lit, which
+        # manifested in the desktop preview as e.g. a mirrorball beam
+        # appearing to darken a moving-head beam where they crossed the bulb
+        # disc. Keep additive (``SRC_ALPHA, ONE``) unconditionally.
+        self.ctx.enable(mgl.BLEND)
+        self.ctx.blend_func = mgl.SRC_ALPHA, mgl.ONE
 
         vao.render(mgl.TRIANGLES)
 
-        # Disable blending
-        if alpha < 1.0:
-            self.ctx.disable(mgl.BLEND)
+        self.ctx.disable(mgl.BLEND)
 
     def render_sphere(
         self,

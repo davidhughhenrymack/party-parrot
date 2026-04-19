@@ -15,17 +15,17 @@ export function createNoopSceneController(
     viewportEl.textContent = message;
   }
   return {
-    applyBootstrap() {},
-    applyVjPreviewUrl() {},
-    resetVideoWallToPlaceholder() {},
-    updateFloorPreview() {},
-    updateVideoWallPreview() {},
-    setView() {},
-    setSelection() {},
-    setInteractionMode() {},
-    setLightingMode() {},
-    applyFixtureRuntimeState() {},
-    destroy() {},
+    applyBootstrap() { },
+    applyVjPreviewUrl() { },
+    resetVideoWallToPlaceholder() { },
+    updateFloorPreview() { },
+    updateVideoWallPreview() { },
+    setView() { },
+    setSelection() { },
+    setInteractionMode() { },
+    setLightingMode() { },
+    applyFixtureRuntimeState() { },
+    destroy() { },
   };
 }
 
@@ -1510,7 +1510,7 @@ function createThreeSceneController({
       localState.selectedFixtureIds.length >= 2
         ? [...localState.selectedFixtureIds]
         : previousSelectedEntityKey &&
-            localState.entityMap.get(previousSelectedEntityKey)?.type === 'fixture'
+          localState.entityMap.get(previousSelectedEntityKey)?.type === 'fixture'
           ? [previousSelectedEntityKey]
           : [];
     const previousVenueId = localState.venueSnapshot?.summary?.id ?? null;
@@ -1572,9 +1572,9 @@ function createThreeSceneController({
 
     const restoreIds =
       previousVenueId !== null &&
-      venueSnapshot?.summary?.id === previousVenueId &&
-      previousFixtureSelectionIds.length > 0 &&
-      previousFixtureSelectionIds.every((id) => localState.entityMap.has(id))
+        venueSnapshot?.summary?.id === previousVenueId &&
+        previousFixtureSelectionIds.length > 0 &&
+        previousFixtureSelectionIds.every((id) => localState.entityMap.has(id))
         ? previousFixtureSelectionIds
         : null;
 
