@@ -114,12 +114,18 @@ class ColorAlternateBg(InterpreterBase):
 
 @beartype
 class ColorBg(InterpreterBase):
+
+    def __init__(self, group, args):
+        super().__init__(group, args)
+        self.slots = ["bg", "bg_contrast"]
+        self.slot = random.choice(self.slots)
+
     def __str__(self):
         return f"🎨{Fore.MAGENTA}Bg{Style.RESET_ALL}"
 
     def step(self, frame, scheme):
         for idx, fixture in enumerate(self.group):
-            fixture.set_color(scheme.bg)
+            fixture.set_color(getattr(scheme, self.slot))
 
 
 @beartype
@@ -150,9 +156,7 @@ class AnyColor(InterpreterBase):
         self._rainbow = ColorRainbow(group, args, color_speed, color_phase_spread)
         self.p_rainbow_all = p_rainbow_all
         self._wants_all_rainbow = random.random() < p_rainbow_all
-        self._fixture_slots = [
-            random.choice(self._SOLID_SLOTS) for _ in group
-        ]
+        self._fixture_slots = [random.choice(self._SOLID_SLOTS) for _ in group]
         self._mode: Literal["unset", "rainbow", "solid"] = "unset"
 
     def __str__(self):

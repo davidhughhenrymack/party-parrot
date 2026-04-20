@@ -112,16 +112,26 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 signal_switch(
                     randomize(
                         SequenceFadeDimmers,
-                        GentlePulse,
                         VerySlowDecay,
                         SlowSustained,
-                        SoftSpatialPulse,
+                        SequenceFadeDimmers,
                     )
                 ),
                 ColorBg,
                 randomize(
-                    MoveCircles, MoveNod, MoveFigureEight, MoveFan, MoveSmoothWalk
+                    with_args("ChillCircles", MoveCircles, multiplier=0.25),
+                    with_args("ChillNod", MoveNod, multiplier=0.25),
+                    with_args("ChillFigureEight", MoveFigureEight, multiplier=0.25),
+                    with_args("ChillFan", MoveFan, multiplier=0.25),
+                    with_args(
+                        "ChillSmoothWalk",
+                        MoveSmoothWalk,
+                        multiplier=0.05,
+                    ),
                 ),
+                randomize(MoverRandomGobo, MoverNoGobo),
+                randomize(RotatePrism, PrismOff),
+                randomize(FocusBig, FocusSmall),
             )
         ],
         Motionstrip: [Dimmer0],
@@ -136,7 +146,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         for_bulbs(Twinkle),
                     )
                 ),
-                ColorBg,
+                randomize(ColorBg, ColorAlternateBg),
             )
         ],
         Laser: [signal_switch(Dimmer0)],
