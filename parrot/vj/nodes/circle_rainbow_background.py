@@ -97,17 +97,32 @@ class CircleRainbowBackground(BaseInterpretationNode[mgl.Context, None, mgl.Fram
                 float point_radius = circle_radius / 16.0;
                 int num_points = min(int(pow(2.0, floor(iTime / PI))), MAX_POINTS);
 
-                fragColor = texture(iChannel0, fragCoord.xy / iResolution.xy);
+                // Previous frame: RGB decay + sample slightly toward UV center so old paint
+                // very slowly creeps inward (tunnel / drain toward middle).
+                const float FEEDBACK_DECAY = 0.993;
+                const vec2 UV_CENTER = vec2(0.5, 0.5);
+                const float FEEDBACK_PULL = 0.99965;
+                vec2 uv = fragCoord.xy / iResolution.xy;
+                vec2 uv_past = UV_CENTER + (uv - UV_CENTER) * FEEDBACK_PULL;
+                vec3 past = texture(iChannel0, uv_past).rgb;
+                fragColor = vec4(past * FEEDBACK_DECAY, 1.0);
+
+                const float RADIUS_SCALE = 2.0;
 
                 for (int point_index = 0; point_index < MAX_POINTS; point_index++) {
                     if (point_index >= num_points) {
                         break;
                     }
                     float point_angle = PI * float(point_index) / float(num_points);
-                    vec2 point_center = vec2(cos(point_angle), sin(point_angle));
-                    point_center *= circle_radius;
-                    point_center *= cos((PI * iTime / PI * 2.0) - point_angle);
-                    point_center += circle_center;
+                    vec2 dir = vec2(cos(point_angle), sin(point_angle));
+                    float orbit = cos(iTime * 2.0 - point_angle);
+                    // Slow sine mix on radius: global breathe + per-point phase (wide swing shrink/grow).
+                    float radius_wobble = 1.0
+                        + 0.28 * sin(iTime * 0.27)
+                        + 0.22 * sin(iTime * 0.31 + point_angle * 2.7)
+                        + 0.14 * sin(iTime * 0.18 - point_angle * 1.15);
+                    vec2 point_center = circle_center
+                        + dir * circle_radius * RADIUS_SCALE * orbit * radius_wobble;
 
                     float point_dist = length(fragCoord - point_center);
                     if (point_dist < point_radius) {
