@@ -136,10 +136,19 @@ def build_fixture_runtime_payload(
     runtime_patch: list[FixtureBase] | None,
     manual_group: Any | None,
     color_scheme: ColorScheme | None = None,
+    output_override_by_spec_id: dict[str, FixtureBase] | None = None,
 ) -> dict[str, Any]:
     fixtures: list[dict[str, Any]] = []
     for fixture in iter_leaf_fixtures(runtime_patch, manual_group):
-        row = fixture_runtime_entry(fixture)
+        cid = getattr(fixture, "cloud_spec_id", None)
+        effective = fixture
+        if (
+            output_override_by_spec_id is not None
+            and cid is not None
+            and str(cid) in output_override_by_spec_id
+        ):
+            effective = output_override_by_spec_id[str(cid)]
+        row = fixture_runtime_entry(effective)
         if row is not None:
             fixtures.append(row)
     payload: dict[str, Any] = {"version": 1, "fixtures": fixtures}

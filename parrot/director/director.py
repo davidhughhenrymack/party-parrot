@@ -3,8 +3,7 @@ import re
 import time
 import os
 from collections import defaultdict
-from typing import List
-from colorama import Fore, Style, init
+from colorama import Fore, Style
 from parrot.director.frame import Frame, FrameSignal
 
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
@@ -13,17 +12,24 @@ from parrot.director.color_schemes import color_schemes
 from parrot.director.color_scheme import ColorScheme
 
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
-from parrot.director.mode import Mode
 from .mode_dispatch import CompositeInterpreter, get_interpreter
 
 from parrot.utils.lerp import LerpAnimator
 from parrot.state import State
 from parrot.utils.color_utils import format_color_scheme
 from parrot.fixtures.position_manager import FixturePositionManager
-from parrot.venue_runtime import get_runtime_fixtures, get_runtime_manual_group
+from parrot.venue_runtime import (
+    get_runtime_fixtures,
+    get_runtime_manual_group,
+    replace_fixture_leaf_in_runtime_patch,
+)
+from parrot.director.interpretation_blend import InterpretationBlend
 
 SHIFT_AFTER = 60
 WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
+INTERPRETATION_BLEND_SECONDS = max(
+    float(os.environ.get("INTERPRETATION_BLEND_SECONDS", "2.0")), 0.05
+)
 
 HYPE_BUCKETS = [10, 40, 70]
 
@@ -82,6 +88,9 @@ class Director:
         self.generate_color_scheme()
 
         self.warmup_complete = False
+        self._interpretation_blend: InterpretationBlend | None = None
+        self._pending_regenerate_interpreters = False
+        self._force_fresh_interpreters = False
 
         # Register event handlers
         self.state.events.on_mode_change += self.on_mode_change
@@ -89,8 +98,12 @@ class Director:
         self.state.events.on_venue_change += lambda s: self.setup_patch(reset_vj=False)
 
     def setup_patch(self, reset_vj: bool = False):
+        self._interpretation_blend = None
+        self._pending_regenerate_interpreters = False
+        self._force_fresh_interpreters = True
         self.group_fixtures()
         self.generate_interpreters()
+        self._force_fresh_interpreters = False
         if reset_vj and self.vj_director:
             self.vj_director.shift(self.state.vj_mode, threshold=1.0)
 
@@ -136,12 +149,117 @@ class Director:
             self.fixture_groups.append(ungrouped)
             self.fixture_group_names.append(None)
 
+    def _default_interpreter_args_for_bucket_index(self, idx: int) -> InterpreterArgs:
+        return InterpreterArgs(
+            HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
+            self.state.theme.allow_rainbows,
+            0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
+            (100 if not self.state.hype_limiter else min(100, self.state.hype + 30)),
+        )
+
+    def _interpreter_args_for_auto_shift_eviction(self) -> InterpreterArgs:
+        hype_bracket = (
+            0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
+            100 if not self.state.hype_limiter else min(100, self.state.hype + 30),
+        )
+        return InterpreterArgs(
+            self.state.hype,
+            self.state.theme.allow_rainbows,
+            hype_bracket[0],
+            hype_bracket[1],
+        )
+
+    def _start_interpretation_blend(
+        self,
+        bucket_indices: list[int],
+        args_by_bucket: dict[int, InterpreterArgs],
+    ) -> None:
+        incoming_interpreters: dict[int, InterpreterBase] = {}
+        incoming_fixtures: dict[int, list[FixtureBase]] = {}
+        lerp_fixtures: dict[int, list[FixtureBase]] = {}
+        for i in bucket_indices:
+            group = self.fixture_groups[i]
+            incoming_fixtures[i] = [f.transition_clone() for f in group]
+            lerp_fixtures[i] = [f.transition_clone() for f in group]
+            incoming_interpreters[i] = get_interpreter(
+                self.state.mode,
+                incoming_fixtures[i],
+                args_by_bucket[i],
+            )
+        self._interpretation_blend = InterpretationBlend(
+            start_time=time.time(),
+            bucket_indices=frozenset(bucket_indices),
+            incoming_interpreters=incoming_interpreters,
+            incoming_fixtures=incoming_fixtures,
+            lerp_fixtures=lerp_fixtures,
+        )
+
+    def _finish_interpretation_blend(self, frame: Frame, scheme: ColorScheme) -> None:
+        b = self._interpretation_blend
+        if b is None:
+            return
+        for i in b.bucket_indices:
+            self.interpreters[i].exit(frame, scheme)
+        patch = get_runtime_fixtures(self.state)
+        for i in b.bucket_indices:
+            olds = list(self.fixture_groups[i])
+            news = b.incoming_fixtures[i]
+            for old_f, new_f in zip(olds, news):
+                replaced = replace_fixture_leaf_in_runtime_patch(patch, old_f, new_f)
+                if not replaced:
+                    raise RuntimeError(
+                        "Failed to promote incoming fixture into runtime patch"
+                    )
+            self.fixture_groups[i] = list(news)
+            self.interpreters[i] = b.incoming_interpreters[i]
+        self._interpretation_blend = None
+        self.last_shift_time = time.time()
+        if self._pending_regenerate_interpreters:
+            self._pending_regenerate_interpreters = False
+            self.generate_interpreters()
+
+    def resolve_output_fixture(self, primary: FixtureBase) -> FixtureBase:
+        b = self._interpretation_blend
+        if b is None:
+            return primary
+        for i in b.bucket_indices:
+            group = self.fixture_groups[i]
+            for k, f in enumerate(group):
+                if f is primary:
+                    return b.lerp_fixtures[i][k]
+        return primary
+
+    def output_fixture_overrides_by_spec_id(self) -> dict[str, FixtureBase]:
+        b = self._interpretation_blend
+        if b is None:
+            return {}
+        out: dict[str, FixtureBase] = {}
+        for i in b.bucket_indices:
+            for k, primary in enumerate(self.fixture_groups[i]):
+                cid = getattr(primary, "cloud_spec_id", None)
+                if cid is not None:
+                    out[str(cid)] = b.lerp_fixtures[i][k]
+        return out
+
+    def _effective_interpreters_for_signals(self) -> list[InterpreterBase]:
+        if self._interpretation_blend is None:
+            return self.interpreters
+        b = self._interpretation_blend
+        return [
+            (
+                b.incoming_interpreters[idx]
+                if idx in b.bucket_indices
+                else self.interpreters[idx]
+            )
+            for idx in range(len(self.interpreters))
+        ]
+
     def format_fixture_names(self, fixtures):
         # Format fixtures
         fixtures = [str(j) for j in fixtures]
         if len(fixtures) == 1:
             return fixtures[0]
-        
+
         # Group fixtures by type (base name)
         grouped = defaultdict(list)
         for f in fixtures:
@@ -149,14 +267,14 @@ class Director:
             base_name = parts[0]
             address = int(parts[1])
             grouped[base_name].append(address)
-        
+
         # Format each group: "type @ addr1, addr2, addr3"
         parts = []
         for base_name in sorted(grouped.keys()):
             addresses = sorted(grouped[base_name])
             addr_str = ", ".join(str(addr) for addr in addresses)
             parts.append(f"{base_name} @ {addr_str}")
-        
+
         return "; ".join(parts)
 
     def print_lighting_tree(self, mode_name: str | None = None):
@@ -190,7 +308,9 @@ class Director:
             is_last_section = s_idx == len(sections) - 1
             section_connector = "└── " if is_last_section else "├── "
             header_label = name if name is not None else "ungrouped"
-            result += f"{section_connector}{Fore.MAGENTA}{header_label}{Style.RESET_ALL}\n"
+            result += (
+                f"{section_connector}{Fore.MAGENTA}{header_label}{Style.RESET_ALL}\n"
+            )
 
             section_pipe = "    " if is_last_section else "│   "
             for r_idx, (group, interpreter_str_raw) in enumerate(rows):
@@ -207,23 +327,34 @@ class Director:
 
     def generate_interpreters(self):
         """Generate interpreters for lighting only (does not affect VJ)"""
-        self.interpreters: List[InterpreterBase] = [
-            get_interpreter(
-                self.state.mode,
-                group,
-                InterpreterArgs(
-                    HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
-                    self.state.theme.allow_rainbows,
-                    0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
-                    (
-                        100
-                        if not self.state.hype_limiter
-                        else min(100, self.state.hype + 30)
-                    ),
-                ),
-            )
-            for idx, group in enumerate(self.fixture_groups)
-        ]
+        if self._interpretation_blend is not None:
+            self._pending_regenerate_interpreters = True
+            return
+        n = len(self.fixture_groups)
+        if n == 0:
+            self.interpreters = []
+            print(self.print_lighting_tree(self.state.mode.name))
+            return
+        is_regen = (
+            not self._force_fresh_interpreters
+            and hasattr(self, "interpreters")
+            and len(self.interpreters) == n
+        )
+        if is_regen:
+            args_by_bucket = {
+                idx: self._default_interpreter_args_for_bucket_index(idx)
+                for idx in range(n)
+            }
+            self._start_interpretation_blend(list(range(n)), args_by_bucket)
+        else:
+            self.interpreters = [
+                get_interpreter(
+                    self.state.mode,
+                    group,
+                    self._default_interpreter_args_for_bucket_index(idx),
+                )
+                for idx, group in enumerate(self.fixture_groups)
+            ]
 
         print(self.print_lighting_tree(self.state.mode.name))
 
@@ -253,33 +384,13 @@ class Director:
         self.scheme.push(new_scheme)
         print(f"Shifting to {format_color_scheme(new_scheme)}")
 
-    def shift_interpreter(self):
-        eviction_index = random.randint(0, len(self.interpreters) - 1)
-        eviction_group = self.fixture_groups[eviction_index]
-
-        hype_bracket = (
-            0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
-            100 if not self.state.hype_limiter else min(100, self.state.hype + 30),
-        )
-
-        self.interpreters[eviction_index] = get_interpreter(
-            self.state.mode,
-            eviction_group,
-            InterpreterArgs(
-                self.state.hype,
-                self.state.theme.allow_rainbows,
-                hype_bracket[0],
-                hype_bracket[1],
-            ),
-        )
-
     def ensure_each_signal_is_enabled(self):
         """Makes a list of every interpreter that is a SignalSwitch. Then for each signal they handle, ensures
         at least one interpreter handles it. If not, a randomly selected SignalSwitch has the un-handled signal enabled.
         """
         signal_switches = [
             i
-            for i in self.interpreters
+            for i in self._effective_interpreters_for_signals()
             if hasattr(i, "responds_to") and hasattr(i, "set_enabled")
         ]
         if not signal_switches:
@@ -292,54 +403,15 @@ class Director:
     def shift_lighting_only(self):
         """Full shift of DMX lighting only (no VJ changes) - regenerates all interpreters"""
         self.generate_color_scheme()
-
-        # Regenerate all interpreters (similar to generate_interpreters but without VJ shift)
-        self.interpreters: List[InterpreterBase] = [
-            get_interpreter(
-                self.state.mode,
-                group,
-                InterpreterArgs(
-                    HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
-                    self.state.theme.allow_rainbows,
-                    0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
-                    (
-                        100
-                        if not self.state.hype_limiter
-                        else min(100, self.state.hype + 30)
-                    ),
-                ),
-            )
-            for idx, group in enumerate(self.fixture_groups)
-        ]
-
+        self.generate_interpreters()
         self.ensure_each_signal_is_enabled()
-
-        self.last_shift_time = time.time()
         self.shift_count += 1
-
-        # Print the tree structure after shift
         print(self.print_lighting_tree(self.state.mode.name))
 
     def shift_vj_only(self):
         """Full shift of VJ visuals only (no lighting changes) - complete regeneration"""
         if self.vj_director:
             self.vj_director.shift(self.state.vj_mode, threshold=1.0)
-
-    def shift(self):
-        """Shift DMX lighting and VJ together"""
-        self.shift_color_scheme()
-        self.shift_interpreter()
-        self.ensure_each_signal_is_enabled()
-
-        # Shift VJ director if available (with moderate threshold for subtle changes)
-        if self.vj_director:
-            self.vj_director.shift(self.state.vj_mode, threshold=0.3)
-
-        self.last_shift_time = time.time()
-        self.shift_count += 1
-
-        # Print the tree structure after shift
-        print(self.print_lighting_tree(self.state.mode.name))
 
     def step(self, frame: Frame):
         self.last_frame = frame
@@ -352,25 +424,67 @@ class Director:
 
         frame = frame * warmup_phase
 
+        if self._interpretation_blend is not None:
+            b = self._interpretation_blend
+            t_done = (time.time() - b.start_time) / INTERPRETATION_BLEND_SECONDS
+            if t_done >= 1.0:
+                self._finish_interpretation_blend(frame, scheme)
+                scheme = self.scheme.render()
+
         # Reset fixture state before interpreter step() calls
         # This ensures strobe values accumulate using max(existing, new)
         for fixture in get_runtime_fixtures(self.state):
             fixture.begin()
 
-        for i in self.interpreters:
-            i.step(frame, scheme)
+        if self._interpretation_blend is not None:
+            b = self._interpretation_blend
+            for i in b.bucket_indices:
+                for f in b.incoming_fixtures[i]:
+                    f.begin()
+
+        for idx, interp in enumerate(self.interpreters):
+            interp.step(frame, scheme)
+
+        if self._interpretation_blend is not None:
+            b = self._interpretation_blend
+            for i in b.bucket_indices:
+                b.incoming_interpreters[i].step(frame, scheme)
+            t = min(
+                1.0,
+                (time.time() - b.start_time) / INTERPRETATION_BLEND_SECONDS,
+            )
+            for i in b.bucket_indices:
+                for k in range(len(self.fixture_groups[i])):
+                    b.lerp_fixtures[i][k].lerp_into(
+                        self.fixture_groups[i][k],
+                        b.incoming_fixtures[i][k],
+                        t,
+                    )
 
         # Pass frame and scheme to VJ system for rendering
         if self.vj_director:
             self.vj_director.step(frame, scheme)
 
         if (
-            time.time() - self.last_shift_time > SHIFT_AFTER
+            self._interpretation_blend is None
+            and len(self.interpreters) > 0
+            and time.time() - self.last_shift_time > SHIFT_AFTER
             and frame[FrameSignal.sustained_low] < 0.2
         ):
-            for i in self.interpreters:
-                i.exit(frame, scheme)
-            self.shift()
+            eviction_index = random.randint(0, len(self.interpreters) - 1)
+            for idx, interp in enumerate(self.interpreters):
+                if idx != eviction_index:
+                    interp.exit(frame, scheme)
+            self._start_interpretation_blend(
+                [eviction_index],
+                {eviction_index: self._interpreter_args_for_auto_shift_eviction()},
+            )
+            self.shift_color_scheme()
+            self.ensure_each_signal_is_enabled()
+            if self.vj_director:
+                self.vj_director.shift(self.state.vj_mode, threshold=0.3)
+            self.shift_count += 1
+            print(self.print_lighting_tree(self.state.mode.name))
 
     def render(self, dmx):
         # Get manual group and set its dimmer value
@@ -379,9 +493,12 @@ class Director:
             manual_group.apply_manual_levels(self.state.manual_fixture_dimmers)
             manual_group.render(dmx)
 
-        # Render all fixtures
-        for i in get_runtime_fixtures(self.state):
-            i.render(dmx)
+        for item in get_runtime_fixtures(self.state):
+            if isinstance(item, FixtureGroup):
+                for leaf in item.fixtures:
+                    self.resolve_output_fixture(leaf).render(dmx)
+            else:
+                self.resolve_output_fixture(item).render(dmx)
 
         dmx.submit()
 

@@ -1,9 +1,11 @@
+import copy
 import logging
 from typing import Optional
 from beartype import beartype
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import dmx_clamp, Universe
 from parrot.utils.string import kebab_case
+from parrot.utils.lerp import lerp
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +93,36 @@ class FixtureBase:
     def id(self):
         return f"{kebab_case(self.name)}@{self.address}:{self.universe.value}"
 
+    def transition_clone(self) -> "FixtureBase":
+        """Deep copy for interpretation blending (incoming / lerp_result tracks)."""
+        return copy.deepcopy(self)
+
+    @beartype
+    def lerp_into(self, a: "FixtureBase", b: "FixtureBase", t: float) -> None:
+        """Write a linear blend of ``a`` (outgoing / primary) and ``b`` (incoming) into self."""
+        if type(self) is not type(a) or type(a) is not type(b):
+            raise TypeError(
+                "lerp_into requires three instances of the same concrete fixture type"
+            )
+        for i in range(len(self.values)):
+            self.values[i] = int(
+                round(lerp(float(a.values[i]), float(b.values[i]), t))
+            )
+        ac = a.get_color()
+        bc = b.get_color()
+        self.set_color(
+            Color(
+                red=lerp(float(ac.red), float(bc.red), t),
+                green=lerp(float(ac.green), float(bc.green), t),
+                blue=lerp(float(ac.blue), float(bc.blue), t),
+            )
+        )
+        self.set_dimmer(lerp(float(a.get_dimmer()), float(b.get_dimmer()), t))
+        self.strobe_value = int(
+            round(lerp(float(a.strobe_value), float(b.strobe_value), t))
+        )
+        self.set_speed(lerp(float(a.get_speed()), float(b.get_speed()), t))
+
 
 @beartype
 class FixtureWithBulbs(FixtureBase):
@@ -121,6 +153,13 @@ class FixtureWithBulbs(FixtureBase):
         for bulb in self.bulbs:
             bulb.render_values(self.values)
         super().render(dmx)
+
+    def lerp_into(self, a: FixtureBase, b: FixtureBase, t: float) -> None:
+        super().lerp_into(a, b, t)
+        if not isinstance(a, FixtureWithBulbs) or not isinstance(b, FixtureWithBulbs):
+            return
+        for i, bulb in enumerate(self.bulbs):
+            bulb.lerp_into(a.bulbs[i], b.bulbs[i], t)
 
 
 @beartype

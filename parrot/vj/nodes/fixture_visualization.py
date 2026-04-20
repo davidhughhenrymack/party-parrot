@@ -4,6 +4,7 @@ from beartype import beartype
 
 from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
 from parrot.graph.BaseInterpretationNode import format_node_status
+from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.mode import Mode
@@ -51,6 +52,7 @@ class FixtureVisualization(GenerativeEffectBase):
         height: int = 1080,
         canvas_width: int = 1200,
         canvas_height: int = 1200,
+        director: Optional[Director] = None,
     ):
         """
         Args:
@@ -61,11 +63,13 @@ class FixtureVisualization(GenerativeEffectBase):
             height: Height of the effect (render resolution)
             canvas_width: Width of the fixture canvas (legacy GUI coordinate space)
             canvas_height: Height of the fixture canvas (legacy GUI coordinate space)
+            director: Optional director (interpretation-blend output routing for previews)
         """
         super().__init__(width, height)
         self.state = state
         self.position_manager = position_manager
         self.vj_director = vj_director
+        self._director = director
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
 
@@ -313,20 +317,66 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Store fixtures temporarily - will create renderers after room_renderer is initialized
         self._fixtures = fixtures
+        self._renderer_slot_keys: list[str] = [
+            self._runtime_slot_key(f) for f in fixtures
+        ]
         self.renderers = []
+
+    @staticmethod
+    def _runtime_slot_key(f: FixtureBase) -> str:
+        """Stable key for a logical fixture (survives runtime object replacement)."""
+        cid = getattr(f, "cloud_spec_id", None)
+        return str(cid) if cid is not None else f.id
+
+    def _leaf_map_by_runtime_slot_key(self) -> dict[str, FixtureBase]:
+        """Current leaf fixtures from the live patch, keyed for renderer binding."""
+        out: dict[str, FixtureBase] = {}
+        for item in get_runtime_fixtures(self.state):
+            if isinstance(item, FixtureGroup):
+                for f in item.fixtures:
+                    out[self._runtime_slot_key(f)] = f
+            else:
+                out[self._runtime_slot_key(item)] = item
+        manual_group = get_runtime_manual_group(self.state)
+        if manual_group is not None:
+            for f in manual_group.fixtures:
+                out[self._runtime_slot_key(f)] = f
+        return out
+
+    def _sync_renderer_output_fixtures(self) -> None:
+        """Bind each renderer's ``fixture`` to the current output (lerp or primary).
+
+        Looks up the live patch leaf by stable slot key every frame so that after an
+        interpretation blend promotion, we follow the new ``FixtureBase`` instances.
+        """
+        if not self.renderers or not self._renderer_slot_keys:
+            return
+        leaves = self._leaf_map_by_runtime_slot_key()
+        for renderer, key in zip(self.renderers, self._renderer_slot_keys):
+            primary = leaves.get(key)
+            if primary is None:
+                continue
+            if self._director is not None:
+                renderer.fixture = self._director.resolve_output_fixture(primary)
+            else:
+                renderer.fixture = primary
 
     def _apply_positions_to_renderers(self):
         """Apply positions from fixture objects to renderers (positions were set by position manager)"""
-        for renderer in self.renderers:
-            fixture = renderer.fixture
-            # Get position from fixture (set by position manager)
-            position = self.position_manager.get_fixture_position(fixture)
+        if not self.renderers or not self._renderer_slot_keys:
+            return
+        leaves = self._leaf_map_by_runtime_slot_key()
+        for renderer, key in zip(self.renderers, self._renderer_slot_keys):
+            primary = leaves.get(key)
+            if primary is None:
+                continue
+            position = self.position_manager.get_fixture_position(primary)
             if position:
                 x, y, z = position
                 renderer.set_position(x, y, z)
 
             # Get orientation from fixture
-            orientation = self.position_manager.get_fixture_orientation(fixture)
+            orientation = self.position_manager.get_fixture_orientation(primary)
             if orientation is not None:
                 renderer.orientation = orientation
 
@@ -381,7 +431,7 @@ class FixtureVisualization(GenerativeEffectBase):
             List of (position, color_rgba) tuples for each bulb
         """
         lights = []
-        fixture = renderer.fixture
+        fixture = renderer.output_fixture()
 
         # Get fixture base position in world space
         fixture_world_pos = renderer.get_3d_position(canvas_size)
@@ -566,8 +616,9 @@ class FixtureVisualization(GenerativeEffectBase):
                 create_renderer(fixture, self.room_renderer)
                 for fixture in self._fixtures
             ]
-            # Apply positions from fixtures (set by position manager) to renderers
-            self._apply_positions_to_renderers()
+
+        self._sync_renderer_output_fixtures()
+        self._apply_positions_to_renderers()
 
         # Update camera rotation based on frame time
         self.room_renderer.update_camera(frame.time)

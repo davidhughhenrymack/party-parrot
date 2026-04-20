@@ -125,6 +125,7 @@ def run_gl_window_app(args):
         vj_director=vj_director,
         width=1920,
         height=1080,
+        director=director,
     )
     fixture_renderer.enter(ctx)
 
@@ -600,7 +601,8 @@ def run_gl_window_app(args):
                 director.render(dmx_ref["controller"])
                 if runtime_client is not None:
                     runtime_client.maybe_push_fixture_runtime_state(
-                        director.scheme.render()
+                        director.scheme.render(),
+                        output_override_by_spec_id=director.output_fixture_overrides_by_spec_id(),
                     )
             last_audio_update = time.perf_counter()
 

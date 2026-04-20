@@ -113,8 +113,8 @@ class MovingHeadRenderer(FixtureRenderer):
 
     def _pan_tilt_radians_for_render(self) -> tuple[float, float]:
         """Pan/tilt radians for mesh, bulb, and beam — see `parrot.vj.moving_head_visual`."""
-        pan_rad = pan_radians_for_render(float(self.fixture.get_pan_angle()))
-        tilt_rad = tilt_radians_for_render(float(self.fixture.get_tilt_angle()))
+        pan_rad = pan_radians_for_render(float(self.output_fixture().get_pan_angle()))
+        tilt_rad = tilt_radians_for_render(float(self.output_fixture().get_tilt_angle()))
         return pan_rad, tilt_rad
 
     def _moving_body_rotation(self) -> np.ndarray:
@@ -255,16 +255,16 @@ class MovingHeadRenderer(FixtureRenderer):
                         # a physical prism accessory (Chauvet Rogue Beam R2) or a
                         # variable-focus optic render as a plain beam even when
                         # interpreters drive the DMX values.
-                        if self.fixture.supports_prism:
-                            prism_on, prism_speed = self.fixture.get_prism()
+                        if self.output_fixture().supports_prism:
+                            prism_on, prism_speed = self.output_fixture().get_prism()
                         else:
                             prism_on, prism_speed = False, 0.0
-                        if self.fixture.supports_focus:
+                        if self.output_fixture().supports_focus:
                             # Fixture focus modulates end_radius: tight focus → narrow
                             # beam, wide focus → the original chunky cone. start_radius
                             # stays put since the lens aperture doesn't visibly change.
                             focus_mult = _focus_width_multiplier(
-                                float(self.fixture.get_focus())
+                                float(self.output_fixture().get_focus())
                             )
                         else:
                             focus_mult = _FOCUS_WIDE_MULT

@@ -10,6 +10,7 @@ import websocket
 from beartype import beartype
 
 from parrot.director.color_scheme import ColorScheme
+from parrot.fixtures.base import FixtureBase
 from parrot.runtime_fixture_state import build_fixture_runtime_payload
 from parrot.state import State
 from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
@@ -63,7 +64,9 @@ class RuntimeVenueClient:
             self._vj_preview_cond.notify_all()
 
     def maybe_push_fixture_runtime_state(
-        self, color_scheme: ColorScheme | None = None
+        self,
+        color_scheme: ColorScheme | None = None,
+        output_override_by_spec_id: dict[str, FixtureBase] | None = None,
     ) -> None:
         if self._stop_event.is_set():
             return
@@ -74,7 +77,10 @@ class RuntimeVenueClient:
         if now - self._last_fixture_push_mono < FIXTURE_RUNTIME_PUSH_MIN_INTERVAL_S:
             return
         payload = build_fixture_runtime_payload(
-            patch, self.state.runtime_manual_group, color_scheme=color_scheme
+            patch,
+            self.state.runtime_manual_group,
+            color_scheme=color_scheme,
+            output_override_by_spec_id=output_override_by_spec_id,
         )
         encoded = json.dumps(payload, separators=(",", ":"), sort_keys=True)
         with self._fixture_push_lock:

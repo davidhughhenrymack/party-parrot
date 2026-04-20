@@ -38,7 +38,7 @@ class MotionstripRenderer(FixtureRenderer):
         so we just normalize the stored DMX value and convert to rotation."""
         from parrot.fixtures.motionstrip import Motionstrip38
 
-        fixture = self.fixture
+        fixture = self.output_fixture()
 
         # Read the DMX pan value from the fixture (already inverted if invert_pan=True)
         pan_dmx_value = fixture.values[0]
@@ -125,7 +125,7 @@ class MotionstripRenderer(FixtureRenderer):
                     bulb_radius = 0.1
                     bulb_forward_distance = body_depth * 0.7
 
-                    bulbs = self.fixture.get_bulbs()
+                    bulbs = self.output_fixture().get_bulbs()
 
                     for i, bulb in enumerate(bulbs):
                         try:

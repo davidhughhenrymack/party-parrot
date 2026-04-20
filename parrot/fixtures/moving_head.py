@@ -1,6 +1,8 @@
 from typing import List
+from beartype import beartype
 from parrot.fixtures.base import FixtureBase, GoboWheelEntry
 from parrot.utils.dmx_utils import Universe
+from parrot.utils.lerp import lerp
 
 
 class MovingHead(FixtureBase):
@@ -93,3 +95,25 @@ class MovingHead(FixtureBase):
     @property
     def gobo_wheel(self):
         return self._gobo_wheel
+
+    @beartype
+    def lerp_into(self, a: FixtureBase, b: FixtureBase, t: float) -> None:
+        super().lerp_into(a, b, t)
+        if not isinstance(a, MovingHead) or not isinstance(b, MovingHead):
+            return
+        self.pan_angle = lerp(float(a.pan_angle), float(b.pan_angle), t)
+        self.tilt_angle = lerp(float(a.tilt_angle), float(b.tilt_angle), t)
+        self.prism_on = b.prism_on if t >= 0.5 else a.prism_on
+        self.prism_rotate_speed = lerp(
+            float(a.prism_rotate_speed), float(b.prism_rotate_speed), t
+        )
+        pick_b_slot = t >= 0.5
+        self.rotating_gobo_slot = (
+            b.rotating_gobo_slot if pick_b_slot else a.rotating_gobo_slot
+        )
+        self.rotating_gobo_rotate_speed = lerp(
+            float(a.rotating_gobo_rotate_speed),
+            float(b.rotating_gobo_rotate_speed),
+            t,
+        )
+        self.focus_value = lerp(float(a.focus_value), float(b.focus_value), t)

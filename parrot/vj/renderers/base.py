@@ -83,6 +83,14 @@ class FixtureRenderer:
         """Set the position of the fixture in canvas coordinates (x, y) and height (z)"""
         self.position = (x, y, z)
 
+    def output_fixture(self) -> FixtureBase:
+        """Fixture object that holds current DMX/visual state for this renderer.
+
+        ``FixtureVisualization`` may reassign ``self.fixture`` each frame so this
+        stays aligned with the live runtime patch (e.g. after interpretation blends).
+        """
+        return self.fixture
+
     @abstractmethod
     def _get_default_size(self) -> tuple[float, float]:
         """Get the default size (width, height) for this fixture type"""
@@ -96,17 +104,17 @@ class FixtureRenderer:
 
     def get_color(self) -> tuple[float, float, float]:
         """Get RGB color from fixture (0-1 range)"""
-        color = self.fixture.get_color()
+        color = self.output_fixture().get_color()
         return (color.red, color.green, color.blue)
 
     def get_dimmer(self) -> float:
         """Get dimmer value (0-1 range)"""
-        return self.fixture.get_dimmer() / 255.0
+        return self.output_fixture().get_dimmer() / 255.0
 
     def get_strobe(self) -> float:
         """Get strobe value (0-1 range)"""
         try:
-            strobe = self.fixture.get_strobe()
+            strobe = self.output_fixture().get_strobe()
             return strobe / 255.0
         except:
             return 0.0
@@ -232,7 +240,7 @@ class FixtureRenderer:
         # Use the room renderer's local position context manager
         with self.room_renderer.local_position(room_pos):
             self.room_renderer.render_text_label(
-                text=str(self.fixture.address),
+                text=str(self.output_fixture().address),
                 position=(0.0, self.cube_size + 0.1, 0.0),  # Slightly above fixture
                 color=(0.8, 0.8, 0.8),  # Light gray
                 size=0.2,  # Small text
