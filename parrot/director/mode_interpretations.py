@@ -581,7 +581,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
     Mode.ethereal: {
         Mirrorball: [
             combo(
-                with_args("MirrorballFade10s", DimmerFadeInLinearSeconds, seconds=10.0),
+                Dimmer255,
                 ColorAlternateBg,
             ),
         ],
