@@ -1,13 +1,14 @@
 /**
- * Moving-head preview math — must match `parrot/vj/moving_head_visual.py` exactly.
+ * Moving-head preview math — tilt/pan helpers stay aligned with `parrot/vj/moving_head_visual.py`.
  *
- * Logical angles come from runtime JSON (`pan_deg`, `tilt_deg`); they are the same
- * `MovingHead` logical angles as the desktop VJ preview.
+ * Pan: `panRadiansForRender` is logical degrees → radians. `DenseSceneController` uses
+ * `aimGroup.rotation.z = -panRadiansForRender(pan_deg)` (= Python `aim_group_rotation_z_radians`).
+ * Desktop OpenGL `pan_radians_for_render` is that angle plus π (fixed +Y mesh vs Z-up web).
  */
 
-/** @param {number} panDeg */
+/** Logical pan to radians (no extra offset). @param {number} panDeg */
 export function panRadiansForRender(panDeg) {
-  return (Math.PI / 180) * Number(panDeg) * 0.5 + Math.PI;
+  return (Math.PI / 180) * Number(panDeg);
 }
 
 /**
@@ -43,17 +44,13 @@ export function tiltRadiansForWebHead(tiltDeg) {
 }
 
 /**
- * Z-up Three.js `aimGroup.rotation.z` so pan matches `MovingHeadRenderer` (room +Y pan)
- * after the venue axis mapping in `DenseSceneController` / `toScenePosition`.
- *
- * Algebra (same as Python `aim_group_rotation_z_radians`): this equals `-(panRadiansForRender(pan) - π)`,
- * i.e. `-panDeg` scaled by 0.5 in radians — the +π in `panRadiansForRender` is the desktop
- * yoke offset and cancels for the web Euler.
+ * Z-up Three.js `aimGroup.rotation.z` — must match `DenseSceneController` runtime:
+ * `rotation.z = -degToRad(pan_deg)` i.e. `-panRadiansForRender(panDeg)`.
  *
  * @param {number} panDeg
  */
 export function aimGroupRotationZRadians(panDeg) {
-  return -(panRadiansForRender(panDeg) - Math.PI);
+  return -panRadiansForRender(panDeg);
 }
 
 export const MECHANICAL_TILT_MAX_DEG = 270.0;

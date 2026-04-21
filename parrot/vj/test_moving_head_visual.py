@@ -19,11 +19,12 @@ def test_pan_radians_at_logical_zero() -> None:
     assert pan_radians_for_render(0.0) == pytest.approx(math.pi)
 
 
-def test_aim_group_z_is_half_negative_pan_without_pi() -> None:
-    """Web Euler cancels the desktop +π offset: rotation.z = −0.5×rad(pan)."""
-    for deg in (0.0, 13.7, -40.0, 180.0):
-        expected = -math.radians(deg) * 0.5
-        assert aim_group_rotation_z_radians(deg) == pytest.approx(expected)
+def test_aim_group_z_matches_dense_scene_controller() -> None:
+    """Web: rotation.z = -degToRad(pan). Desktop +Y pan adds π (fixed mesh/orientation)."""
+    for deg in (0.0, 13.7, -40.0, 180.0, 360.0):
+        aim_z = -math.radians(deg)
+        assert aim_group_rotation_z_radians(deg) == pytest.approx(aim_z)
+        assert pan_radians_for_render(deg) == pytest.approx(aim_z + math.pi)
 
 
 def test_tilt_neutral_logical_value() -> None:
@@ -59,5 +60,5 @@ def test_tilt_clamped_to_mechanical_range() -> None:
 def test_pan_radians_explicit_formula() -> None:
     for deg in (0.0, 12.5, 90.0):
         assert pan_radians_for_render(deg) == pytest.approx(
-            math.radians(deg) * 0.5 + math.pi
+            -math.radians(deg) + math.pi
         )

@@ -7,10 +7,8 @@ and the same “neutral pan” base marking in Party Parrot (desktop) and Parrot
 The functions here are the single source of truth for how logical DMX angles
 (`MovingHead.pan_angle` / `tilt_angle`, surfaced as `pan_deg` / `tilt_deg` in runtime JSON)
 map to the renderer’s internal radians. They must stay in lockstep with
-`parrot_cloud/frontend/src/movingHeadPreviewMath.js`.
-
-Scaling (0.5×) matches historical VJ preview behavior: the mesh is not a 1:1 mechanical
-CAD model, but the motion must stay consistent everywhere.
+`parrot_cloud/frontend/src/movingHeadPreviewMath.js` and with
+`DenseSceneController.js`, which sets ``aimGroup.rotation.z = -degToRad(pan_deg)``.
 """
 
 from __future__ import annotations
@@ -32,10 +30,12 @@ _MECHANICAL_TILT_NEUTRAL_DEG = 135.0
 def pan_radians_for_render(pan_deg: float) -> float:
     """Radians for yoke pan in the desktop moving-head renderer (around room +Y).
 
-    Includes a fixed +π offset so “logical pan = 0°” still aims the proxy usefully;
-    web applies the equivalent as ``aimGroup.rotation.z = -(pan_radians_for_render(pan) - π)``.
+    Web uses ``aimGroup.rotation.z = -degToRad(pan_deg)`` (see
+    ``aim_group_rotation_z_radians``). The OpenGL mesh/beam forward in ``+Z`` lines up
+    with that aim after a fixed ``+π`` around ``+Y`` (same incremental pan as web,
+    absolute aim aligned).
     """
-    return math.radians(float(pan_deg)) * 0.5 + math.pi
+    return -math.radians(float(pan_deg)) + math.pi
 
 
 @beartype
@@ -54,8 +54,8 @@ def tilt_radians_for_render(tilt_deg: float) -> float:
 
 @beartype
 def aim_group_rotation_z_radians(pan_deg: float) -> float:
-    """Pan rotation for the web venue editor’s Z-up ``aimGroup`` (see `movingHeadPreviewMath.js`)."""
-    return -(pan_radians_for_render(pan_deg) - math.pi)
+    """Pan rotation for the web venue’s Z-up ``aimGroup`` (``DenseSceneController``)."""
+    return -math.radians(float(pan_deg))
 
 
 @beartype
