@@ -12,12 +12,13 @@ from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
 from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
-from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
     ChauvetIntimidatorHybrid140SR_13Ch,
     ChauvetIntimidatorHybrid140SR_19Ch,
 )
 from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
 from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
+from parrot.fixtures.color_wheel_library import color_wheel_slots_for_api
 from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.chauvet.slimpar_pro_h import ChauvetSlimParProH_7Ch
@@ -43,12 +44,16 @@ class FixtureTypeDefinition:
     dmx_address_width: int = 1
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        result: dict[str, object] = {
             "key": self.key,
             "label": self.label,
             "default_options": dict(self.default_options),
             "dmx_address_width": self.dmx_address_width,
         }
+        wheel = color_wheel_slots_for_api(self.key)
+        if wheel is not None:
+            result["color_wheel"] = wheel
+        return result
 
 
 def _parse_universe(value: str) -> Universe:
@@ -199,7 +204,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
                 pan_upper=_option_float(spec, "pan_upper", 450.0),
                 tilt_lower=_option_float(spec, "tilt_lower", 0.0),
                 tilt_upper=_option_float(spec, "tilt_upper", 90.0),
-                dimmer_upper=_option_float(spec, "dimmer_upper", 200.0),
+                dimmer_upper=_option_float(spec, "dimmer_upper", 255.0),
                 universe=_parse_universe(spec.universe),
             ),
             spec,
@@ -210,7 +215,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_lower": 0,
             "tilt_upper": 90,
         },
-        dmx_address_width=15,
+        dmx_address_width=19,
     ),
     "chauvet_intimidator_hybrid_140sr": FixtureTypeDefinition(
         key="chauvet_intimidator_hybrid_140sr",

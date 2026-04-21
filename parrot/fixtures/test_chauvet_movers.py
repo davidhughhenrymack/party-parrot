@@ -284,7 +284,7 @@ class TestChauvetRogueBeamR2:
         """Test initialization"""
         assert self.rogue.address == 50
         assert self.rogue.name == "chauvet rogue beam r2"
-        assert self.rogue.width == 15
+        assert self.rogue.width == 19
         assert len(self.rogue.color_wheel) > 0
         assert len(self.rogue.gobo_wheel) > 0
 
@@ -295,7 +295,7 @@ class TestChauvetRogueBeamR2:
     def test_startup_sequence_initialization(self):
         """Test that control channel is set for startup"""
         # Should be set to disable blackout function initially
-        assert self.rogue.values[14] == self.rogue.control_disable_blackout_on_all_fn
+        assert self.rogue.values[18] == self.rogue.control_disable_blackout_on_all_fn
 
     @patch("time.time")
     def test_render_startup_sequence_start(self, mock_time):
@@ -307,7 +307,7 @@ class TestChauvetRogueBeamR2:
 
         assert self.rogue._startup_sequence_started
         assert not self.rogue._startup_sequence_complete
-        assert self.rogue.values[14] == self.rogue.control_lamp_on
+        assert self.rogue.values[18] == self.rogue.control_lamp_on
 
     @patch("time.time")
     def test_render_startup_sequence_middle(self, mock_time):
@@ -320,7 +320,7 @@ class TestChauvetRogueBeamR2:
         self.rogue.render(self.dmx)
 
         # Should switch to disable blackout
-        assert self.rogue.values[14] == self.rogue.control_disable_blackout_on_all_fn
+        assert self.rogue.values[18] == self.rogue.control_disable_blackout_on_all_fn
 
     @patch("time.time")
     def test_render_startup_sequence_complete(self, mock_time):
@@ -334,7 +334,7 @@ class TestChauvetRogueBeamR2:
 
         # Sequence should be complete
         assert self.rogue._startup_sequence_complete
-        assert self.rogue.values[14] == 0  # Control channel cleared
+        assert self.rogue.values[18] == 0  # Control channel cleared
 
     def test_color_wheel_has_expected_colors(self):
         """Test that color wheel contains expected colors"""
@@ -353,12 +353,12 @@ class TestChauvetRogueBeamR2:
         """Test that gobo wheel contains expected gobos"""
         gobo_names = [entry.name for entry in self.rogue.gobo_wheel]
         assert "open" in gobo_names
-        assert "starburst" in gobo_names
+        assert "gobo1" in gobo_names
 
     def test_shutter_settings(self):
         """Test shutter-specific settings"""
         # Rogue Beam R2 has different shutter settings
-        assert self.rogue.shutter_open_value == 255
+        assert self.rogue.shutter_open_value == 12
         assert self.rogue.strobe_shutter_lower == 16
         assert self.rogue.strobe_shutter_upper == 131
 
@@ -374,4 +374,4 @@ class TestChauvetRogueBeamR2:
 
     def test_dimmer_upper_limit(self):
         """Test dimmer upper limit"""
-        assert self.rogue.dimmer_upper == 200  # Custom dimmer limit
+        assert self.rogue.dimmer_upper == 255  # R2X manual ch 6: full 000–255

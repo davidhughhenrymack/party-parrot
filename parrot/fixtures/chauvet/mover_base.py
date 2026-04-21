@@ -93,6 +93,16 @@ class ChauvetMoverBase(MovingHead):
         self.set("speed", value)
 
     def set_color(self, color: Color):
+        moderate = getattr(type(self), "COLOR_WHEEL_ROTATE_MODERATE_DMX", 0)
+        if (
+            getattr(self, "supports_color_wheel_rotate", False)
+            and getattr(self, "_color_wheel_rotate", False)
+            and isinstance(moderate, int)
+            and moderate > 0
+        ):
+            self.set("color_wheel", moderate)
+            FixtureBase.set_color(self, color)
+            return
         # Find the closest color in the color wheel
         closest = None
         for entry in self.color_wheel:

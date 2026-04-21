@@ -1,6 +1,6 @@
-"""Tests for Chauvet Intimidator Hybrid 140SR DMX mapping."""
+"""Tests for Chauvet Intimidator Hybrid 140SR DMX mapping (``rogue_hybrid_rh1`` module)."""
 
-from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
     ChauvetIntimidatorHybrid140SR_13Ch,
     ChauvetIntimidatorHybrid140SR_19Ch,
 )
@@ -86,7 +86,7 @@ def test_hybrid_140sr_13ch_prism_writes_prism1_channel():
 def test_hybrid_140sr_rotating_gobo_slot_6_in_band():
     m = ChauvetIntimidatorHybrid140SR_19Ch(1)
     m.set_rotating_gobo(6, 0.0)
-    # QRG Rev5 rotating gobo 6 band is DMX 042..047.
+    # Rev.1 manual: Gobo 6 → 042–047 (midpoint 44).
     v = m.values[m.dmx_layout["rotating_gobo"]]
     assert 42 <= v <= 47
     # rotate_speed 0 → indexed/static (gobo_rotation = 0 "no function").
@@ -97,28 +97,28 @@ def test_hybrid_140sr_rotating_gobo_slot_6_in_band():
 def test_hybrid_140sr_rotating_gobo_forward_rotation_uses_forward_band():
     m = ChauvetIntimidatorHybrid140SR_19Ch(1)
     m.set_rotating_gobo(6, 1.0)
-    # Forward rotation band is 64..144 (fast → slow).
-    assert m.values[m.dmx_layout["gobo_rotation"]] == 64
+    # Rev.1: 006–116 rotation fast→slow (DMX 6 = fastest).
+    assert m.values[m.dmx_layout["gobo_rotation"]] == 6
     m.set_rotating_gobo(6, 0.3)
     v = m.values[m.dmx_layout["gobo_rotation"]]
-    assert 64 <= v <= 144
+    assert 6 <= v <= 116
 
 
 def test_hybrid_140sr_rotating_gobo_reverse_rotation_uses_reverse_band():
     m = ChauvetIntimidatorHybrid140SR_19Ch(1)
     m.set_rotating_gobo(6, -1.0)
-    # Reverse rotation band is 152..231 (slow → fast).
+    # Rev.1: 121–231 reverse (slow → fast); 231 = fastest.
     assert m.values[m.dmx_layout["gobo_rotation"]] == 231
     m.set_rotating_gobo(6, -0.5)
     v = m.values[m.dmx_layout["gobo_rotation"]]
-    assert 152 <= v <= 231
+    assert 121 <= v <= 231
 
 
 def test_hybrid_140sr_13ch_rotating_gobo_writes_both_channels():
     m = ChauvetIntimidatorHybrid140SR_13Ch(1)
     m.set_rotating_gobo(6, 0.3)
     assert 42 <= m.values[m.dmx_layout["rotating_gobo"]] <= 47
-    assert 64 <= m.values[m.dmx_layout["gobo_rotation"]] <= 144
+    assert 6 <= m.values[m.dmx_layout["gobo_rotation"]] <= 116
 
 
 def test_hybrid_140sr_rotating_gobo_slot_clamped():

@@ -1,85 +1,78 @@
-from parrot.utils.colour import Color
-from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
-from parrot.fixtures.base import GoboWheelEntry, ColorWheelEntry
-from parrot.utils.dmx_utils import Universe
+"""Chauvet Rogue Beam R2 / Rogue R2X Beam — DMX matches *Rogue R2X Beam User Manual Rev. 1* (19CH).
+
+Physical product may be labeled R2 or R2X; wheel layouts and 19-channel map follow the R2X manual.
+"""
+
+from __future__ import annotations
+
 import time
 
+from parrot.fixtures.base import GoboWheelEntry
+from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
+from parrot.fixtures.color_wheel_library import color_wheel_entries_for_fixture_type
+from parrot.utils.dmx_utils import Universe
 
-# DMX layout:
-dmx_layout = {
+# --- 19CH personality (manual “DMX Values → 19CH”) — channel indices 0-based ---
+DMX_LAYOUT_19 = {
     "pan_coarse": 0,
     "pan_fine": 1,
     "tilt_coarse": 2,
     "tilt_fine": 3,
     "speed": 4,
     "dimmer": 5,
-    "shutter": 6,
-    "color_wheel": 7,
-    "gobo_wheel": 8,
-    "prism": 9,
-    "prism_rotate": 10,
-    "prism_zoom": 11,
-    "focus": 12,
-    "frost": 13,
-    "control": 14,
+    "dimmer_fine": 6,
+    "shutter": 7,
+    "color_wheel": 8,
+    "gobo_wheel": 9,
+    "prism1": 10,
+    "prism1_rotate": 11,
+    "prism2": 12,
+    "prism2_rotate": 13,
+    "focus": 14,
+    "frost": 15,
+    "auto_program": 16,
+    "auto_speed": 17,
+    "control": 18,
 }
 
+# Channel 9 — indexed slots + scroll bands in manual; discrete rows live in
+# ``parrot.fixtures.color_wheel_library`` (key ``chauvet_rogue_beam_r2``).
+COLOR_WHEEL = color_wheel_entries_for_fixture_type("chauvet_rogue_beam_r2")
 
-color_wheel = [
-    ColorWheelEntry(Color("white"), 2),  # Open (white)
-    ColorWheelEntry(Color("red"), 6),  # Red (1)
-    # ColorWheelEntry(Color("#FFD700"), 10),  # Deep yellow (2)
-    ColorWheelEntry(Color("Turquoise"), 14),  # Turquoise (3)
-    ColorWheelEntry(Color("green"), 18),  # Green (4)
-    ColorWheelEntry(Color("lightgreen"), 22),  # Light green (5)
-    ColorWheelEntry(Color("Lightpink"), 26),  # Light purple (6)
-    ColorWheelEntry(Color("pink"), 30),  # Pink (7)
-    # ColorWheelEntry(Color("#FFFF00"), 34),  # Light yellow (8)
-    ColorWheelEntry(Color("magenta"), 38),  # Magenta (9)
-    ColorWheelEntry(Color("blue"), 42),  # Blue (10)
-    # ColorWheelEntry(Color("#FFA500"), 46),  # CTO 3200K (11)
-    # ColorWheelEntry(Color("#FFA500"), 50),  # CTO 5600K (12)
-    # ColorWheelEntry(Color("#FFA500"), 54),  # CTO 6500K (13)
-    ColorWheelEntry(Color("BlueViolet"), 58),  # UV (14)
-    # Split colors: 61-127
-    # Clockwise scroll (fast → slow): 128-189
-    # Stop: 190-193
-    # Counter-clockwise scroll (slow → fast): 194-255
+# Channel 10 — static gobo wheel (17 gobos + open + open); midpoints per manual.
+GOBO_WHEEL: list[GoboWheelEntry] = [
+    GoboWheelEntry("open", 1),  # 000–003
+    GoboWheelEntry("gobo1", 5),  # 004–006 Gobo 1
+    GoboWheelEntry("gobo2", 8),  # 007–009
+    GoboWheelEntry("gobo3", 11),  # 010–012
+    GoboWheelEntry("gobo4", 14),  # 013–015
+    GoboWheelEntry("gobo5", 17),  # 016–018
+    GoboWheelEntry("gobo6", 20),  # 019–021
+    GoboWheelEntry("gobo7", 23),  # 022–024
+    GoboWheelEntry("gobo8", 26),  # 025–027
+    GoboWheelEntry("gobo9", 29),  # 028–030
+    GoboWheelEntry("gobo10", 32),  # 031–033
+    GoboWheelEntry("gobo11", 35),  # 034–036
+    GoboWheelEntry("gobo12", 38),  # 037–039
+    GoboWheelEntry("gobo13", 41),  # 040–042
+    GoboWheelEntry("gobo14", 44),  # 043–045
+    GoboWheelEntry("gobo15", 47),  # 046–048
+    GoboWheelEntry("gobo16", 50),  # 049–051
+    GoboWheelEntry("gobo17", 53),  # 052–055
+    GoboWheelEntry("open", 57),  # 056–059 Open
 ]
 
-gobo_wheel = [
-    GoboWheelEntry("open", 0),  # Open
-    GoboWheelEntry("gobo1", 4),  # Gobo 1
-    GoboWheelEntry("gobo2", 7),  # Gobo 2
-    GoboWheelEntry("gobo3", 10),  # Gobo 3
-    GoboWheelEntry("gobo4", 13),  # Gobo 4
-    GoboWheelEntry("gobo5", 16),  # Gobo 5
-    GoboWheelEntry("gobo6", 19),  # Gobo 6
-    GoboWheelEntry("gobo7", 22),  # Gobo 7
-    GoboWheelEntry("gobo8", 25),  # Gobo 8
-    GoboWheelEntry("gobo9", 28),  # Gobo 9
-    GoboWheelEntry("gobo10", 31),  # Gobo 10
-    GoboWheelEntry("gobo11", 34),  # Gobo 11
-    GoboWheelEntry("gobo12", 37),  # Gobo 12
-    GoboWheelEntry("starburst", 40),  # Gobo 13
-    GoboWheelEntry("gobo14", 43),  # Gobo 14
-    GoboWheelEntry("gobo15", 46),  # Gobo 15
-    GoboWheelEntry("gobo16", 49),  # Gobo 16
-    GoboWheelEntry("gobo17", 52),  # Gobo 17
-    GoboWheelEntry("open", 56),  # Open (again)
-    # Gobo shake (1-17), slow → fast: 60-127
-    # Clockwise scroll (fast → slow): 128-189
-    # Stop: 190-193
-    # Counter-clockwise scroll (slow → fast): 194-255
-]
+# Clockwise color scroll 128–189 (fast→slow); one moderate-speed preset for API use.
+COLOR_WHEEL_ROTATE_MODERATE_DMX = 158
 
 
 class ChauvetRogueBeamR2(ChauvetMoverBase):
-    # Rogue Beam R2 has no prism accessory and no variable-focus lens — the
-    # physical fixture ignores those DMX channels mechanically, so previews
-    # shouldn't splay-fan or narrow-beam it either.
+    """Rogue R2X Beam @ 19CH — preview skips prism/focus visuals; DMX still carries those channels."""
+
     supports_prism: bool = False
     supports_focus: bool = False
+    supports_color_wheel_rotate: bool = True
+    COLOR_WHEEL_ROTATE_MODERATE_DMX = COLOR_WHEEL_ROTATE_MODERATE_DMX
 
     def __init__(
         self,
@@ -88,22 +81,23 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
         pan_upper=450,
         tilt_lower=0,
         tilt_upper=90,
-        dimmer_upper=200,
+        # Manual ch 6: Dimmer 000–255 (0–100%); no cap in the R2X spec.
+        dimmer_upper=255,
         universe=Universe.default,
     ):
         super().__init__(
             patch=patch,
             name="chauvet rogue beam r2",
-            width=15,
-            dmx_layout=dmx_layout,
-            color_wheel=color_wheel,
-            gobo_wheel=gobo_wheel,
+            width=19,
+            dmx_layout=DMX_LAYOUT_19,
+            color_wheel=COLOR_WHEEL,
+            gobo_wheel=GOBO_WHEEL,
             pan_lower=pan_lower,
             pan_upper=pan_upper,
             tilt_lower=tilt_lower,
             tilt_upper=tilt_upper,
             dimmer_upper=dimmer_upper,
-            shutter_open=255,
+            shutter_open=12,  # 008–015 Open (primary)
             speed_value=0,
             universe=universe,
             strobe_shutter_lower=16,
@@ -115,30 +109,34 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
         self.control_lamp_on = 135  # 1 sec hold
         self.set("control", self.control_disable_blackout_on_all_fn)
 
-        # Startup sequence state
+        self.set("dimmer_fine", 0)
+        self.set("prism1", 0)
+        self.set("prism1_rotate", 0)
+        self.set("prism2", 0)
+        self.set("prism2_rotate", 0)
+        self.set("auto_program", 0)
+        self.set("auto_speed", 0)
+        self.set("frost", 0)
+        self.set("focus", 0)
+
         self._startup_sequence_started = False
         self._startup_sequence_complete = False
         self._startup_sequence_start_time = None
 
     def render(self, dmx):
-        # Handle startup sequence
         if not self._startup_sequence_complete:
             current_time = time.time()
 
-            # Start the sequence if not started
             if not self._startup_sequence_started:
                 self._startup_sequence_started = True
                 self._startup_sequence_start_time = current_time
                 self.set("control", self.control_lamp_on)
 
-            # After 1 second, switch to disable blackout
             elif current_time - self._startup_sequence_start_time >= 1:
                 self.set("control", self.control_disable_blackout_on_all_fn)
 
-            # After 4 seconds (1 + 3), complete the sequence
             if current_time - self._startup_sequence_start_time >= 4:
                 self._startup_sequence_complete = True
                 self.set("control", 0)
 
-        # Call the base render function
         super().render(dmx)

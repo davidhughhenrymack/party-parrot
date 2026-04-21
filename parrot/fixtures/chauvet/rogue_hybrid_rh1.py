@@ -1,10 +1,15 @@
-"""Chauvet Intimidator Hybrid 140SR — DMX personalities 19ch and 13ch (user manual Rev. 1)."""
+"""Chauvet Intimidator Hybrid 140SR — DMX personalities 19CH and 13CH.
+
+Implementation module: ``rogue_hybrid_rh1.py``. Channel order and wheel value bands match
+*Intimidator Hybrid 140SR User Manual Rev. 1* (Chauvet DJ), pages “DMX Channel Assignments
+and Values” (19CH / 13CH).
+"""
 
 from __future__ import annotations
 
-from parrot.fixtures.base import ColorWheelEntry, GoboWheelEntry
+from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
-from parrot.utils.colour import Color
+from parrot.fixtures.color_wheel_library import color_wheel_entries_for_fixture_type
 from parrot.utils.dmx_utils import Universe
 
 # 19-channel personality (pan/tilt fine, full feature set)
@@ -47,71 +52,54 @@ DMX_LAYOUT_13 = {
     "shutter": 12,
 }
 
-# Color wheel channel 6 (19ch) / channel 3 (13ch) — midpoints per manual ranges
-COLOR_WHEEL: list[ColorWheelEntry] = [
-    ColorWheelEntry(Color("white"), 2),
-    ColorWheelEntry(Color("red"), 6),
-    ColorWheelEntry(Color("yellow"), 10),
-    ColorWheelEntry(Color("green"), 14),
-    ColorWheelEntry(Color("#87ceeb"), 18),
-    ColorWheelEntry(Color("#e6e6fa"), 22),
-    ColorWheelEntry(Color("#ffff99"), 26),
-    ColorWheelEntry(Color("blue"), 31),
-    ColorWheelEntry(Color("magenta"), 36),
-    ColorWheelEntry(Color("lime"), 41),
-    ColorWheelEntry(Color("#fff8f0"), 46),
-    ColorWheelEntry(Color("#dde8f0"), 51),
-    ColorWheelEntry(Color("BlueViolet"), 57),
-]
+# Color wheel — discrete indexed bands; rainbow scroll ranges not modeled as rows.
+# Canonical slot list: ``color_wheel_library`` (``chauvet_intimidator_hybrid_140sr``).
+COLOR_WHEEL = color_wheel_entries_for_fixture_type("chauvet_intimidator_hybrid_140sr")
 
-# Static gobo wheel — midpoints of each slot range (manual ch 7 / 13ch ch 4)
+# One moderate-speed preset for ``set_color_wheel_rotate(True)`` (188–219 fast→slow).
+COLOR_WHEEL_ROTATE_MODERATE_DMX = 203
+
+# Static gobo wheel — 19CH ch 7 / 13CH ch 4 (manual Rev. 1).
 STATIC_GOBO_WHEEL: list[GoboWheelEntry] = [
-    GoboWheelEntry("open", 1),
-    GoboWheelEntry("gobo1", 4),
-    GoboWheelEntry("gobo2", 7),
-    GoboWheelEntry("gobo3", 10),
-    GoboWheelEntry("gobo4", 13),
-    GoboWheelEntry("gobo5", 16),
-    GoboWheelEntry("gobo6", 19),
-    GoboWheelEntry("gobo7", 22),
-    GoboWheelEntry("gobo8", 25),
-    GoboWheelEntry("gobo9", 28),
-    GoboWheelEntry("gobo10", 31),
-    GoboWheelEntry("gobo11", 34),
-    GoboWheelEntry("gobo12", 37),
-    GoboWheelEntry("gobo13", 40),
-    GoboWheelEntry("gobo14", 43),
-    GoboWheelEntry("gobo15", 46),
-    GoboWheelEntry("gobo16", 49),
-    GoboWheelEntry("open", 121),
+    GoboWheelEntry("open", 1),  # 000–002
+    GoboWheelEntry("gobo1", 4),  # 003–005
+    GoboWheelEntry("gobo2", 7),  # 006–008
+    GoboWheelEntry("gobo3", 10),  # 009–011
+    GoboWheelEntry("gobo4", 13),  # 012–014
+    GoboWheelEntry("gobo5", 16),  # 015–017
+    GoboWheelEntry("gobo6", 19),  # 018–020
+    GoboWheelEntry("gobo7", 22),  # 021–023
+    GoboWheelEntry("gobo8", 25),  # 024–026
+    GoboWheelEntry("gobo9", 28),  # 027–029
+    GoboWheelEntry("gobo10", 31),  # 030–032
+    GoboWheelEntry("gobo11", 34),  # 033–035
+    GoboWheelEntry("gobo12", 37),  # 036–038
+    GoboWheelEntry("gobo13", 40),  # 039–041
+    GoboWheelEntry("gobo14", 42),  # 040–044
+    GoboWheelEntry("gobo15", 46),  # 045–047
+    GoboWheelEntry("gobo16", 49),  # 048–050
+    GoboWheelEntry("open", 121),  # 115–127 Open
 ]
 
 
 class _Hybrid140SRBase(ChauvetMoverBase):
     """Shared Hybrid-140SR behavior: rotating-gobo DMX mapping for both personalities.
 
-    The rotating-gobo wheel and rotation channels are specific to this fixture
-    (different Chauvet movers either lack a rotating wheel or use different DMX
-    ranges), so the mapping lives here rather than polluting ``ChauvetMoverBase``.
+    DMX bands from *Intimidator Hybrid 140SR User Manual Rev. 1* (19CH ch 8 / 13CH ch 5).
     """
 
-    # Midpoints of the Hybrid 140SR rotating-gobo-wheel DMX bands (19ch channel 8
-    # / 13ch channel 5). Slot 0 = open; slots 1..8 match rotating gobos 1..8.
-    _ROTATING_GOBO_DMX: tuple[int, ...] = (2, 14, 20, 26, 32, 38, 44, 50, 58)
+    supports_color_wheel_rotate: bool = True
+    COLOR_WHEEL_ROTATE_MODERATE_DMX = COLOR_WHEEL_ROTATE_MODERATE_DMX
+
+    # Rotating gobo wheel midpoints: 000–011 Open, 012–017 … 054–063 Gobo 8.
+    _ROTATING_GOBO_DMX: tuple[int, ...] = (6, 14, 20, 26, 32, 38, 44, 50, 58)
 
     def set_rotating_gobo(self, slot: int, rotate_speed: float = 0.0) -> None:
-        """Map (slot, rotate_speed) onto the Hybrid 140SR rotating-gobo channels.
+        """Map (slot, rotate_speed) onto rotating-gobo + gobo_rotation channels.
 
-        Rotating gobo wheel bands (QRG Rev5, both 19ch ch 8 and 13ch ch 5):
-            000–005: open
-            006–011: beam mode
-            012–017: gobo 1   …   048–053: gobo 7
-            054–063: gobo 8
-
-        Gobo rotation channel bands (19ch ch 9 / 13ch ch 6):
-            000:     no function (static indexed gobo)
-            064–144: rotation, fast → slow
-            152–231: reverse rotation, slow → fast
+        Wheel (ch 8 / 13ch ch 5): Open, then gobos 1–8.
+        Rotation (ch 9 / 13ch ch 6): 000–005 no function; 006–116 CW fast→slow;
+        121–231 CCW slow→fast; 232–255 bounce.
         """
         super().set_rotating_gobo(slot, rotate_speed)
         slot_idx = self.rotating_gobo_slot
@@ -123,11 +111,11 @@ class _Hybrid140SRBase(ChauvetMoverBase):
         if speed == 0.0:
             self.set("gobo_rotation", 0)
         elif speed > 0.0:
-            # Forward: speed=1 → 64 (fastest); speed→0 → 144 (slowest).
-            self.set("gobo_rotation", int(round(144 - (144 - 64) * speed)))
+            # Forward: DMX 6 = fastest … 116 = slowest
+            self.set("gobo_rotation", int(round(6 + (116 - 6) * (1.0 - speed))))
         else:
-            # Reverse: |speed|=0 → 152 (slowest); |speed|=1 → 231 (fastest).
-            self.set("gobo_rotation", int(round(152 + (231 - 152) * (-speed))))
+            # Reverse: 121 = slow … 231 = fast
+            self.set("gobo_rotation", int(round(121 + (231 - 121) * (-speed))))
 
 
 class ChauvetIntimidatorHybrid140SR_19Ch(_Hybrid140SRBase):

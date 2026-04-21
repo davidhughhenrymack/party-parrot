@@ -111,6 +111,17 @@ def test_fixture_types_endpoint(client):
     data = response.get_json()
     par_rgb = next(item for item in data["fixture_types"] if item["key"] == "par_rgb")
     assert par_rgb["dmx_address_width"] == 7
+    assert "color_wheel" not in par_rgb
+
+    rogue = next(
+        item for item in data["fixture_types"] if item["key"] == "chauvet_rogue_beam_r2"
+    )
+    wheel = rogue["color_wheel"]
+    assert len(wheel) == 15
+    assert wheel[0]["dmx_value"] == 2
+    assert wheel[0]["color"] == "white"
+    assert len(wheel[0]["rgb"]) == 3
+    assert all(0.0 <= float(c) <= 1.0 for c in wheel[0]["rgb"])
 
 
 def test_dmx_address_width_for_fixture_helper():

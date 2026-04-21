@@ -44,6 +44,9 @@ class MovingHead(FixtureBase):
         # 1.0 = small/tight (in-focus, pinpoint). Subclasses with a focus
         # channel override set_focus to emit DMX.
         self.focus_value: float = 0.0
+        # Fixtures with a scrollable color wheel: when True, DMX uses a fixed moderate
+        # rotation speed instead of indexing to a color slot (see subclass).
+        self._color_wheel_rotate: bool = False
 
     def set_pan_angle(self, value):
         self.pan_angle = value
@@ -92,12 +95,25 @@ class MovingHead(FixtureBase):
     def get_focus(self) -> float:
         return self.focus_value
 
+    def set_color_wheel_rotate(self, enabled: bool) -> None:
+        """When supported by the fixture, use color-wheel scroll at a moderate speed."""
+        self._color_wheel_rotate = bool(enabled)
+        self.set_color(self.get_color())
+
+    def get_color_wheel_rotate(self) -> bool:
+        return self._color_wheel_rotate
+
     @property
     def gobo_wheel(self):
         return self._gobo_wheel
 
     @beartype
     def lerp_into(self, a: FixtureBase, b: FixtureBase, t: float) -> None:
+        if isinstance(a, MovingHead) and isinstance(b, MovingHead):
+            pick_b = t >= 0.5
+            self._color_wheel_rotate = (
+                b._color_wheel_rotate if pick_b else a._color_wheel_rotate
+            )
         super().lerp_into(a, b, t)
         if not isinstance(a, MovingHead) or not isinstance(b, MovingHead):
             return

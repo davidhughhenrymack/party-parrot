@@ -99,7 +99,7 @@ venue_patches = {
         ),
         FixtureGroup(
             [
-                *[ChauvetRogueBeamR2(i) for i in range(191, 191 + 15 * 6, 15)],
+                *[ChauvetRogueBeamR2(i) for i in range(191, 191 + 20 * 6, 20)],
                 *[ParRGB(i) for i in range(67, 67 + 6 * 7, 7)],
             ],
             "Moving heads crescent",
@@ -128,7 +128,7 @@ venue_patches = {
     ],
     venues.crux_test: [
         FixtureGroup(
-            [ChauvetRogueBeamR2(1), ChauvetRogueBeamR2(16)],
+            [ChauvetRogueBeamR2(1), ChauvetRogueBeamR2(21)],
             "Rogue Beams",
         ),
     ],

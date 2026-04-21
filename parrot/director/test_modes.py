@@ -104,7 +104,7 @@ class TestModes(unittest.TestCase):
 
     def test_sheer_lights_are_silenced_in_chill(self):
         """Sheer group stays dark in chill, including moving heads."""
-        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
             ChauvetIntimidatorHybrid140SR_19Ch,
         )
 
@@ -126,7 +126,7 @@ class TestModes(unittest.TestCase):
         each randomize call — that proves the DSL is actually picking, not frozen.
         """
         import random as _random
-        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
             ChauvetIntimidatorHybrid140SR_19Ch,
         )
 
@@ -179,7 +179,7 @@ class TestModes(unittest.TestCase):
         weights, drops the gate entirely, or silences the sheers forever.
         """
         import random as _random
-        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
             ChauvetIntimidatorHybrid140SR_19Ch,
         )
 
@@ -220,7 +220,7 @@ class TestModes(unittest.TestCase):
         group + the merged ``__str__``) so each partition prints its own row.
         """
         from parrot.director.mode_dispatch import CompositeInterpreter
-        from parrot.fixtures.chauvet.intimidator_hybrid_140sr import (
+        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
             ChauvetIntimidatorHybrid140SR_19Ch,
         )
         from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
