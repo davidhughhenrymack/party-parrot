@@ -6,13 +6,7 @@ from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase, FixtureWithBulbs
 from parrot.interpreters.base import ColorRainbow, InterpreterArgs, InterpreterBase
 from parrot.interpreters.bulbs import for_bulbs
-from parrot.interpreters.dimmer import (
-    Dimmer255,
-    GentlePulse,
-    SequenceFadeDimmers,
-    SlowBreath,
-    Twinkle,
-)
+from parrot.interpreters.dimmer import GentlePulse, SequenceFadeDimmers
 
 
 T = TypeVar("T", bound=FixtureBase)
@@ -154,6 +148,14 @@ def signal_switch(
 
                 if self.chase_active and self.chase_interp:
                     self.chase_interp.step(frame, scheme)
+
+            # Rainbow / chase look wrong with strobe artifacts; force strobe off while active.
+            if self.rainbow_active or self.chase_active:
+                for fixture in self.group:
+                    fixture.set_strobe(0)
+                    if isinstance(fixture, FixtureWithBulbs):
+                        for bulb in fixture.get_bulbs():
+                            bulb.set_strobe(0)
 
         def exit(self, frame: Frame, scheme: ColorScheme):
             self.interp_std.exit(frame, scheme)

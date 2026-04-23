@@ -381,6 +381,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
     Mode.stroby: {
         (Group("sheer lights"), MovingHead): [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 weighted_randomize(
                     (
                         30,
@@ -422,23 +423,23 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     ),
                     (70, Dimmer0),
                 ),
-                randomize(StrobeChannelSustained, Noop),
             )
         ],
         Group("sheer lights"): [
-            combo(Dimmer0, randomize(StrobeChannelSustained, Noop)),
+            combo(randomize(StrobeChannelSustained, Noop), Dimmer0),
         ],
         Mirrorball: [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 weighted_randomize(
                     (10, combo(StabPulse, AnyColor)),
                     (90, Dimmer0),
                 ),
-                randomize(StrobeChannelSustained, Noop),
             )
         ],
         Par: [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 AnyColor,
                 signal_switch(
                     randomize(
@@ -451,11 +452,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                randomize(StrobeChannelSustained, Noop),
             )
         ],
         MovingHead: [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 AnyColor,
                 signal_switch(
                     randomize(
@@ -486,11 +487,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     (10, RotatePrism),
                     (90, PrismOff),
                 ),
-                randomize(StrobeChannelSustained, Noop),
             )
         ],
         Motionstrip: [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 for_bulbs(AnyColor),
                 signal_switch(
                     randomize(
@@ -511,11 +512,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     ),
                 ),
                 randomize(MoveCircles, MoveFan),
-                randomize(StrobeChannelSustained, Noop),
             )
         ],
         ChauvetColorBandPiX_36Ch: [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 for_bulbs(AnyColor),
                 signal_switch(
                     randomize(
@@ -545,36 +546,35 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         ),
                     ),
                 ),
-                randomize(StrobeChannelSustained, Noop),
             )
         ],
         Laser: [
-            combo(signal_switch(LaserLatch), randomize(StrobeChannelSustained, Noop)),
-            combo(StrobeHighSustained, randomize(StrobeChannelSustained, Noop)),
+            combo(randomize(StrobeChannelSustained, Noop), signal_switch(LaserLatch)),
+            combo(randomize(StrobeChannelSustained, Noop), StrobeHighSustained),
         ],
         ChauvetRotosphere_28Ch: [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 RotosphereSpinColor,
                 randomize(
                     for_bulbs(StabPulse),
                     for_bulbs(GentlePulse),
                     LightningStab,
                 ),
-                randomize(StrobeChannelSustained, Noop),
             ),
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 for_bulbs(AnyColor),
                 Spin,
                 StabPulse,
-                randomize(StrobeChannelSustained, Noop),
             ),
         ],
         ChauvetDerby: [
             combo(
+                randomize(StrobeChannelSustained, Noop),
                 randomize(Spin, Noop),
                 AnyColor,
                 randomize(StabPulse, LightningStab, GentlePulse, Dimmer0),
-                randomize(StrobeChannelSustained, Noop),
             )
         ],
     },

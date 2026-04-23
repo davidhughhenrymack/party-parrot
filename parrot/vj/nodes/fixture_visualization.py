@@ -111,6 +111,9 @@ class FixtureVisualization(GenerativeEffectBase):
         if not self.texture:
             # Opaque framebuffer (Blinn-Phong geometry) - kept separate
             self.opaque_texture = context.texture((width, height), 3)
+            # Blur/composite sample past edges; REPEAT wraps (e.g. top → bottom seam).
+            self.opaque_texture.repeat_x = False
+            self.opaque_texture.repeat_y = False
             self.depth_texture = context.depth_texture((width, height))
             self.opaque_framebuffer = context.framebuffer(
                 color_attachments=[self.opaque_texture],
@@ -119,12 +122,16 @@ class FixtureVisualization(GenerativeEffectBase):
 
             # Main output framebuffer (final composite)
             self.texture = context.texture((width, height), 3)
+            self.texture.repeat_x = False
+            self.texture.repeat_y = False
             self.framebuffer = context.framebuffer(
                 color_attachments=[self.texture], depth_attachment=self.depth_texture
             )
 
             # Emissive framebuffer (shares depth buffer for proper occlusion)
             self.emissive_texture = context.texture((width, height), 3)
+            self.emissive_texture.repeat_x = False
+            self.emissive_texture.repeat_y = False
             self.emissive_framebuffer = context.framebuffer(
                 color_attachments=[self.emissive_texture],
                 depth_attachment=self.depth_texture,  # Share depth from opaque pass
@@ -132,11 +139,15 @@ class FixtureVisualization(GenerativeEffectBase):
 
             # Bloom framebuffers for ping-pong blur
             self.bloom_texture = context.texture((width, height), 3)
+            self.bloom_texture.repeat_x = False
+            self.bloom_texture.repeat_y = False
             self.bloom_framebuffer = context.framebuffer(
                 color_attachments=[self.bloom_texture]
             )
 
             self.bloom_temp_texture = context.texture((width, height), 3)
+            self.bloom_temp_texture.repeat_x = False
+            self.bloom_temp_texture.repeat_y = False
             self.bloom_temp_framebuffer = context.framebuffer(
                 color_attachments=[self.bloom_temp_texture]
             )
