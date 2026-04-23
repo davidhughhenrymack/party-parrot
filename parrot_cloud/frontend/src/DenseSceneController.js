@@ -547,6 +547,101 @@ function createThreeSceneController({
     };
   }
 
+  /** Top surface of default floor slab in floorMesh local coords (half-thickness z = 0.04). */
+  function floorPlaneNdFromMesh(floorMesh, THREE) {
+    floorMesh.updateWorldMatrix(true, false);
+    const corners = [
+      new THREE.Vector3(-5, -5, 0.04),
+      new THREE.Vector3(5, -5, 0.04),
+      new THREE.Vector3(-5, 5, 0.04),
+    ];
+    for (let i = 0; i < corners.length; i += 1) {
+      corners[i].applyMatrix4(floorMesh.matrixWorld);
+    }
+    const u = corners[1].clone().sub(corners[0]);
+    const v = corners[2].clone().sub(corners[0]);
+    const n = u.clone().cross(v);
+    if (n.lengthSq() < 1e-14) {
+      n.set(0, 0, 1);
+    } else {
+      n.normalize();
+    }
+    const d = n.dot(corners[0]);
+    return { n, d };
+  }
+
+  /** Ray P(t) = origin + t dir, t >= 0; plane n·x = d. Returns min(maxLen, t_hit) or maxLen. */
+  function clipRayToPlaneNd(origin, dir, maxLen, planeN, planeD, eps = 1e-5) {
+    const denom = planeN.dot(dir);
+    if (Math.abs(denom) < eps) {
+      return maxLen;
+    }
+    const t = (planeD - planeN.dot(origin)) / denom;
+    if (t <= 0) {
+      return maxLen;
+    }
+    return Math.min(maxLen, t);
+  }
+
+  function updateFixtureBeamsToFloorClip(entity, floorNd, THREE) {
+    const maxL = entity.maxBeamLength;
+    if (!Number.isFinite(maxL) || maxL <= 0) {
+      return;
+    }
+    const { n, d } = floorNd;
+    const fy = entity.focusWidth ?? 1;
+
+    if (entity.coneMesh && entity.beamTipLocal && entity.beamParent) {
+      const tipL = entity.beamTipLocal;
+      const bp = entity.beamParent;
+      const o = tipL.clone();
+      const far = tipL.clone().add(new THREE.Vector3(0, maxL, 0));
+      bp.localToWorld(o);
+      bp.localToWorld(far);
+      const dir = far.clone().sub(o).normalize();
+      const clip = clipRayToPlaneNd(o, dir, maxL, n, d);
+      entity.coneMesh.scale.set(fy, clip / maxL, fy);
+      entity.coneMesh.position.set(0, tipL.y + clip / 2, tipL.z);
+    }
+
+    if (entity.prismSubMeshes?.length) {
+      for (const sub of entity.prismSubMeshes) {
+        const hh = sub.geometry.parameters.height;
+        const narrow = new THREE.Vector3(0, hh / 2, 0);
+        const wide = new THREE.Vector3(0, -hh / 2, 0);
+        sub.localToWorld(narrow);
+        sub.localToWorld(wide);
+        const dir = wide.clone().sub(narrow).normalize();
+        const clip = clipRayToPlaneNd(narrow, dir, maxL, n, d);
+        sub.scale.set(fy, clip / maxL, fy);
+        sub.position.set(0, clip / 2, 0);
+      }
+    }
+
+    const mbGroup = entity.mirrorballBeamsGroup;
+    if (mbGroup && entity.profile?.kind === 'mirrorball') {
+      const L = entity.profile.beamLength;
+      const r = entity.profile.sphereRadius;
+      const md = new THREE.Vector3();
+      const pos = new THREE.Vector3();
+      mbGroup.children.forEach((cone) => {
+        if (!(cone instanceof THREE.Mesh)) {
+          return;
+        }
+        const narrow = new THREE.Vector3(0, L / 2, 0);
+        const wide = new THREE.Vector3(0, -L / 2, 0);
+        cone.localToWorld(narrow);
+        cone.localToWorld(wide);
+        const dir = wide.clone().sub(narrow).normalize();
+        const clip = clipRayToPlaneNd(narrow, dir, L, n, d);
+        cone.scale.set(1, clip / L, 1);
+        md.set(0, 1, 0).applyQuaternion(cone.quaternion);
+        pos.copy(md).multiplyScalar(r - clip / 2);
+        cone.position.copy(pos);
+      });
+    }
+  }
+
   function getEntityFromObject(object) {
     let current = object;
     while (current) {
@@ -1025,14 +1120,7 @@ function createThreeSceneController({
       ? Math.max(0, Math.min(1, vis.focus))
       : 0;
     const focusWidth = 1.0 + (0.22 - 1.0) * focus;
-    if (entity.coneMesh) {
-      entity.coneMesh.scale.set(focusWidth, 1, focusWidth);
-    }
-    if (entity.prismSubMeshes && entity.prismSubMeshes.length > 0) {
-      for (const sub of entity.prismSubMeshes) {
-        sub.scale.set(focusWidth, 1, focusWidth);
-      }
-    }
+    entity.focusWidth = focusWidth;
     if (entity.prismMaterials && entity.prismMaterials.length > 0) {
       const subOp = prismOn ? dimClamped * CONE_OPACITY_AT_FULL_DIM : 0;
       for (const m of entity.prismMaterials) {
@@ -1172,6 +1260,8 @@ function createThreeSceneController({
     let prismGroupRef = null;
     let prismMaterialsRef = [];
     let prismSubMeshesRef = [];
+    /** @type {import('three').Vector3 | null} */
+    let beamTipLocal = null;
     if (profile.kind !== 'mirrorball') {
       let beam;
       if (placed.headPivotGroup) {
@@ -1181,6 +1271,8 @@ function createThreeSceneController({
       } else {
         beam = beamOriginLocal(profile);
       }
+
+      beamTipLocal = new THREE.Vector3(0, beam.y, beam.z ?? 0);
 
       const coneLength = profile.coneLength;
       const coneRadius = profile.coneRadius;
@@ -1198,7 +1290,7 @@ function createThreeSceneController({
         coneMaterial
       );
       coneMesh.rotateX(Math.PI);
-      coneMesh.position.set(0, beam.y + coneLength / 2, beam.z);
+      coneMesh.position.set(0, beam.y + coneLength / 2, beam.z ?? 0);
       coneMesh.userData = { entityKey: fixture.id };
       beamParent.add(coneMesh);
       coneMeshRef = coneMesh;
@@ -1286,6 +1378,11 @@ function createThreeSceneController({
       headPivotGroup: placed.headPivotGroup ?? null,
       stripPanGroup: placed.stripPanGroup ?? null,
       profile,
+      beamParent: profile.kind !== 'mirrorball' ? beamParent : null,
+      beamTipLocal,
+      maxBeamLength:
+        profile.kind === 'mirrorball' ? profile.beamLength : profile.coneLength,
+      focusWidth: 1,
     };
     if (profile.kind === 'mirrorball') {
       localState.entityMap.set(fixture.id, {
@@ -1811,6 +1908,14 @@ function createThreeSceneController({
     if (strobeGateChanged) {
       applySelectionVisuals();
     }
+
+    const floorNd = floorPlaneNdFromMesh(floorMesh, THREE);
+    localState.entityMap.forEach((entity) => {
+      if (entity.type === 'fixture') {
+        updateFixtureBeamsToFloorClip(entity, floorNd, THREE);
+      }
+    });
+
     renderer.render(scene, localState.activeCamera);
   }
   animate();

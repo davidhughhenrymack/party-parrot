@@ -803,6 +803,78 @@ class Room3DRenderer:
 
         return model
 
+    def _get_floor_plane_world_nd(self) -> tuple[np.ndarray, float]:
+        """Infinite floor plane in world space: ``{ x | n·x = d }``.
+
+        Matches the transform used by :meth:`render_floor` so beam clipping aligns
+        with the visible floor quad.
+        """
+        floor = self.scene_layout["floor"]
+        scale = np.array(
+            [
+                [float(floor["width"]) / 10.0, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, float(floor["depth"]) / 10.0, 0],
+                [0, 0, 0, 1],
+            ],
+            dtype=np.float64,
+        )
+        rotation = self._quaternion_to_matrix(
+            self._quaternion_from_euler_xyz(
+                float(floor.get("rotation_x", 0.0)),
+                float(floor.get("rotation_y", 0.0)),
+                float(floor.get("rotation_z", 0.0)),
+            )
+        ).astype(np.float64)
+        translation = np.array(
+            [
+                [1, 0, 0, float(floor["center_x"])],
+                [0, 1, 0, 0.0],
+                [0, 0, 1, float(floor["center_z"])],
+                [0, 0, 0, 1],
+            ],
+            dtype=np.float64,
+        )
+        model = translation @ rotation @ scale
+        r = rotation[:3, :3]
+        n_w = r @ np.array([0.0, 1.0, 0.0])
+        nn = float(np.linalg.norm(n_w))
+        if nn < 1e-12:
+            n_w = np.array([0.0, 1.0, 0.0], dtype=np.float64)
+        else:
+            n_w = n_w / nn
+        p0 = (model @ np.array([0.0, 0.0, 0.0, 1.0]))[:3]
+        d_plane = float(np.dot(n_w, p0))
+        return n_w.astype(np.float32), d_plane
+
+    def _clip_beam_length_to_floor_plane(
+        self,
+        local_start: tuple[float, float, float],
+        direction: tuple[float, float, float],
+        max_length: float,
+    ) -> float:
+        """Shorten beam to the first hit with the infinite floor plane, else cap at max_length."""
+        n_plane, d_plane = self._get_floor_plane_world_nd()
+        pos = self.position_stack[-1]
+        rot_q = self.rotation_stack[-1]
+        r_body = self._quaternion_to_matrix(rot_q).astype(np.float64)
+        r3 = r_body[:3, :3]
+        p_l = np.array(local_start, dtype=np.float64)
+        d_l = np.array(direction, dtype=np.float64)
+        o_w = r3 @ p_l + np.array(pos, dtype=np.float64)
+        d_w = r3 @ d_l
+        dn = float(np.linalg.norm(d_w))
+        if dn < 1e-12:
+            return max_length
+        d_w = d_w / dn
+        denom = float(np.dot(n_plane.astype(np.float64), d_w))
+        if abs(denom) < 1e-8:
+            return max_length
+        t = (d_plane - float(np.dot(n_plane.astype(np.float64), o_w))) / denom
+        if t <= 0.0:
+            return max_length
+        return float(min(max_length, t))
+
     @contextmanager
     def local_position(self, position: tuple[float, float, float]):
         """Context manager for local position transform
@@ -1882,6 +1954,10 @@ class Room3DRenderer:
         if dir_length < 0.001:
             return  # Invalid direction
         dx, dy, dz = dx / dir_length, dy / dir_length, dz / dir_length
+
+        length = self._clip_beam_length_to_floor_plane(
+            (start_x, start_y, start_z), (dx, dy, dz), length
+        )
 
         # Get or create cached geometry
         cache_key = (start_radius, end_radius, segments)
