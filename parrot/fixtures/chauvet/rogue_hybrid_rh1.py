@@ -1,11 +1,15 @@
-"""Chauvet Intimidator Hybrid 140SR — DMX personalities 19CH and 13CH.
+"""Chauvet Rogue RH1 Hybrid (Intimidator Hybrid 140SR) — DMX 19CH and 13CH.
 
-Implementation module: ``rogue_hybrid_rh1.py``. Channel order and wheel value bands match
-*Intimidator Hybrid 140SR User Manual Rev. 1* (Chauvet DJ), pages “DMX Channel Assignments
-and Values” (19CH / 13CH).
+Implementation module: ``rogue_hybrid_rh1.py``. Channel order matches *Intimidator Hybrid 140SR
+User Manual Rev. 1* (Chauvet DJ).
+
+19CH ``Function`` channel (CH 18): QLC+ … 16–23 blackout on color wheel movement;
+24–31 blackout on gobo wheel movement (3s hold each per manual).
 """
 
 from __future__ import annotations
+
+import time
 
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
@@ -52,55 +56,51 @@ DMX_LAYOUT_13 = {
     "shutter": 12,
 }
 
-# Color wheel — discrete indexed bands; rainbow scroll ranges not modeled as rows.
-# Canonical slot list: ``color_wheel_library`` (``chauvet_intimidator_hybrid_140sr``).
-COLOR_WHEEL = color_wheel_entries_for_fixture_type("chauvet_intimidator_hybrid_140sr")
+COLOR_WHEEL = color_wheel_entries_for_fixture_type("chauvet_rogue_hybrid_rh1")
 
-# One moderate-speed preset for ``set_color_wheel_rotate(True)`` (188–219 fast→slow).
 COLOR_WHEEL_ROTATE_MODERATE_DMX = 203
 
-# Static gobo wheel — 19CH ch 7 / 13CH ch 4 (manual Rev. 1).
 STATIC_GOBO_WHEEL: list[GoboWheelEntry] = [
-    GoboWheelEntry("open", 1),  # 000–002
-    GoboWheelEntry("gobo1", 4),  # 003–005
-    GoboWheelEntry("gobo2", 7),  # 006–008
-    GoboWheelEntry("gobo3", 10),  # 009–011
-    GoboWheelEntry("gobo4", 13),  # 012–014
-    GoboWheelEntry("gobo5", 16),  # 015–017
-    GoboWheelEntry("gobo6", 19),  # 018–020
-    GoboWheelEntry("gobo7", 22),  # 021–023
-    GoboWheelEntry("gobo8", 25),  # 024–026
-    GoboWheelEntry("gobo9", 28),  # 027–029
-    GoboWheelEntry("gobo10", 31),  # 030–032
-    GoboWheelEntry("gobo11", 34),  # 033–035
-    GoboWheelEntry("gobo12", 37),  # 036–038
-    GoboWheelEntry("gobo13", 40),  # 039–041
-    GoboWheelEntry("gobo14", 42),  # 040–044
-    GoboWheelEntry("gobo15", 46),  # 045–047
-    GoboWheelEntry("gobo16", 49),  # 048–050
-    GoboWheelEntry("open", 121),  # 115–127 Open
+    GoboWheelEntry("open", 1),
+    GoboWheelEntry("gobo1", 4),
+    GoboWheelEntry("gobo2", 7),
+    GoboWheelEntry("gobo3", 10),
+    GoboWheelEntry("gobo4", 13),
+    GoboWheelEntry("gobo5", 16),
+    GoboWheelEntry("gobo6", 19),
+    GoboWheelEntry("gobo7", 22),
+    GoboWheelEntry("gobo8", 25),
+    GoboWheelEntry("gobo9", 28),
+    GoboWheelEntry("gobo10", 31),
+    GoboWheelEntry("gobo11", 34),
+    GoboWheelEntry("gobo12", 37),
+    GoboWheelEntry("gobo13", 40),
+    GoboWheelEntry("gobo14", 42),
+    GoboWheelEntry("gobo15", 46),
+    GoboWheelEntry("gobo16", 49),
+    GoboWheelEntry("open", 121),
 ]
 
+# CH 18 Function — enable blackout-on-wheel-move (midpoints; 3s hold per band).
+FUNCTION_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX = 19
+FUNCTION_BLACKOUT_ON_GOBO_WHEEL_MOVE_DMX = 27
 
-class _Hybrid140SRBase(ChauvetMoverBase):
-    """Shared Hybrid-140SR behavior: rotating-gobo DMX mapping for both personalities.
+STARTUP_FUNCTION_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = (
+    (FUNCTION_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX, 3.0),
+    (FUNCTION_BLACKOUT_ON_GOBO_WHEEL_MOVE_DMX, 3.0),
+)
 
-    DMX bands from *Intimidator Hybrid 140SR User Manual Rev. 1* (19CH ch 8 / 13CH ch 5).
-    """
+
+class _RogueHybridRH1Base(ChauvetMoverBase):
+    """Shared Rogue RH1 Hybrid behavior: rotating-gobo DMX mapping for both personalities."""
 
     supports_color_wheel_rotate: bool = True
     COLOR_WHEEL_ROTATE_MODERATE_DMX = COLOR_WHEEL_ROTATE_MODERATE_DMX
 
-    # Rotating gobo wheel midpoints: 000–011 Open, 012–017 … 054–063 Gobo 8.
     _ROTATING_GOBO_DMX: tuple[int, ...] = (6, 14, 20, 26, 32, 38, 44, 50, 58)
 
     def set_rotating_gobo(self, slot: int, rotate_speed: float = 0.0) -> None:
-        """Map (slot, rotate_speed) onto rotating-gobo + gobo_rotation channels.
-
-        Wheel (ch 8 / 13ch ch 5): Open, then gobos 1–8.
-        Rotation (ch 9 / 13ch ch 6): 000–005 no function; 006–116 CW fast→slow;
-        121–231 CCW slow→fast; 232–255 bounce.
-        """
+        """Map (slot, rotate_speed) onto rotating-gobo + gobo_rotation channels."""
         super().set_rotating_gobo(slot, rotate_speed)
         slot_idx = self.rotating_gobo_slot
         if slot_idx >= len(self._ROTATING_GOBO_DMX):
@@ -111,15 +111,15 @@ class _Hybrid140SRBase(ChauvetMoverBase):
         if speed == 0.0:
             self.set("gobo_rotation", 0)
         elif speed > 0.0:
-            # Forward: DMX 6 = fastest … 116 = slowest
             self.set("gobo_rotation", int(round(6 + (116 - 6) * (1.0 - speed))))
         else:
-            # Reverse: 121 = slow … 231 = fast
             self.set("gobo_rotation", int(round(121 + (231 - 121) * (-speed))))
 
 
-class ChauvetIntimidatorHybrid140SR_19Ch(_Hybrid140SRBase):
+class ChauvetRogueHybridRH1_19Ch(_RogueHybridRH1Base):
     """19-channel DMX mode — set fixture to DMX 19CH."""
+
+    STARTUP_FUNCTION_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = STARTUP_FUNCTION_HOLD_SEQUENCE
 
     def __init__(
         self,
@@ -133,7 +133,7 @@ class ChauvetIntimidatorHybrid140SR_19Ch(_Hybrid140SRBase):
     ) -> None:
         super().__init__(
             patch,
-            "chauvet intimidator hybrid 140sr 19ch",
+            "chauvet rogue rh1 hybrid 19ch",
             19,
             DMX_LAYOUT_19,
             COLOR_WHEEL,
@@ -160,9 +160,38 @@ class ChauvetIntimidatorHybrid140SR_19Ch(_Hybrid140SRBase):
         self.set("zoom", 128)
         self.set("frost", 0)
 
+        self._startup_step = 0
+        self._startup_phase_t0: float | None = None
+        self._startup_function_complete = False
 
-class ChauvetIntimidatorHybrid140SR_13Ch(_Hybrid140SRBase):
-    """13-channel DMX mode — set fixture to DMX 13CH (no dedicated dimmer channel)."""
+    def render(self, dmx):
+        seq = self.STARTUP_FUNCTION_HOLD_SEQUENCE
+        if self._startup_function_complete or not seq:
+            super().render(dmx)
+            return
+
+        now = time.time()
+        if self._startup_phase_t0 is None:
+            self._startup_phase_t0 = now
+            self.set("function", seq[0][0])
+            super().render(dmx)
+            return
+
+        _, hold = seq[self._startup_step]
+        if now - self._startup_phase_t0 >= hold:
+            self._startup_step += 1
+            if self._startup_step >= len(seq):
+                self._startup_function_complete = True
+                self.set("function", 0)
+            else:
+                self._startup_phase_t0 = now
+                self.set("function", seq[self._startup_step][0])
+
+        super().render(dmx)
+
+
+class ChauvetRogueHybridRH1_13Ch(_RogueHybridRH1Base):
+    """13-channel DMX mode — no Function channel; startup wheel-blackout macros are 19CH-only."""
 
     def __init__(
         self,
@@ -176,7 +205,7 @@ class ChauvetIntimidatorHybrid140SR_13Ch(_Hybrid140SRBase):
     ) -> None:
         super().__init__(
             patch,
-            "chauvet intimidator hybrid 140sr 13ch",
+            "chauvet rogue rh1 hybrid 13ch",
             13,
             DMX_LAYOUT_13,
             COLOR_WHEEL,

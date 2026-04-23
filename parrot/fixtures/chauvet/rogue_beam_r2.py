@@ -1,6 +1,9 @@
 """Chauvet Rogue Beam R2 / Rogue R2X Beam — DMX matches *Rogue R2X Beam User Manual Rev. 1* (19CH).
 
 Physical product may be labeled R2 or R2X; wheel layouts and 19-channel map follow the R2X manual.
+
+Control channel (CH 19) blackout options follow the same band layout as Chauvet Rogue RH1 Hybrid in QLC+
+(Rogue professional line): 90–99 blackout while color wheel moves; 110–119 while gobo wheels move.
 """
 
 from __future__ import annotations
@@ -36,8 +39,8 @@ DMX_LAYOUT_19 = {
 }
 
 # Channel 9 — indexed slots + scroll bands in manual; discrete rows live in
-# ``parrot.fixtures.color_wheel_library`` (key ``chauvet_rogue_beam_r2``).
-COLOR_WHEEL = color_wheel_entries_for_fixture_type("chauvet_rogue_beam_r2")
+# ``parrot.fixtures.color_wheel_library`` (canonical key ``chauvet_rogue_beam_r2x``).
+COLOR_WHEEL = color_wheel_entries_for_fixture_type("chauvet_rogue_beam_r2x")
 
 # Channel 10 — static gobo wheel (17 gobos + open + open); midpoints per manual.
 GOBO_WHEEL: list[GoboWheelEntry] = [
@@ -65,14 +68,27 @@ GOBO_WHEEL: list[GoboWheelEntry] = [
 # Clockwise color scroll 128–189 (fast→slow); one moderate-speed preset for API use.
 COLOR_WHEEL_ROTATE_MODERATE_DMX = 158
 
+# CH 19 Control — lamp + wheel blackout selects (midpoints of manual bands; hold each 3s unless noted).
+CONTROL_LAMP_ON_DMX = 135  # 130–139 Lamp on (~1s hold typical)
+CONTROL_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX = 95  # 90–99 Blackout while color wheel moving (3s hold)
+CONTROL_BLACKOUT_ON_GOBO_WHEELS_MOVE_DMX = 115  # 110–119 Blackout while gobo wheels moving (3s hold)
 
-class ChauvetRogueBeamR2(ChauvetMoverBase):
+STARTUP_CONTROL_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = (
+    (CONTROL_LAMP_ON_DMX, 1.0),
+    (CONTROL_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX, 3.0),
+    (CONTROL_BLACKOUT_ON_GOBO_WHEELS_MOVE_DMX, 3.0),
+)
+
+
+class ChauvetRogueBeamR2X(ChauvetMoverBase):
     """Rogue R2X Beam @ 19CH — preview skips prism/focus visuals; DMX still carries those channels."""
 
     supports_prism: bool = False
     supports_focus: bool = False
     supports_color_wheel_rotate: bool = True
     COLOR_WHEEL_ROTATE_MODERATE_DMX = COLOR_WHEEL_ROTATE_MODERATE_DMX
+
+    STARTUP_CONTROL_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = STARTUP_CONTROL_HOLD_SEQUENCE
 
     def __init__(
         self,
@@ -81,13 +97,12 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
         pan_upper=450,
         tilt_lower=0,
         tilt_upper=90,
-        # Manual ch 6: Dimmer 000–255 (0–100%); no cap in the R2X spec.
         dimmer_upper=255,
         universe=Universe.default,
     ):
         super().__init__(
             patch=patch,
-            name="chauvet rogue beam r2",
+            name="chauvet rogue beam r2x",
             width=19,
             dmx_layout=DMX_LAYOUT_19,
             color_wheel=COLOR_WHEEL,
@@ -97,17 +112,13 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
             tilt_lower=tilt_lower,
             tilt_upper=tilt_upper,
             dimmer_upper=dimmer_upper,
-            shutter_open=12,  # 008–015 Open (primary)
+            shutter_open=12,
             speed_value=0,
             universe=universe,
             strobe_shutter_lower=16,
             strobe_shutter_upper=131,
             disable_fine=False,
         )
-
-        self.control_disable_blackout_on_all_fn = 85  # 3 sec hold
-        self.control_lamp_on = 135  # 1 sec hold
-        self.set("control", self.control_disable_blackout_on_all_fn)
 
         self.set("dimmer_fine", 0)
         self.set("prism1", 0)
@@ -119,24 +130,31 @@ class ChauvetRogueBeamR2(ChauvetMoverBase):
         self.set("frost", 0)
         self.set("focus", 0)
 
-        self._startup_sequence_started = False
-        self._startup_sequence_complete = False
-        self._startup_sequence_start_time = None
+        self._startup_step = 0
+        self._startup_phase_t0: float | None = None
+        self._startup_complete = False
 
     def render(self, dmx):
-        if not self._startup_sequence_complete:
-            current_time = time.time()
+        seq = self.STARTUP_CONTROL_HOLD_SEQUENCE
+        if self._startup_complete or not seq:
+            super().render(dmx)
+            return
 
-            if not self._startup_sequence_started:
-                self._startup_sequence_started = True
-                self._startup_sequence_start_time = current_time
-                self.set("control", self.control_lamp_on)
+        now = time.time()
+        if self._startup_phase_t0 is None:
+            self._startup_phase_t0 = now
+            self.set("control", seq[0][0])
+            super().render(dmx)
+            return
 
-            elif current_time - self._startup_sequence_start_time >= 1:
-                self.set("control", self.control_disable_blackout_on_all_fn)
-
-            if current_time - self._startup_sequence_start_time >= 4:
-                self._startup_sequence_complete = True
+        _, hold = seq[self._startup_step]
+        if now - self._startup_phase_t0 >= hold:
+            self._startup_step += 1
+            if self._startup_step >= len(seq):
+                self._startup_complete = True
                 self.set("control", 0)
+            else:
+                self._startup_phase_t0 = now
+                self.set("control", seq[self._startup_step][0])
 
         super().render(dmx)

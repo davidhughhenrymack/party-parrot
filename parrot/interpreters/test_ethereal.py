@@ -79,11 +79,11 @@ def test_ethereal_dsl_drives_sheer_moving_heads_and_zeros_others() -> None:
 
 def test_ethereal_dsl_turns_prism_on_for_sheer_moving_heads() -> None:
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetIntimidatorHybrid140SR_19Ch,
+        ChauvetRogueHybridRH1_19Ch,
     )
 
     args = InterpreterArgs(50, True, 0, 100)
-    mh = ChauvetIntimidatorHybrid140SR_19Ch(1)
+    mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
@@ -98,11 +98,11 @@ def test_ethereal_dsl_turns_prism_on_for_sheer_moving_heads() -> None:
 
 def test_ethereal_dsl_applies_rotating_gobo_6_to_hybrid_beams() -> None:
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetIntimidatorHybrid140SR_19Ch,
+        ChauvetRogueHybridRH1_19Ch,
     )
 
     args = InterpreterArgs(50, True, 0, 100)
-    mh = ChauvetIntimidatorHybrid140SR_19Ch(1)
+    mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
@@ -120,11 +120,11 @@ def test_ethereal_dsl_applies_rotating_gobo_6_to_hybrid_beams() -> None:
 
 def test_ethereal_dsl_applies_focus_big_to_hybrid_beams() -> None:
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetIntimidatorHybrid140SR_19Ch,
+        ChauvetRogueHybridRH1_19Ch,
     )
 
     args = InterpreterArgs(50, True, 0, 100)
-    mh = ChauvetIntimidatorHybrid140SR_19Ch(1)
+    mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
@@ -137,11 +137,11 @@ def test_ethereal_dsl_uses_slow_breath_within_configured_range() -> None:
     """SlowBreath replaces GentlePulse on sheer lights: dimmer stays inside [0.25, 0.85]*255
     regardless of frame.time, with no audio signal required."""
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetIntimidatorHybrid140SR_19Ch,
+        ChauvetRogueHybridRH1_19Ch,
     )
 
     args = InterpreterArgs(50, True, 0, 100)
-    mh = ChauvetIntimidatorHybrid140SR_19Ch(1)
+    mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))

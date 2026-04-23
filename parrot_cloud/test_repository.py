@@ -174,6 +174,7 @@ def test_moving_head_add_seeds_pan_tilt_range_defaults(venue_repository):
         },
     )
     fixture = next(f for f in created.fixtures if f.id == "range-seed-hybrid")
+    assert fixture.fixture_type == "chauvet_rogue_hybrid_rh1"
     assert fixture.options["pan_lower"] == 0
     assert fixture.options["pan_upper"] == 540
     assert fixture.options["tilt_lower"] == 0
@@ -222,6 +223,7 @@ def test_update_fixture_merges_top_level_pan_tilt_range(venue_repository):
         },
     )
     fixture = next(f for f in created.fixtures if f.id == "range-merge")
+    assert fixture.fixture_type == "chauvet_rogue_hybrid_rh1"
     # Client-supplied options win where they overlap with the type defaults;
     # unspecified keys (tilt_*) fall through to the fixture-type defaults so new
     # fixtures always expose the full range for editing.
@@ -283,6 +285,7 @@ def test_legacy_moving_head_reads_get_pan_tilt_range_defaults(venue_repository):
 
     after = venue_repository.get_active_venue_snapshot()
     legacy = next(f for f in after.fixtures if f.id == "legacy-hybrid")
+    assert legacy.fixture_type == "chauvet_rogue_hybrid_rh1"
     assert legacy.options["custom_marker"] == "legacy"
     assert legacy.options["pan_lower"] == 0
     assert legacy.options["pan_upper"] == 540

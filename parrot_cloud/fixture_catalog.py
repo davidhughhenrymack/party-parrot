@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import math
 from typing import Callable
 
@@ -13,13 +13,13 @@ from parrot.fixtures.chauvet.derby import ChauvetDerby
 from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-    ChauvetIntimidatorHybrid140SR_13Ch,
-    ChauvetIntimidatorHybrid140SR_19Ch,
+    ChauvetRogueHybridRH1_13Ch,
+    ChauvetRogueHybridRH1_19Ch,
 )
 from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
 from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
 from parrot.fixtures.color_wheel_library import color_wheel_slots_for_api
-from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.chauvet.slimpar_pro_h import ChauvetSlimParProH_7Ch
 from parrot.fixtures.chauvet.slimpar_pro_q import ChauvetSlimParProQ_5Ch
@@ -31,6 +31,7 @@ from parrot.fixtures.uking.laser import FiveBeamLaser
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.venue_axis import venue_rotation_to_desktop_quaternion
 from parrot_cloud.domain import FixtureSpec, VenueSnapshot
+from parrot_cloud.fixture_type_aliases import normalize_fixture_type_key
 
 
 @beartype
@@ -96,7 +97,7 @@ def _apply_live_fixture_options(fixture: FixtureBase, spec: FixtureSpec) -> None
     so that changes to pan_lower/pan_upper/tilt_lower/tilt_upper in the venue
     editor take effect on the next frame without a scene rebuild.
     """
-    definition = FIXTURE_TYPES.get(spec.fixture_type)
+    definition = FIXTURE_TYPES.get(normalize_fixture_type_key(spec.fixture_type))
     defaults: dict[str, int | float | bool] = (
         definition.default_options if definition is not None else {}
     )
@@ -194,11 +195,11 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
         },
         dmx_address_width=11,
     ),
-    "chauvet_rogue_beam_r2": FixtureTypeDefinition(
-        key="chauvet_rogue_beam_r2",
-        label="Chauvet Rogue Beam R2",
+    "chauvet_rogue_beam_r2x": FixtureTypeDefinition(
+        key="chauvet_rogue_beam_r2x",
+        label="Chauvet Rogue Beam R2X",
         builder=lambda spec: _apply_transform(
-            ChauvetRogueBeamR2(
+            ChauvetRogueBeamR2X(
                 spec.address,
                 pan_lower=_option_float(spec, "pan_lower", 270.0),
                 pan_upper=_option_float(spec, "pan_upper", 450.0),
@@ -217,11 +218,11 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
         },
         dmx_address_width=19,
     ),
-    "chauvet_intimidator_hybrid_140sr": FixtureTypeDefinition(
-        key="chauvet_intimidator_hybrid_140sr",
-        label="Chauvet Intimidator Hybrid 140SR (19ch)",
+    "chauvet_rogue_hybrid_rh1": FixtureTypeDefinition(
+        key="chauvet_rogue_hybrid_rh1",
+        label="Chauvet Rogue RH1 Hybrid (19ch)",
         builder=lambda spec: _apply_transform(
-            ChauvetIntimidatorHybrid140SR_19Ch(
+            ChauvetRogueHybridRH1_19Ch(
                 spec.address,
                 pan_lower=_option_float(spec, "pan_lower", 0.0),
                 pan_upper=_option_float(spec, "pan_upper", 540.0),
@@ -240,11 +241,11 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
         },
         dmx_address_width=19,
     ),
-    "chauvet_intimidator_hybrid_140sr_13ch": FixtureTypeDefinition(
-        key="chauvet_intimidator_hybrid_140sr_13ch",
-        label="Chauvet Intimidator Hybrid 140SR (13ch)",
+    "chauvet_rogue_hybrid_rh1_13ch": FixtureTypeDefinition(
+        key="chauvet_rogue_hybrid_rh1_13ch",
+        label="Chauvet Rogue RH1 Hybrid (13ch)",
         builder=lambda spec: _apply_transform(
-            ChauvetIntimidatorHybrid140SR_13Ch(
+            ChauvetRogueHybridRH1_13Ch(
                 spec.address,
                 pan_lower=_option_float(spec, "pan_lower", 0.0),
                 pan_upper=_option_float(spec, "pan_upper", 540.0),
@@ -376,7 +377,7 @@ def dmx_address_width_for_fixture(
     """DMX footprint for spacing cloned fixtures (matches FixtureBase.width)."""
     if fixture_type == "manual_dimmer_channel":
         return max(1, int(float(options.get("width", 1))))
-    definition = FIXTURE_TYPES.get(fixture_type)
+    definition = FIXTURE_TYPES.get(normalize_fixture_type_key(fixture_type))
     if definition is None:
         return 1
     return definition.dmx_address_width
@@ -399,7 +400,7 @@ _PAN_TILT_RANGE_KEYS: tuple[str, ...] = (
 @beartype
 def fixture_type_has_pan_tilt_range(fixture_type: str) -> bool:
     """True for moving-head types whose default_options declare a pan/tilt range."""
-    definition = FIXTURE_TYPES.get(fixture_type)
+    definition = FIXTURE_TYPES.get(normalize_fixture_type_key(fixture_type))
     if definition is None:
         return False
     return all(key in definition.default_options for key in _PAN_TILT_RANGE_KEYS)
@@ -408,7 +409,7 @@ def fixture_type_has_pan_tilt_range(fixture_type: str) -> bool:
 @beartype
 def pan_tilt_range_default_options(fixture_type: str) -> dict[str, float]:
     """Return the per-type default pan/tilt range (empty dict for non-movers)."""
-    definition = FIXTURE_TYPES.get(fixture_type)
+    definition = FIXTURE_TYPES.get(normalize_fixture_type_key(fixture_type))
     if definition is None:
         return {}
     return {
@@ -419,10 +420,12 @@ def pan_tilt_range_default_options(fixture_type: str) -> dict[str, float]:
 
 
 def create_fixture_instance(spec: FixtureSpec) -> FixtureBase:
-    definition = FIXTURE_TYPES.get(spec.fixture_type)
+    canon = normalize_fixture_type_key(spec.fixture_type)
+    definition = FIXTURE_TYPES.get(canon)
     if definition is None:
         raise KeyError(f"Unsupported fixture type: {spec.fixture_type}")
-    fixture = definition.builder(spec)
+    effective = replace(spec, fixture_type=canon) if spec.fixture_type != canon else spec
+    fixture = definition.builder(effective)
     if spec.name:
         fixture.name = spec.name
     return fixture

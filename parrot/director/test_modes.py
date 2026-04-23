@@ -105,12 +105,12 @@ class TestModes(unittest.TestCase):
     def test_sheer_lights_are_silenced_in_chill(self):
         """Sheer group stays dark in chill, including moving heads."""
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetIntimidatorHybrid140SR_19Ch,
+            ChauvetRogueHybridRH1_19Ch,
         )
 
-        sheer = ChauvetIntimidatorHybrid140SR_19Ch(1)
+        sheer = ChauvetRogueHybridRH1_19Ch(1)
         sheer.cloud_group_name = "sheer lights"
-        other = ChauvetIntimidatorHybrid140SR_19Ch(20)
+        other = ChauvetRogueHybridRH1_19Ch(20)
         other.cloud_group_name = None
 
         interp = get_interpreter(Mode.chill, [sheer, other], self.args)
@@ -127,7 +127,7 @@ class TestModes(unittest.TestCase):
         """
         import random as _random
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetIntimidatorHybrid140SR_19Ch,
+            ChauvetRogueHybridRH1_19Ch,
         )
 
         focus_picks: set[float] = set()
@@ -136,7 +136,7 @@ class TestModes(unittest.TestCase):
         for seed in range(40):
             _random.seed(seed)
             movers = [
-                ChauvetIntimidatorHybrid140SR_19Ch(1 + i * 20) for i in range(6)
+                ChauvetRogueHybridRH1_19Ch(1 + i * 20) for i in range(6)
             ]
             for m in movers:
                 m.cloud_group_name = "sheer lights"
@@ -180,7 +180,7 @@ class TestModes(unittest.TestCase):
         """
         import random as _random
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetIntimidatorHybrid140SR_19Ch,
+            ChauvetRogueHybridRH1_19Ch,
         )
 
         trials = 400
@@ -188,7 +188,7 @@ class TestModes(unittest.TestCase):
         for seed in range(trials):
             _random.seed(seed)
             movers = [
-                ChauvetIntimidatorHybrid140SR_19Ch(1 + i * 20) for i in range(4)
+                ChauvetRogueHybridRH1_19Ch(1 + i * 20) for i in range(4)
             ]
             for m in movers:
                 m.cloud_group_name = "sheer lights"
@@ -221,13 +221,13 @@ class TestModes(unittest.TestCase):
         """
         from parrot.director.mode_dispatch import CompositeInterpreter
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetIntimidatorHybrid140SR_19Ch,
+            ChauvetRogueHybridRH1_19Ch,
         )
-        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 
-        sheer = ChauvetIntimidatorHybrid140SR_19Ch(1)
+        sheer = ChauvetRogueHybridRH1_19Ch(1)
         sheer.cloud_group_name = "sheer lights"
-        rogue = ChauvetRogueBeamR2(20)
+        rogue = ChauvetRogueBeamR2X(20)
         rogue.cloud_group_name = None
         mirror = Mirrorball(40)
 
@@ -258,7 +258,7 @@ class TestModes(unittest.TestCase):
         only to freq_low / freq_all (which is kick-dominated in dance music).
         """
         import random as _random
-        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
         from parrot.fixtures.led_par import ParRGB
 
         trials = 200
@@ -266,7 +266,7 @@ class TestModes(unittest.TestCase):
         par_high_hits = 0
         for seed in range(trials):
             _random.seed(seed)
-            movers = [ChauvetRogueBeamR2(1 + i * 20) for i in range(3)]
+            movers = [ChauvetRogueBeamR2X(1 + i * 20) for i in range(3)]
             for m in movers:
                 m.cloud_group_name = None
             mh_interp = get_interpreter(Mode.rave, movers, self.args)

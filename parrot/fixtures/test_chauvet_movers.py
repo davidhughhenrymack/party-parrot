@@ -5,7 +5,7 @@ from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
-from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 from parrot.fixtures.base import ColorWheelEntry, GoboWheelEntry
 from parrot.utils.colour import Color
 
@@ -274,67 +274,64 @@ class TestChauvetMove_9Ch:
         assert self.move.values[2] > 0  # Tilt channel
 
 
-class TestChauvetRogueBeamR2:
+class TestChauvetRogueBeamR2X:
     def setup_method(self):
         """Setup for each test method"""
-        self.rogue = ChauvetRogueBeamR2(patch=50)
+        self.rogue = ChauvetRogueBeamR2X(patch=50)
         self.dmx = MagicMock()
 
     def test_initialization(self):
         """Test initialization"""
         assert self.rogue.address == 50
-        assert self.rogue.name == "chauvet rogue beam r2"
+        assert self.rogue.name == "chauvet rogue beam r2x"
         assert self.rogue.width == 19
         assert len(self.rogue.color_wheel) > 0
         assert len(self.rogue.gobo_wheel) > 0
 
-        # Check startup sequence state
-        assert not self.rogue._startup_sequence_started
-        assert not self.rogue._startup_sequence_complete
+        assert self.rogue._startup_phase_t0 is None
+        assert not self.rogue._startup_complete
 
     def test_startup_sequence_initialization(self):
-        """Test that control channel is set for startup"""
-        # Should be set to disable blackout function initially
-        assert self.rogue.values[18] == self.rogue.control_disable_blackout_on_all_fn
+        """Control CH19 stays at 0 until the first ``render`` step."""
+        assert self.rogue.values[18] == 0
 
     @patch("time.time")
     def test_render_startup_sequence_start(self, mock_time):
-        """Test startup sequence beginning"""
+        """First render applies lamp-on on the control channel."""
         mock_time.return_value = 1000.0
-
-        # First render should start sequence
         self.rogue.render(self.dmx)
 
-        assert self.rogue._startup_sequence_started
-        assert not self.rogue._startup_sequence_complete
-        assert self.rogue.values[18] == self.rogue.control_lamp_on
+        assert not self.rogue._startup_complete
+        assert self.rogue.values[18] == 135
 
     @patch("time.time")
     def test_render_startup_sequence_middle(self, mock_time):
-        """Test startup sequence middle phase"""
-        # Simulate time progression
+        """After lamp-on hold, control advances to color-wheel blackout macro."""
         mock_time.return_value = 1000.0
-        self.rogue.render(self.dmx)  # Start sequence
-
-        mock_time.return_value = 1002.0  # 2 seconds later
         self.rogue.render(self.dmx)
 
-        # Should switch to disable blackout
-        assert self.rogue.values[18] == self.rogue.control_disable_blackout_on_all_fn
+        mock_time.return_value = 1001.0
+        self.rogue.render(self.dmx)
+
+        assert self.rogue.values[18] == 95
 
     @patch("time.time")
     def test_render_startup_sequence_complete(self, mock_time):
-        """Test startup sequence completion"""
-        # Simulate time progression
+        """Full sequence: 1s lamp + 3s + 3s wheel-macros (one advance per ``render``)."""
         mock_time.return_value = 1000.0
-        self.rogue.render(self.dmx)  # Start sequence
-
-        mock_time.return_value = 1005.0  # 5 seconds later (past 4 second threshold)
         self.rogue.render(self.dmx)
 
-        # Sequence should be complete
-        assert self.rogue._startup_sequence_complete
-        assert self.rogue.values[18] == 0  # Control channel cleared
+        mock_time.return_value = 1001.0
+        self.rogue.render(self.dmx)
+
+        mock_time.return_value = 1005.0
+        self.rogue.render(self.dmx)
+
+        mock_time.return_value = 1008.0
+        self.rogue.render(self.dmx)
+
+        assert self.rogue._startup_complete
+        assert self.rogue.values[18] == 0
 
     def test_color_wheel_has_expected_colors(self):
         """Test that color wheel contains expected colors"""

@@ -1,7 +1,7 @@
 """Tests for live fixture state serialization (Party Parrot Cloud preview)."""
 
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
-from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.led_par import ParRGB
 from parrot.director.color_scheme import ColorScheme
@@ -74,7 +74,7 @@ def test_rogue_beam_r2_omits_prism_and_focus():
     """Rogue Beam R2 has no prism accessory and no variable-focus optic, so the
     runtime payload must not publish those keys — the web preview's defaults
     then render a plain beam regardless of DMX drive."""
-    rogue = ChauvetRogueBeamR2(patch=1)
+    rogue = ChauvetRogueBeamR2X(patch=1)
     rogue.cloud_spec_id = "rogue-1"
     rogue.set_prism(True, 0.9)
     rogue.set_focus(1.0)

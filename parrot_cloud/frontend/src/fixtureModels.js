@@ -29,10 +29,10 @@ function scaleVenueEditorBeamThrow(model) {
 const MOVING_HEAD_TYPES = new Set([
   'chauvet_spot_110',
   'chauvet_spot_160',
-  'chauvet_rogue_beam_r2',
+  'chauvet_rogue_beam_r2x',
   'chauvet_move_9ch',
-  'chauvet_intimidator_hybrid_140sr',
-  'chauvet_intimidator_hybrid_140sr_13ch',
+  'chauvet_rogue_hybrid_rh1',
+  'chauvet_rogue_hybrid_rh1_13ch',
 ]);
 
 export function isMovingHeadFixtureType(fixtureType) {

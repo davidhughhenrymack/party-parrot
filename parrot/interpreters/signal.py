@@ -16,7 +16,7 @@ SIGNAL_PROBABILITIES = {
     FrameSignal.strobe: 0.4,
     FrameSignal.big_blinder: 0.7,
     FrameSignal.small_blinder: 0.3,
-    FrameSignal.pulse: 0.9,
+    FrameSignal.pulse: 1.0,
     FrameSignal.dampen: 0.9,
 }
 

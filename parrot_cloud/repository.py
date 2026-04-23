@@ -30,6 +30,7 @@ from parrot_cloud.fixture_catalog import (
     fixture_type_has_pan_tilt_range,
     pan_tilt_range_default_options,
 )
+from parrot_cloud.fixture_type_aliases import normalize_fixture_type_key
 from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import parse_vj_mode_string
@@ -479,7 +480,7 @@ class VenueRepository:
                 raise KeyError(f"Venue not found: {venue_id}")
 
             next_order = len(venue.fixtures)
-            fixture_type_str = str(fixture_data["fixture_type"])
+            fixture_type_str = normalize_fixture_type_key(str(fixture_data["fixture_type"]))
             if _is_manual_dimmer_channel_type(fixture_type_str):
                 is_manual = True
             else:
@@ -550,6 +551,12 @@ class VenueRepository:
                     value = fixture_data[key]
                     if key == "universe":
                         setattr(fixture, key, _normalize_universe(value))
+                    elif key == "fixture_type":
+                        setattr(
+                            fixture,
+                            key,
+                            None if value in (None, "") else normalize_fixture_type_key(str(value)),
+                        )
                     else:
                         setattr(
                             fixture,
@@ -737,7 +744,7 @@ class VenueRepository:
         fixtures = tuple(
             FixtureSpec(
                 id=fixture.id,
-                fixture_type=fixture.fixture_type,
+                fixture_type=normalize_fixture_type_key(fixture.fixture_type),
                 address=fixture.address,
                 universe=fixture.universe,
                 x=fixture.x,

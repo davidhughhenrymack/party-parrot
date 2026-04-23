@@ -167,9 +167,11 @@ class FixtureSpec:
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> "FixtureSpec":
+        from parrot_cloud.fixture_type_aliases import normalize_fixture_type_key
+
         return cls(
             id=str(data["id"]),
-            fixture_type=str(data["fixture_type"]),
+            fixture_type=normalize_fixture_type_key(str(data["fixture_type"])),
             address=int(data["address"]),
             universe=str(data.get("universe", "default")),
             x=float(data.get("x", 0.0)),

@@ -23,7 +23,7 @@ class ColorWheelSlotRow(TypedDict):
 
 
 # --- Chauvet Rogue Beam R2 / R2X Beam (19CH ch 9) — Rogue R2X Beam User Manual Rev. 1
-_CHAUVET_ROGUE_BEAM_R2: list[ColorWheelSlotRow] = [
+_CHAUVET_ROGUE_BEAM_R2X_WHEEL: list[ColorWheelSlotRow] = [
     {"dmx_value": 2, "color": "white", "label": "Open"},
     {"dmx_value": 6, "color": "red", "label": "Color 1"},
     {"dmx_value": 10, "color": "#FF6600", "label": "Color 2"},
@@ -41,8 +41,8 @@ _CHAUVET_ROGUE_BEAM_R2: list[ColorWheelSlotRow] = [
     {"dmx_value": 58, "color": "BlueViolet", "label": "Color 14"},
 ]
 
-# --- Intimidator Hybrid 140SR Rev. 1 (19CH ch 6 / 13CH ch 3)
-_CHAUVET_INTIMIDATOR_HYBRID_140SR: list[ColorWheelSlotRow] = [
+# --- Rogue RH1 Hybrid (Intimidator Hybrid 140SR) Rev. 1 (19CH ch 6 / 13CH ch 3)
+_CHAUVET_ROGUE_HYBRID_RH1_WHEEL: list[ColorWheelSlotRow] = [
     {"dmx_value": 2, "color": "white"},
     {"dmx_value": 6, "color": "red"},
     {"dmx_value": 10, "color": "yellow"},
@@ -58,17 +58,27 @@ _CHAUVET_INTIMIDATOR_HYBRID_140SR: list[ColorWheelSlotRow] = [
     {"dmx_value": 56, "color": "BlueViolet", "label": "Ultraviolet"},
 ]
 
-# Keys match ``FixtureTypeDefinition.key`` in ``parrot_cloud.fixture_catalog``.
+# Keys match canonical ``FixtureTypeDefinition.key`` in ``parrot_cloud.fixture_catalog``.
 COLOR_WHEEL_LIBRARY: dict[str, list[ColorWheelSlotRow]] = {
-    "chauvet_rogue_beam_r2": _CHAUVET_ROGUE_BEAM_R2,
-    "chauvet_intimidator_hybrid_140sr": _CHAUVET_INTIMIDATOR_HYBRID_140SR,
+    "chauvet_rogue_beam_r2x": _CHAUVET_ROGUE_BEAM_R2X_WHEEL,
+    "chauvet_rogue_hybrid_rh1": _CHAUVET_ROGUE_HYBRID_RH1_WHEEL,
 }
+
+# Pre-rename catalog keys still appear in older venues / tests.
+_LEGACY_COLOR_WHEEL_KEY: dict[str, str] = {
+    "chauvet_rogue_beam_r2": "chauvet_rogue_beam_r2x",
+    "chauvet_intimidator_hybrid_140sr": "chauvet_rogue_hybrid_rh1",
+}
+
+
+def _canonical_wheel_catalog_key(fixture_type_key: str) -> str:
+    return _LEGACY_COLOR_WHEEL_KEY.get(fixture_type_key, fixture_type_key)
 
 
 @beartype
 def color_wheel_entries_for_fixture_type(fixture_type_key: str) -> list[ColorWheelEntry]:
     """Build ``ColorWheelEntry`` rows for mover fixtures (DMX snap + preview)."""
-    rows = COLOR_WHEEL_LIBRARY.get(fixture_type_key, ())
+    rows = COLOR_WHEEL_LIBRARY.get(_canonical_wheel_catalog_key(fixture_type_key), ())
     return [
         ColorWheelEntry(Color(str(row["color"])), int(row["dmx_value"])) for row in rows
     ]
@@ -77,7 +87,7 @@ def color_wheel_entries_for_fixture_type(fixture_type_key: str) -> list[ColorWhe
 @beartype
 def color_wheel_slots_for_api(fixture_type_key: str) -> list[dict[str, object]] | None:
     """JSON-serializable slots for web: ``dmx_value``, ``color`` string, ``rgb`` 0–1, optional ``label``."""
-    rows = COLOR_WHEEL_LIBRARY.get(fixture_type_key)
+    rows = COLOR_WHEEL_LIBRARY.get(_canonical_wheel_catalog_key(fixture_type_key))
     if not rows:
         return None
     out: list[dict[str, object]] = []

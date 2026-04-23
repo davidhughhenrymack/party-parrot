@@ -3,7 +3,7 @@ from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
 from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
-from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2
+from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.gigbar import ChauvetGigBarMoveILS
 from parrot.fixtures.chauvet.slimpar_pro_q import ChauvetSlimParProQ_5Ch
@@ -99,7 +99,7 @@ venue_patches = {
         ),
         FixtureGroup(
             [
-                *[ChauvetRogueBeamR2(i) for i in range(191, 191 + 20 * 6, 20)],
+                *[ChauvetRogueBeamR2X(i) for i in range(191, 191 + 20 * 6, 20)],
                 *[ParRGB(i) for i in range(67, 67 + 6 * 7, 7)],
             ],
             "Moving heads crescent",
@@ -128,7 +128,7 @@ venue_patches = {
     ],
     venues.crux_test: [
         FixtureGroup(
-            [ChauvetRogueBeamR2(1), ChauvetRogueBeamR2(21)],
+            [ChauvetRogueBeamR2X(1), ChauvetRogueBeamR2X(21)],
             "Rogue Beams",
         ),
     ],

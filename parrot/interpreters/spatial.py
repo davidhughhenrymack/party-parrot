@@ -1,16 +1,44 @@
-import math
+"""Floor-plane spatial pulses in **venue coordinates** (Z-up; see ``parrot/vj/venue_axis.py``).
+
+Effects use the horizontal footprint only — **venue X** (audience left ↔ right) and **venue Y**
+(downstage ↔ upstage depth). **Venue Z** (fixture height above the floor) is ignored: sweeps are
+meant to read as waves across the rig on the floor plan. Positions come from the venue editor /
+cloud snapshot (``FixtureSpec.x/y/z`` applied in ``fixture_catalog._apply_transform``) or from
+``FixturePositionManager`` JSON loads — all store floats on ``fixture.x`` / ``fixture.y``.
+"""
+
+from __future__ import annotations
+
 from typing import List, TypeVar
+
+import time
+
 from parrot.director.frame import FrameSignal
 from parrot.fixtures.base import FixtureBase
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase, with_args
-from parrot.utils.math import clamp
-import time
-
 
 T = TypeVar("T", bound=FixtureBase)
 
 
+def _venue_floor_x(fixture: FixtureBase) -> float | None:
+    """Audience-width axis; ``None`` if the fixture has not been placed in the venue."""
+    x = getattr(fixture, "x", None)
+    if x is None:
+        return None
+    return float(x)
+
+
+def _venue_floor_y(fixture: FixtureBase) -> float | None:
+    """Stage-depth axis; ``None`` if the fixture has not been placed in the venue."""
+    y = getattr(fixture, "y", None)
+    if y is None:
+        return None
+    return float(y)
+
+
 class SpatialDownwardsPulse(InterpreterBase[T]):
+    """Sweep along **venue Y** (floor depth). Despite the name, this is not venue Z (height)."""
+
     hype = 60
 
     def __init__(
@@ -44,16 +72,15 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
         self.last_activation_time = 0
 
     def _calculate_spatial_range(self):
-        # Filter fixtures with valid y positions
         self.valid_fixtures = [
-            f for f in self.group if hasattr(f, "y") and f.y is not None
+            f for f in self.group if _venue_floor_y(f) is not None
         ]
 
         if not self.valid_fixtures:
             return False
 
         # Calculate the spatial range with 30% margin
-        y_positions = [fixture.y for fixture in self.valid_fixtures]
+        y_positions = [_venue_floor_y(f) for f in self.valid_fixtures]
         min_y = min(y_positions)
         max_y = max(y_positions)
         y_range = max_y - min_y
@@ -96,10 +123,11 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
                 self.active = False
                 return
 
-            # Calculate intensity for each fixture based on its y position
+            # Calculate intensity for each fixture based on its venue Y position
             for fixture in self.valid_fixtures:
-                # Calculate normalized distance from pulse center
-                distance = abs(fixture.y - self.pulse_position) / (self.y_range + 1e-6)
+                fy = _venue_floor_y(fixture)
+                assert fy is not None
+                distance = abs(fy - self.pulse_position) / (self.y_range + 1e-6)
 
                 # Calculate intensity using a smooth falloff
                 # The pulse_width controls how wide the pulse is
@@ -142,6 +170,8 @@ SoftSpatialPulse = with_args(
 
 
 class SpatialCenterOutwardsPulse(InterpreterBase[T]):
+    """Expand pulses along **venue X** from the horizontal center of the rig."""
+
     hype = 60
 
     def __init__(
@@ -177,16 +207,15 @@ class SpatialCenterOutwardsPulse(InterpreterBase[T]):
         self.last_activation_time = 0.0
 
     def _calculate_spatial_range(self):
-        # Filter fixtures with valid x positions
         self.valid_fixtures = [
-            f for f in self.group if hasattr(f, "x") and f.x is not None
+            f for f in self.group if _venue_floor_x(f) is not None
         ]
 
         if not self.valid_fixtures:
             return False
 
         # Calculate the spatial range with 30% margin
-        x_positions = [fixture.x for fixture in self.valid_fixtures]
+        x_positions = [_venue_floor_x(f) for f in self.valid_fixtures]
         min_x = min(x_positions)
         max_x = max(x_positions)
         x_span = max_x - min_x
@@ -234,10 +263,12 @@ class SpatialCenterOutwardsPulse(InterpreterBase[T]):
                 self.active = False
                 return
 
-            # Set intensity based on horizontal distance to the nearest pulse
+            # Set intensity based on horizontal distance to the nearest pulse (venue X)
             for fixture in self.valid_fixtures:
-                distance_left = abs(fixture.x - self.left_pulse_position)
-                distance_right = abs(fixture.x - self.right_pulse_position)
+                fx = _venue_floor_x(fixture)
+                assert fx is not None
+                distance_left = abs(fx - self.left_pulse_position)
+                distance_right = abs(fx - self.right_pulse_position)
                 distance = min(distance_left, distance_right) / (self.x_range + 1e-6)
 
                 normalized_distance = distance / self.pulse_width

@@ -607,7 +607,11 @@ function createThreeSceneController({
         }
       }
       if (entity.lensMaterial && typeof entity.runtimeLensOpacity === 'number') {
-        entity.lensMaterial.opacity = entity.runtimeLensOpacity * strobeGate;
+        let mul = 1.0;
+        if (fixtureSelectionActive && !isSelected) mul *= 0.62;
+        if (isSelected) mul *= 1.28;
+        // Lens tint/strobe lives in material.color (animate loop); opacity is dim × selection only.
+        entity.lensMaterial.opacity = Math.min(1, entity.runtimeLensOpacity * mul);
       }
       if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
         const ro = entity.runtimeMirrorballOpacity ?? 0;
@@ -972,14 +976,17 @@ function createThreeSceneController({
 
   function applyFixtureRuntimeVisual(entity, vis, rgb, dim) {
     const dimClamped = Math.max(0, Math.min(1, dim));
+    entity.runtimeRgb = [
+      Math.max(0, Math.min(1, rgb[0])),
+      Math.max(0, Math.min(1, rgb[1])),
+      Math.max(0, Math.min(1, rgb[2])),
+    ];
     const r = Math.min(1, rgb[0] * dimClamped);
     const g = Math.min(1, rgb[1] * dimClamped);
     const b = Math.min(1, rgb[2] * dimClamped);
-    // `strobe` mirrors the desktop renderer: when dimmer>0 and strobe>0, the
-    // beam toggles on/off at 5–30 Hz (see FixtureRenderer.get_effective_dimmer
-    // in parrot/vj/renderers/base.py). The gating itself happens in the
-    // animate() loop — here we just record the base strobe amount so the
-    // per-frame tick knows whether/how fast to flicker.
+    // `strobe`: when dimmer>0 and strobe>0, animate() toggles a square-wave gate.
+    // Web preview uses a slower Hz band than desktop (see animate); desktop remains
+    // ~5–30 Hz in parrot/vj/renderers/base.py.
     entity.runtimeStrobe = typeof vis.strobe === 'number'
       ? Math.max(0, Math.min(1, vis.strobe))
       : 0;
@@ -1038,14 +1045,10 @@ function createThreeSceneController({
       }
     }
     if (entity.lensMaterial) {
-      entity.lensMaterial.color.setRGB(
-        Math.min(1, r + 0.12),
-        Math.min(1, g + 0.12),
-        Math.min(1, b + 0.12)
-      );
-      entity.runtimeLensOpacity = 0.35 + dimClamped * 0.58;
-      entity.lensMaterial.opacity =
-        entity.runtimeLensOpacity * (entity.runtimeStrobeGate ?? 1);
+      // Lens bulb RGB is driven every frame in animate(): beam × dim × strobe phase.
+      // Opacity tracks dim only so we do not double-apply strobe (gate is in color).
+      entity.runtimeLensOpacity = 0.28 + dimClamped * 0.72;
+      entity.lensMaterial.opacity = entity.runtimeLensOpacity;
     }
     if (entity.aimGroup && entity.headPivotGroup) {
       // Pan-then-tilt kinematics: `aimGroup` is the parent (yoke pan around
@@ -1120,6 +1123,7 @@ function createThreeSceneController({
         entity.runtimeStrobe = 0;
         entity.runtimeDimmerForStrobe = 0;
         entity.runtimeStrobeGate = 1;
+        entity.runtimeRgb = null;
         if (entity.coneMaterial) {
           entity.runtimeConeOpacity = 0;
           entity.coneMaterial.opacity = 0;
@@ -1755,8 +1759,8 @@ function createThreeSceneController({
     const mbSpin = now * 0.00012;
     // Prism splay group rotation: rotate_speed in [-1,1] → ~0.5 Hz at full speed.
     const prismPhase = now * 0.001 * Math.PI;
-    // Strobe gate: mirrors `FixtureRenderer.get_effective_dimmer` in
-    // parrot/vj/renderers/base.py — strobe 0..1 maps to 5..30 Hz on/off.
+    // Strobe gate: same square-wave idea as desktop, but slower Hz so the preview
+    // reads clearly (desktop uses ~5–30 Hz in FixtureRenderer.get_effective_dimmer).
     const timeSec = now / 1000;
     let strobeGateChanged = false;
     localState.entityMap.forEach((entity) => {
@@ -1776,12 +1780,31 @@ function createThreeSceneController({
         const dimForStrobe = entity.runtimeDimmerForStrobe ?? 0;
         let gate = 1;
         if (strobe > 0 && dimForStrobe > 0) {
-          const hz = 5.0 + strobe * 25.0;
+          // Slower than desktop: ~1.2–8 Hz (was ~5–30 Hz) for calmer preview flicker.
+          const hz = 1.2 + strobe * 6.8;
           gate = Math.floor(timeSec * hz) % 2 === 1 ? 1 : 0;
         }
         if ((entity.runtimeStrobeGate ?? 1) !== gate) {
           entity.runtimeStrobeGate = gate;
           strobeGateChanged = true;
+        }
+        // Lens bulb: match beam perception — color = beam RGB × dim × strobe phase.
+        if (entity.lensMaterial && entity.runtimeRgb) {
+          const [r0, g0, b0] = entity.runtimeRgb;
+          const dim = Math.max(0, Math.min(1, dimForStrobe));
+          if (dim < 1e-4) {
+            entity.lensMaterial.color.setRGB(0.11, 0.11, 0.13);
+          } else if (strobe > 0 && gate === 0) {
+            const grey = 0.06 + dim * 0.07;
+            entity.lensMaterial.color.setRGB(grey, grey, grey);
+          } else {
+            const ph = strobe > 0 ? gate : 1;
+            entity.lensMaterial.color.setRGB(
+              Math.min(1, r0 * dim * ph),
+              Math.min(1, g0 * dim * ph),
+              Math.min(1, b0 * dim * ph),
+            );
+          }
         }
       }
     });

@@ -114,7 +114,7 @@ def test_fixture_types_endpoint(client):
     assert "color_wheel" not in par_rgb
 
     rogue = next(
-        item for item in data["fixture_types"] if item["key"] == "chauvet_rogue_beam_r2"
+        item for item in data["fixture_types"] if item["key"] == "chauvet_rogue_beam_r2x"
     )
     wheel = rogue["color_wheel"]
     assert len(wheel) == 15

@@ -262,3 +262,44 @@ class TestSpatialCenterOutwardsPulse:
         assert interp.interpreter.edge_hardness == 4.0
         assert interp.interpreter.pulse_width == 0.2
         assert interp.interpreter.speed == 2.0
+
+
+def test_spatial_range_with_cloud_style_float_xyz():
+    """Venue snapshots set float x/y/z on fixtures; floor sweeps use X/Y only."""
+    from parrot.fixtures.base import FixtureBase
+
+    fixtures = []
+    for i in range(5):
+        f = FixtureBase(100 + i * 10, f"pulse-fixture-{i}", 3)
+        f.x = 412.875 + float(i) * 15.25
+        f.y = -220.125 + float(i) * 9.5
+        f.z = float(i) * 2.25
+        fixtures.append(f)
+
+    args = InterpreterArgs(50, True, 0, 100)
+    down = SpatialDownwardsPulse(fixtures, args)
+    assert down._calculate_spatial_range()
+    assert len(down.valid_fixtures) == 5
+
+    wide = SpatialCenterOutwardsPulse(fixtures, args)
+    assert wide._calculate_spatial_range()
+    assert len(wide.valid_fixtures) == 5
+
+
+def test_hard_spatial_aliases_use_same_floor_math():
+    from parrot.fixtures.base import FixtureBase
+
+    fixtures = []
+    for i in range(4):
+        f = FixtureBase(200 + i, f"h{i}", 3)
+        f.x = float(i * 40)
+        f.y = float(i * 25)
+        f.z = 3.0
+        fixtures.append(f)
+    args = InterpreterArgs(50, True, 0, 100)
+
+    hd = HardSpatialPulse(fixtures, args)
+    assert hd.interpreter._calculate_spatial_range()
+
+    hc = HardSpatialCenterOutPulse(fixtures, args)
+    assert hc.interpreter._calculate_spatial_range()
