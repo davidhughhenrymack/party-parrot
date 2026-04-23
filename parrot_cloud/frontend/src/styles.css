@@ -701,6 +701,19 @@ label {
   color: #8c8c8c;
 }
 
+.dense-selection-dmx-panel {
+  padding-top: 8px;
+}
+
+.dense-selection-dmx-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #c9d1d9;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
 /* Section dividers edge-to-edge; horizontal padding lives on each panel */
 .dense-sidebar .panel {
   background: transparent;

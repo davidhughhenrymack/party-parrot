@@ -752,7 +752,7 @@ export default function DenseVenueEditorPage({ venueId }) {
       if (selectedFixtureIds.length > 1) {
         return `${selectedFixtureIds.length} fixtures`;
       }
-      return selectedFixture ? selectedFixture.name || selectedFixture.fixture_type : 'Fixture';
+      return selectedFixture ? selectedFixture.fixture_type : 'Fixture';
     }
     if (selectedKind === 'video_wall') {
       return 'Video screen';
@@ -2422,27 +2422,33 @@ export default function DenseVenueEditorPage({ venueId }) {
                 </div>
               </div>
               {selectedKind === 'fixture' && selectedFixtureIds.length === 1 && selectedFixture ? (
-                <>
-                  <label className="dense-selection-name-field">
-                    <span className="dense-selection-field-label">Name</span>
-                    <DenseFixtureNameInput
-                      fixture={selectedFixture}
-                      onCommit={async (nextName) => {
-                        const snap = await apiPatchFixture(venueSnapshot.summary.id, selectedFixture.id, {
-                          name: nextName,
-                        });
-                        setVenueSnapshot(snap);
-                      }}
-                    />
-                  </label>
-                  <p className="dense-selection-meta">
-                    {selectedFixture.fixture_type}
-                    {' · '}
-                    {`${selectedFixture.universe}:${selectedFixture.address}`}
-                  </p>
-                </>
+                <label className="dense-selection-name-field">
+                  <span className="dense-selection-field-label">Name</span>
+                  <DenseFixtureNameInput
+                    fixture={selectedFixture}
+                    onCommit={async (nextName) => {
+                      const snap = await apiPatchFixture(venueSnapshot.summary.id, selectedFixture.id, {
+                        name: nextName,
+                      });
+                      setVenueSnapshot(snap);
+                    }}
+                  />
+                </label>
               ) : null}
             </div>
+
+            {selectedKind === 'fixture' && selectedFixtureIds.length === 1 && selectedFixture ? (
+              <div className="panel dense-panel dense-selection-dmx-panel">
+                <div className="dense-section-header">
+                  <h3>DMX patch</h3>
+                </div>
+                <p className="dense-selection-dmx-line">
+                  {selectedFixture.fixture_type}
+                  {' · '}
+                  {`${selectedFixture.universe}:${selectedFixture.address}`}
+                </p>
+              </div>
+            ) : null}
 
             <div className="panel dense-panel">
               <div className="dense-section-header">
