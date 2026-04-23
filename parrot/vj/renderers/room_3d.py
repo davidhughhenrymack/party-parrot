@@ -175,6 +175,9 @@ class Room3DRenderer:
             **self._build_default_scene_layout(),
             **scene_layout,
         }
+        if self.show_floor:
+            self._release_floor_geometry()
+            self._setup_floor_geometry()
 
     def get_scene_object(self, kind: str) -> dict[str, float | tuple[float, float, float]]:
         return dict(self.scene_layout.get(kind, {}))
@@ -453,9 +456,28 @@ class Room3DRenderer:
             print(f"Warning: Could not load DJ texture: {e}")
             self._dj_texture = None
 
+    def _release_floor_geometry(self) -> None:
+        """Release floor + grid GPU buffers (used when rebuilding after layout changes)."""
+        if not self.show_floor:
+            return
+        for attr in (
+            "floor_vbo",
+            "floor_normal_vbo",
+            "floor_color_vbo",
+            "floor_vao",
+            "grid_vbo",
+            "grid_normal_vbo",
+            "grid_color_vbo",
+            "grid_vao",
+        ):
+            buf = getattr(self, attr, None)
+            if buf is not None:
+                buf.release()
+                setattr(self, attr, None)
+
     def _setup_floor_geometry(self):
-        """Create floor grid geometry with normals"""
-        # Floor quad vertices (dark)
+        """Create floor deck (top + underside) and grid geometry with normals."""
+        # Floor quad vertices (dark) — top surface at y=0 (stage deck)
         back_left = (-5.0, 0.0, -5.0)
         back_right = (5.0, 0.0, -5.0)
         front_left = (-5.0, 0.0, 5.0)
@@ -476,6 +498,29 @@ class Room3DRenderer:
 
         floor_normals = [floor_normal] * 6
         floor_colors_rgb = [self.floor_color] * 6
+
+        # Underside at y = -thickness so back-face culling still writes depth when the
+        # camera is below the deck (same footprint + winding as the top, normals down).
+        thickness = float(self.scene_layout["floor"].get("thickness", 0.08))
+        if thickness > 1e-6:
+            ty = -thickness
+            bt_bl = (-5.0, ty, -5.0)
+            bt_br = (5.0, ty, -5.0)
+            bt_fl = (-5.0, ty, 5.0)
+            bt_fr = (5.0, ty, 5.0)
+            bottom_normal = (0.0, -1.0, 0.0)
+            floor_vertices.extend(
+                [
+                    bt_bl,
+                    bt_br,
+                    bt_fl,
+                    bt_br,
+                    bt_fr,
+                    bt_fl,
+                ]
+            )
+            floor_normals.extend([bottom_normal] * 6)
+            floor_colors_rgb.extend([self.floor_color] * 6)
 
         # Convert to flat arrays with RGBA
         floor_verts_flat = []
@@ -2385,21 +2430,5 @@ class Room3DRenderer:
             vao.release()
         self._cone_cache.clear()
 
-        # Only cleanup floor resources if they were created
         if self.show_floor:
-            if hasattr(self, "floor_vbo"):
-                self.floor_vbo.release()
-            if hasattr(self, "floor_normal_vbo"):
-                self.floor_normal_vbo.release()
-            if hasattr(self, "floor_color_vbo"):
-                self.floor_color_vbo.release()
-            if hasattr(self, "floor_vao"):
-                self.floor_vao.release()
-            if hasattr(self, "grid_vbo"):
-                self.grid_vbo.release()
-            if hasattr(self, "grid_normal_vbo"):
-                self.grid_normal_vbo.release()
-            if hasattr(self, "grid_color_vbo"):
-                self.grid_color_vbo.release()
-            if hasattr(self, "grid_vao"):
-                self.grid_vao.release()
+            self._release_floor_geometry()
