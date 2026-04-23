@@ -10,7 +10,6 @@ https://github.com/user-attachments/assets/72ff89d6-7b12-43f1-8451-35beed2953bf
 
 https://github.com/user-attachments/assets/0b33b6e6-dcdd-497a-94ae-4c70f65ac35f
 
----
 
 ## Features
 
@@ -21,9 +20,9 @@ https://github.com/user-attachments/assets/0b33b6e6-dcdd-497a-94ae-4c70f65ac35f
 - Phone/laptop remote so you can change mode and intensity from anywhere on the Wi‑Fi.
 - Optional VJ window for a projector or TV with video and beat-synced effects.
 
----
 
-## About DMX
+
+## Talks to lights over DMX
 
 DMX is the standard way lighting fixtures take instructions. A **universe** is a stream of up to **512 channels**, and each channel is a single value from 0–255 — dimmer, red, pan, gobo, and so on. Every fixture is given a **start address** and reads its slice of the stream from there. Party Parrot writes that stream 30+ times a second based on what it hears.
 
@@ -69,13 +68,31 @@ In the venue editor:
 - Connect your **USB DMX** interface and DMX cable to your first fixture.
 - Press play. Lights go.
 
-### Fullscreen visuals
 
-```bash
-just launch --vj-fullscreen
-```
 
-Drag the VJ window onto a projector or TV for on-screen visuals.
+## Keyboard shortcuts
+
+With the Party Parrot window focused:
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Step lighting mode up (towards rave) / down (towards blackout) |
+| `←` / `→` | Previous / next VJ mode |
+| `Space` | Generate a fresh scene (new lighting + visuals) |
+| `B` | Blackout toggle — kills lights and visuals, press again to restore |
+| `N` | Shift the lighting scene only |
+| `O` | Shift the VJ scene only |
+| `S` | Shift the color scheme |
+| `\` | Toggle fixture/debug view |
+
+Hold-to-trigger moments (release to stop):
+
+| Key | Effect |
+|-----|--------|
+| `1` / `I` | Rainbow |
+| `2` / `G` | Big blinder |
+| `3` / `H` | Strobe |
+| `4` / `J` | Chase |
 
 
 
