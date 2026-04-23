@@ -274,7 +274,7 @@ class NoiseEffect(PostProcessEffectBase):
         # Special responses to specific Frame signals
         strobe_value = frame[FrameSignal.strobe]
         big_blinder_value = frame[FrameSignal.big_blinder]
-        pulse_value = frame[FrameSignal.pulse]
+        chase_value = frame[FrameSignal.chase]
 
         # Calculate time offset for animation
         current_time = time.time()
@@ -300,10 +300,10 @@ class NoiseEffect(PostProcessEffectBase):
             effective_signal = big_blinder_value
 
         # PULSE: Sharp noise bursts
-        elif pulse_value > 0.5:
+        elif chase_value > 0.5:
             # Create burst-like noise during pulse
             noise_intensity = min(1.0, self.noise_intensity * 1.5)
-            effective_signal = pulse_value
+            effective_signal = chase_value
             # Discrete noise seed changes
             pulse_seed = int(current_time * 5.0)
             self.noise_seed = (pulse_seed * 0.1) % 1.0

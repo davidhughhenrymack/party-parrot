@@ -109,8 +109,8 @@ class TestConcertStageCameraShake(unittest.TestCase):
                         FrameSignal.sustained_low,
                         FrameSignal.sustained_high,
                         FrameSignal.strobe,
-                        FrameSignal.small_blinder,
-                        FrameSignal.pulse,
+                        FrameSignal.rainbow,
+                        FrameSignal.chase,
                     ],
                 )
 

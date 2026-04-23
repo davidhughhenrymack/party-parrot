@@ -321,9 +321,8 @@ class ConcertStage(BaseInterpretationNode[mgl.Context, None, mgl.Framebuffer]):
             head.cloud_group_name = "Sheer lights"
             fixtures.append(head)
 
-        def interpreter_factory(mode: Mode, group: list[MovingHead]):
-            hype = 75 if mode in (Mode.rave, Mode.stroby) else 40
-            args = InterpreterArgs(hype, True, 0, 100)
+        def interpreter_factory(_mode: Mode, group: list[MovingHead]):
+            args = InterpreterArgs(True)
             return create_fixture_interpreter(mode, group, args)
 
         interpreter_node = FixtureInterpreterNode(

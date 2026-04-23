@@ -110,7 +110,7 @@ class RGBShiftEffect(PostProcessEffectBase):
         # Special responses to specific Frame signals
         strobe_value = frame[FrameSignal.strobe]
         big_blinder_value = frame[FrameSignal.big_blinder]
-        pulse_value = frame[FrameSignal.pulse]
+        chase_value = frame[FrameSignal.chase]
 
         # Calculate time offset for animation
         current_time = time.time()
@@ -132,12 +132,12 @@ class RGBShiftEffect(PostProcessEffectBase):
             effective_signal = big_blinder_value
 
         # PULSE: Sharp, instant shifts
-        elif pulse_value > 0.5:
+        elif chase_value > 0.5:
             # Create sharp, non-smooth shifts during pulse
             pulse_time = int(current_time * 10.0)  # Discrete time steps
             time_offset = float(pulse_time)
             shift_strength = self.shift_strength * 2.0
-            effective_signal = pulse_value
+            effective_signal = chase_value
 
         # Set uniforms
         self.shader_program["shift_strength"] = shift_strength

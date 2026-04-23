@@ -22,7 +22,6 @@ class TestModes(unittest.TestCase):
             FrameSignal.freq_low: 0.8,  # High value to trigger beat detection
             FrameSignal.sustained_low: 0.1,
             FrameSignal.sustained_high: 0.8,  # High value to trigger effects
-            FrameSignal.dampen: 0.0,  # Keep dampen signal low to allow light activation
         }
         timeseries = {
             FrameSignal.freq_all.name: [0.8] * 200,
@@ -30,11 +29,9 @@ class TestModes(unittest.TestCase):
             FrameSignal.freq_low.name: [0.8] * 200,
             FrameSignal.sustained_low.name: [0.1] * 200,
             FrameSignal.sustained_high.name: [0.8] * 200,
-            FrameSignal.dampen.name: [0.0]
-            * 200,  # Keep dampen signal low in timeseries
         }
         self.frame = Frame(frame_values, timeseries)
-        self.args = InterpreterArgs(50, True, 0, 100)
+        self.args = InterpreterArgs(True)
 
         # Create a test color scheme
         self.scheme = ColorScheme(

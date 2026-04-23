@@ -52,7 +52,7 @@ class TestBeatHueShiftGL:
             saturation_boost=1.2,
             transition_speed=8.0,
             random_hues=False,
-            signal=FrameSignal.pulse,
+            signal=FrameSignal.chase,
         )
 
         red_input_node.enter(gl_context)
@@ -60,7 +60,7 @@ class TestBeatHueShiftGL:
 
         try:
             # Create frame with low pulse signal (no beat)
-            frame = Frame({FrameSignal.pulse: 0.2})
+            frame = Frame({FrameSignal.chase: 0.2})
 
             result_framebuffer = hue_shift_node.render(frame, color_scheme, gl_context)
 
@@ -99,7 +99,7 @@ class TestBeatHueShiftGL:
             saturation_boost=1.5,
             transition_speed=12.0,
             random_hues=False,
-            signal=FrameSignal.pulse,
+            signal=FrameSignal.chase,
         )
 
         red_input_node.enter(gl_context)
@@ -107,14 +107,14 @@ class TestBeatHueShiftGL:
 
         try:
             # First, establish low baseline
-            low_frame = Frame({FrameSignal.pulse: 0.2})
+            low_frame = Frame({FrameSignal.chase: 0.2})
             hue_shift_node.render(low_frame, color_scheme, gl_context)
 
             # Wait a bit to ensure beat detection timing works
             time.sleep(0.05)
 
             # Then trigger a beat with high pulse signal
-            beat_frame = Frame({FrameSignal.pulse: 0.9})
+            beat_frame = Frame({FrameSignal.chase: 0.9})
             result_framebuffer = hue_shift_node.render(
                 beat_frame, color_scheme, gl_context
             )
@@ -154,7 +154,7 @@ class TestBeatHueShiftGL:
             saturation_boost=1.3,
             transition_speed=10.0,
             random_hues=False,
-            signal=FrameSignal.pulse,
+            signal=FrameSignal.chase,
         )
 
         red_input_node.enter(gl_context)
@@ -165,7 +165,7 @@ class TestBeatHueShiftGL:
             rgb_values = []
 
             for i, signal_level in enumerate(signal_levels):
-                frame = Frame({FrameSignal.pulse: signal_level})
+                frame = Frame({FrameSignal.chase: signal_level})
 
                 # Add small delay between frames for beat detection
                 if i > 0:
@@ -230,7 +230,7 @@ class TestBeatHueShiftGL:
                 input_node,
                 hue_shift_amount=60.0,
                 saturation_boost=1.2,
-                signal=FrameSignal.pulse,
+                signal=FrameSignal.chase,
             )
 
             input_node.enter(gl_context)
@@ -238,7 +238,7 @@ class TestBeatHueShiftGL:
 
             try:
                 # Test with medium signal
-                frame = Frame({FrameSignal.pulse: 0.6})
+                frame = Frame({FrameSignal.chase: 0.6})
 
                 result_framebuffer = hue_shift_node.render(
                     frame, color_scheme, gl_context
@@ -280,13 +280,13 @@ class TestBeatHueShiftGL:
 
         for width, height in sizes:
             red_input = StaticColor(color=(1.0, 0.0, 0.0), width=width, height=height)
-            hue_shift_node = BeatHueShift(red_input, signal=FrameSignal.pulse)
+            hue_shift_node = BeatHueShift(red_input, signal=FrameSignal.chase)
 
             red_input.enter(gl_context)
             hue_shift_node.enter(gl_context)
 
             try:
-                frame = Frame({FrameSignal.pulse: 0.5})
+                frame = Frame({FrameSignal.chase: 0.5})
 
                 result_framebuffer = hue_shift_node.render(
                     frame, color_scheme, gl_context
@@ -320,7 +320,7 @@ class TestBeatHueShiftGL:
             red_input_node,
             hue_shift_amount=60.0,
             random_hues=False,
-            signal=FrameSignal.pulse,
+            signal=FrameSignal.chase,
         )
 
         # Test random mode
@@ -328,7 +328,7 @@ class TestBeatHueShiftGL:
             red_input_node,
             hue_shift_amount=60.0,
             random_hues=True,
-            signal=FrameSignal.pulse,
+            signal=FrameSignal.chase,
         )
 
         red_input_node.enter(gl_context)
@@ -336,7 +336,7 @@ class TestBeatHueShiftGL:
         try:
             # Test sequential mode
             sequential_node.enter(gl_context)
-            seq_frame = Frame({FrameSignal.pulse: 0.8})
+            seq_frame = Frame({FrameSignal.chase: 0.8})
             seq_result = sequential_node.render(seq_frame, color_scheme, gl_context)
 
             seq_pixels = np.frombuffer(seq_result.read(), dtype=np.uint8).reshape(
@@ -346,7 +346,7 @@ class TestBeatHueShiftGL:
 
             # Test random mode
             random_node.enter(gl_context)
-            rand_frame = Frame({FrameSignal.pulse: 0.8})
+            rand_frame = Frame({FrameSignal.chase: 0.8})
             rand_result = random_node.render(rand_frame, color_scheme, gl_context)
 
             rand_pixels = np.frombuffer(rand_result.read(), dtype=np.uint8).reshape(

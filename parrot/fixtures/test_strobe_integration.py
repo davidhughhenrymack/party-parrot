@@ -22,9 +22,8 @@ class TestStrobeIntegrationWithInterpreters(unittest.TestCase):
                 FrameSignal.freq_low: 0.8,
                 FrameSignal.sustained_low: 0.1,
                 FrameSignal.sustained_high: 0.8,
-                FrameSignal.dampen: 0.0,
                 FrameSignal.strobe: 0.9,  # High strobe signal
-                FrameSignal.pulse: 0.5,
+                FrameSignal.chase: 0.5,
             },
             {},
         )

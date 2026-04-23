@@ -94,7 +94,7 @@ class SaturationPulse(PostProcessEffectBase):
         # Special responses to specific Frame signals
         strobe_value = frame[FrameSignal.strobe]
         big_blinder_value = frame[FrameSignal.big_blinder]
-        pulse_value = frame[FrameSignal.pulse]
+        chase_value = frame[FrameSignal.chase]
 
         # Calculate base saturation multiplier
         saturation_multiplier = self.base_saturation + (self.intensity * signal_value)
@@ -117,9 +117,9 @@ class SaturationPulse(PostProcessEffectBase):
             saturation_multiplier = 0.05 + (0.1 * (1.0 - big_blinder_value))
 
         # PULSE: Sharp saturation spikes
-        elif pulse_value > 0.5:
+        elif chase_value > 0.5:
             # Create sharp saturation boost during pulse
-            saturation_multiplier = self.base_saturation + (2.0 * pulse_value)
+            saturation_multiplier = self.base_saturation + (2.0 * chase_value)
 
         # Clamp to reasonable range
         saturation_multiplier = max(0.0, min(2.0, saturation_multiplier))

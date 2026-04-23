@@ -23,38 +23,25 @@ from parrot.utils.colour import Color
 class TestInterpreterArgs:
     def test_interpreter_args_creation(self):
         """Test InterpreterArgs namedtuple creation"""
-        args = InterpreterArgs(hype=50, allow_rainbows=True, min_hype=0, max_hype=100)
-        assert args.hype == 50
-        assert args.allow_rainbows == True
-        assert args.min_hype == 0
-        assert args.max_hype == 100
+        args = InterpreterArgs(allow_rainbows=True)
+        assert args.allow_rainbows is True
 
 
 class TestAcceptableTest:
-    def test_acceptable_test_within_hype_range(self):
-        """Test acceptable_test with hype within range"""
-        args = InterpreterArgs(hype=50, allow_rainbows=True, min_hype=0, max_hype=100)
-        assert acceptable_test(args, 50, False) == True
-        assert acceptable_test(args, 25, False) == True
-        assert acceptable_test(args, 75, False) == True
-
-    def test_acceptable_test_outside_hype_range(self):
-        """Test acceptable_test with hype outside range"""
-        args = InterpreterArgs(hype=50, allow_rainbows=True, min_hype=20, max_hype=80)
-        assert acceptable_test(args, 10, False) == False
-        assert acceptable_test(args, 90, False) == False
+    def test_acceptable_test_non_rainbow_ok(self):
+        args = InterpreterArgs(allow_rainbows=True)
+        assert acceptable_test(args, False) is True
 
     def test_acceptable_test_rainbow_allowed(self):
-        """Test acceptable_test with rainbows allowed"""
-        args = InterpreterArgs(hype=50, allow_rainbows=True, min_hype=0, max_hype=100)
-        assert acceptable_test(args, 50, True) == True
-        assert acceptable_test(args, 50, False) == True
+        """Rainbow interpreters pass when theme allows rainbows."""
+        args = InterpreterArgs(allow_rainbows=True)
+        assert acceptable_test(args, True) is True
 
     def test_acceptable_test_rainbow_not_allowed(self):
-        """Test acceptable_test with rainbows not allowed"""
-        args = InterpreterArgs(hype=50, allow_rainbows=False, min_hype=0, max_hype=100)
-        assert acceptable_test(args, 50, True) == False
-        assert acceptable_test(args, 50, False) == True
+        """Rainbow interpreters are filtered when rainbows are disallowed."""
+        args = InterpreterArgs(allow_rainbows=False)
+        assert acceptable_test(args, True) is False
+        assert acceptable_test(args, False) is True
 
 
 class TestInterpreterBase:
@@ -63,9 +50,7 @@ class TestInterpreterBase:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         # Create test frame
         frame_values = {
@@ -101,11 +86,6 @@ class TestInterpreterBase:
         # Should not raise an error
         interpreter.exit(self.frame, self.scheme)
 
-    def test_get_hype(self):
-        """Test get_hype method"""
-        interpreter = InterpreterBase(self.group, self.args)
-        assert interpreter.get_hype() == InterpreterBase.hype
-
     def test_acceptable_class_method(self):
         """Test acceptable class method"""
         # Default InterpreterBase should be acceptable with any args
@@ -123,16 +103,13 @@ class TestWithArgs:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_with_args_creation(self):
         """Test with_args function creates proper wrapper class"""
 
         # Create a simple base interpreter
         class TestInterpreter(InterpreterBase):
-            hype = 30
             has_rainbow = False
 
             def step(self, frame, scheme):
@@ -141,31 +118,25 @@ class TestWithArgs:
 
         # Wrap it with with_args
         WrappedInterpreter = with_args(
-            "TestWrapper", TestInterpreter, new_hype=60, new_has_rainbow=True
+            "TestWrapper", TestInterpreter, new_has_rainbow=True
         )
 
         wrapped = WrappedInterpreter(self.group, self.args)
         assert wrapped.name == "TestWrapper"
-        assert wrapped.get_hype() == 60
+        assert WrappedInterpreter.acceptable(InterpreterArgs(allow_rainbows=True)) is True
 
     def test_with_args_acceptable(self):
         """Test with_args acceptable method"""
 
         class TestInterpreter(InterpreterBase):
-            hype = 30
             has_rainbow = False
 
         WrappedInterpreter = with_args(
-            "TestWrapper", TestInterpreter, new_hype=60, new_has_rainbow=True
+            "TestWrapper", TestInterpreter, new_has_rainbow=True
         )
 
-        # Should use new values for acceptable test
-        args_no_rainbow = InterpreterArgs(
-            hype=60, allow_rainbows=False, min_hype=0, max_hype=100
-        )
-        assert (
-            WrappedInterpreter.acceptable(args_no_rainbow) == False
-        )  # has_rainbow=True but not allowed
+        args_no_rainbow = InterpreterArgs(allow_rainbows=False)
+        assert WrappedInterpreter.acceptable(args_no_rainbow) is False
 
     def test_with_args_step_delegation(self):
         """Test that with_args properly delegates step calls"""
@@ -190,9 +161,7 @@ class TestNoop:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_noop_step(self):
         """Test that Noop does nothing"""
@@ -212,13 +181,7 @@ class TestColorFg:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_color_fg_hype(self):
-        """Test ColorFg hype level"""
-        assert ColorFg.hype == 30
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_color_fg_step(self):
         """Test ColorFg sets foreground color"""
@@ -247,9 +210,7 @@ class TestColorAlternateBg:
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.fixture3 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2, self.fixture3]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_color_alternate_bg_step(self):
         """Test ColorAlternateBg alternates background colors"""
@@ -279,13 +240,12 @@ class TestColorBg:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_color_bg_step(self):
         """Test ColorBg sets background color"""
-        interpreter = ColorBg(self.group, self.args)
+        with patch("parrot.interpreters.base.random.choice", return_value="bg"):
+            interpreter = ColorBg(self.group, self.args)
         scheme = ColorScheme(
             fg=Color("red"), bg=Color("blue"), bg_contrast=Color("green")
         )
@@ -308,9 +268,7 @@ class TestAnyColor:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
         self.scheme = ColorScheme(
             fg=Color("red"),
             bg=Color("blue"),
@@ -322,7 +280,7 @@ class TestAnyColor:
         assert AnyColor.has_rainbow is False
 
     def test_any_color_acceptable_without_rainbow_args(self):
-        args = InterpreterArgs(hype=35, allow_rainbows=False, min_hype=0, max_hype=100)
+        args = InterpreterArgs(allow_rainbows=False)
         assert AnyColor.acceptable(args) is True
 
     def test_any_color_solid_slots_assigned_at_init(self):
@@ -388,14 +346,11 @@ class TestColorRainbow:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_color_rainbow_properties(self):
-        """Test ColorRainbow has rainbow and correct hype"""
-        assert ColorRainbow.has_rainbow == True
-        assert ColorRainbow.hype == 40
+        """Test ColorRainbow is tagged as rainbow."""
+        assert ColorRainbow.has_rainbow is True
 
     def test_color_rainbow_initialization(self):
         """Test ColorRainbow initialization with custom parameters"""
@@ -460,13 +415,7 @@ class TestFlashBeat:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_flash_beat_hype(self):
-        """Test FlashBeat hype level"""
-        assert FlashBeat.hype == 70
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_flash_beat_initialization(self):
         """Test FlashBeat initialization"""

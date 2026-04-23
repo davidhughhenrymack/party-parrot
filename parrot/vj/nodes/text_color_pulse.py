@@ -25,7 +25,7 @@ class TextColorPulse(PostProcessEffectBase):
         input_node: BaseInterpretationNode,
         intensity: float = 1.0,
         decay_rate: float = 0.95,
-        signal: FrameSignal = FrameSignal.pulse,
+        signal: FrameSignal = FrameSignal.chase,
     ):
         """
         Args:
@@ -51,7 +51,7 @@ class TextColorPulse(PostProcessEffectBase):
         """Configure text color pulse parameters based on the vibe"""
         # Randomly pick a signal from pulse-related Frame signals
         pulse_signals = [
-            FrameSignal.pulse,
+            FrameSignal.chase,
             FrameSignal.freq_low,
             FrameSignal.freq_high,
             FrameSignal.freq_all,

@@ -31,9 +31,6 @@ INTERPRETATION_BLEND_SECONDS = max(
     float(os.environ.get("INTERPRETATION_BLEND_SECONDS", "2.0")), 0.05
 )
 
-HYPE_BUCKETS = [10, 40, 70]
-
-
 def _flatten_runtime_fixtures(top_level) -> list[FixtureBase]:
     """Walk runtime patch entries into a flat list of individual fixtures.
 
@@ -150,24 +147,10 @@ class Director:
             self.fixture_group_names.append(None)
 
     def _default_interpreter_args_for_bucket_index(self, idx: int) -> InterpreterArgs:
-        return InterpreterArgs(
-            HYPE_BUCKETS[idx % len(HYPE_BUCKETS)],
-            self.state.theme.allow_rainbows,
-            0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
-            (100 if not self.state.hype_limiter else min(100, self.state.hype + 30)),
-        )
+        return InterpreterArgs(self.state.theme.allow_rainbows)
 
     def _interpreter_args_for_auto_shift_eviction(self) -> InterpreterArgs:
-        hype_bracket = (
-            0 if not self.state.hype_limiter else max(0, self.state.hype - 30),
-            100 if not self.state.hype_limiter else min(100, self.state.hype + 30),
-        )
-        return InterpreterArgs(
-            self.state.hype,
-            self.state.theme.allow_rainbows,
-            hype_bracket[0],
-            hype_bracket[1],
-        )
+        return InterpreterArgs(self.state.theme.allow_rainbows)
 
     def _start_interpretation_blend(
         self,

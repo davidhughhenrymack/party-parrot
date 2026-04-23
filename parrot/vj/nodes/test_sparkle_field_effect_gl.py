@@ -39,7 +39,7 @@ def test_sparkle_field_renders_and_saves_png(gl_context, color_scheme, tmp_path)
     frame.extend(
         {
             FrameSignal.freq_high: 1.0,
-            FrameSignal.pulse: 0.8,
+            FrameSignal.chase: 0.8,
             FrameSignal.strobe: 0.5,
         }
     )

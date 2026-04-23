@@ -19,18 +19,12 @@ class TestDimmerBinaryLatched:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         # Create test scheme
         self.scheme = ColorScheme(
             fg=Color("red"), bg=Color("blue"), bg_contrast=Color("green")
         )
-
-    def test_dimmer_binary_latched_hype(self):
-        """Test DimmerBinaryLatched hype level"""
-        assert DimmerBinaryLatched.hype == 40
 
     def test_dimmer_binary_latched_initialization(self):
         """Test DimmerBinaryLatched initialization"""
@@ -103,17 +97,11 @@ class TestDimmerFadeLatched:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         self.scheme = ColorScheme(
             fg=Color("red"), bg=Color("blue"), bg_contrast=Color("green")
         )
-
-    def test_dimmer_fade_latched_hype(self):
-        """Test DimmerFadeLatched hype level"""
-        assert DimmerFadeLatched.hype == 40
 
     def test_dimmer_fade_latched_initialization(self):
         """Test DimmerFadeLatched initialization with custom parameters"""
@@ -143,7 +131,12 @@ class TestDimmerFadeLatched:
 
     def test_dimmer_fade_latched_fade_in(self):
         """Test DimmerFadeLatched fades in when triggered"""
-        interpreter = DimmerFadeLatched(self.group, self.args, fade_in_rate=0.5)
+        interpreter = DimmerFadeLatched(
+            self.group,
+            self.args,
+            fade_in_rate=0.5,
+            signal=FrameSignal.sustained_low,
+        )
 
         # Create frame that triggers on condition
         frame_values = {FrameSignal.sustained_low: 0.8}
@@ -166,7 +159,12 @@ class TestDimmerFadeLatched:
 
     def test_dimmer_fade_latched_fade_out(self):
         """Test DimmerFadeLatched fades out when signal drops"""
-        interpreter = DimmerFadeLatched(self.group, self.args, fade_out_rate=0.3)
+        interpreter = DimmerFadeLatched(
+            self.group,
+            self.args,
+            fade_out_rate=0.3,
+            signal=FrameSignal.sustained_low,
+        )
         interpreter.memory = 200  # Set high initial value
         interpreter.switch = False
 
@@ -184,7 +182,12 @@ class TestDimmerFadeLatched:
 
     def test_dimmer_fade_latched_latch_behavior(self):
         """Test DimmerFadeLatched latch behavior"""
-        interpreter = DimmerFadeLatched(self.group, self.args, latch_time=1.0)
+        interpreter = DimmerFadeLatched(
+            self.group,
+            self.args,
+            latch_time=1.0,
+            signal=FrameSignal.sustained_low,
+        )
 
         # First frame: trigger on
         frame_values = {FrameSignal.sustained_low: 0.8}
@@ -210,6 +213,7 @@ class TestDimmerFadeLatched:
         interpreter = DimmerFadeLatched(
             self.group,
             self.args,
+            signal=FrameSignal.sustained_low,
             condition_on=condition_on,
             condition_off=condition_off,
         )
@@ -236,9 +240,7 @@ class TestDimmerFadeLatched4s:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_dimmer_fade_latched_4s_properties(self):
         """Test DimmerFadeLatched4s has correct properties"""
@@ -246,30 +248,16 @@ class TestDimmerFadeLatched4s:
         interpreter_class = DimmerFadeLatched4s
         interpreter = interpreter_class(self.group, self.args)
 
-        # Should have modified hype and rainbow properties
-        assert interpreter.get_hype() == 10
-        # Check that it's actually a DimmerFadeLatched with 4s latch time
         assert interpreter.interpreter.latch_time == 4
 
     def test_dimmer_fade_latched_4s_acceptable(self):
         """Test DimmerFadeLatched4s acceptable method"""
         # Should accept both rainbow and no-rainbow args since new_has_rainbow=False means it doesn't use rainbows
-        args_with_rainbow = InterpreterArgs(
-            hype=10, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-        args_no_rainbow = InterpreterArgs(
-            hype=10, allow_rainbows=False, min_hype=0, max_hype=100
-        )
+        args_with_rainbow = InterpreterArgs(allow_rainbows=True)
+        args_no_rainbow = InterpreterArgs(allow_rainbows=False)
 
-        # Both should be acceptable since the interpreter itself doesn't have rainbows
-        assert DimmerFadeLatched4s.acceptable(args_with_rainbow) == True
-        assert DimmerFadeLatched4s.acceptable(args_no_rainbow) == True
-
-        # Test hype requirements - interpreter has hype=10, so max_hype=5 should make it unacceptable
-        args_wrong_hype = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=5
-        )
-        assert DimmerFadeLatched4s.acceptable(args_wrong_hype) == False
+        assert DimmerFadeLatched4s.acceptable(args_with_rainbow) is True
+        assert DimmerFadeLatched4s.acceptable(args_no_rainbow) is True
 
 
 class TestDimmerFadeLatchedRandom:
@@ -279,17 +267,11 @@ class TestDimmerFadeLatchedRandom:
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.fixture3 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2, self.fixture3]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         self.scheme = ColorScheme(
             fg=Color("red"), bg=Color("blue"), bg_contrast=Color("green")
         )
-
-    def test_dimmer_fade_latched_random_hype(self):
-        """Test DimmerFadeLatchedRandom hype level"""
-        assert DimmerFadeLatchedRandom.hype == 50
 
     def test_dimmer_fade_latched_random_initialization(self):
         """Test DimmerFadeLatchedRandom initialization"""

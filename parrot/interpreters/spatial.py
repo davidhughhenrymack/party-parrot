@@ -39,13 +39,11 @@ def _venue_floor_y(fixture: FixtureBase) -> float | None:
 class SpatialDownwardsPulse(InterpreterBase[T]):
     """Sweep along **venue Y** (floor depth). Despite the name, this is not venue Z (height)."""
 
-    hype = 60
-
     def __init__(
         self,
         group: List[T],
         args: InterpreterArgs,
-        signal=FrameSignal.pulse,
+        signal=FrameSignal.chase,
         trigger_level=0.3,
         edge_hardness=2.0,
         pulse_width=0.3,
@@ -152,7 +150,6 @@ class SpatialDownwardsPulse(InterpreterBase[T]):
 HardSpatialPulse = with_args(
     "HardSpatialPulse",
     SpatialDownwardsPulse,
-    new_hype=90,
     edge_hardness=2.0,
     pulse_width=0.2,
     speed=2.0,
@@ -162,7 +159,6 @@ HardSpatialPulse = with_args(
 SoftSpatialPulse = with_args(
     "SoftSpatialPulse",
     SpatialDownwardsPulse,
-    new_hype=30,
     edge_hardness=1.5,
     pulse_width=0.4,
     speed=0.5,
@@ -172,13 +168,11 @@ SoftSpatialPulse = with_args(
 class SpatialCenterOutwardsPulse(InterpreterBase[T]):
     """Expand pulses along **venue X** from the horizontal center of the rig."""
 
-    hype = 60
-
     def __init__(
         self,
         group: List[T],
         args: InterpreterArgs,
-        signal=FrameSignal.pulse,
+        signal=FrameSignal.chase,
         trigger_level=0.3,
         edge_hardness=2.0,
         pulse_width=0.3,
@@ -289,7 +283,6 @@ class SpatialCenterOutwardsPulse(InterpreterBase[T]):
 HardSpatialCenterOutPulse = with_args(
     "HardSpatialCenterOutPulse",
     SpatialCenterOutwardsPulse,
-    new_hype=90,
     edge_hardness=4.0,
     pulse_width=0.2,
     speed=2.0,

@@ -150,7 +150,7 @@ class DatamoshEffect(PostProcessEffectBase):
         # Special responses to specific Frame signals
         strobe_value = frame[FrameSignal.strobe]
         big_blinder_value = frame[FrameSignal.big_blinder]
-        pulse_value = frame[FrameSignal.pulse]
+        chase_value = frame[FrameSignal.chase]
 
         # Update time-based seed for animation
         current_time = time.time()
@@ -184,11 +184,11 @@ class DatamoshEffect(PostProcessEffectBase):
             effective_signal = big_blinder_value
 
         # PULSE: Sharp glitch spikes
-        elif pulse_value > 0.5:
+        elif chase_value > 0.5:
             # Create sharp, discrete glitch patterns
             displacement_strength = self.displacement_strength * 1.5
             corruption_intensity = min(1.0, self.corruption_intensity * 1.8)
-            effective_signal = pulse_value
+            effective_signal = chase_value
             # Discrete time steps for sharp transitions
             time_seed = float(int(current_time * 8.0))
 

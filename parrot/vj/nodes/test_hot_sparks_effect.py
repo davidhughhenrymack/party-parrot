@@ -28,7 +28,7 @@ class TestHotSparksEffect:
         assert sparks.height == 1080
         assert sparks.num_sparks == 600
         assert sparks.spark_lifetime == 1.0
-        assert sparks.signal == FrameSignal.pulse
+        assert sparks.signal == FrameSignal.chase
         assert sparks.mode_opacity_multiplier == 1.0
 
     def test_initialization_custom_params(self):
@@ -38,7 +38,7 @@ class TestHotSparksEffect:
             height=600,
             num_sparks=60,
             spark_lifetime=2.0,
-            signal=FrameSignal.pulse,
+            signal=FrameSignal.chase,
             opacity_multiplier=0.5,
         )
 
@@ -46,7 +46,7 @@ class TestHotSparksEffect:
         assert sparks.height == 600
         assert sparks.num_sparks == 60
         assert sparks.spark_lifetime == 2.0
-        assert sparks.signal == FrameSignal.pulse
+        assert sparks.signal == FrameSignal.chase
         assert sparks.mode_opacity_multiplier == 0.5
 
     def test_generate_vibe_energetic(self):
@@ -104,7 +104,7 @@ class TestHotSparksEffect:
         sparks.shader_program = Mock()
         sparks.shader_program.__setitem__ = Mock()
 
-        frame = Frame({FrameSignal.small_blinder: 0.8})
+        frame = Frame({FrameSignal.rainbow: 0.8})
         sparks._set_effect_uniforms(frame, self.mock_scheme)
 
         # Check uniforms are set
@@ -125,7 +125,7 @@ class TestHotSparksEffect:
         mock_fg_color.rgb = (1.0, 0.5, 0.25)
         mock_scheme.fg = mock_fg_color
 
-        frame = Frame({FrameSignal.pulse: 0.5})
+        frame = Frame({FrameSignal.chase: 0.5})
         sparks._set_effect_uniforms(frame, mock_scheme)
 
         # Check opacity multiplier is set
@@ -142,13 +142,13 @@ class TestHotSparksEffect:
         sparks.shader_program.__setitem__ = Mock()
 
         # First frame with low signal
-        frame1 = Frame({FrameSignal.pulse: 0.0})
+        frame1 = Frame({FrameSignal.chase: 0.0})
         sparks._set_effect_uniforms(frame1, self.mock_scheme)
         assert not sparks.is_emitting
         emission_time_1 = sparks.emission_start_time
 
         # Second frame with high signal (should start emission)
-        frame2 = Frame({FrameSignal.pulse: 0.8})
+        frame2 = Frame({FrameSignal.chase: 0.8})
         sparks._set_effect_uniforms(frame2, self.mock_scheme)
         assert sparks.is_emitting
         emission_time_2 = sparks.emission_start_time
@@ -165,13 +165,13 @@ class TestHotSparksEffect:
         sparks.shader_program.__setitem__ = Mock()
 
         # Start emission
-        frame1 = Frame({FrameSignal.pulse: 0.8})
+        frame1 = Frame({FrameSignal.chase: 0.8})
         sparks._set_effect_uniforms(frame1, self.mock_scheme)
         emission_time_1 = sparks.emission_start_time
         assert sparks.is_emitting
 
         # Signal stays high (emission should continue with same start time)
-        frame2 = Frame({FrameSignal.pulse: 0.9})
+        frame2 = Frame({FrameSignal.chase: 0.9})
         sparks._set_effect_uniforms(frame2, self.mock_scheme)
         emission_time_2 = sparks.emission_start_time
 

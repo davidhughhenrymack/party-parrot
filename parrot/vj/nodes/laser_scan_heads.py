@@ -360,11 +360,11 @@ class LaserScanHeads(GenerativeEffectBase):
         self.last_update_time = current_time
 
         # Get signal values
-        small_blinder_signal = frame[FrameSignal.small_blinder]
+        rainbow_signal = frame[FrameSignal.rainbow]
         freq_high_signal = frame[FrameSignal.freq_high]
 
         # Set target based on signal
-        self.blinder_target = 1.0 if small_blinder_signal > 0.5 else 0.0
+        self.blinder_target = 1.0 if rainbow_signal > 0.5 else 0.0
 
         # Apply attack/decay to blinder level
         if self.blinder_target > self.blinder_level:

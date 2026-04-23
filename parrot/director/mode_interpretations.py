@@ -97,6 +97,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         Mirrorball: [Dimmer0],
         Par: [
             combo(
+                ColorBg,
                 signal_switch(
                     randomize(
                         SequenceFadeDimmers,
@@ -104,11 +105,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         Twinkle,
                     )
                 ),
-                ColorBg,
             )
         ],
         MovingHead: [
             combo(
+                ColorBg,
                 signal_switch(
                     randomize(
                         SequenceFadeDimmers,
@@ -117,7 +118,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         SequenceFadeDimmers,
                     )
                 ),
-                ColorBg,
                 randomize(
                     with_args("ChillCircles", MoveCircles, multiplier=0.25),
                     with_args("ChillNod", MoveNod, multiplier=0.25),
@@ -137,6 +137,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         Motionstrip: [Dimmer0],
         ChauvetColorBandPiX_36Ch: [
             combo(
+                randomize(ColorBg, ColorAlternateBg),
                 signal_switch(
                     randomize(
                         for_bulbs(SequenceFadeDimmers),
@@ -146,14 +147,13 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         for_bulbs(Twinkle),
                     )
                 ),
-                randomize(ColorBg, ColorAlternateBg),
             )
         ],
         Laser: [signal_switch(Dimmer0)],
         ChauvetRotosphere_28Ch: [
-            combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)
+            combo(ColorBg, signal_switch(randomize(GentlePulse, Twinkle)))
         ],
-        ChauvetDerby: [combo(signal_switch(randomize(GentlePulse, Twinkle)), ColorBg)],
+        ChauvetDerby: [combo(ColorBg, signal_switch(randomize(GentlePulse, Twinkle)))],
     },
     Mode.rave: {
         # Rave sheer movers share one dimmer / color / move / gobo pick across the
@@ -171,6 +171,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 (
                     30,
                     combo(
+                        AnyColor,
                         signal_switch(
                             randomize(
                                 HardSpatialPulse,
@@ -194,7 +195,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                 LightningStab,
                             ),
                         ),
-                        AnyColor,
                         randomize(
                             MoveCircles,
                             MoveNod,
@@ -228,6 +228,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ],
         Par: [
             combo(
+                AnyColor,
                 signal_switch(
                     randomize(
                         StabPulse,
@@ -239,11 +240,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                AnyColor,
             ),
         ],
         MovingHead: [
             combo(
+                AnyColor,
                 signal_switch(
                     randomize(
                         HardSpatialPulse,
@@ -267,7 +268,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                AnyColor,
                 randomize(
                     MoveCircles, MoveNod, MoveFigureEight, MoveFan, MoveSmoothWalk
                 ),
@@ -287,6 +287,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ],
         Motionstrip: [
             combo(
+                for_bulbs(AnyColor),
                 signal_switch(
                     randomize(
                         combo(Dimmer255, for_bulbs(Twinkle)),
@@ -306,12 +307,12 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         combo(LightningStab, for_bulbs(LightningStab)),
                     ),
                 ),
-                for_bulbs(AnyColor),
                 randomize(MoveCircles, MoveFan),
             ),
         ],
         ChauvetColorBandPiX_36Ch: [
             combo(
+                for_bulbs(AnyColor),
                 signal_switch(
                     randomize(
                         combo(Dimmer255, for_bulbs(Twinkle)),
@@ -341,7 +342,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         combo(Dimmer255, for_bulbs(DimmersBeatChase)),
                     ),
                 ),
-                for_bulbs(AnyColor),
             ),
         ],
         Laser: [signal_switch(LaserLatch), StrobeHighSustained],
@@ -385,6 +385,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     (
                         30,
                         combo(
+                            AnyColor,
                             signal_switch(
                                 randomize(
                                     HardSpatialPulse,
@@ -399,7 +400,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                                     LightningStab,
                                 ),
                             ),
-                            AnyColor,
                             randomize(
                                 MoveCircles,
                                 MoveNod,
@@ -439,6 +439,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ],
         Par: [
             combo(
+                AnyColor,
                 signal_switch(
                     randomize(
                         StabPulse,
@@ -450,12 +451,12 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                AnyColor,
                 randomize(StrobeChannelSustained, Noop),
             )
         ],
         MovingHead: [
             combo(
+                AnyColor,
                 signal_switch(
                     randomize(
                         HardSpatialPulse,
@@ -470,7 +471,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         LightningStab,
                     ),
                 ),
-                AnyColor,
                 randomize(
                     MoveCircles, MoveNod, MoveFigureEight, MoveFan, MoveSmoothWalk
                 ),
@@ -491,6 +491,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         ],
         Motionstrip: [
             combo(
+                for_bulbs(AnyColor),
                 signal_switch(
                     randomize(
                         combo(DimmersBeatChase, AllBulbs255),
@@ -509,13 +510,13 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         combo(LightningStab, for_bulbs(LightningStab)),
                     ),
                 ),
-                for_bulbs(AnyColor),
                 randomize(MoveCircles, MoveFan),
                 randomize(StrobeChannelSustained, Noop),
             )
         ],
         ChauvetColorBandPiX_36Ch: [
             combo(
+                for_bulbs(AnyColor),
                 signal_switch(
                     randomize(
                         combo(DimmersBeatChase, AllBulbs255),
@@ -544,7 +545,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         ),
                     ),
                 ),
-                for_bulbs(AnyColor),
                 randomize(StrobeChannelSustained, Noop),
             )
         ],

@@ -1,28 +1,31 @@
 import random
-from typing import Dict, List, Type, TypeVar
+from typing import List, Type, TypeVar
 
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.base import FixtureBase, FixtureWithBulbs
-from parrot.interpreters.base import InterpreterArgs, InterpreterBase
+from parrot.interpreters.base import ColorRainbow, InterpreterArgs, InterpreterBase
 from parrot.interpreters.bulbs import for_bulbs
-from parrot.interpreters.spatial import HardSpatialCenterOutPulse, HardSpatialPulse
+from parrot.interpreters.dimmer import (
+    Dimmer255,
+    GentlePulse,
+    SequenceFadeDimmers,
+    SlowBreath,
+    Twinkle,
+)
 
 
 T = TypeVar("T", bound=FixtureBase)
 
-# Probability constants for each signal
+# Probability constants for each signal (% of fixtures that recruit for this carrier)
 SIGNAL_PROBABILITIES = {
     FrameSignal.strobe: 0.4,
     FrameSignal.big_blinder: 0.7,
-    FrameSignal.small_blinder: 0.3,
-    FrameSignal.pulse: 1.0,
-    FrameSignal.dampen: 0.9,
+    FrameSignal.rainbow: 0.95,
+    FrameSignal.chase: 0.95,
 }
 
-# Decay rates for pulses
 BIG_BLINDER_DECAY = 0.9
-SMALL_BLINDER_DECAY = 0.8
 
 
 def signal_switch(
@@ -38,23 +41,21 @@ def signal_switch(
             super().__init__(group, args)
 
             self.interp_std = interp_std(group, args)
-            self.args = args  # Store args for use in pulse interpreter
+            self.args = args
 
-            # Randomly decide which signals to respond to
             self.responds_to = {
                 signal: random.random() < probability
                 for signal, probability in SIGNAL_PROBABILITIES.items()
             }
 
-            self.pulse_type = random.choice(
-                [HardSpatialPulse, HardSpatialCenterOutPulse]
-            )
-
-            # Initialize state
             self.big_blinder_dimmer = 0.0
-            self.small_blinder_dimmer = 0.0
-            self.pulse_interp = None
-            self.pulse_active = False
+
+            self.chase_active = False
+            self.chase_interp = None
+
+            self.rainbow_active = False
+            self.rainbow_color_interp = None
+            self.rainbow_twinkle_interp = None
 
         def is_enabled(self, signal: FrameSignal) -> bool:
             return self.responds_to.get(signal, False)
@@ -63,16 +64,32 @@ def signal_switch(
             if signal in self.responds_to:
                 self.responds_to[signal] = enabled
 
+        def _make_chase_interp(self):
+            bulb_fixtures = [f for f in self.group if isinstance(f, FixtureWithBulbs)]
+            if bulb_fixtures:
+                return for_bulbs(SequenceFadeDimmers)(self.group, self.args)
+            return SequenceFadeDimmers(self.group, self.args)
+
+        def _make_rainbow_interps(self):
+            bulb_fixtures = [f for f in self.group if isinstance(f, FixtureWithBulbs)]
+            if bulb_fixtures:
+                return (
+                    for_bulbs(ColorRainbow)(self.group, self.args),
+                    for_bulbs(GentlePulse)(self.group, self.args),
+                )
+            return (
+                ColorRainbow(self.group, self.args),
+                GentlePulse(self.group, self.args),
+            )
+
         def step(self, frame: Frame, scheme: ColorScheme):
-            # Always run standard interpreter first
             self.interp_std.step(frame, scheme)
 
-            # Handle strobe signal
             if self.responds_to.get(FrameSignal.strobe, False):
                 if frame[FrameSignal.strobe] > 0.5:
                     for fixture in self.group:
                         fixture.set_strobe(220)
-                        fixture.set_dimmer(225)  # Set dimmer high during strobe
+                        fixture.set_dimmer(225)
                         if isinstance(fixture, FixtureWithBulbs):
                             for bulb in fixture.get_bulbs():
                                 bulb.set_strobe(220)
@@ -81,9 +98,7 @@ def signal_switch(
                 else:
                     for fixture in self.group:
                         fixture.set_strobe(0)
-                        # Don't reset dimmer here as it might be controlled by other signals
 
-            # Handle big blinder
             if self.responds_to.get(FrameSignal.big_blinder, False):
                 if frame[FrameSignal.big_blinder] > 0.5:
                     self.big_blinder_dimmer = 225
@@ -92,67 +107,67 @@ def signal_switch(
                         self.big_blinder_dimmer * BIG_BLINDER_DECAY
                     )
 
-            # Handle small blinder
-            if self.responds_to.get(FrameSignal.small_blinder, False):
-                if frame[FrameSignal.small_blinder] > 0.5:
-                    self.small_blinder_dimmer = 225
-                else:
-                    self.small_blinder_dimmer = (
-                        self.small_blinder_dimmer * SMALL_BLINDER_DECAY
-                    )
-
-            # Handle dampen signal
-            if (
-                self.responds_to.get(FrameSignal.dampen, False)
-                and frame[FrameSignal.dampen] > 0.5
-            ):
-                for fixture in self.group:
-                    fixture.set_dimmer(0)  # Force dimmer to 0 when dampen is high
-                return  # Skip further dimmer processing when dampen is active
-
-            # Set dimmer to the maximum of the blinder values and standard interpreter's dimmer
             for fixture in self.group:
                 current_dimmer = max(
                     self.big_blinder_dimmer,
-                    self.small_blinder_dimmer,
                     fixture.get_dimmer(),
                 )
                 fixture.set_dimmer(current_dimmer)
 
-            # Handle pulse
-            if self.responds_to.get(FrameSignal.pulse, False):
-                if frame[FrameSignal.pulse] > 0.5:
-                    if not self.pulse_active:
-                        self.pulse_active = True
-                        # Create pulse interpreter for bulbs
-                        bulb_fixtures = [
-                            f for f in self.group if isinstance(f, FixtureWithBulbs)
-                        ]
-                        if bulb_fixtures:
-                            self.pulse_interp = for_bulbs(self.pulse_type)(
-                                self.group, self.args
-                            )
-                        else:
-                            self.pulse_interp = self.pulse_type(self.group, self.args)
+            if self.responds_to.get(FrameSignal.rainbow, False):
+                if frame[FrameSignal.rainbow] > 0.5:
+                    if not self.rainbow_active:
+                        self.rainbow_active = True
+                        (
+                            self.rainbow_color_interp,
+                            self.rainbow_twinkle_interp,
+                        ) = self._make_rainbow_interps()
                 else:
-                    if self.pulse_active:
-                        self.pulse_active = False
-                        if self.pulse_interp:
-                            self.pulse_interp.exit(frame, scheme)
-                            self.pulse_interp = None
+                    if self.rainbow_active:
+                        self.rainbow_active = False
+                        if self.rainbow_color_interp:
+                            self.rainbow_color_interp.exit(frame, scheme)
+                            self.rainbow_color_interp = None
+                        if self.rainbow_twinkle_interp:
+                            self.rainbow_twinkle_interp.exit(frame, scheme)
+                            self.rainbow_twinkle_interp = None
 
-                if self.pulse_active and self.pulse_interp:
-                    self.pulse_interp.step(frame, scheme)
+                if (
+                    self.rainbow_active
+                    and self.rainbow_color_interp
+                    and self.rainbow_twinkle_interp
+                ):
+                    self.rainbow_color_interp.step(frame, scheme)
+                    self.rainbow_twinkle_interp.step(frame, scheme)
+
+            if self.responds_to.get(FrameSignal.chase, False):
+                if frame[FrameSignal.chase] > 0.5:
+                    if not self.chase_active:
+                        self.chase_active = True
+                        self.chase_interp = self._make_chase_interp()
+                else:
+                    if self.chase_active:
+                        self.chase_active = False
+                        if self.chase_interp:
+                            self.chase_interp.exit(frame, scheme)
+                            self.chase_interp = None
+
+                if self.chase_active and self.chase_interp:
+                    self.chase_interp.step(frame, scheme)
 
         def exit(self, frame: Frame, scheme: ColorScheme):
             self.interp_std.exit(frame, scheme)
             for fixture in self.group:
                 fixture.set_strobe(0)
 
-            if self.pulse_interp:
-                self.pulse_interp.exit(frame, scheme)
+            if self.chase_interp:
+                self.chase_interp.exit(frame, scheme)
+            if self.rainbow_color_interp:
+                self.rainbow_color_interp.exit(frame, scheme)
+            if self.rainbow_twinkle_interp:
+                self.rainbow_twinkle_interp.exit(frame, scheme)
 
-        def __str__(self) -> str:
+        def __str__(self):
             return str(self.interp_std)
 
     return SignalSwitch

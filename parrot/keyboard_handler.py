@@ -72,7 +72,7 @@ class KeyboardHandler:
 
         # Signal buttons (press and hold)
         elif symbol == pyglet.window.key.I or symbol == pyglet.window.key._1:
-            self.signal_states.set_signal(FrameSignal.small_blinder, 1.0)
+            self.signal_states.set_signal(FrameSignal.rainbow, 1.0)
             return True
         elif symbol == pyglet.window.key.G or symbol == pyglet.window.key._2:
             self.signal_states.set_signal(FrameSignal.big_blinder, 1.0)
@@ -81,7 +81,7 @@ class KeyboardHandler:
             self.signal_states.set_signal(FrameSignal.strobe, 1.0)
             return True
         elif symbol == pyglet.window.key.J or symbol == pyglet.window.key._4:
-            self.signal_states.set_signal(FrameSignal.pulse, 1.0)
+            self.signal_states.set_signal(FrameSignal.chase, 1.0)
             return True
 
         # Blackout toggle
@@ -95,7 +95,7 @@ class KeyboardHandler:
         """Handle key release events"""
         # Signal buttons (release)
         if symbol == pyglet.window.key.I or symbol == pyglet.window.key._1:
-            self.signal_states.set_signal(FrameSignal.small_blinder, 0.0)
+            self.signal_states.set_signal(FrameSignal.rainbow, 0.0)
             return True
         elif symbol == pyglet.window.key.G or symbol == pyglet.window.key._2:
             self.signal_states.set_signal(FrameSignal.big_blinder, 0.0)
@@ -104,7 +104,7 @@ class KeyboardHandler:
             self.signal_states.set_signal(FrameSignal.strobe, 0.0)
             return True
         elif symbol == pyglet.window.key.J or symbol == pyglet.window.key._4:
-            self.signal_states.set_signal(FrameSignal.pulse, 0.0)
+            self.signal_states.set_signal(FrameSignal.chase, 0.0)
             return True
 
         # Lighting mode navigation (C = up towards rave, D = down towards blackout)

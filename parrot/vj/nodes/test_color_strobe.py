@@ -58,13 +58,13 @@ def test_color_strobe_custom_parameters():
         width=800,
         height=600,
         strobe_frequency=12.0,
-        signal=FrameSignal.pulse,
+        signal=FrameSignal.chase,
     )
 
     assert strobe.width == 800
     assert strobe.height == 600
     assert strobe.strobe_frequency == 12.0
-    assert strobe.signal == FrameSignal.pulse
+    assert strobe.signal == FrameSignal.chase
 
 
 def test_color_strobe_gl_setup(gl_context):
@@ -167,7 +167,7 @@ def test_pulse_response(gl_context, color_scheme, frame):
 
     # Mock pulse signal
     frame.__getitem__.side_effect = lambda signal: (
-        0.7 if signal == FrameSignal.pulse else 0.0
+        0.7 if signal == FrameSignal.chase else 0.0
     )
 
     # Render with pulse signal

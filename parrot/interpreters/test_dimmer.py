@@ -29,9 +29,7 @@ class TestDimmer255:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_dimmer255_step(self):
         """Test Dimmer255 sets all fixtures to full brightness"""
@@ -51,9 +49,7 @@ class TestDimmer30:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_dimmer30_step(self):
         """Test Dimmer30 sets all fixtures to 30"""
@@ -73,9 +69,7 @@ class TestDimmer0:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_dimmer0_step(self):
         """Test Dimmer0 turns off all fixtures"""
@@ -96,9 +90,7 @@ class TestDimmerFadeIn:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_dimmer_fade_in_initialization(self):
         """Test DimmerFadeIn initialization"""
@@ -145,13 +137,7 @@ class TestSequenceDimmers:
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.fixture3 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2, self.fixture3]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_sequence_dimmers_hype(self):
-        """Test SequenceDimmers hype level"""
-        assert SequenceDimmers.hype == 30
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_sequence_dimmers_initialization(self):
         """Test SequenceDimmers initialization"""
@@ -191,13 +177,7 @@ class TestSequenceFadeDimmers:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_sequence_fade_dimmers_hype(self):
-        """Test SequenceFadeDimmers hype level"""
-        assert SequenceFadeDimmers.hype == 20
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_sequence_fade_dimmers_initialization(self):
         """Test SequenceFadeDimmers initialization"""
@@ -231,13 +211,7 @@ class TestDimmersBeatChase:
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.fixture3 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2, self.fixture3]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_dimmers_beat_chase_hype(self):
-        """Test DimmersBeatChase hype level"""
-        assert DimmersBeatChase.hype == 75
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_dimmers_beat_chase_initialization(self):
         """Test DimmersBeatChase initialization"""
@@ -294,13 +268,7 @@ class TestGentlePulse:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_gentle_pulse_hype(self):
-        """Test GentlePulse hype level"""
-        assert GentlePulse.hype == 10
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_gentle_pulse_initialization(self):
         """Test GentlePulse initialization"""
@@ -362,13 +330,7 @@ class TestStabPulse:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_stab_pulse_hype(self):
-        """Test StabPulse hype level"""
-        assert StabPulse.hype == 50
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_stab_pulse_faster_decay_than_gentle(self):
         """Test StabPulse decays faster than GentlePulse"""
@@ -405,13 +367,7 @@ class TestLightingStab:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_lighting_stab_hype(self):
-        """Test LightingStab hype level"""
-        assert LightningStab.hype == 60
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_lighting_stab_initialization(self):
         """Test LightingStab initialization"""
@@ -520,13 +476,7 @@ class TestTwinkle:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-    def test_twinkle_hype(self):
-        """Test Twinkle hype level"""
-        assert Twinkle.hype == 5
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_twinkle_initialization(self):
         """Test Twinkle initialization"""
@@ -590,9 +540,12 @@ class TestSlowBreath:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
+
+    def test_slow_breath_acceptable_without_rainbows(self):
+        """SlowBreath is non-rainbow and stays eligible regardless of args."""
+        assert SlowBreath.acceptable(InterpreterArgs(allow_rainbows=False)) is True
+        assert SlowBreath.acceptable(InterpreterArgs(allow_rainbows=True)) is True
 
     def _frame_at(self, t: float, bass: float = 0.0) -> Frame:
         """Build a Frame with ``frame.time = t`` and freq_low = ``bass``."""

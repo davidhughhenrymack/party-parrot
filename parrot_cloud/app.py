@@ -144,8 +144,8 @@ def create_app() -> Flask:
                 "effects": [
                     FrameSignal.strobe.value,
                     FrameSignal.big_blinder.value,
-                    FrameSignal.small_blinder.value,
-                    FrameSignal.pulse.value,
+                    FrameSignal.rainbow.value,
+                    FrameSignal.chase.value,
                 ],
                 "shift_targets": list(SHIFT_TARGETS),
             }

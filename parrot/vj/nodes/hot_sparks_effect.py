@@ -26,7 +26,7 @@ class HotSparksEffect(GenerativeEffectBase):
         width: int = 1920,
         height: int = 1080,
         num_sparks: int = 600,
-        signal: FrameSignal = FrameSignal.pulse,
+        signal: FrameSignal = FrameSignal.chase,
         spark_lifetime: float = 1.0,
         opacity_multiplier: float = 1.0,
     ):

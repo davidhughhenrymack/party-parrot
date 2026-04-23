@@ -58,7 +58,7 @@ class SparkleFieldEffect(GenerativeEffectBase):
             min(
                 1.0,
                 float(frame[FrameSignal.freq_high]) * 0.62
-                + float(frame[FrameSignal.pulse]) * 0.26
+                + float(frame[FrameSignal.chase]) * 0.26
                 + float(frame[FrameSignal.strobe]) * 0.20,
             ),
         )
@@ -80,7 +80,7 @@ class SparkleFieldEffect(GenerativeEffectBase):
             (
                 float(frame[FrameSignal.freq_low]),
                 float(frame[FrameSignal.freq_high]),
-                float(frame[FrameSignal.pulse]),
+                float(frame[FrameSignal.chase]),
                 float(frame[FrameSignal.strobe]),
             ),
         )

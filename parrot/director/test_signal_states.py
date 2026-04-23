@@ -43,8 +43,8 @@ class TestSignalStates(unittest.TestCase):
         for signal in [
             FrameSignal.strobe,
             FrameSignal.big_blinder,
-            FrameSignal.small_blinder,
-            FrameSignal.pulse,
+            FrameSignal.rainbow,
+            FrameSignal.chase,
         ]:
             self.assertEqual(states[signal], 0.0)
 

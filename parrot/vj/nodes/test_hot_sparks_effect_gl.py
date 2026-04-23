@@ -61,7 +61,7 @@ def test_hot_sparks_render_no_signal(gl_context, color_scheme):
     sparks = HotSparksEffect(width=256, height=256)
 
     # Frame with no signal
-    frame = Frame({FrameSignal.small_blinder: 0.0})
+    frame = Frame({FrameSignal.rainbow: 0.0})
 
     # Render
     result = sparks.render(frame, color_scheme, gl_context)
@@ -77,14 +77,14 @@ def test_hot_sparks_render_with_pulse(gl_context, color_scheme):
     sparks = HotSparksEffect(width=256, height=256, num_sparks=20)
 
     # Frame with strong signal to trigger pulse
-    frame = Frame({FrameSignal.small_blinder: 0.9})
+    frame = Frame({FrameSignal.rainbow: 0.9})
 
     # Render first frame (trigger pulse)
     result = sparks.render(frame, color_scheme, gl_context)
     assert result is not None
 
     # Render second frame (sparks should be animating)
-    frame2 = Frame({FrameSignal.small_blinder: 0.8})
+    frame2 = Frame({FrameSignal.rainbow: 0.8})
     result2 = sparks.render(frame2, color_scheme, gl_context)
     assert result2 is not None
 

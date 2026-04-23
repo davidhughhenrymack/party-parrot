@@ -99,9 +99,8 @@ class TestInfiniteZoomEffect:
             FrameSignal.sustained_high,
             FrameSignal.strobe,
             FrameSignal.big_blinder,
-            FrameSignal.small_blinder,
-            FrameSignal.pulse,
-            FrameSignal.dampen,
+            FrameSignal.rainbow,
+            FrameSignal.chase,
         ]
 
     def test_fragment_shader(self):

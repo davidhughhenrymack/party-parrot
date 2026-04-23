@@ -145,7 +145,7 @@ class ScanlinesEffect(PostProcessEffectBase):
         # Special responses to specific Frame signals
         strobe_value = frame[FrameSignal.strobe]
         big_blinder_value = frame[FrameSignal.big_blinder]
-        pulse_value = frame[FrameSignal.pulse]
+        chase_value = frame[FrameSignal.chase]
 
         # Calculate time offset for animation
         current_time = time.time()
@@ -175,12 +175,12 @@ class ScanlinesEffect(PostProcessEffectBase):
             effective_signal = big_blinder_value
 
         # PULSE: Sharp scanline bursts
-        elif pulse_value > 0.5:
+        elif chase_value > 0.5:
             # Create burst-like scanline effects
             scanline_intensity = min(1.0, self.scanline_intensity * 1.3)
             # Discrete roll speed changes
-            roll_speed = self.roll_speed * (1.0 + pulse_value * 2.0)
-            effective_signal = pulse_value
+            roll_speed = self.roll_speed * (1.0 + chase_value * 2.0)
+            effective_signal = chase_value
 
         # Set uniforms
         self.shader_program["scanline_intensity"] = scanline_intensity

@@ -17,7 +17,6 @@ export default function RemoteControlPage() {
     display_mode: 'dmx_heatmap',
     active_venue_id: null,
     manual_fixture_dimmers: {},
-    hype_limiter: false,
     show_waveform: true,
   });
   const [manualFixtures, setManualFixtures] = useState([]);
@@ -296,7 +295,7 @@ export default function RemoteControlPage() {
   );
 }
 
-/** Short tap = legacy pulse (~0.35s server-side); hold = signal stays at 1 until release. */
+/** Short tap = one-shot effect (~0.35s server-side); hold = signal stays at 1 until release. */
 const REMOTE_EFFECT_TAP_MS = 280;
 
 function RemoteEffectButton({ effect, label }) {

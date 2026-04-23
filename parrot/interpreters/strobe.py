@@ -8,8 +8,6 @@ from parrot.interpreters.base import InterpreterBase
 
 @beartype
 class StrobeHighSustained(InterpreterBase[MovingHead]):
-    hype = 90
-
     def step(self, frame, scheme):
         for i in self.group:
             i.set_strobe(220)
@@ -24,8 +22,6 @@ class StrobeHighSustained(InterpreterBase[MovingHead]):
 @beartype
 class StrobeChannelSustained(InterpreterBase[FixtureBase]):
     """Drives only the strobe DMX channel high; leaves dimmer/color to other interpreters."""
-
-    hype = 90
 
     def step(self, frame: Frame, scheme: ColorScheme) -> None:
         for i in self.group:

@@ -35,35 +35,35 @@ class TestKeyboardHandler:
         self.director.generate_all.assert_called_once()
 
     def test_signal_button_press_i(self):
-        """Test that I key sets small_blinder signal on press"""
+        """Test that I key sets rainbow signal on press"""
         result = self.handler.on_key_press(pyglet.window.key.I, 0)
         assert result is True
         self.signal_states.set_signal.assert_called_once_with(
-            FrameSignal.small_blinder, 1.0
+            FrameSignal.rainbow, 1.0
         )
 
     def test_signal_button_release_i(self):
-        """Test that I key clears small_blinder signal on release"""
+        """Test that I key clears rainbow signal on release"""
         result = self.handler.on_key_release(pyglet.window.key.I, 0)
         assert result is True
         self.signal_states.set_signal.assert_called_once_with(
-            FrameSignal.small_blinder, 0.0
+            FrameSignal.rainbow, 0.0
         )
 
     def test_signal_button_press_1(self):
-        """Test that 1 key sets small_blinder signal on press"""
+        """Test that 1 key sets rainbow signal on press"""
         result = self.handler.on_key_press(pyglet.window.key._1, 0)
         assert result is True
         self.signal_states.set_signal.assert_called_once_with(
-            FrameSignal.small_blinder, 1.0
+            FrameSignal.rainbow, 1.0
         )
 
     def test_signal_button_release_1(self):
-        """Test that 1 key clears small_blinder signal on release"""
+        """Test that 1 key clears rainbow signal on release"""
         result = self.handler.on_key_release(pyglet.window.key._1, 0)
         assert result is True
         self.signal_states.set_signal.assert_called_once_with(
-            FrameSignal.small_blinder, 0.0
+            FrameSignal.rainbow, 0.0
         )
 
     def test_signal_button_press_2(self):
@@ -95,16 +95,16 @@ class TestKeyboardHandler:
         self.signal_states.set_signal.assert_called_once_with(FrameSignal.strobe, 0.0)
 
     def test_signal_button_press_4(self):
-        """Test that 4 key sets pulse signal on press"""
+        """Test that 4 key sets chase signal on press"""
         result = self.handler.on_key_press(pyglet.window.key._4, 0)
         assert result is True
-        self.signal_states.set_signal.assert_called_once_with(FrameSignal.pulse, 1.0)
+        self.signal_states.set_signal.assert_called_once_with(FrameSignal.chase, 1.0)
 
     def test_signal_button_release_4(self):
-        """Test that 4 key clears pulse signal on release"""
+        """Test that 4 key clears chase signal on release"""
         result = self.handler.on_key_release(pyglet.window.key._4, 0)
         assert result is True
-        self.signal_states.set_signal.assert_called_once_with(FrameSignal.pulse, 0.0)
+        self.signal_states.set_signal.assert_called_once_with(FrameSignal.chase, 0.0)
 
     def test_mode_navigate_up(self):
         """Test that C key navigates up lighting modes (towards rave)"""

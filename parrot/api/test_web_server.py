@@ -178,14 +178,14 @@ class TestWebServer:
 
         response = self.client.post(
             "/api/effect",
-            json={"effect": "pulse", "value": 0},
+            json={"effect": "chase", "value": 0},
             content_type="application/json",
         )
         assert response.status_code == 200
 
         data = json.loads(response.data)
         assert data["success"] is True
-        mock_state.set_effect_thread_safe.assert_called_once_with("pulse", value=0.0)
+        mock_state.set_effect_thread_safe.assert_called_once_with("chase", value=0.0)
 
     def test_set_effect_exception(self):
         """Test POST /api/effect when set_effect_thread_safe raises exception."""

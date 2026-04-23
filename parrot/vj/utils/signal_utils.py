@@ -27,8 +27,8 @@ def get_random_frame_signal() -> FrameSignal:
         FrameSignal.sustained_high,
         FrameSignal.strobe,
         FrameSignal.big_blinder,
-        FrameSignal.small_blinder,
-        FrameSignal.pulse,
+        FrameSignal.rainbow,
+        FrameSignal.chase,
     ]
     weights = [
         3,  # freq_all
@@ -38,7 +38,7 @@ def get_random_frame_signal() -> FrameSignal:
         2,  # sustained_high
         1,  # strobe
         1,  # big_blinder
-        1,  # small_blinder
-        1,  # pulse
+        1,  # rainbow
+        1,  # chase
     ]
     return random.choices(available_signals, weights=weights, k=1)[0]

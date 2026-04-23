@@ -24,7 +24,7 @@ class TestSpatialDownwardsPulse:
             fixture.set_dimmer = MagicMock()
             self.fixtures.append(fixture)
 
-        self.args = InterpreterArgs(50, True, 0, 100)
+        self.args = InterpreterArgs(True)
 
         # Create a test frame with varying signal values
         self.frame = MagicMock(spec=Frame)
@@ -35,10 +35,6 @@ class TestSpatialDownwardsPulse:
         }.get(signal, 0.0)
 
         self.scheme = MagicMock()
-
-    def test_spatial_downwards_pulse_hype(self):
-        """Test SpatialDownwardsPulse hype level"""
-        assert SpatialDownwardsPulse.hype == 60
 
     def test_spatial_downwards_pulse_initialization(self):
         """Test SpatialDownwardsPulse initialization with custom parameters"""
@@ -175,7 +171,7 @@ class TestHardSpatialPulse:
         self.fixtures = [MagicMock(spec=FixtureBase) for _ in range(3)]
         for i, fixture in enumerate(self.fixtures):
             fixture.y = i * 5
-        self.args = InterpreterArgs(50, True, 0, 100)
+        self.args = InterpreterArgs(True)
 
     def test_hard_spatial_pulse_properties(self):
         """Test HardSpatialPulse has correct properties"""
@@ -183,8 +179,6 @@ class TestHardSpatialPulse:
         interpreter_class = HardSpatialPulse
         interpreter = interpreter_class(self.fixtures, self.args)
 
-        # Should have modified hype and parameters
-        assert interpreter.get_hype() == 90
         assert interpreter.interpreter.edge_hardness == 2.0
         assert interpreter.interpreter.pulse_width == 0.2
         assert interpreter.interpreter.speed == 2.0
@@ -196,7 +190,7 @@ class TestSoftSpatialPulse:
         self.fixtures = [MagicMock(spec=FixtureBase) for _ in range(3)]
         for i, fixture in enumerate(self.fixtures):
             fixture.y = i * 5
-        self.args = InterpreterArgs(50, True, 0, 100)
+        self.args = InterpreterArgs(True)
 
     def test_soft_spatial_pulse_properties(self):
         """Test SoftSpatialPulse has correct properties"""
@@ -204,8 +198,6 @@ class TestSoftSpatialPulse:
         interpreter_class = SoftSpatialPulse
         interpreter = interpreter_class(self.fixtures, self.args)
 
-        # Should have modified hype and parameters
-        assert interpreter.get_hype() == 30
         assert interpreter.interpreter.edge_hardness == 1.5
         assert interpreter.interpreter.pulse_width == 0.4
         assert interpreter.interpreter.speed == 0.5
@@ -221,7 +213,7 @@ class TestSpatialCenterOutwardsPulse:
             f.y = 0
             f.set_dimmer = MagicMock()
             self.fixtures.append(f)
-        self.args = InterpreterArgs(50, True, 0, 100)
+        self.args = InterpreterArgs(True)
         self.frame = MagicMock(spec=Frame)
         self.frame.time = 0
         self.frame.__getitem__.side_effect = lambda signal: {
@@ -258,7 +250,6 @@ class TestSpatialCenterOutwardsPulse:
     def test_hard_center_out_wrapper(self):
         cls = HardSpatialCenterOutPulse
         interp = cls(self.fixtures, self.args)
-        assert interp.get_hype() == 90
         assert interp.interpreter.edge_hardness == 4.0
         assert interp.interpreter.pulse_width == 0.2
         assert interp.interpreter.speed == 2.0
@@ -276,7 +267,7 @@ def test_spatial_range_with_cloud_style_float_xyz():
         f.z = float(i) * 2.25
         fixtures.append(f)
 
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
     down = SpatialDownwardsPulse(fixtures, args)
     assert down._calculate_spatial_range()
     assert len(down.valid_fixtures) == 5
@@ -296,7 +287,7 @@ def test_hard_spatial_aliases_use_same_floor_math():
         f.y = float(i * 25)
         f.z = 3.0
         fixtures.append(f)
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
 
     hd = HardSpatialPulse(fixtures, args)
     assert hd.interpreter._calculate_spatial_range()

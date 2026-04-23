@@ -72,8 +72,6 @@ class DimmerFadeInLinearSeconds(InterpreterBase[T]):
 
 @beartype
 class SequenceDimmers(InterpreterBase[T]):
-    hype = 30
-
     def __init__(self, group: list[T], args: InterpreterArgs, dimmer=255, wait_time=1):
         super().__init__(group, args)
         self.dimmer = dimmer
@@ -90,8 +88,6 @@ class SequenceDimmers(InterpreterBase[T]):
 
 @beartype
 class SequenceFadeDimmers(InterpreterBase[T]):
-    hype = 20
-
     def __init__(self, group: list[T], args: InterpreterArgs, wait_time=3):
         super().__init__(group, args)
         self.wait_time = wait_time
@@ -110,8 +106,6 @@ class SequenceFadeDimmers(InterpreterBase[T]):
 
 @beartype
 class DimmersBeatChase(InterpreterBase[T]):
-    hype = 75
-
     def __init__(self, group: list[T], args: InterpreterArgs):
         super().__init__(group, args)
         self.signal = random.choice([FrameSignal.freq_high, FrameSignal.freq_low])
@@ -147,8 +141,6 @@ class SlowBreath(InterpreterBase[T]):
     phase offset so the group doesn't pulse in lockstep. Intended for dreamy modes
     where ``GentlePulse`` still feels too snappy.
     """
-
-    hype = 0
 
     def __init__(
         self,
@@ -186,8 +178,6 @@ class SlowBreath(InterpreterBase[T]):
 
 @beartype
 class GentlePulse(InterpreterBase[T]):
-    hype = 10
-
     def __init__(
         self,
         group: list[T],
@@ -219,8 +209,6 @@ class GentlePulse(InterpreterBase[T]):
 
 @beartype
 class StabPulse(InterpreterBase[T]):
-    hype = 50
-
     def __init__(
         self,
         group: list[T],
@@ -252,8 +240,6 @@ class StabPulse(InterpreterBase[T]):
 
 @beartype
 class LightningStab(InterpreterBase[T]):
-    hype = 60
-
     def __init__(
         self,
         group: list[T],
@@ -311,8 +297,6 @@ class LightningStab(InterpreterBase[T]):
 
 @beartype
 class Twinkle(InterpreterBase[T]):
-    hype = 5
-
     def __init__(self, group: list[T], args: InterpreterArgs):
         super().__init__(group, args)
         self.memory = [0] * len(self.group)

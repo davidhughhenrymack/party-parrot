@@ -19,9 +19,7 @@ class TestState:
         state = State()
 
         assert state.mode == Mode.chill  # Default mode
-        assert state.hype == 30
         assert state.theme == themes[0]
-        assert state.hype_limiter is False
         assert state.show_waveform is True
         assert state.editor_display_mode == EditorDisplayMode.DMX_HEATMAP
         assert state.show_fixture_mode is False
@@ -59,17 +57,6 @@ class TestState:
 
         assert state.mode == Mode.chill
 
-    def test_set_hype(self):
-        """Test setting hype value triggers events."""
-        state = State()
-        mock_handler = Mock()
-        state.events.on_hype_change += mock_handler
-
-        state.set_hype(75.0)
-
-        assert state.hype == 75.0
-        mock_handler.assert_called_once_with(75.0)
-
     def test_set_theme(self):
         """Test setting theme triggers events."""
         state = State()
@@ -81,17 +68,6 @@ class TestState:
 
         assert state.theme == new_theme
         mock_handler.assert_called_once_with(new_theme)
-
-    def test_set_hype_limiter(self):
-        """Test setting hype limiter triggers events."""
-        state = State()
-        mock_handler = Mock()
-        state.events.on_hype_limiter_change += mock_handler
-
-        state.set_hype_limiter(True)
-
-        assert state.hype_limiter is True
-        mock_handler.assert_called_once_with(True)
 
     def test_set_show_waveform(self):
         """Test setting show waveform triggers events."""

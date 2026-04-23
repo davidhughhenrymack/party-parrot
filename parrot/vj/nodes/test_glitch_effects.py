@@ -260,7 +260,7 @@ class TestBeatHueShift:
         assert effect.saturation_boost == 1.2
         assert effect.transition_speed == 8.0
         assert effect.random_hues == True
-        assert effect.signal == FrameSignal.pulse
+        assert effect.signal == FrameSignal.chase
 
     def test_initialization_custom(self):
         """Test BeatHueShift initialization with custom parameters"""
@@ -372,7 +372,7 @@ class TestGlitchEffectsIntegration:
             ScanlinesEffect(input_node, signal=FrameSignal.freq_high),
             PixelateEffect(input_node, signal=FrameSignal.sustained_low),
             NoiseEffect(input_node, signal=FrameSignal.sustained_high),
-            BeatHueShift(input_node, signal=FrameSignal.pulse),
+            BeatHueShift(input_node, signal=FrameSignal.chase),
         ]
 
         expected_signals = [
@@ -381,7 +381,7 @@ class TestGlitchEffectsIntegration:
             FrameSignal.freq_high,
             FrameSignal.sustained_low,
             FrameSignal.sustained_high,
-            FrameSignal.pulse,
+            FrameSignal.chase,
         ]
 
         for effect, expected_signal in zip(effects, expected_signals):
@@ -409,7 +409,7 @@ class TestGlitchEffectsIntegration:
             call(effect.signal),  # Original signal
             call(FrameSignal.strobe),  # Special signal responses
             call(FrameSignal.big_blinder),
-            call(FrameSignal.pulse),
+            call(FrameSignal.chase),
         ]
         frame.__getitem__.assert_has_calls(expected_calls, any_order=True)
 

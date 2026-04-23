@@ -13,8 +13,6 @@ from parrot.fixtures.base import FixtureBase
 
 @beartype
 class SlowDecay(InterpreterBase[FixtureBase]):
-    hype = 20
-
     def __init__(
         self,
         group,
@@ -40,12 +38,11 @@ class SlowDecay(InterpreterBase[FixtureBase]):
 
 
 VerySlowDecay = with_args(
-    "VerySlowDecay", SlowDecay, new_hype=5, new_has_rainbow=False, decay_rate=0.01
+    "VerySlowDecay", SlowDecay, new_has_rainbow=False, decay_rate=0.01
 )
 SlowSustained = with_args(
     "SlowSustained",
     SlowDecay,
-    new_hype=5,
     new_has_rainbow=False,
     decay_rate=0.5,
     signal=FrameSignal.sustained_low,
@@ -54,7 +51,6 @@ SlowSustained = with_args(
 OnWhenNoSustained = with_args(
     "OnWhenNoSustained",
     SlowDecay,
-    new_hype=0,
     new_has_rainbow=False,
     decay_rate=0.01,
     signal=FrameSignal.sustained_low,

@@ -41,7 +41,7 @@ class TestTextColorPulse:
 
         assert effect.intensity == 1.0
         assert effect.decay_rate == 0.95
-        assert effect.signal == FrameSignal.pulse
+        assert effect.signal == FrameSignal.chase
         assert effect.current_pulse_intensity == 0.0
         assert effect.current_color_index == 0
         assert effect.color_change_threshold == 0.7
@@ -75,7 +75,7 @@ class TestTextColorPulse:
         # At least some parameters should change (with high probability)
         # We can't guarantee all will change due to randomness, but signal should be from the expected list
         pulse_signals = [
-            FrameSignal.pulse,
+            FrameSignal.chase,
             FrameSignal.freq_low,
             FrameSignal.freq_high,
             FrameSignal.freq_all,
@@ -94,7 +94,7 @@ class TestTextColorPulse:
 
         # Create frame with strong pulse signal
         frame_values = {signal: 0.0 for signal in FrameSignal}
-        frame_values[FrameSignal.pulse] = 0.8
+        frame_values[FrameSignal.chase] = 0.8
         frame = Frame(frame_values)
 
         # Create color scheme
@@ -116,7 +116,7 @@ class TestTextColorPulse:
 
         # Create frame with weak pulse signal
         frame_values = {signal: 0.0 for signal in FrameSignal}
-        frame_values[FrameSignal.pulse] = 0.1
+        frame_values[FrameSignal.chase] = 0.1
         frame = Frame(frame_values)
 
         # Update pulse state multiple times to see decay
@@ -159,7 +159,7 @@ class TestTextColorPulse:
 
         # Create frame with strong pulse signal (above threshold)
         frame_values = {signal: 0.0 for signal in FrameSignal}
-        frame_values[FrameSignal.pulse] = 0.8
+        frame_values[FrameSignal.chase] = 0.8
         frame = Frame(frame_values)
 
         # Update pulse state
@@ -194,7 +194,7 @@ class TestTextColorPulse:
 
         # Create test frame and scheme
         frame_values = {signal: 0.0 for signal in FrameSignal}
-        frame_values[FrameSignal.pulse] = 0.5
+        frame_values[FrameSignal.chase] = 0.5
         frame = Frame(frame_values)
         scheme = ColorScheme(Color("red"), Color("blue"), Color("green"))
 

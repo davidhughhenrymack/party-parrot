@@ -27,7 +27,6 @@ def _empty_frame(t: float) -> Frame:
         FrameSignal.freq_low: 0.0,
         FrameSignal.sustained_low: 0.0,
         FrameSignal.sustained_high: 0.0,
-        FrameSignal.dampen: 0.0,
     }
     timeseries = {sig.name: [0.0] * 200 for sig in FrameSignal}
     f = Frame(frame_values, timeseries)
@@ -40,7 +39,7 @@ class TestTestModeInterpreters(unittest.TestCase):
         self.scheme = ColorScheme(
             Color("red"), Color("blue"), Color("white")
         )
-        self.args = InterpreterArgs(50, True, 0, 100)
+        self.args = InterpreterArgs(True)
 
     def test_color_cycle_white_then_red_at_boundary(self):
         mh1 = MagicMock(spec=MovingHead)

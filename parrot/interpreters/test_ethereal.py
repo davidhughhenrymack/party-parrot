@@ -49,7 +49,7 @@ def test_mode_uses_group_matchers_for_modes_that_silence_sheer_lights() -> None:
 
 
 def test_ethereal_dsl_fades_mirrorball_and_zeros_unlisted() -> None:
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
     mb = Mirrorball(1)
     par = MagicMock(spec=Par)
     par.cloud_group_name = None
@@ -65,7 +65,7 @@ def test_ethereal_dsl_fades_mirrorball_and_zeros_unlisted() -> None:
 
 
 def test_ethereal_dsl_drives_sheer_moving_heads_and_zeros_others() -> None:
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
     mh = ChauvetSpot160_12Ch(1)
     mh.cloud_group_name = "sheer lights"
     par = MagicMock(spec=MovingHead)
@@ -82,7 +82,7 @@ def test_ethereal_dsl_turns_prism_on_for_sheer_moving_heads() -> None:
         ChauvetRogueHybridRH1_19Ch,
     )
 
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
     mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
@@ -101,7 +101,7 @@ def test_ethereal_dsl_applies_rotating_gobo_6_to_hybrid_beams() -> None:
         ChauvetRogueHybridRH1_19Ch,
     )
 
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
     mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
@@ -123,7 +123,7 @@ def test_ethereal_dsl_applies_focus_big_to_hybrid_beams() -> None:
         ChauvetRogueHybridRH1_19Ch,
     )
 
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
     mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
@@ -140,7 +140,7 @@ def test_ethereal_dsl_uses_slow_breath_within_configured_range() -> None:
         ChauvetRogueHybridRH1_19Ch,
     )
 
-    args = InterpreterArgs(50, True, 0, 100)
+    args = InterpreterArgs(True)
     mh = ChauvetRogueHybridRH1_19Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
@@ -155,3 +155,25 @@ def test_ethereal_dsl_uses_slow_breath_within_configured_range() -> None:
         assert 0.25 * 255 - 1.0 <= dim <= 0.85 * 255 + 1.0
     # Dimmer must actually move (not stuck) across a full breathing period.
     assert max(seen) - min(seen) > 5.0
+
+
+def test_ethereal_sheer_slow_breath_moves_dimmer() -> None:
+    """Ethereal sheer group still picks SlowBreath breathing (not collapsed to Dimmer0)."""
+    from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
+        ChauvetRogueHybridRH1_19Ch,
+    )
+
+    args = InterpreterArgs(True)
+    mh = ChauvetRogueHybridRH1_19Ch(1)
+    mh.cloud_group_name = "sheer lights"
+    interp = get_interpreter(Mode.ethereal, [mh], args)
+    scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
+    frame = _frame()
+    dims: list[float] = []
+    for t in (0.0, 3.5, 7.0, 10.5, 14.0):
+        frame.time = t
+        interp.step(frame, scheme)
+        dims.append(mh.get_dimmer())
+    assert max(dims) - min(dims) > 5.0
+    for dim in dims:
+        assert 0.25 * 255 - 1.0 <= dim <= 0.85 * 255 + 1.0

@@ -66,7 +66,6 @@ def test_state_applies_runtime_bootstrap():
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",
-            hype_limiter=False,
             show_waveform=True,
         ),
     )
@@ -134,7 +133,6 @@ def test_room_layout_uses_snapshot_floor_when_scene_objects_empty():
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",
-            hype_limiter=False,
             show_waveform=True,
         ),
     )
@@ -206,7 +204,6 @@ def test_room_layout_uses_snapshot_floor_not_stale_scene_object_footprint():
             theme_name="Rave",
             active_venue_id="venue-1",
             display_mode="dmx_heatmap",
-            hype_limiter=False,
             show_waveform=True,
         ),
     )

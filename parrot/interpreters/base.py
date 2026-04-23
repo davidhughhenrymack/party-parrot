@@ -11,26 +11,19 @@ from colorama import Fore, Style
 
 T = TypeVar("T", bound=FixtureBase)
 
-InterpreterArgs = namedtuple(
-    "InterpreterArgs", ["hype", "allow_rainbows", "min_hype", "max_hype"]
-)
+InterpreterArgs = namedtuple("InterpreterArgs", ["allow_rainbows"])
 
 
 @beartype
-def acceptable_test(args: InterpreterArgs, hype, has_rainbow):
+def acceptable_test(args: InterpreterArgs, has_rainbow: bool) -> bool:
     if has_rainbow and not args.allow_rainbows:
         return False
-
-    if hype < args.min_hype or hype > args.max_hype:
-        return False
-
     return True
 
 
 @beartype
 class InterpreterBase(Generic[T]):
     has_rainbow = False
-    hype = 0
 
     def __init__(self, group: list[T], args: InterpreterArgs):
         self.group = group
@@ -42,19 +35,16 @@ class InterpreterBase(Generic[T]):
     def exit(self, frame: Frame, scheme: ColorScheme):
         pass
 
-    def get_hype(self):
-        return self.__class__.hype
-
     @classmethod
     def acceptable(cls, args: InterpreterArgs) -> bool:
-        return acceptable_test(args, cls.hype, cls.has_rainbow)
+        return acceptable_test(args, cls.has_rainbow)
 
     def __str__(self) -> str:
         return f"{Fore.YELLOW}{self.__class__.__name__}{Style.RESET_ALL}"
 
 
 @beartype
-def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
+def with_args(name, interpreter, new_has_rainbow=None, **kwargs):
 
     class WithArgs(InterpreterBase):
         def __init__(self, group, args):
@@ -64,8 +54,8 @@ def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
 
         @classmethod
         def acceptable(cls, args):
-            if new_hype is not None and new_has_rainbow is not None:
-                return acceptable_test(args, new_hype, new_has_rainbow)
+            if new_has_rainbow is not None:
+                return acceptable_test(args, new_has_rainbow)
             return interpreter.acceptable(args)
 
         def step(self, frame, scheme):
@@ -73,9 +63,6 @@ def with_args(name, interpreter, new_hype=None, new_has_rainbow=None, **kwargs):
 
         def exit(self, frame, scheme):
             self.interpreter.exit(frame, scheme)
-
-        def get_hype(self):
-            return new_hype if new_hype is not None else self.interpreter.get_hype()
 
         def __str__(self):
             n = str(self.interpreter) if self.name is None else self.name
@@ -92,8 +79,6 @@ class Noop(InterpreterBase):
 
 @beartype
 class ColorFg(InterpreterBase):
-    hype = 30
-
     def __str__(self):
         return f"🎨{Fore.MAGENTA}Fg{Style.RESET_ALL}"
 
@@ -139,8 +124,6 @@ class AnyColor(InterpreterBase):
     and interpreter args allow rainbows (otherwise the per-fixture solid slots
     are used). Rainbow output is delegated to :class:`ColorRainbow`.
     """
-
-    hype = 35
 
     _SOLID_SLOTS: tuple[str, str, str] = ("fg", "bg", "bg_contrast")
 
@@ -191,7 +174,6 @@ class AnyColor(InterpreterBase):
 @beartype
 class ColorRainbow(InterpreterBase):
     has_rainbow = True
-    hype = 40
 
     def __str__(self):
         return f"🌈{Fore.MAGENTA}Rainbow{Style.RESET_ALL}"
@@ -214,8 +196,6 @@ class ColorRainbow(InterpreterBase):
 
 @beartype
 class FlashBeat(InterpreterBase):
-    hype = 70
-
     def __str__(self):
         return f"⚡{Fore.MAGENTA}FlashBeat{Style.RESET_ALL}"
 

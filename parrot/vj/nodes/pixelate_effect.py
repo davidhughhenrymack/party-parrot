@@ -150,7 +150,7 @@ class PixelateEffect(PostProcessEffectBase):
         # Special responses to specific Frame signals
         strobe_value = frame[FrameSignal.strobe]
         big_blinder_value = frame[FrameSignal.big_blinder]
-        pulse_value = frame[FrameSignal.pulse]
+        chase_value = frame[FrameSignal.chase]
 
         # Modify parameters based on special signals
         pixel_size = self.pixel_size
@@ -177,11 +177,11 @@ class PixelateEffect(PostProcessEffectBase):
             effective_signal = big_blinder_value
 
         # PULSE: Sharp pixel bursts
-        elif pulse_value > 0.5:
+        elif chase_value > 0.5:
             # Create sharp pixel size changes during pulse
-            pixel_size = self.pixel_size * (1.0 + pulse_value * 1.5)
-            color_depth = max(4.0, self.color_depth * (1.0 - pulse_value * 0.5))
-            effective_signal = pulse_value
+            pixel_size = self.pixel_size * (1.0 + chase_value * 1.5)
+            color_depth = max(4.0, self.color_depth * (1.0 - chase_value * 0.5))
+            effective_signal = chase_value
 
         # Set uniforms
         self.shader_program["pixel_size"] = pixel_size

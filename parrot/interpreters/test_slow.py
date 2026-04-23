@@ -19,18 +19,12 @@ class TestSlowDecay:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         # Create test scheme
         self.scheme = ColorScheme(
             fg=Color("red"), bg=Color("blue"), bg_contrast=Color("green")
         )
-
-    def test_slow_decay_hype(self):
-        """Test SlowDecay hype level"""
-        assert SlowDecay.hype == 20
 
     def test_slow_decay_initialization(self):
         """Test SlowDecay initialization with custom parameters"""
@@ -140,9 +134,7 @@ class TestVerySlowDecay:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_very_slow_decay_properties(self):
         """Test VerySlowDecay has correct properties"""
@@ -150,19 +142,13 @@ class TestVerySlowDecay:
         interpreter_class = VerySlowDecay
         interpreter = interpreter_class(self.group, self.args)
 
-        # Should have modified hype and decay rate
-        assert interpreter.get_hype() == 5
         assert interpreter.interpreter.decay_rate == 0.01
 
     def test_very_slow_decay_acceptable(self):
         """Test VerySlowDecay acceptable method"""
         # Should not allow rainbows
-        args_with_rainbow = InterpreterArgs(
-            hype=5, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-        args_no_rainbow = InterpreterArgs(
-            hype=5, allow_rainbows=False, min_hype=0, max_hype=100
-        )
+        args_with_rainbow = InterpreterArgs(allow_rainbows=True)
+        args_no_rainbow = InterpreterArgs(allow_rainbows=False)
 
         # Both should be acceptable since the interpreter itself doesn't have rainbows
         assert VerySlowDecay.acceptable(args_with_rainbow) == True
@@ -174,9 +160,7 @@ class TestSlowSustained:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         # Create test scheme
         self.scheme = ColorScheme(
@@ -189,8 +173,6 @@ class TestSlowSustained:
         interpreter_class = SlowSustained
         interpreter = interpreter_class(self.group, self.args)
 
-        # Should have modified hype, decay rate, and signal
-        assert interpreter.get_hype() == 5
         assert interpreter.interpreter.decay_rate == 0.5
         assert interpreter.interpreter.signal == FrameSignal.sustained_low
 
@@ -215,9 +197,7 @@ class TestOnWhenNoSustained:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         # Create test scheme
         self.scheme = ColorScheme(
@@ -230,8 +210,6 @@ class TestOnWhenNoSustained:
         interpreter_class = OnWhenNoSustained
         interpreter = interpreter_class(self.group, self.args)
 
-        # Should have modified hype, decay rate, signal, and signal function
-        assert interpreter.get_hype() == 0
         assert interpreter.interpreter.decay_rate == 0.01
         assert interpreter.interpreter.signal == FrameSignal.sustained_low
 
@@ -282,14 +260,6 @@ class TestOnWhenNoSustained:
         self.fixture.set_dimmer.assert_called_with(expected_dimmer)
 
     def test_on_when_no_sustained_acceptable(self):
-        """Test OnWhenNoSustained acceptable method"""
-        # Should accept any hype since it has hype=0
-        args_low_hype = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=10, max_hype=100
-        )
-        args_zero_hype = InterpreterArgs(
-            hype=0, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-        assert OnWhenNoSustained.acceptable(args_low_hype) == False  # 0 < 10
-        assert OnWhenNoSustained.acceptable(args_zero_hype) == True  # 0 >= 0
+        """Non-rainbow with_args wrapper is always eligible regardless of args."""
+        assert OnWhenNoSustained.acceptable(InterpreterArgs(allow_rainbows=True)) is True
+        assert OnWhenNoSustained.acceptable(InterpreterArgs(allow_rainbows=False)) is True

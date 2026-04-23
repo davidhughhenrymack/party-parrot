@@ -28,9 +28,7 @@ class TestMoveInterpreters:
         self.scheme = MagicMock()
 
         # Create interpreter args
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
     def test_move_circles(self):
         """Test MoveCircles interpreter"""

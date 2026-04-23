@@ -49,8 +49,6 @@ class PanLatched(InterpreterBase[FixtureBase]):
 
 
 class MotionstripSlowRespond(InterpreterBase[Motionstrip38]):
-    hype = 30
-
     def __init__(
         self,
         group: List[Motionstrip38],

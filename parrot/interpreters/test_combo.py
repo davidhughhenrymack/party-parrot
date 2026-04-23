@@ -14,9 +14,7 @@ class TestCombo:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         # Create test frame
         frame_values = {signal: 0.0 for signal in FrameSignal}
@@ -107,9 +105,7 @@ class TestComboFunction:
         """Setup for each test method"""
         self.fixture = MagicMock(spec=FixtureBase)
         self.group = [self.fixture]
-        self.args = InterpreterArgs(
-            hype=50, allow_rainbows=True, min_hype=0, max_hype=100
-        )
+        self.args = InterpreterArgs(allow_rainbows=True)
 
         # Create test frame
         frame_values = {signal: 0.0 for signal in FrameSignal}
@@ -124,7 +120,6 @@ class TestComboFunction:
         """Test combo function creates proper wrapper class"""
 
         class TestInterpreter1(InterpreterBase):
-            hype = 20
             has_rainbow = False
 
             def step(self, frame, scheme):
@@ -132,7 +127,6 @@ class TestComboFunction:
                     fixture.set_dimmer(150)
 
         class TestInterpreter2(InterpreterBase):
-            hype = 30
             has_rainbow = True
 
             def step(self, frame, scheme):
@@ -145,38 +139,18 @@ class TestComboFunction:
         assert len(combo_instance.interpreters) == 2
 
     def test_combo_function_acceptable(self):
-        """Test combo function acceptable method"""
+        """Combo is acceptable only when every child passes (rainbow args included)."""
 
         class TestInterpreter1(InterpreterBase):
-            hype = 20
             has_rainbow = False
 
-            @classmethod
-            def acceptable(cls, args):
-                return args.hype >= 15
-
         class TestInterpreter2(InterpreterBase):
-            hype = 80
             has_rainbow = True
-
-            @classmethod
-            def acceptable(cls, args):
-                return args.hype >= 75
 
         ComboClass = combo(TestInterpreter1, TestInterpreter2)
 
-        # Should be acceptable only if ALL interpreters are acceptable
-        args_low = InterpreterArgs(
-            hype=20, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-        args_high = InterpreterArgs(
-            hype=80, allow_rainbows=True, min_hype=0, max_hype=100
-        )
-
-        assert (
-            ComboClass.acceptable(args_low) == False
-        )  # TestInterpreter2 not acceptable
-        assert ComboClass.acceptable(args_high) == True  # Both acceptable
+        assert ComboClass.acceptable(InterpreterArgs(allow_rainbows=False)) is False
+        assert ComboClass.acceptable(InterpreterArgs(allow_rainbows=True)) is True
 
     def test_combo_function_step(self):
         """Test combo function step delegation"""
@@ -227,33 +201,6 @@ class TestComboFunction:
         # Both interpreters should have exit called
         assert combo_instance.interpreters[0].exit_called == True
         assert combo_instance.interpreters[1].exit_called == True
-
-    def test_combo_function_get_hype(self):
-        """Test combo function get_hype returns maximum hype"""
-
-        class TestInterpreter1(InterpreterBase):
-            hype = 30
-
-            def get_hype(self):
-                return 30
-
-        class TestInterpreter2(InterpreterBase):
-            hype = 60
-
-            def get_hype(self):
-                return 60
-
-        class TestInterpreter3(InterpreterBase):
-            hype = 45
-
-            def get_hype(self):
-                return 45
-
-        ComboClass = combo(TestInterpreter1, TestInterpreter2, TestInterpreter3)
-        combo_instance = ComboClass(self.group, self.args)
-
-        # Should return the maximum hype
-        assert combo_instance.get_hype() == 60
 
     def test_combo_function_str_representation(self):
         """Test combo function string representation"""

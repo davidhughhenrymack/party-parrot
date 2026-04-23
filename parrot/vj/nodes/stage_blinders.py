@@ -16,7 +16,7 @@ class StageBlinders(GenerativeEffectBase):
     """
     Stage blinder lights effect that emulates the bright white blinder lights
     at rock concerts. Creates a line of white circles with blur across the bottom
-    of the screen. Responds to big_blinder and small_blinder signals with
+    of the screen. Responds to big_blinder and rainbow signals with
     attack and decay fade in/out behavior.
     """
 
@@ -47,9 +47,9 @@ class StageBlinders(GenerativeEffectBase):
 
         # Track blinder state
         self.big_blinder_level = 0.0
-        self.small_blinder_level = 0.0
+        self.rainbow_level = 0.0
         self.big_blinder_target = 0.0
-        self.small_blinder_target = 0.0
+        self.rainbow_target = 0.0
         self.last_update_time = time.time()
 
     def generate(self, vibe: Vibe):
@@ -74,7 +74,7 @@ class StageBlinders(GenerativeEffectBase):
         
         uniform int num_blinders;
         uniform float big_blinder_level;
-        uniform float small_blinder_level;
+        uniform float rainbow_level;
         uniform vec2 resolution;
         uniform float mode_opacity_multiplier;
         uniform vec3 blinder_color;
@@ -143,8 +143,8 @@ class StageBlinders(GenerativeEffectBase):
                 }
             }
             
-            // Render small blinders (smaller but with MORE blur/glow like big blinders)
-            if (small_blinder_level > 0.01) {
+            // Rainbow carrier: secondary row (smaller circles, softer than big blinder)
+            if (rainbow_level > 0.01) {
                 // Small blinder circle size (60% of big blinder size)
                 float circle_radius = 0.036;
                 float medium_blur_radius = 0.024;
@@ -170,7 +170,7 @@ class StageBlinders(GenerativeEffectBase):
                     float intensity = core + glow;
                     
                     // Use blinder_color (70% brightness of big blinders)
-                    final_color += blinder_color * intensity * small_blinder_level * 0.7;
+                    final_color += blinder_color * intensity * rainbow_level * 0.7;
                 }
             }
             
@@ -195,30 +195,33 @@ class StageBlinders(GenerativeEffectBase):
         dt = current_time - self.last_update_time
         self.last_update_time = current_time
 
-        # Get signal values - only big blinder now (small blinder is for laser heads)
         big_blinder_signal = frame[FrameSignal.big_blinder]
+        rainbow_signal = frame[FrameSignal.rainbow]
 
-        # Set targets based on signals
         self.big_blinder_target = 1.0 if big_blinder_signal > 0.5 else 0.0
-        # Small blinder no longer used - set to 0
-        self.small_blinder_target = 0.0
+        self.rainbow_target = 1.0 if rainbow_signal > 0.5 else 0.0
 
-        # Apply attack/decay to big blinder
         if self.big_blinder_target > self.big_blinder_level:
-            # Attack: fade in
             attack_rate = 1.0 / self.attack_time if self.attack_time > 0 else 999.0
             self.big_blinder_level = min(
                 self.big_blinder_level + attack_rate * dt, self.big_blinder_target
             )
         else:
-            # Decay: fade out
             decay_rate = 1.0 / self.decay_time if self.decay_time > 0 else 999.0
             self.big_blinder_level = max(
                 self.big_blinder_level - decay_rate * dt, self.big_blinder_target
             )
 
-        # Small blinder is always off (used by laser heads now)
-        self.small_blinder_level = 0.0
+        if self.rainbow_target > self.rainbow_level:
+            attack_rate = 1.0 / self.attack_time if self.attack_time > 0 else 999.0
+            self.rainbow_level = min(
+                self.rainbow_level + attack_rate * dt, self.rainbow_target
+            )
+        else:
+            decay_rate = 1.0 / self.decay_time if self.decay_time > 0 else 999.0
+            self.rainbow_level = max(
+                self.rainbow_level - decay_rate * dt, self.rainbow_target
+            )
 
         # Determine blinder color based on use_color_scheme flag
         if self.use_color_scheme:
@@ -229,7 +232,7 @@ class StageBlinders(GenerativeEffectBase):
         # Set uniforms
         self.shader_program["num_blinders"] = self.num_blinders
         self.shader_program["big_blinder_level"] = self.big_blinder_level
-        self.shader_program["small_blinder_level"] = self.small_blinder_level
+        self.shader_program["rainbow_level"] = self.rainbow_level
         self.shader_program["resolution"] = (float(self.width), float(self.height))
         self.shader_program["mode_opacity_multiplier"] = self.mode_opacity_multiplier
         self.shader_program["blinder_color"] = blinder_color

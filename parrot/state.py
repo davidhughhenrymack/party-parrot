@@ -24,11 +24,9 @@ class State:
         # Default values
         self._mode = Mode.chill  # Default mode
         self._vj_mode = VJMode.prom_dmack  # Default VJ mode
-        self._hype = 30
         self._theme = themes[0]
         self._venue = venues.dmack
         self._manual_fixture_dimmers: dict[str, float] = {}
-        self._hype_limiter = False  # Start with hype limiter OFF
         self._show_waveform = True  # New property for waveform visibility
         self._editor_display_mode = EditorDisplayMode.DMX_HEATMAP
         self._available_venues = []
@@ -91,7 +89,7 @@ class State:
         """Drive a FrameSignal from the remote / websocket.
 
         * ``value is None`` — one-shot pulse (1.0 for ~0.35s), same as a quick tap
-          when the mobile UI sends the legacy pulse request.
+          on any effect button in the remote UI.
         * ``value is 1.0`` or ``0.0`` — explicit hold / release (no timer). Used
           when the remote holds a button: high until ``value=0``.
         """
@@ -125,17 +123,6 @@ class State:
     def set_vj_mode_thread_safe(self, value: VJMode):
         """Set the VJ mode (web server runs on main thread; no extra threading needed)."""
         self.set_vj_mode(value)
-
-    @property
-    def hype(self):
-        return self._hype
-
-    def set_hype(self, value: float):
-        if self._hype == value:
-            return
-
-        self._hype = value
-        self.events.on_hype_change(self._hype)
 
     @property
     def theme(self):
@@ -256,11 +243,6 @@ class State:
             if self._manual_fixture_dimmers != next_mfd:
                 self._manual_fixture_dimmers = next_mfd
 
-            next_hype_limiter = bool(control_state.hype_limiter)
-            if self._hype_limiter != next_hype_limiter:
-                self._hype_limiter = next_hype_limiter
-                self.events.on_hype_limiter_change(self._hype_limiter)
-
             next_show_waveform = bool(control_state.show_waveform)
             if self._show_waveform != next_show_waveform:
                 self._show_waveform = next_show_waveform
@@ -325,18 +307,6 @@ class State:
             return
         self._manual_fixture_dimmers = next_map
         self._push_remote_control_state({"manual_fixture_dimmers": applied})
-
-    @property
-    def hype_limiter(self):
-        return self._hype_limiter
-
-    def set_hype_limiter(self, value):
-        if self._hype_limiter == value:
-            return
-
-        self._hype_limiter = value
-        self.events.on_hype_limiter_change(self._hype_limiter)
-        self._push_remote_control_state({"hype_limiter": bool(value)})
 
     @property
     def show_waveform(self):

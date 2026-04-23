@@ -21,10 +21,10 @@ def test_laser_scan_heads_render():
     laser_heads.enter(ctx)
     laser_heads.generate(Vibe(mode=Mode.rave))
 
-    # Create test frame with small_blinder signal active
+    # Create test frame with rainbow signal active
     frame = Frame(
         {
-            FrameSignal.small_blinder: 1.0,
+            FrameSignal.rainbow: 1.0,
             FrameSignal.freq_high: 0.5,
         }
     )
@@ -66,10 +66,10 @@ def test_laser_scan_heads_rotation():
     laser_heads.enter(ctx)
     laser_heads.generate(Vibe(mode=Mode.rave))
 
-    # Create test frame with small_blinder signal active
+    # Create test frame with rainbow signal active
     frame = Frame(
         {
-            FrameSignal.small_blinder: 1.0,
+            FrameSignal.rainbow: 1.0,
             FrameSignal.freq_high: 0.5,
         }
     )
@@ -135,17 +135,17 @@ def test_laser_scan_heads_modes():
 
 
 def test_laser_scan_heads_no_strobe():
-    """Test that lasers don't render when small_blinder signal is low"""
+    """Test that lasers don't render when rainbow signal is low"""
     ctx = mgl.create_standalone_context()
 
     laser_heads = LaserScanHeads(width=800, height=600)
     laser_heads.enter(ctx)
     laser_heads.generate(Vibe(mode=Mode.rave))
 
-    # Create test frame with NO small_blinder signal
+    # Create test frame with NO rainbow signal
     frame = Frame(
         {
-            FrameSignal.small_blinder: 0.0,
+            FrameSignal.rainbow: 0.0,
             FrameSignal.freq_high: 0.0,
         }
     )
@@ -182,7 +182,7 @@ def test_laser_scan_heads_attack_decay():
     # Create test frame with signal off
     frame = Frame(
         {
-            FrameSignal.small_blinder: 0.0,
+            FrameSignal.rainbow: 0.0,
             FrameSignal.freq_high: 0.0,
         }
     )
@@ -200,7 +200,7 @@ def test_laser_scan_heads_attack_decay():
     # Turn on signal
     frame_on = Frame(
         {
-            FrameSignal.small_blinder: 1.0,
+            FrameSignal.rainbow: 1.0,
             FrameSignal.freq_high: 0.0,
         }
     )
@@ -221,7 +221,7 @@ def test_laser_scan_heads_attack_decay():
     # Turn off signal
     frame_off = Frame(
         {
-            FrameSignal.small_blinder: 0.0,
+            FrameSignal.rainbow: 0.0,
             FrameSignal.freq_high: 0.0,
         }
     )

@@ -193,7 +193,7 @@ def test_spatial_interpreter_can_access_positions(temp_dir_fixture):
 
     if fixtures:
         # Create spatial interpreter
-        args = InterpreterArgs(hype=50, allow_rainbows=False, min_hype=0, max_hype=100)
+        args = InterpreterArgs(allow_rainbows=False)
         interpreter = SpatialDownwardsPulse(fixtures, args)
 
         # Try to calculate spatial range (this accesses fixture.y)

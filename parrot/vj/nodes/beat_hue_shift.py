@@ -27,7 +27,7 @@ class BeatHueShift(PostProcessEffectBase):
         saturation_boost: float = 1.2,
         transition_speed: float = 8.0,
         random_hues: bool = True,
-        signal: FrameSignal = FrameSignal.pulse,
+        signal: FrameSignal = FrameSignal.chase,
     ):
         """
         Args:
@@ -190,7 +190,7 @@ class BeatHueShift(PostProcessEffectBase):
         # Special responses to specific Frame signals
         strobe_value = frame[FrameSignal.strobe]
         big_blinder_value = frame[FrameSignal.big_blinder]
-        pulse_value = frame[FrameSignal.pulse]
+        chase_value = frame[FrameSignal.chase]
 
         # STROBE: Rapid hue cycling
         if strobe_value > 0.5:
@@ -209,7 +209,7 @@ class BeatHueShift(PostProcessEffectBase):
             self.current_hue = 0.0
 
         # PULSE: Instant hue snap
-        elif pulse_value > 0.5:
+        elif chase_value > 0.5:
             # Instant hue change on strong pulse
             self.current_target_hue = self._get_next_hue()
             self.current_hue = self.current_target_hue
@@ -222,7 +222,7 @@ class BeatHueShift(PostProcessEffectBase):
                 self.current_target_hue = self._get_next_hue()
 
         # Smooth transition between hues (except during special signals)
-        if strobe_value <= 0.5 and big_blinder_value <= 0.5 and pulse_value <= 0.5:
+        if strobe_value <= 0.5 and big_blinder_value <= 0.5 and chase_value <= 0.5:
             current_time = time.time()
             dt = min(
                 current_time - getattr(self, "_last_update_time", current_time),

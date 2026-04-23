@@ -24,7 +24,7 @@ def test_stage_blinders_render():
     # Create test frame with big blinder signal active
     frame = Frame({
         FrameSignal.big_blinder: 1.0,
-        FrameSignal.small_blinder: 0.0,
+        FrameSignal.rainbow: 0.0,
     })
     
     # Create test color scheme
@@ -48,8 +48,8 @@ def test_stage_blinders_render():
     ctx.release()
 
 
-def test_stage_blinders_big_and_small():
-    """Test that both big and small blinders can be rendered together"""
+def test_stage_blinders_big_and_rainbow():
+    """Test that big blinder and rainbow carriers can render together"""
     ctx = mgl.create_standalone_context()
     
     # Create stage blinders effect
@@ -60,7 +60,7 @@ def test_stage_blinders_big_and_small():
     # Create test frame with both signals active
     frame = Frame({
         FrameSignal.big_blinder: 1.0,
-        FrameSignal.small_blinder: 1.0,
+        FrameSignal.rainbow: 1.0,
     })
     
     # Create test color scheme
@@ -101,7 +101,7 @@ def test_stage_blinders_attack_decay():
     # Create test frame with signal off
     frame = Frame({
         FrameSignal.big_blinder: 0.0,
-        FrameSignal.small_blinder: 0.0,
+        FrameSignal.rainbow: 0.0,
     })
     
     scheme = ColorScheme(
@@ -117,7 +117,7 @@ def test_stage_blinders_attack_decay():
     # Turn on signal
     frame_on = Frame({
         FrameSignal.big_blinder: 1.0,
-        FrameSignal.small_blinder: 0.0,
+        FrameSignal.rainbow: 0.0,
     })
     
     # Render a few times to allow attack to happen
@@ -136,7 +136,7 @@ def test_stage_blinders_attack_decay():
     # Turn off signal
     frame_off = Frame({
         FrameSignal.big_blinder: 0.0,
-        FrameSignal.small_blinder: 0.0,
+        FrameSignal.rainbow: 0.0,
     })
     
     # Render to start decay

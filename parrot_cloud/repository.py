@@ -298,8 +298,6 @@ class VenueRepository:
                 for k, v in incoming.items():
                     merged[str(k)] = max(0.0, min(1.0, float(v)))
                 control_state.manual_fixture_dimmers = merged
-            if "hype_limiter" in data:
-                control_state.hype_limiter = bool(data["hype_limiter"])
             if "show_waveform" in data:
                 control_state.show_waveform = bool(data["show_waveform"])
             if "show_fixture_mode" in data:
@@ -819,7 +817,6 @@ class VenueRepository:
             theme_name=control_state.theme_name,
             active_venue_id=control_state.active_venue_id,
             display_mode=self._normalize_display_mode(control_state.display_mode),
-            hype_limiter=control_state.hype_limiter,
             show_waveform=control_state.show_waveform,
             manual_fixture_dimmers=manual_fixture_dimmers,
         )

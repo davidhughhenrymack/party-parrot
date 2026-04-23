@@ -7,8 +7,6 @@ from parrot.utils.lerp import lerp
 
 
 class DimmerBinaryLatched(InterpreterBase):
-    hype = 40
-
     def __init__(
         self,
         group: List[FixtureBase],
@@ -35,8 +33,6 @@ class DimmerBinaryLatched(InterpreterBase):
 
 
 class DimmerFadeLatched(InterpreterBase):
-    hype = 40
-
     def __init__(
         self,
         group,
@@ -78,15 +74,12 @@ class DimmerFadeLatched(InterpreterBase):
 DimmerFadeLatched4s = with_args(
     "DimmerFadeLatched4s",
     DimmerFadeLatched,
-    new_hype=10,
     new_has_rainbow=False,
     latch_time=4,
 )
 
 
 class DimmerFadeLatchedRandom(InterpreterBase):
-    hype = 50
-
     def __init__(
         self,
         group,

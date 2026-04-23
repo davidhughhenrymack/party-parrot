@@ -167,7 +167,6 @@ class TestBloomFilter:
         low_freq_signals = [
             FrameSignal.sustained_low,
             FrameSignal.freq_low,
-            FrameSignal.dampen,
         ]
         assert bloom.signal in low_freq_signals
 
