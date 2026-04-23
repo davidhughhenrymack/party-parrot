@@ -555,6 +555,11 @@ class VenueRepository:
                             key,
                             None if value in (None, "") else normalize_fixture_type_key(str(value)),
                         )
+                    elif key == "name":
+                        if value in (None, ""):
+                            fixture.name = None
+                        else:
+                            fixture.name = str(value).strip() or None
                     else:
                         setattr(
                             fixture,

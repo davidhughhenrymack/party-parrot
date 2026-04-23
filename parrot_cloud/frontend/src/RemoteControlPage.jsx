@@ -89,7 +89,10 @@ export default function RemoteControlPage() {
               .filter((f) => f.is_manual)
               .map((f) => ({
                 id: f.id,
-                name: f.name || f.fixture_type || 'Manual',
+                displayLabel:
+                  typeof f.name === 'string' && f.name.trim() !== ''
+                    ? f.name.trim()
+                    : (f.fixture_type || 'Manual'),
               })),
           );
         }
@@ -116,7 +119,10 @@ export default function RemoteControlPage() {
           .filter((f) => f.is_manual)
           .map((f) => ({
             id: f.id,
-            name: f.name || f.fixture_type || 'Manual',
+            displayLabel:
+              typeof f.name === 'string' && f.name.trim() !== ''
+                ? f.name.trim()
+                : (f.fixture_type || 'Manual'),
           })),
       );
       {
@@ -157,7 +163,7 @@ export default function RemoteControlPage() {
             <div key={fixture.id} className="remote-fader-row">
               <div className="remote-fader-labels">
                 <label className="remote-fader-name" htmlFor={`manual-dim-${fixture.id}`}>
-                  {fixture.name}
+                  {fixture.displayLabel}
                 </label>
                 <div className="remote-fader-value">
                   {manualDimmerPercentFor(mfd, fixture.id)}%

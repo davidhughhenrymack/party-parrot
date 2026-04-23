@@ -483,7 +483,7 @@ function PanTiltRangePanel({ fixtures, onPatch }) {
     panUpper.value === null ? 0 : Math.max(0, panUpper.value - PAN_CENTER_DEG);
 
   return (
-    <div className="floating-transform-panel pan-tilt-range-panel">
+    <div className="panel dense-panel pan-tilt-range-panel">
       <div className="dense-section-header">
         <h3>Pan / Tilt Range</h3>
         {fixtures.length > 1 ? (
@@ -567,6 +567,49 @@ function PanTiltRangePanel({ fixtures, onPatch }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function DenseFixtureNameInput({ fixture, onCommit }) {
+  const [draft, setDraft] = useState(fixture.name ?? '');
+
+  useEffect(() => {
+    setDraft(fixture.name ?? '');
+  }, [fixture.id, fixture.name]);
+
+  async function commitIfChanged() {
+    const trimmed = draft.trim();
+    const nextName = trimmed === '' ? null : trimmed;
+    const prevName = fixture.name ?? null;
+    if (nextName === prevName) {
+      return;
+    }
+    try {
+      await onCommit(nextName);
+    } catch (error) {
+      console.error('Failed to save fixture name:', error);
+      setDraft(fixture.name ?? '');
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      className="dense-fixture-name-input"
+      placeholder={fixture.fixture_type}
+      autoComplete="off"
+      aria-label={`Optional name (${fixture.fixture_type})`}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={() => void commitIfChanged()}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.currentTarget.blur();
+        }
+      }}
+      onMouseDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
+    />
   );
 }
 
@@ -694,6 +737,31 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
     return null;
   }, [selectedKind, venueSnapshot]);
+
+  const selectionInspectorVisible =
+    Boolean(selectedKind) && !(selectedKind === 'fixture' && selectedFixtureIds.length === 0);
+
+  const selectionSidebarTitle = useMemo(() => {
+    if (!selectedKind) {
+      return '';
+    }
+    if (selectedKind === 'fixture') {
+      if (selectedFixtureIds.length === 0) {
+        return '';
+      }
+      if (selectedFixtureIds.length > 1) {
+        return `${selectedFixtureIds.length} fixtures`;
+      }
+      return selectedFixture ? selectedFixture.name || selectedFixture.fixture_type : 'Fixture';
+    }
+    if (selectedKind === 'video_wall') {
+      return 'Video screen';
+    }
+    if (selectedKind === 'dj_booth') {
+      return 'DJ booth';
+    }
+    return '';
+  }, [selectedKind, selectedFixtureIds, selectedFixture]);
 
   const venueSummary = useMemo(
     () => venueSummaries.find((venue) => venue.id === venueId) ?? null,
@@ -920,6 +988,23 @@ export default function DenseVenueEditorPage({ venueId }) {
       sceneControllerRef.current = null;
     };
   }, [venueId]);
+
+  /** Opening/closing the inspector changes the viewport column width without a window `resize` event — resize the WebGL canvas. */
+  useEffect(() => {
+    sceneControllerRef.current?.resize?.();
+  }, [selectionInspectorVisible, sceneControllerEpoch]);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) {
+      return undefined;
+    }
+    const ro = new ResizeObserver(() => {
+      sceneControllerRef.current?.resize?.();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [sceneControllerEpoch]);
 
   useEffect(() => {
     if (!venueSnapshot) {
@@ -1733,9 +1818,67 @@ export default function DenseVenueEditorPage({ venueId }) {
     setVenueSnapshot(snapshot);
   }
 
+  async function apiActivateVenue(targetVenueId) {
+    await fetchJson(`/api/venues/${targetVenueId}/activate`, { method: 'POST' });
+  }
+
+  async function apiPatchVenue(targetVenueId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiPatchVideoWall(targetVenueId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/video-wall`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiPatchSceneObject(targetVenueId, kind, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/scene-objects/${kind}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiAddFixture(targetVenueId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/fixtures`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiPatchFixture(targetVenueId, fixtureId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/fixtures/${fixtureId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiDeleteFixture(targetVenueId, fixtureId) {
+    return fetchJson(`/api/venues/${targetVenueId}/fixtures/${fixtureId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async function apiMagicRepatchFixtures(targetVenueId) {
+    return fetchJson(`/api/venues/${targetVenueId}/fixtures/magic-repatch`, {
+      method: 'POST',
+    });
+  }
+
   return (
     <>
-      <div className="dense-editor-shell">
+      <div
+        className={`dense-editor-shell${selectionInspectorVisible ? ' dense-editor-shell-inspector-open' : ''}`}
+      >
         <aside className="dense-sidebar">
           <div className="panel dense-header-panel">
             <div className="dense-header-top" ref={editorMenuRef}>
@@ -2167,62 +2310,6 @@ export default function DenseVenueEditorPage({ venueId }) {
 
           <div id="viewport" ref={viewportRef} />
 
-          {selectedKind && !(selectedKind === 'fixture' && selectedFixtureIds.length === 0) ? (
-            <div className="floating-transform-stack">
-              <div className="floating-transform-panel">
-                <div className="dense-section-header floating-transform-panel-header">
-                  <h3>{selectedKind === 'fixture' ? 'Fixture Rotation' : selectedKind === 'video_wall' ? 'Video Wall Rotation' : 'DJ Booth Rotation'}</h3>
-                  <div className="floating-transform-panel-actions">
-                    {selectedKind === 'fixture' ? (
-                      <button
-                        type="button"
-                        id="group-selected-fixtures-button"
-                        className="small-button secondary-button"
-                        disabled={!venueSnapshot || selectedFixtureIds.length < 2}
-                        title="Cmd+click to toggle. Shift+click a second row for a range. Group sets FixtureGroup (group_name)."
-                        onClick={() => void handleGroupSelectedFixtures()}
-                      >
-                        Group
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="small-button secondary-button"
-                      title="Clear current selection"
-                      onClick={() => handleSelectionChange(null)}
-                    >
-                      Deselect
-                    </button>
-                  </div>
-                </div>
-                {['x', 'y', 'z'].map((axis) => {
-                  const radians = selectedKind === 'fixture'
-                    ? (selectedFixture?.[`rotation_${axis}`] || 0)
-                    : (selectedSceneObject?.[`rotation_${axis}`] || 0);
-                  return (
-                    <div key={axis} className="rotation-row">
-                      <span className={`rotation-axis rotation-axis-${axis}`}>{axis.toUpperCase()}</span>
-                      <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, -1)}>
-                        -45°
-                      </button>
-                      <span className="rotation-value">{Math.round(radiansToDegrees(radians))}°</span>
-                      <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, 1)}>
-                        +45°
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {selectedKind === 'fixture' && selectedMovingHeadFixtures.length > 0 ? (
-                <PanTiltRangePanel
-                  fixtures={selectedMovingHeadFixtures}
-                  onPatch={handleUpdateFixturePanTiltRange}
-                />
-              ) : null}
-            </div>
-          ) : null}
-
           <div className="floating-bottom-bar">
             <div className="tool-radio-group" role="radiogroup" aria-label="Viewport tool">
               <button
@@ -2305,6 +2392,90 @@ export default function DenseVenueEditorPage({ venueId }) {
             </button>
           </div>
         </main>
+
+        {selectionInspectorVisible ? (
+          <aside className="dense-sidebar dense-sidebar-right" aria-label="Selection properties">
+            <div className="panel dense-header-panel dense-selection-header-panel">
+              <div className="dense-selection-title-row">
+                <h2 className="dense-selection-title">{selectionSidebarTitle}</h2>
+                <div className="dense-selection-header-actions">
+                  {selectedKind === 'fixture' ? (
+                    <button
+                      type="button"
+                      id="group-selected-fixtures-button"
+                      className="small-button secondary-button"
+                      disabled={!venueSnapshot || selectedFixtureIds.length < 2}
+                      title="Cmd+click to toggle. Shift+click a second row for a range. Group sets FixtureGroup (group_name)."
+                      onClick={() => void handleGroupSelectedFixtures()}
+                    >
+                      Group
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="small-button secondary-button"
+                    title="Clear current selection"
+                    onClick={() => handleSelectionChange(null)}
+                  >
+                    Deselect
+                  </button>
+                </div>
+              </div>
+              {selectedKind === 'fixture' && selectedFixtureIds.length === 1 && selectedFixture ? (
+                <>
+                  <label className="dense-selection-name-field">
+                    <span className="dense-selection-field-label">Name</span>
+                    <DenseFixtureNameInput
+                      fixture={selectedFixture}
+                      onCommit={async (nextName) => {
+                        const snap = await apiPatchFixture(venueSnapshot.summary.id, selectedFixture.id, {
+                          name: nextName,
+                        });
+                        setVenueSnapshot(snap);
+                      }}
+                    />
+                  </label>
+                  <p className="dense-selection-meta">
+                    {selectedFixture.fixture_type}
+                    {' · '}
+                    {`${selectedFixture.universe}:${selectedFixture.address}`}
+                  </p>
+                </>
+              ) : null}
+            </div>
+
+            <div className="panel dense-panel">
+              <div className="dense-section-header">
+                <h3>Rotation</h3>
+              </div>
+              {['x', 'y', 'z'].map((axis) => {
+                const radians =
+                  selectedKind === 'fixture'
+                    ? selectedFixture?.[`rotation_${axis}`] || 0
+                    : selectedSceneObject?.[`rotation_${axis}`] || 0;
+                return (
+                  <div key={axis} className="rotation-row">
+                    <span className={`rotation-axis rotation-axis-${axis}`}>{axis.toUpperCase()}</span>
+                    <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, -1)}>
+                      -45°
+                    </button>
+                    <span className="rotation-value">{Math.round(radiansToDegrees(radians))}°</span>
+                    <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, 1)}>
+                      +45°
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedKind === 'fixture' && selectedMovingHeadFixtures.length > 0 ? (
+              <PanTiltRangePanel
+                fixtures={selectedMovingHeadFixtures}
+                onPatch={handleUpdateFixturePanTiltRange}
+              />
+            ) : null}
+          </aside>
+        ) : null}
       </div>
 
       <div
@@ -2499,62 +2670,6 @@ export default function DenseVenueEditorPage({ venueId }) {
       </Modal>
     </>
   );
-
-  async function apiActivateVenue(targetVenueId) {
-    await fetchJson(`/api/venues/${targetVenueId}/activate`, { method: 'POST' });
-  }
-
-  async function apiPatchVenue(targetVenueId, data) {
-    return fetchJson(`/api/venues/${targetVenueId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-  }
-
-  async function apiPatchVideoWall(targetVenueId, data) {
-    return fetchJson(`/api/venues/${targetVenueId}/video-wall`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-  }
-
-  async function apiPatchSceneObject(targetVenueId, kind, data) {
-    return fetchJson(`/api/venues/${targetVenueId}/scene-objects/${kind}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-  }
-
-  async function apiAddFixture(targetVenueId, data) {
-    return fetchJson(`/api/venues/${targetVenueId}/fixtures`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-  }
-
-  async function apiPatchFixture(targetVenueId, fixtureId, data) {
-    return fetchJson(`/api/venues/${targetVenueId}/fixtures/${fixtureId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-  }
-
-  async function apiDeleteFixture(targetVenueId, fixtureId) {
-    return fetchJson(`/api/venues/${targetVenueId}/fixtures/${fixtureId}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async function apiMagicRepatchFixtures(targetVenueId) {
-    return fetchJson(`/api/venues/${targetVenueId}/fixtures/magic-repatch`, {
-      method: 'POST',
-    });
-  }
 }
 
 function Modal({ open, title, onClose, children, showHeaderCloseButton = true }) {

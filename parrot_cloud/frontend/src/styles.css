@@ -614,9 +614,13 @@ label {
 
 .dense-editor-shell {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 320px minmax(0, 1fr);
   height: 100vh;
   overflow: hidden;
+}
+
+.dense-editor-shell.dense-editor-shell-inspector-open {
+  grid-template-columns: 320px minmax(0, 1fr) 320px;
 }
 
 .dense-sidebar {
@@ -633,6 +637,68 @@ label {
     'Helvetica Neue',
     Arial,
     sans-serif;
+}
+
+.dense-sidebar-right {
+  border-right: none;
+  border-left: 1px solid #30363d;
+  min-width: 0;
+}
+
+.dense-selection-header-panel {
+  padding-bottom: 8px;
+}
+
+.dense-selection-title-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.dense-selection-title {
+  margin: 0;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #f0f6fc;
+  overflow-wrap: anywhere;
+}
+
+.dense-selection-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.dense-selection-header-actions .small-button {
+  flex: 0 1 auto;
+}
+
+.dense-selection-meta {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #9ba8b4;
+}
+
+.dense-selection-name-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.dense-selection-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8c8c8c;
 }
 
 /* Section dividers edge-to-edge; horizontal padding lives on each panel */
@@ -920,6 +986,30 @@ label {
   color: #d4d4d4;
 }
 
+.dense-fixture-name-input {
+  width: 100%;
+  min-width: 0;
+  margin-top: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: #ececec;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dense-fixture-name-input::placeholder {
+  color: #6e6e6e;
+}
+
+.dense-fixture-name-input:focus {
+  outline: none;
+  border-color: #30363d;
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .dense-fixture-meta {
   font-size: 10px;
   font-weight: 400;
@@ -988,44 +1078,19 @@ label {
 .dense-viewport-shell {
   position: relative;
   height: 100vh;
+  min-width: 0;
+  overflow: hidden;
   background: radial-gradient(circle at top, #334155, #1f2937 70%);
+}
+
+/* Keep three.js canvas clipped to the center column when the inspector opens (layout change has no window resize event). */
+.dense-viewport-shell canvas {
+  display: block;
+  max-width: 100%;
 }
 
 .dense-viewport-shell #viewport {
   height: 100vh;
-}
-
-.floating-transform-stack {
-  position: absolute;
-  left: 14px;
-  top: 14px;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.floating-transform-panel {
-  min-width: 240px;
-  padding: 12px;
-  border-radius: 18px;
-  background: rgba(9, 13, 19, 0.84);
-  border: 1px solid #30363d;
-  backdrop-filter: blur(12px);
-}
-
-.floating-transform-panel-header {
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.floating-transform-panel-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
 }
 
 .rotation-row {
@@ -1065,6 +1130,39 @@ label {
   /* Wide enough for two pan sliders + compact value columns; cap on small viewports */
   min-width: 480px;
   max-width: min(620px, calc(100vw - 28px));
+}
+
+/* Right inspector column: stack pan/tilt controls vertically */
+.dense-sidebar-right .pan-tilt-range-panel {
+  min-width: 0;
+  max-width: none;
+}
+
+.dense-sidebar-right .pan-tilt-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.dense-sidebar-right .pan-tilt-row-label {
+  width: auto;
+}
+
+.dense-sidebar-right .pan-tilt-pan-sliders {
+  flex-direction: column;
+}
+
+.dense-sidebar-right .pan-tilt-slider-input {
+  min-width: 0;
+}
+
+.dense-sidebar-right .pan-tilt-quick-presets {
+  flex-wrap: wrap;
+}
+
+.dense-sidebar-right .pan-tilt-quick-preset-button {
+  flex: 1 1 calc(50% - 4px);
+  min-width: 96px;
 }
 
 .pan-tilt-range-panel .dense-section-header {
@@ -1567,6 +1665,15 @@ a.dense-editor-menu-external-link {
   .dense-editor-shell {
     grid-template-columns: 1fr;
     height: auto;
+  }
+
+  /*
+   * Match specificity of `.dense-editor-shell.dense-editor-shell-inspector-open`
+   * so narrow viewports stack columns instead of keeping three fixed tracks (which
+   * clips the inspector column when overflow is hidden).
+   */
+  .dense-editor-shell.dense-editor-shell-inspector-open {
+    grid-template-columns: 1fr;
   }
 
   .dense-sidebar {

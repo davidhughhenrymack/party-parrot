@@ -1926,6 +1926,8 @@ function createThreeSceneController({
     resetVideoWallToPlaceholder,
     updateFloorPreview,
     updateVideoWallPreview,
+    /** Re-read viewport element size (call when grid layout changes the viewport width without a window resize). */
+    resize: resizeRenderer,
     setView,
     setSelection,
     setInteractionMode,
