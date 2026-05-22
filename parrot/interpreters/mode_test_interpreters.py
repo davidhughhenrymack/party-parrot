@@ -10,22 +10,17 @@ from parrot.utils.colour import Color
 
 @beartype
 class RigColorCycle(InterpreterBase):
-    """Cycle white → red → green → blue every few seconds (same color for the whole group)."""
+    """Slow continuous rainbow color for fixture / color-wheel checkout."""
 
-    COLORS = (
-        Color("white"),
-        Color("red"),
-        Color("green"),
-        Color("blue"),
-    )
-    SECONDS_PER_COLOR = 5.0
+    SECONDS_PER_CYCLE = 30.0
 
     def __str__(self) -> str:
         return "🧪 RigColorCycle"
 
     def step(self, frame: Frame, scheme: ColorScheme) -> None:
-        idx = int(frame.time / self.SECONDS_PER_COLOR) % len(self.COLORS)
-        c = self.COLORS[idx]
+        phase = (frame.time % self.SECONDS_PER_CYCLE) / self.SECONDS_PER_CYCLE
+        c = Color("red")
+        c.set_hue(phase)
         for fixture in self.group:
             fixture.set_color(c)
 

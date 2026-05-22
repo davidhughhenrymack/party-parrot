@@ -1935,6 +1935,16 @@ export default function DenseVenueEditorPage({ venueId }) {
                       </a>
                     </div>
                     <div className="dense-editor-menu-section">
+                      <a
+                        className="dense-editor-menu-heading dense-editor-menu-external-link"
+                        href={patchListHref(venueSnapshot?.summary?.id)}
+                        role="menuitem"
+                        onClick={() => setEditorMenuOpen(false)}
+                      >
+                        Patch list
+                      </a>
+                    </div>
+                    <div className="dense-editor-menu-section">
                       <button
                         type="button"
                         id="magic-repatch-fixtures-button"
@@ -2711,6 +2721,15 @@ async function fetchJson(url, options = {}) {
 
 function withCurrentSearch(pathname) {
   return `${pathname}${window.location.search}`;
+}
+
+function patchListHref(venueId) {
+  const params = new URLSearchParams(window.location.search);
+  if (venueId) {
+    params.set('venue_id', venueId);
+  }
+  const query = params.toString();
+  return query ? `/patch?${query}` : '/patch';
 }
 
 function metersToFeet(value) {

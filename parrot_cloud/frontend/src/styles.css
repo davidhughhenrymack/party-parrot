@@ -238,6 +238,55 @@ label {
   border-style: dashed;
 }
 
+.patch-page-shell {
+  overflow-x: hidden;
+}
+
+.patch-list-panel {
+  overflow: hidden;
+}
+
+.patch-list-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.patch-list-table {
+  width: 100%;
+  min-width: 940px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.patch-list-table th,
+.patch-list-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #30363d;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.patch-list-table th {
+  color: #9ba8b4;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.patch-list-table td {
+  color: #f0f6fc;
+  font-variant-numeric: tabular-nums;
+}
+
+.patch-list-table tbody tr:hover {
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.patch-list-error {
+  margin: 0;
+  color: #fecaca;
+}
+
 .button-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -483,6 +532,7 @@ label {
 .remote-compact-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   padding: 6px 12px;
   background: rgba(13, 17, 23, 0.6);
@@ -492,10 +542,10 @@ label {
 
 .remote-primary-mode-row {
   display: block;
-  padding: 16px;
-  background: linear-gradient(180deg, rgba(31, 111, 235, 0.18), rgba(13, 17, 23, 0.78));
-  border-color: rgba(88, 166, 255, 0.36);
-  border-radius: 16px;
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
 }
 
 .remote-compact-label {
@@ -550,6 +600,61 @@ label {
   box-shadow: 0 0 0 1px rgba(121, 192, 255, 0.25), 0 10px 24px rgba(31, 111, 235, 0.28);
 }
 
+.remote-lighting-shift-button {
+  width: 100%;
+  min-height: 64px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #a78bfa;
+  background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+  color: #f5f3ff;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+
+.remote-lighting-shift-button:active {
+  transform: scale(0.98);
+}
+
+.remote-inline-shift-button {
+  width: auto;
+  flex: 0 0 auto;
+  margin-top: 0;
+  min-height: 34px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid #5b21b6;
+  background: #5b21b6;
+  color: #f5f3ff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.remote-inline-shift-button:active {
+  transform: scale(0.98);
+}
+
+.remote-color-shift-row {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 2px;
+  margin-left: 74px;
+}
+
+.remote-color-shift-swatches .remote-shift-swatch {
+  width: 16px;
+  height: 16px;
+}
+
 .chip {
   width: auto;
   margin-top: 0;
@@ -597,6 +702,10 @@ label {
   .remote-compact-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .remote-color-shift-row {
+    margin-left: 0;
   }
 
   .remote-compact-label {

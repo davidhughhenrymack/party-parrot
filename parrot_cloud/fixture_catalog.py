@@ -43,6 +43,8 @@ class FixtureTypeDefinition:
     default_options: dict[str, int | float | bool] = field(default_factory=dict)
     # DMX channel footprint (matches desktop FixtureBase width).
     dmx_address_width: int = 1
+    pan_angle_mode_degrees: int | None = None
+    tilt_angle_mode_degrees: int | None = None
 
     def to_dict(self) -> dict[str, object]:
         result: dict[str, object] = {
@@ -51,6 +53,10 @@ class FixtureTypeDefinition:
             "default_options": dict(self.default_options),
             "dmx_address_width": self.dmx_address_width,
         }
+        if self.pan_angle_mode_degrees is not None:
+            result["pan_angle_mode_degrees"] = self.pan_angle_mode_degrees
+        if self.tilt_angle_mode_degrees is not None:
+            result["tilt_angle_mode_degrees"] = self.tilt_angle_mode_degrees
         wheel = color_wheel_slots_for_api(self.key)
         if wheel is not None:
             result["color_wheel"] = wheel
@@ -171,6 +177,8 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_upper": 90,
         },
         dmx_address_width=12,
+        pan_angle_mode_degrees=540,
+        tilt_angle_mode_degrees=270,
     ),
     "chauvet_spot_160": FixtureTypeDefinition(
         key="chauvet_spot_160",
@@ -194,6 +202,8 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_upper": 90,
         },
         dmx_address_width=11,
+        pan_angle_mode_degrees=540,
+        tilt_angle_mode_degrees=270,
     ),
     "chauvet_rogue_beam_r2x": FixtureTypeDefinition(
         key="chauvet_rogue_beam_r2x",
@@ -217,6 +227,8 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_upper": 90,
         },
         dmx_address_width=18,
+        pan_angle_mode_degrees=540,
+        tilt_angle_mode_degrees=270,
     ),
     "chauvet_rogue_hybrid_rh1": FixtureTypeDefinition(
         key="chauvet_rogue_hybrid_rh1",
@@ -240,6 +252,8 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_upper": 270,
         },
         dmx_address_width=20,
+        pan_angle_mode_degrees=540,
+        tilt_angle_mode_degrees=270,
     ),
     "chauvet_rogue_hybrid_rh1_25ch": FixtureTypeDefinition(
         key="chauvet_rogue_hybrid_rh1_25ch",
@@ -263,6 +277,8 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_upper": 270,
         },
         dmx_address_width=25,
+        pan_angle_mode_degrees=540,
+        tilt_angle_mode_degrees=270,
     ),
     "motionstrip_38": FixtureTypeDefinition(
         key="motionstrip_38",
@@ -348,6 +364,8 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_upper": 90,
         },
         dmx_address_width=12,
+        pan_angle_mode_degrees=540,
+        tilt_angle_mode_degrees=270,
     ),
     "chauvet_colorband_pix_36ch": FixtureTypeDefinition(
         key="chauvet_colorband_pix_36ch",

@@ -146,17 +146,15 @@ export default function RemoteControlPage() {
 
   const mfd = controlState.manual_fixture_dimmers || {};
   const visibleEffects = config.effects.filter((effect) => !REMOTE_HIDDEN_EFFECTS.has(effect));
+  const secondaryShiftTargets = config.shift_targets.filter(
+    (target) => !['lighting_only', 'color_scheme', 'vj_only'].includes(target),
+  );
+  const canShiftLighting = config.shift_targets.includes('lighting_only');
+  const canShiftColors = config.shift_targets.includes('color_scheme');
+  const canShiftVj = config.shift_targets.includes('vj_only');
 
   return (
     <div className="remote-shell">
-      <header className="remote-topbar">
-        <h1>Remote</h1>
-        <div className="remote-topbar-actions">
-          <button className="secondary-button chip" onClick={() => window.location.assign('/')}>Home</button>
-          <button className="secondary-button chip" onClick={() => window.location.assign('/editor')}>Editor</button>
-        </div>
-      </header>
-
       <CompactSelector
         label="Lighting mode"
         options={config.available_modes}
@@ -164,7 +162,30 @@ export default function RemoteControlPage() {
         format={labelize}
         onSelect={(mode) => patchControlState({ mode })}
         variant="primary-mode"
-      />
+      >
+        {canShiftLighting ? (
+          <button
+            type="button"
+            className="remote-lighting-shift-button"
+            onClick={() => postJson('/api/shift', { target: 'lighting_only' })}
+          >
+            {formatShiftLabel('lighting_only')}
+          </button>
+        ) : null}
+      </CompactSelector>
+
+      <section className="remote-hero-panel">
+        <h2 className="remote-hero-title">Effects</h2>
+        {visibleEffects.length > 0 ? (
+          <div className="remote-effects-grid">
+            {visibleEffects.map((effect) => (
+              <RemoteEffectButton key={effect} effect={effect} label={labelize(effect)} />
+            ))}
+          </div>
+        ) : (
+          <p className="remote-hero-empty">No effects configured.</p>
+        )}
+      </section>
 
       <section className="remote-hero-panel">
         {manualDimmerSupported ? (
@@ -222,24 +243,11 @@ export default function RemoteControlPage() {
         )}
       </section>
 
-      <section className="remote-hero-panel">
-        <h2 className="remote-hero-title">Effects</h2>
-        {visibleEffects.length > 0 ? (
-          <div className="remote-effects-grid">
-            {visibleEffects.map((effect) => (
-              <RemoteEffectButton key={effect} effect={effect} label={labelize(effect)} />
-            ))}
-          </div>
-        ) : (
-          <p className="remote-hero-empty">No effects configured.</p>
-        )}
-      </section>
-
-      {config.shift_targets.length > 0 && (
+      {secondaryShiftTargets.length > 0 && (
         <section className="remote-hero-panel remote-shift-panel">
           <h2 className="remote-hero-title">Shift</h2>
           <div className="remote-effects-grid remote-shift-grid">
-            {config.shift_targets.map((target) => (
+            {secondaryShiftTargets.map((target) => (
               <button
                 key={target}
                 type="button"
@@ -277,14 +285,45 @@ export default function RemoteControlPage() {
         value={controlState.vj_mode}
         format={formatVjModeLabel}
         onSelect={(vj_mode) => patchControlState({ vj_mode })}
-      />
+      >
+        {canShiftVj ? (
+          <button
+            type="button"
+            className="remote-inline-shift-button"
+            onClick={() => postJson('/api/shift', { target: 'vj_only' })}
+          >
+            {formatShiftLabel('vj_only')}
+          </button>
+        ) : null}
+      </CompactSelector>
       <CompactSelector
         label="Color"
         options={config.theme_names}
         value={controlState.theme_name}
         format={(v) => v}
         onSelect={(theme_name) => patchControlState({ theme_name })}
-      />
+      >
+        {canShiftColors ? (
+          <div className="remote-color-shift-row">
+            <span className="remote-shift-swatches remote-color-shift-swatches" aria-hidden="true">
+              {(liveColorPalette ?? DEFAULT_REMOTE_COLOR_PALETTE).map((rgb, i) => (
+                <span
+                  key={i}
+                  className="remote-shift-swatch"
+                  style={{ background: rgbTripleToCss(rgb) }}
+                />
+              ))}
+            </span>
+            <button
+              type="button"
+              className="remote-inline-shift-button"
+              onClick={() => postJson('/api/shift', { target: 'color_scheme' })}
+            >
+              {formatShiftLabel('color_scheme')}
+            </button>
+          </div>
+        ) : null}
+      </CompactSelector>
       <CompactSelector
         label="Venue"
         options={venues.map((v) => v.id)}
@@ -340,7 +379,7 @@ function RemoteEffectButton({ effect, label }) {
   );
 }
 
-function CompactSelector({ label, options, value, format, onSelect, variant = 'compact' }) {
+function CompactSelector({ label, options, value, format, onSelect, variant = 'compact', children }) {
   if (!options || options.length === 0) {
     return null;
   }
@@ -359,6 +398,7 @@ function CompactSelector({ label, options, value, format, onSelect, variant = 'c
           </button>
         ))}
       </div>
+      {children}
     </section>
   );
 }

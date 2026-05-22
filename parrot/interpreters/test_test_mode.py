@@ -41,17 +41,22 @@ class TestTestModeInterpreters(unittest.TestCase):
         )
         self.args = InterpreterArgs(True)
 
-    def test_color_cycle_white_then_red_at_boundary(self):
+    def test_color_cycle_continuously_sweeps_rainbow_hue(self):
         mh1 = MagicMock(spec=MovingHead)
         mh2 = MagicMock(spec=MovingHead)
         group = [mh1, mh2]
         tc = RigColorCycle(group, self.args)
         tc.step(_empty_frame(0.0), self.scheme)
-        mh1.set_color.assert_called_with(Color("white"))
-        mh2.set_color.assert_called_with(Color("white"))
-        tc.step(_empty_frame(5.0), self.scheme)
-        mh1.set_color.assert_called_with(Color("red"))
-        mh2.set_color.assert_called_with(Color("red"))
+        first = mh1.set_color.call_args[0][0]
+        mh2.set_color.assert_called_with(first)
+
+        tc.step(_empty_frame(RigColorCycle.SECONDS_PER_CYCLE / 3), self.scheme)
+        second = mh1.set_color.call_args[0][0]
+
+        self.assertIsInstance(first, Color)
+        self.assertIsInstance(second, Color)
+        self.assertAlmostEqual(first.hue, 0.0, places=3)
+        self.assertAlmostEqual(second.hue, 1.0 / 3.0, places=3)
 
     def test_move_circle_sync_identical_pan_tilt(self):
         m1 = MagicMock(spec=MovingHead)

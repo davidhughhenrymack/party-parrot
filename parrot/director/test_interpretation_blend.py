@@ -9,6 +9,7 @@ from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.mode import Mode
 from parrot.director import director as director_mod
+from parrot.interpreters.base import InterpreterBase
 from parrot.fixtures.led_par import ParRGB
 from parrot.state import State
 from parrot.utils.colour import Color
@@ -92,6 +93,38 @@ class TestInterpretationBlend(unittest.TestCase):
                     self.director._interpretation_blend.duration_seconds,
                     expected,
                 )
+
+    def test_lighting_tree_prints_blend_destination(self):
+        self.director.interpreters[0] = _NamedInterpreter(
+            self.director.fixture_groups[0],
+            self.director._default_interpreter_args_for_bucket_index(0),
+            "CURRENT",
+        )
+        self.director._start_interpretation_blend(
+            [0],
+            {0: self.director._default_interpreter_args_for_bucket_index(0)},
+        )
+        b = self.director._interpretation_blend
+        self.assertIsNotNone(b)
+        b.incoming_interpreters[0] = _NamedInterpreter(
+            b.incoming_fixtures[0],
+            self.director._default_interpreter_args_for_bucket_index(0),
+            "DESTINATION",
+        )
+
+        tree = self.director.print_lighting_tree(self.state.mode.name)
+
+        self.assertIn("DESTINATION", tree)
+        self.assertNotIn("CURRENT", tree)
+
+
+class _NamedInterpreter(InterpreterBase):
+    def __init__(self, group, args, name: str):
+        super().__init__(group, args)
+        self._name = name
+
+    def __str__(self) -> str:
+        return self._name
 
 
 if __name__ == "__main__":

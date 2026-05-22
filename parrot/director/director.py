@@ -40,7 +40,9 @@ MODE_INTERPRETATION_BLEND_SECONDS = {
 
 def _interpretation_blend_seconds_for_mode(mode) -> float:
     """Blend duration for entering a lighting mode."""
-    return MODE_INTERPRETATION_BLEND_SECONDS.get(mode.name, INTERPRETATION_BLEND_SECONDS)
+    return MODE_INTERPRETATION_BLEND_SECONDS.get(
+        mode.name, INTERPRETATION_BLEND_SECONDS
+    )
 
 
 def _flatten_runtime_fixtures(top_level) -> list[FixtureBase]:
@@ -294,8 +296,13 @@ class Director:
             result += "└── (no interpreters)\n"
             return result
 
+        blend = self._interpretation_blend
         sections: list[tuple[str | None, list[tuple[list[FixtureBase], str]]]] = []
-        for name, interpreter in zip(self.fixture_group_names, self.interpreters):
+        for idx, (name, interpreter) in enumerate(
+            zip(self.fixture_group_names, self.interpreters)
+        ):
+            if blend is not None and idx in blend.bucket_indices:
+                interpreter = blend.incoming_interpreters[idx]
             rows = _flatten_interpreter_rows(interpreter)
             if rows:
                 sections.append((name, rows))

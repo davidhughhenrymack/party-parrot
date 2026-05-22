@@ -116,6 +116,8 @@ def test_fixture_types_endpoint(client):
     rogue = next(
         item for item in data["fixture_types"] if item["key"] == "chauvet_rogue_beam_r2x"
     )
+    assert rogue["pan_angle_mode_degrees"] == 540
+    assert rogue["tilt_angle_mode_degrees"] == 270
     wheel = rogue["color_wheel"]
     assert len(wheel) == 15
     assert wheel[0]["dmx_value"] == 2

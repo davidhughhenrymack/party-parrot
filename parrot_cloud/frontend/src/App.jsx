@@ -1,6 +1,7 @@
 import RemoteControlPage from './RemoteControlPage.jsx';
 import VenuesPage from './VenuesPage.jsx';
 import DenseVenueEditorPage from './DenseVenueEditorPage.jsx';
+import PatchListPage from './PatchListPage.jsx';
 
 export default function App() {
   const path = window.location.pathname;
@@ -16,6 +17,10 @@ export default function App() {
 
   if (path === '/remote') {
     return <RemoteControlPage />;
+  }
+
+  if (path === '/patch') {
+    return <PatchListPage />;
   }
 
   return <HomePage />;

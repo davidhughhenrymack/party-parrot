@@ -12,6 +12,10 @@ class StrobeOn(InterpreterBase[FixtureBase]):
         for i in self.group:
             i.set_strobe(220)
 
+    def exit(self, frame: Frame, scheme: ColorScheme):
+        for i in self.group:
+            i.set_strobe(0)
+
 
 @beartype
 class StrobeOff(InterpreterBase[FixtureBase]):
