@@ -26,6 +26,19 @@ class RigColorCycle(InterpreterBase):
 
 
 @beartype
+class HomePanTilt(InterpreterBase):
+    """Park moving heads at neutral pan/tilt for setup and lamp checks."""
+
+    def __str__(self) -> str:
+        return "🏠 HomePanTilt"
+
+    def step(self, frame: Frame, scheme: ColorScheme) -> None:
+        for fixture in self.group:
+            fixture.set_pan(128)
+            fixture.set_tilt(128)
+
+
+@beartype
 class PanTiltAxisCheck(InterpreterBase):
     """Pan/tilt axis check for rig debugging.
 

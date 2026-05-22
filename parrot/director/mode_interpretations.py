@@ -48,6 +48,7 @@ from parrot.interpreters.latched import (
     DimmerFadeLatched4s,
 )
 from parrot.interpreters.mode_test_interpreters import (
+    HomePanTilt,
     PanTiltAxisCheck,
     RigColorCycle,
 )
@@ -620,6 +621,25 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 Dimmer255,
                 RigColorCycle,
                 PanTiltAxisCheck,
+                MoverNoGobo,
+                PrismOff,
+                FocusSmall,
+            )
+        ],
+        Motionstrip: [combo(Dimmer255, RigColorCycle)],
+        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, for_bulbs(RigColorCycle))],
+        Laser: [combo(Dimmer255, RigColorCycle)],
+        ChauvetRotosphere_28Ch: [combo(Dimmer255, RigColorCycle)],
+        ChauvetDerby: [combo(Dimmer255, RigColorCycle)],
+    },
+    Mode.home: {
+        Mirrorball: [combo(Dimmer255, RigColorCycle)],
+        Par: [combo(Dimmer255, RigColorCycle)],
+        MovingHead: [
+            combo(
+                Dimmer255,
+                RigColorCycle,
+                HomePanTilt,
                 MoverNoGobo,
                 PrismOff,
                 FocusSmall,

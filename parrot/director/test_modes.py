@@ -90,6 +90,7 @@ class TestModes(unittest.TestCase):
             Mode.stroby,
             Mode.blackout,
             Mode.test,
+            Mode.home,
             Mode.ethereal,
         ]:
             # Test with Par fixtures

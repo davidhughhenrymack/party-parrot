@@ -600,6 +600,22 @@ label {
   box-shadow: 0 0 0 1px rgba(121, 192, 255, 0.25), 0 10px 24px rgba(31, 111, 235, 0.28);
 }
 
+.remote-utility-mode-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.remote-mode-button-utility {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  background: #111827;
+}
+
 .remote-lighting-shift-button {
   width: 100%;
   min-height: 64px;
@@ -693,6 +709,11 @@ label {
   .remote-mode-button {
     min-height: 68px;
     font-size: 18px;
+  }
+
+  .remote-mode-button-utility {
+    min-height: 40px;
+    font-size: 13px;
   }
 
   .remote-shift-grid {

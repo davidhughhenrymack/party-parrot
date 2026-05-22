@@ -157,7 +157,7 @@ export default function RemoteControlPage() {
     <div className="remote-shell">
       <CompactSelector
         label="Lighting mode"
-        options={config.available_modes}
+        options={orderRemoteLightingModes(config.available_modes)}
         value={controlState.mode}
         format={labelize}
         onSelect={(mode) => patchControlState({ mode })}
@@ -338,6 +338,24 @@ export default function RemoteControlPage() {
 /** Short tap = one-shot effect (~0.35s server-side); hold = signal stays at 1 until release. */
 const REMOTE_EFFECT_TAP_MS = 280;
 const REMOTE_HIDDEN_EFFECTS = new Set(['rainbow', 'chase']);
+const REMOTE_UTILITY_MODES = new Set(['test', 'home']);
+const REMOTE_UTILITY_MODE_ORDER = ['test', 'home'];
+
+function orderRemoteLightingModes(modes) {
+  const normal = [];
+  const utility = [];
+  for (const mode of modes || []) {
+    if (REMOTE_UTILITY_MODES.has(mode)) {
+      utility.push(mode);
+    } else {
+      normal.push(mode);
+    }
+  }
+  utility.sort(
+    (a, b) => REMOTE_UTILITY_MODE_ORDER.indexOf(a) - REMOTE_UTILITY_MODE_ORDER.indexOf(b),
+  );
+  return [...normal, ...utility];
+}
 
 function RemoteEffectButton({ effect, label }) {
   const downAtRef = useRef(0);
@@ -384,20 +402,39 @@ function CompactSelector({ label, options, value, format, onSelect, variant = 'c
     return null;
   }
   const primary = variant === 'primary-mode';
+  const primaryNormalOptions = primary
+    ? options.filter((option) => !REMOTE_UTILITY_MODES.has(option))
+    : options;
+  const primaryUtilityOptions = primary
+    ? options.filter((option) => REMOTE_UTILITY_MODES.has(option))
+    : [];
   return (
     <section className={`remote-compact-row${primary ? ' remote-primary-mode-row' : ''}`}>
       <div className="remote-compact-label">{label}</div>
       <div className={`remote-chip-row${primary ? ' remote-primary-mode-grid' : ''}`}>
-        {options.map((option) => (
+        {primaryNormalOptions.map((option) => (
           <button
             key={option}
-            className={`${primary ? 'remote-mode-button' : 'chip'} ${value === option ? (primary ? 'remote-mode-button-active' : 'chip-active') : ''}`}
+            className={`${primary ? `remote-mode-button${REMOTE_UTILITY_MODES.has(option) ? ' remote-mode-button-utility' : ''}` : 'chip'} ${value === option ? (primary ? 'remote-mode-button-active' : 'chip-active') : ''}`}
             onClick={() => onSelect(option)}
           >
             {format(option)}
           </button>
         ))}
       </div>
+      {primaryUtilityOptions.length > 0 ? (
+        <div className="remote-utility-mode-row">
+          {primaryUtilityOptions.map((option) => (
+            <button
+              key={option}
+              className={`remote-mode-button remote-mode-button-utility${value === option ? ' remote-mode-button-active' : ''}`}
+              onClick={() => onSelect(option)}
+            >
+              {format(option)}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {children}
     </section>
   );

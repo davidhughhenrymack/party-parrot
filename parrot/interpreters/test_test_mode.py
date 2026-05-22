@@ -14,6 +14,7 @@ from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
 from parrot.interpreters.move import MoveCircleSync
 from parrot.interpreters.mode_test_interpreters import (
+    HomePanTilt,
     PanTiltAxisCheck,
     RigColorCycle,
 )
@@ -71,6 +72,18 @@ class TestTestModeInterpreters(unittest.TestCase):
         m1.set_tilt.assert_called_once_with(expect_tilt)
         m2.set_pan.assert_called_once_with(expect_pan)
         m2.set_tilt.assert_called_once_with(expect_tilt)
+
+    def test_home_pan_tilt_parks_movers_at_neutral(self):
+        mh1 = MagicMock(spec=MovingHead)
+        mh2 = MagicMock(spec=MovingHead)
+        interp = HomePanTilt([mh1, mh2], self.args)
+
+        interp.step(_empty_frame(0.0), self.scheme)
+
+        mh1.set_pan.assert_called_once_with(128)
+        mh1.set_tilt.assert_called_once_with(128)
+        mh2.set_pan.assert_called_once_with(128)
+        mh2.set_tilt.assert_called_once_with(128)
 
     def test_get_interpreter_test_mode_par(self):
         p1 = MagicMock(spec=Par)
@@ -144,6 +157,14 @@ class TestTestModeInterpreters(unittest.TestCase):
         mh = ChauvetSpot160_12Ch(1)
         interp = get_interpreter(Mode.test, [mh], self.args)
         self.assertIn("PanTiltAxisCheck", str(interp))
+
+    def test_get_interpreter_home_mode_moving_head_uses_home_pan_tilt(self):
+        from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
+
+        mh = ChauvetSpot160_12Ch(1)
+        interp = get_interpreter(Mode.home, [mh], self.args)
+        self.assertIn("HomePanTilt", str(interp))
+        interp.step(_empty_frame(0.0), self.scheme)
 
     def test_get_interpreter_test_mode_mirrorball_full_dimmer(self):
         mb = MagicMock(spec=Mirrorball)
