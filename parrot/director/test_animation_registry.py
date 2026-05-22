@@ -8,6 +8,7 @@ from parrot.director.animation_registry import (
     randomize_spec,
     weighted_randomize_spec,
 )
+from parrot.director.frame import FrameSignal
 from parrot.director.mode_dispatch import _build_category_combo
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.moving_head import MovingHead
@@ -47,6 +48,62 @@ def test_registry_defaults_are_applied_to_bare_animation_specs():
 
     assert interp is not None
     assert fixture.get_rotating_gobo() == (1, 0.3)
+
+
+def test_strobe_speed_override_is_applied_from_animation_params():
+    factory = build_interpreter_factory(animation("StrobeOn", strobe_value=123))
+    fixture = ParRGB(1)
+
+    interp = factory([fixture], InterpreterArgs(True))
+    interp.step(None, None)
+
+    assert fixture.get_strobe() == 123
+
+
+def test_sequence_fade_minimum_override_is_applied_from_animation_params():
+    factory = build_interpreter_factory(animation("SequenceFadeDimmers", min="80"))
+    fixture = ParRGB(1)
+    interp = factory([fixture], InterpreterArgs(True))
+
+    assert interp.interpreter.min == 80
+
+
+def test_numeric_animation_params_accept_string_input_from_web_editor():
+    factory = build_interpreter_factory(animation("RotatingGobo", slot="2", rotate_speed="0.1"))
+
+    fixture = MovingHead(1, "moving", 16, [GoboWheelEntry("open", 0)])
+    factory([fixture], InterpreterArgs(True))
+
+    assert fixture.get_rotating_gobo() == (2, 0.1)
+
+
+def test_float_default_params_stay_float_for_integer_like_input():
+    factory = build_interpreter_factory(animation("MoveCircles", multiplier="0"))
+
+    interp = factory([ParRGB(1)], InterpreterArgs(True))
+
+    assert interp.interpreter.multiplier == 0.0
+
+
+def test_registry_defaults_coerce_signal_fn_to_callable():
+    factory = build_interpreter_factory(animation("SlowDecay", signal_fn="identity"))
+    fixture = ParRGB(1)
+    interp = factory([fixture], InterpreterArgs(True))
+
+    assert callable(interp.interpreter.signal_fn)
+
+
+def test_signal_param_list_randomly_selects_one_signal():
+    with patch(
+        "parrot.director.animation_registry.random.choice",
+        side_effect=lambda options: options[-1],
+    ):
+        factory = build_interpreter_factory(
+            animation("GentlePulse", signal=["freq_low", "freq_high"])
+        )
+        interp = factory([ParRGB(1)], InterpreterArgs(True))
+
+    assert interp.interpreter.signal == FrameSignal.freq_high
 
 
 def test_each_registry_entry_with_parameters_can_be_built_bare():

@@ -9,7 +9,7 @@ from parrot.interpreters.base import (
 from parrot.interpreters.move import MoveCircles
 from parrot.interpreters.dimmer import Dimmer255, Dimmer30, SequenceDimmers
 from parrot.interpreters.combo import combo
-from parrot.fixtures.moving_head import MovingHead
+from parrot.fixtures.base import FixtureBase
 
 
 def _even_phase_spread(n: int) -> list[float]:
@@ -18,7 +18,7 @@ def _even_phase_spread(n: int) -> list[float]:
     return [i / n * 2.0 * math.pi for i in range(n)]
 
 
-class MoverFan(InterpreterBase[MovingHead]):
+class MoverFan(InterpreterBase[FixtureBase]):
 
     def __init__(
         self,
@@ -35,7 +35,7 @@ class MoverFan(InterpreterBase[MovingHead]):
         pass
 
 
-class MoverRandomGobo(InterpreterBase[MovingHead]):
+class MoverRandomGobo(InterpreterBase[FixtureBase]):
 
     def __init__(
         self,
@@ -48,7 +48,7 @@ class MoverRandomGobo(InterpreterBase[MovingHead]):
             fixture.set_gobo(random.choice(fixture.gobo_wheel).name)
 
 
-class MoverGobo(InterpreterBase[MovingHead]):
+class MoverGobo(InterpreterBase[FixtureBase]):
 
     def __init__(self, group, args: InterpreterArgs, gobo: str = "open"):
         super().__init__(group, args)
@@ -57,7 +57,7 @@ class MoverGobo(InterpreterBase[MovingHead]):
             fixture.set_gobo(gobo)
 
 
-class MoverNoGobo(InterpreterBase[MovingHead]):
+class MoverNoGobo(InterpreterBase[FixtureBase]):
 
     def __init__(
         self,
@@ -70,7 +70,7 @@ class MoverNoGobo(InterpreterBase[MovingHead]):
             fixture.set_gobo("open")
 
 
-class FocusBig(InterpreterBase[MovingHead]):
+class FocusBig(InterpreterBase[FixtureBase]):
     """Pin focus wide-open (big/unfocused beam) on every fixture in the group.
 
     MovingHead fixtures without a focus channel accept the call; the write is
@@ -87,7 +87,7 @@ class FocusBig(InterpreterBase[MovingHead]):
             fixture.set_focus(0.0)
 
 
-class FocusSmall(InterpreterBase[MovingHead]):
+class FocusSmall(InterpreterBase[FixtureBase]):
     """Pin focus fully tight (small/sharp beam) on every fixture in the group.
 
     Mirror of :class:`FocusBig`. Fixtures lacking a focus channel accept the
@@ -104,7 +104,7 @@ class FocusSmall(InterpreterBase[MovingHead]):
             fixture.set_focus(1.0)
 
 
-class FocusSinePhased(InterpreterBase[MovingHead]):
+class FocusSinePhased(InterpreterBase[FixtureBase]):
     """Animate focus with one sine wave phased across the fixture group.
 
     Focus range follows the MovingHead convention:
@@ -132,7 +132,7 @@ class FocusSinePhased(InterpreterBase[MovingHead]):
             fixture.set_focus(focus)
 
 
-class RotatingGobo(InterpreterBase[MovingHead]):
+class RotatingGobo(InterpreterBase[FixtureBase]):
     """Select a rotating-gobo-wheel slot and keep it spinning.
 
     ``slot`` is 1-indexed per the Chauvet Intimidator Hybrid 140SR rotating
@@ -165,7 +165,7 @@ class RotatingGobo(InterpreterBase[MovingHead]):
             fixture.set_rotating_gobo(0, 0.0)
 
 
-class RotatePrism(InterpreterBase[MovingHead]):
+class RotatePrism(InterpreterBase[FixtureBase]):
     """Turn the prism on and spin it at a constant rate.
 
     ``rotate_speed`` is in [-1, 1]; 0 = static prism on (no rotation).
@@ -194,7 +194,7 @@ class RotatePrism(InterpreterBase[MovingHead]):
             fixture.set_prism(False, 0.0)
 
 
-class PrismOff(InterpreterBase[MovingHead]):
+class PrismOff(InterpreterBase[FixtureBase]):
     """Explicitly disable the prism on a group each frame."""
 
     def __init__(self, group, args: InterpreterArgs):

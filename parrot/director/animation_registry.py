@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -80,14 +81,39 @@ class AnimationParameter:
     label: str
     value_type: str
     default: object
+    min_value: int | float | None = None
+    max_value: int | float | None = None
+    step: int | float | None = None
 
     def to_dict(self) -> JsonDict:
-        return {
+        out: JsonDict = {
             "key": self.key,
             "label": self.label,
             "type": self.value_type,
             "default": self.default,
         }
+        if self.min_value is not None:
+            out["min"] = self.min_value
+        if self.max_value is not None:
+            out["max"] = self.max_value
+        if self.step is not None:
+            out["step"] = self.step
+        if self.value_type == "signal":
+            out["options"] = [
+                {"value": signal.name, "label": signal.name.replace("_", " ").title()}
+                for signal in FrameSignal
+            ]
+        return out
+
+    def coerce(self, value: object) -> object:
+        if self.value_type != "number":
+            return _coerce_param(self.key, value)
+        coerced = float(value)
+        if isinstance(self.default, float):
+            return coerced
+        if isinstance(self.default, int) and not isinstance(self.default, bool):
+            return int(coerced)
+        return coerced
 
 
 @beartype
@@ -108,13 +134,34 @@ class AnimationRegistryEntry:
         }
 
     def params_with_defaults(self, raw: object = None) -> dict[str, object]:
-        params = {parameter.key: parameter.default for parameter in self.parameters}
-        params.update(_params(raw))
+        parameters_by_key = {parameter.key: parameter for parameter in self.parameters}
+        params = {
+            parameter.key: parameter.coerce(parameter.default)
+            for parameter in self.parameters
+        }
+        if not isinstance(raw, dict):
+            return params
+        for key, value in raw.items():
+            normalized_key = str(key)
+            parameter = parameters_by_key.get(normalized_key)
+            if parameter is None:
+                params[normalized_key] = _coerce_param(normalized_key, value)
+            else:
+                params[normalized_key] = parameter.coerce(value)
         return params
 
 
-def _param(key: str, label: str, value_type: str, default: object) -> AnimationParameter:
-    return AnimationParameter(key, label, value_type, default)
+def _param(
+    key: str,
+    label: str,
+    value_type: str,
+    default: object,
+    *,
+    min_value: int | float | None = None,
+    max_value: int | float | None = None,
+    step: int | float | None = None,
+) -> AnimationParameter:
+    return AnimationParameter(key, label, value_type, default, min_value, max_value, step)
 
 
 def _identity(value: float) -> float:
@@ -155,7 +202,7 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Fade In",
         "Dimmer",
         DimmerFadeIn,
-        (_param("fade_time", "Fade Time", "number", 3),),
+        (_param("fade_time", "Fade Time", "number", 3, min_value=0.1, step=0.1),),
     ),
     "DimmersBeatChase": AnimationRegistryEntry(
         "DimmersBeatChase", "Beat Chase", "Dimmer", DimmersBeatChase
@@ -177,7 +224,11 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "SequenceDimmers", "Sequence", "Dimmer", SequenceDimmers
     ),
     "SequenceFadeDimmers": AnimationRegistryEntry(
-        "SequenceFadeDimmers", "Sequence Fade", "Dimmer", SequenceFadeDimmers
+        "SequenceFadeDimmers",
+        "Sequence Fade",
+        "Dimmer",
+        SequenceFadeDimmers,
+        (_param("min", "Minimum Dimmer", "number", 0, min_value=0, max_value=255, step=1),),
     ),
     "StabPulse": AnimationRegistryEntry(
         "StabPulse",
@@ -198,7 +249,6 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         (
             _param("decay_rate", "Decay", "number", 0.1),
             _param("signal", "Signal", "signal", FrameSignal.freq_all.name),
-            _param("signal_fn", "Signal Mapping", "signal_fn", "identity"),
         ),
     ),
     "SlowSustained": AnimationRegistryEntry(
@@ -223,7 +273,7 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Circles",
         "Movement",
         MoveCircles,
-        (_param("multiplier", "Speed", "number", 1.0),),
+        (_param("multiplier", "Speed", "number", 1.0, min_value=0, step=0.05),),
     ),
     "MoveFan": AnimationRegistryEntry(
         "MoveFan",
@@ -231,8 +281,8 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Movement",
         MoveFan,
         (
-            _param("multiplier", "Speed", "number", 1.0),
-            _param("spread", "Spread", "number", 1.0),
+            _param("multiplier", "Speed", "number", 1.0, min_value=0, step=0.05),
+            _param("spread", "Spread", "number", 1.0, min_value=0, step=0.05),
         ),
     ),
     "MoveFigureEight": AnimationRegistryEntry(
@@ -240,7 +290,7 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Figure Eight",
         "Movement",
         MoveFigureEight,
-        (_param("multiplier", "Speed", "number", 1.0),),
+        (_param("multiplier", "Speed", "number", 1.0, min_value=0, step=0.05),),
     ),
     "MoveNamedPosition": AnimationRegistryEntry(
         "MoveNamedPosition",
@@ -250,14 +300,14 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         (_param("position_name", "Position", "named_position", ""),),
     ),
     "MoveNod": AnimationRegistryEntry(
-        "MoveNod", "Nod", "Movement", MoveNod, (_param("multiplier", "Speed", "number", 1.0),)
+        "MoveNod", "Nod", "Movement", MoveNod, (_param("multiplier", "Speed", "number", 1.0, min_value=0, step=0.05),)
     ),
     "MoveSmoothWalk": AnimationRegistryEntry(
         "MoveSmoothWalk",
         "Smooth Walk",
         "Movement",
         MoveSmoothWalk,
-        (_param("multiplier", "Speed", "number", 0.2),),
+        (_param("multiplier", "Speed", "number", 0.2, min_value=0, step=0.05),),
     ),
     "FocusBig": AnimationRegistryEntry("FocusBig", "Wide Focus", "Focus", FocusBig),
     "FocusSinePhased": AnimationRegistryEntry(
@@ -265,7 +315,7 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Focus Sine",
         "Focus",
         FocusSinePhased,
-        (_param("period_seconds", "Period", "number", 14.0),),
+        (_param("period_seconds", "Period", "number", 14.0, min_value=0.1, step=0.1),),
     ),
     "FocusSmall": AnimationRegistryEntry("FocusSmall", "Tight Focus", "Focus", FocusSmall),
     "MoverGobo": AnimationRegistryEntry(
@@ -281,8 +331,8 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Gobo",
         RotatingGobo,
         (
-            _param("slot", "Slot", "number", 1),
-            _param("rotate_speed", "Speed", "number", 0.3),
+            _param("slot", "Gobo Wheel Slot", "number", 1, min_value=0, step=1),
+            _param("rotate_speed", "Speed", "number", 0.3, min_value=-1, max_value=1, step=0.05),
         ),
     ),
     "PrismOff": AnimationRegistryEntry("PrismOff", "Prism Off", "Prism", PrismOff),
@@ -291,18 +341,32 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Rotate Prism",
         "Prism",
         RotatePrism,
-        (_param("rotate_speed", "Speed", "number", 0.25),),
+        (_param("rotate_speed", "Speed", "number", 0.25, min_value=-1, max_value=1, step=0.05),),
     ),
     "StrobeChannelSustained": AnimationRegistryEntry(
-        "StrobeChannelSustained", "Strobe Channel", "Strobe", StrobeChannelSustained
+        "StrobeChannelSustained",
+        "Strobe Channel",
+        "Strobe",
+        StrobeChannelSustained,
+        (_param("strobe_value", "Speed", "number", 220, min_value=0, max_value=255, step=1),),
     ),
     "StrobeHighSustained": AnimationRegistryEntry(
-        "StrobeHighSustained", "High Strobe", "Strobe", StrobeHighSustained
+        "StrobeHighSustained",
+        "High Strobe",
+        "Strobe",
+        StrobeHighSustained,
+        (_param("strobe_value", "Speed", "number", 220, min_value=0, max_value=255, step=1),),
     ),
     "StrobeOff": AnimationRegistryEntry("StrobeOff", "Strobe Off", "Strobe", StrobeOff),
-    "StrobeOn": AnimationRegistryEntry("StrobeOn", "Strobe On", "Strobe", StrobeOn),
+    "StrobeOn": AnimationRegistryEntry(
+        "StrobeOn",
+        "Strobe On",
+        "Strobe",
+        StrobeOn,
+        (_param("strobe_value", "Speed", "number", 220, min_value=0, max_value=255, step=1),),
+    ),
     "Spin": AnimationRegistryEntry(
-        "Spin", "Spin", "Movement", Spin, (_param("speed", "Speed", "number", 50),)
+        "Spin", "Spin", "Movement", Spin, (_param("speed", "Speed", "number", 50, min_value=0, max_value=255, step=1),)
     ),
     "RotosphereSpinColor": AnimationRegistryEntry(
         "RotosphereSpinColor", "Rotosphere Spin Color", "Movement", RotosphereSpinColor
@@ -378,6 +442,11 @@ def _coerce_param(key: str, value: object) -> object:
     if key == "signal":
         if isinstance(value, FrameSignal):
             return value
+        if isinstance(value, (list, tuple)):
+            options = [FrameSignal[str(item)] for item in value]
+            if not options:
+                return FrameSignal.freq_all
+            return random.choice(options)
         return FrameSignal[str(value)]
     if key == "signal_fn":
         if callable(value):

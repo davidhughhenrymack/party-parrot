@@ -6,6 +6,7 @@ import { isViewportWebGlDisabledForTests } from './viewportTestMode.js';
 const isTestMode = isViewportWebGlDisabledForTests();
 const FEET_PER_METER = 3.280839895;
 const ROTATION_STEP_DEGREES = 45;
+const BUILT_IN_FIXTURE_TYPE_TARGETS = new Set(['moving_head', 'par']);
 
 // Moving-head pan/tilt geometry. Pan spans 540° physical (0–540 in stored
 // degrees); the UI treats 270° as "forward" and lets the user set left/right
@@ -193,6 +194,26 @@ function isNamedPositionAnimationSpec(spec) {
     (spec.type === 'animation' || spec.type === 'with_args') &&
     spec.key === 'MoveNamedPosition'
   );
+}
+
+function registryEntryForAnimationSpec(spec, registryEntryByKey) {
+  if (!spec || typeof spec !== 'object') {
+    return null;
+  }
+  if (spec.type !== 'animation' && spec.type !== 'with_args') {
+    return null;
+  }
+  return registryEntryByKey.get(spec.key) || null;
+}
+
+function signalParameterSelection(rawValue, parameter) {
+  if (Array.isArray(rawValue)) {
+    return rawValue;
+  }
+  if (typeof rawValue === 'string' && rawValue) {
+    return [rawValue];
+  }
+  return parameter.default ? [parameter.default] : [];
 }
 
 function clampDirectDmx(value) {
@@ -926,6 +947,7 @@ function AnimationEditorPanel({
   const [addTargetModalOpen, setAddTargetModalOpen] = useState(false);
   const [addModeModalOpen, setAddModeModalOpen] = useState(false);
   const [newModeLabel, setNewModeLabel] = useState('');
+  const [expandedAssignmentIds, setExpandedAssignmentIds] = useState(() => new Set());
   const registryByCategory = useMemo(() => {
     const groups = new Map();
     for (const entry of animationRegistry?.animations || []) {
@@ -966,26 +988,33 @@ function AnimationEditorPanel({
     }));
     const definedTargetPairs = new Map();
     for (const target of customTargets) {
-      definedTargetPairs.set(`${target.groupName}:${target.fixtureType}`, target);
+      if (!target.groupName && BUILT_IN_FIXTURE_TYPE_TARGETS.has(target.fixtureType)) {
+        continue;
+      }
+      definedTargetPairs.set(`${target.groupName || ''}:${target.fixtureType}`, target);
     }
     for (const assignment of assignments) {
       if (
         assignment.lighting_mode_key === selectedModeKey &&
-        assignment.fixture_group_name &&
-        assignment.fixture_type
+        assignment.fixture_type &&
+        (assignment.fixture_group_name || !BUILT_IN_FIXTURE_TYPE_TARGETS.has(assignment.fixture_type))
       ) {
-        definedTargetPairs.set(`${assignment.fixture_group_name}:${assignment.fixture_type}`, {
-          groupName: assignment.fixture_group_name,
+        definedTargetPairs.set(`${assignment.fixture_group_name || ''}:${assignment.fixture_type}`, {
+          groupName: assignment.fixture_group_name || '',
           fixtureType: assignment.fixture_type,
         });
       }
     }
     const definedTargets = [...definedTargetPairs.values()]
-      .filter((target) => groupNames.includes(target.groupName) && venueFixtureTypes.includes(target.fixtureType))
+      .filter((target) => (!target.groupName || groupNames.includes(target.groupName)) && venueFixtureTypes.includes(target.fixtureType))
       .map((target) => ({
-        key: `custom:${target.groupName}:type:${target.fixtureType}`,
-        label: `${target.groupName} · ${fixtureTypeLabelByKey.get(target.fixtureType) || target.fixtureType}`,
-        fixture_group_name: target.groupName,
+        key: target.groupName
+          ? `custom:${target.groupName}:type:${target.fixtureType}`
+          : `custom:type:${target.fixtureType}`,
+        label: target.groupName
+          ? `${target.groupName} · ${fixtureTypeLabelByKey.get(target.fixtureType) || target.fixtureType}`
+          : fixtureTypeLabelByKey.get(target.fixtureType) || target.fixtureType,
+        fixture_group_name: target.groupName || null,
         fixture_type: target.fixtureType,
       }));
     return [
@@ -1017,8 +1046,15 @@ function AnimationEditorPanel({
       return;
     }
     const spec = JSON.parse(raw);
-    if (isNamedPositionAnimationSpec(spec) && namedPositions[0]?.name) {
-      spec.params = { ...(spec.params || {}), position_name: namedPositions[0].name };
+    const entry = registryEntryForAnimationSpec(spec, registryEntryByKey);
+    const namedPositionParameter = (entry?.parameters || []).find(
+      (parameter) => parameter.type === 'named_position',
+    );
+    if (namedPositionParameter && namedPositions[0]?.name) {
+      spec.params = {
+        ...(spec.params || {}),
+        [namedPositionParameter.key]: namedPositions[0].name,
+      };
     }
     void onAddAssignment({
       lighting_mode_key: selectedModeKey,
@@ -1038,6 +1074,18 @@ function AnimationEditorPanel({
     });
   }
 
+  function toggleAssignmentExpanded(assignmentId) {
+    setExpandedAssignmentIds((current) => {
+      const next = new Set(current);
+      if (next.has(assignmentId)) {
+        next.delete(assignmentId);
+      } else {
+        next.add(assignmentId);
+      }
+      return next;
+    });
+  }
+
   function handleAssignmentWeightPercent(assignment, value) {
     const nextSpec = { ...assignment.animation_spec };
     if (value === '') {
@@ -1049,25 +1097,134 @@ function AnimationEditorPanel({
   }
 
   function handleNamedPositionAnimationPosition(assignment, positionName) {
+    handleAnimationParameterOverride(assignment, 'position_name', positionName);
+  }
+
+  function handleAnimationParameterOverride(assignment, parameterKey, value) {
+    const nextParams = { ...(assignment.animation_spec.params || {}) };
+    if (value === '') {
+      delete nextParams[parameterKey];
+    } else {
+      nextParams[parameterKey] = value;
+    }
+    const nextSpec = { ...assignment.animation_spec };
+    if (Object.keys(nextParams).length > 0) {
+      nextSpec.params = nextParams;
+    } else {
+      delete nextSpec.params;
+    }
     void onPatchAssignment(assignment.id, {
-      animation_spec: {
-        ...assignment.animation_spec,
-        params: {
-          ...(assignment.animation_spec.params || {}),
-          position_name: positionName,
-        },
-      },
+      animation_spec: nextSpec,
     });
+  }
+
+  function renderAnimationParameterControl(assignment, parameter) {
+    const value = assignment.animation_spec?.params?.[parameter.key] ?? '';
+    if (parameter.type === 'number') {
+      return (
+        <label key={parameter.key} className="animation-parameter-row">
+          <span>{parameter.label}</span>
+          <input
+            type="number"
+            min={parameter.min ?? undefined}
+            max={parameter.max ?? undefined}
+            step={parameter.step ?? 'any'}
+            value={value}
+            placeholder={String(parameter.default)}
+            onChange={(event) =>
+              handleAnimationParameterOverride(
+                assignment,
+                parameter.key,
+                event.target.value,
+              )
+            }
+          />
+        </label>
+      );
+    }
+    if (parameter.type === 'named_position') {
+      return (
+        <label key={parameter.key} className="animation-parameter-row">
+          <span>{parameter.label}</span>
+          <select
+            value={value}
+            disabled={namedPositions.length === 0}
+            onChange={(event) =>
+              handleAnimationParameterOverride(assignment, parameter.key, event.target.value)
+            }
+          >
+            <option value="">
+              {namedPositions.length === 0 ? 'No named positions' : `Default (${parameter.default || 'none'})`}
+            </option>
+            {namedPositions.map((position) => (
+              <option key={position.id} value={position.name}>
+                {position.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      );
+    }
+    if (parameter.type === 'signal') {
+      const selectedSignals = signalParameterSelection(value, parameter);
+      const selectedSet = new Set(selectedSignals);
+      return (
+        <div key={parameter.key} className="animation-parameter-row animation-signal-parameter-row">
+          <span>{parameter.label}</span>
+          <div className="animation-signal-checkboxes">
+            {(parameter.options || []).map((option) => (
+              <label key={option.value} className="animation-signal-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedSet.has(option.value)}
+                  onChange={(event) => {
+                    const next = new Set(selectedSignals);
+                    if (event.target.checked) {
+                      next.add(option.value);
+                    } else {
+                      next.delete(option.value);
+                    }
+                    handleAnimationParameterOverride(
+                      assignment,
+                      parameter.key,
+                      next.size === 0 ? '' : [...next],
+                    );
+                  }}
+                />
+                <span>{option.label || option.value}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <label key={parameter.key} className="animation-parameter-row">
+        <span>{parameter.label}</span>
+        <input
+          value={value}
+          placeholder={String(parameter.default)}
+          onChange={(event) =>
+            handleAnimationParameterOverride(assignment, parameter.key, event.target.value)
+          }
+        />
+      </label>
+    );
   }
 
   function handleAddCustomTarget() {
     const groupName = customTargetDraft.groupName;
     const fixtureType = customTargetDraft.fixtureType;
-    if (!groupName || !fixtureType) {
+    if (!fixtureType) {
       return;
     }
-    const key = `${groupName}:${fixtureType}`;
-    if (customTargets.some((target) => `${target.groupName}:${target.fixtureType}` === key)) {
+    if (!groupName && BUILT_IN_FIXTURE_TYPE_TARGETS.has(fixtureType)) {
+      setCustomTargetDraft({ groupName: '', fixtureType: '' });
+      setAddTargetModalOpen(false);
+      return;
+    }
+    const key = `${groupName || ''}:${fixtureType}`;
+    if (customTargets.some((target) => `${target.groupName || ''}:${target.fixtureType}` === key)) {
       return;
     }
     setCustomTargets((targets) => [...targets, { groupName, fixtureType }]);
@@ -1130,67 +1287,94 @@ function AnimationEditorPanel({
             return (
               <div key={category} className="animation-assignment-category-group">
                 <div className="animation-assignment-category-heading">{category}</div>
-                {assignmentsInCategory.map((assignment) => (
-                  <div key={assignment.id} className="animation-assignment-row">
-                    <span className="animation-assignment-main">
-                      <span>{summarizeAnimationSpec(assignment.animation_spec)}</span>
-                    </span>
-                    <label className="animation-weight-percent">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value={assignment.animation_spec?.weight_percent ?? ''}
-                        placeholder={assignment.animation_spec?.weight_percent == null ? blankPlaceholder : ''}
-                        onChange={(event) => handleAssignmentWeightPercent(assignment, event.target.value)}
-                      />
-                      <span>%</span>
-                    </label>
-                    <button type="button" className="small-button danger-button" onClick={() => onDeleteAssignment(assignment.id)}>
-                      Delete
-                    </button>
-                    {isNamedPositionAnimationSpec(assignment.animation_spec) ? (
-                      <label className="animation-named-position-row">
-                        <span>Position</span>
-                        <select
-                          value={assignment.animation_spec?.params?.position_name || ''}
-                          disabled={namedPositions.length === 0}
-                          onChange={(event) =>
-                            handleNamedPositionAnimationPosition(assignment, event.target.value)
-                          }
+                {assignmentsInCategory.map((assignment) => {
+                  const registryEntry = registryEntryForAnimationSpec(assignment.animation_spec, registryEntryByKey);
+                  const parameters = registryEntry?.parameters || [];
+                  const hasWeightedOptions = assignment.animation_spec?.type === 'weighted_randomize';
+                  const hasExpandedControls = parameters.length > 0 || hasWeightedOptions;
+                  const isExpanded = expandedAssignmentIds.has(assignment.id);
+                  return (
+                    <div key={assignment.id} className="animation-assignment-row">
+                      <span className="animation-assignment-main">
+                        <span>{summarizeAnimationSpec(assignment.animation_spec)}</span>
+                        {hasExpandedControls ? (
+                          <button
+                            type="button"
+                            className="animation-assignment-expand"
+                            aria-label={isExpanded ? 'Collapse animation parameters' : 'Expand animation parameters'}
+                            aria-expanded={isExpanded}
+                            onClick={() => toggleAssignmentExpanded(assignment.id)}
+                          >
+                            <span className="animation-assignment-expand-triangle" aria-hidden="true" />
+                          </button>
+                        ) : (
+                          <span className="animation-assignment-expand-spacer" aria-hidden="true" />
+                        )}
+                      </span>
+                      <span className="animation-assignment-actions">
+                        <label className="animation-weight-percent">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={assignment.animation_spec?.weight_percent ?? ''}
+                            placeholder={assignment.animation_spec?.weight_percent == null ? blankPlaceholder : ''}
+                            onChange={(event) => handleAssignmentWeightPercent(assignment, event.target.value)}
+                          />
+                          <span>%</span>
+                        </label>
+                        <button
+                          type="button"
+                          className="animation-assignment-delete"
+                          aria-label="Delete animation"
+                          onClick={() => onDeleteAssignment(assignment.id)}
                         >
-                          <option value="">
-                            {namedPositions.length === 0 ? 'No named positions' : 'Choose position'}
-                          </option>
-                          {namedPositions.map((position) => (
-                            <option key={position.id} value={position.name}>
-                              {position.name}
-                            </option>
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v5" />
+                            <path d="M14 11v5" />
+                          </svg>
+                        </button>
+                      </span>
+                      {isExpanded && parameters.length > 0 ? (
+                        <div className="animation-parameter-list">
+                          {parameters.map((parameter) =>
+                            renderAnimationParameterControl(assignment, parameter),
+                          )}
+                        </div>
+                      ) : null}
+                      {isExpanded && hasWeightedOptions ? (
+                        <div className="animation-weight-list">
+                          {(assignment.animation_spec.options || []).map((option, index) => (
+                            <label key={index} className="animation-weight-row">
+                              <span>{summarizeAnimationSpec(option.animation)}</span>
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={option.weight}
+                                onChange={(event) =>
+                                  handleWeightedOptionWeight(assignment, index, event.target.value)
+                                }
+                              />
+                            </label>
                           ))}
-                        </select>
-                      </label>
-                    ) : null}
-                    {assignment.animation_spec?.type === 'weighted_randomize' ? (
-                      <div className="animation-weight-list">
-                        {(assignment.animation_spec.options || []).map((option, index) => (
-                          <label key={index} className="animation-weight-row">
-                            <span>{summarizeAnimationSpec(option.animation)}</span>
-                            <input
-                              type="number"
-                              min="1"
-                              step="1"
-                              value={option.weight}
-                              onChange={(event) =>
-                                handleWeightedOptionWeight(assignment, index, event.target.value)
-                              }
-                            />
-                          </label>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             );
           })
@@ -1233,19 +1417,21 @@ function AnimationEditorPanel({
           </div>
           {destinationGroups.map((group) => (
             <div key={group.key} className="animation-target-group">
-              <div className="animation-target-group-header">
-                <div className="section-subtitle">{group.title}</div>
-                {group.key === 'defined' ? (
-                  <button
-                    type="button"
-                    className="small-button secondary-button animation-add-target-button"
-                    aria-label="Add selection target"
-                    onClick={() => setAddTargetModalOpen(true)}
-                  >
-                    +
-                  </button>
-                ) : null}
-              </div>
+              {group.key === 'fixture-type' ? null : (
+                <div className="animation-target-group-header">
+                  <div className="section-subtitle">{group.title}</div>
+                  {group.key === 'defined' ? (
+                    <button
+                      type="button"
+                      className="small-button secondary-button animation-add-target-button"
+                      aria-label="Add selection target"
+                      onClick={() => setAddTargetModalOpen(true)}
+                    >
+                      +
+                    </button>
+                  ) : null}
+                </div>
+              )}
               {group.targets.length > 0 ? (
                 group.targets.map((destination) => renderDestination(destination))
               ) : (
@@ -1324,14 +1510,14 @@ function AnimationEditorPanel({
           }}
         >
           <label>
-            Group
+            Group (optional)
             <select
               value={customTargetDraft.groupName}
               onChange={(event) =>
                 setCustomTargetDraft((draft) => ({ ...draft, groupName: event.target.value }))
               }
             >
-              <option value="">Choose a group</option>
+              <option value="">No group</option>
               {groupNames.map((groupName) => (
                 <option key={groupName} value={groupName}>
                   {groupName}
@@ -1359,7 +1545,7 @@ function AnimationEditorPanel({
             <button type="button" className="secondary-button" onClick={() => setAddTargetModalOpen(false)}>
               Cancel
             </button>
-            <button type="submit" disabled={!customTargetDraft.groupName || !customTargetDraft.fixtureType}>
+            <button type="submit" disabled={!customTargetDraft.fixtureType}>
               Add Target
             </button>
           </div>
@@ -2930,6 +3116,13 @@ export default function DenseVenueEditorPage({ venueId }) {
     });
   }
 
+  function handleOpenAnimationEditor() {
+    const editableModes = venueSnapshot?.lighting_modes || [];
+    const liveEditableMode = editableModes.find((mode) => mode.key === controlState.mode);
+    setSelectedAnimationModeKey(liveEditableMode?.key || editableModes[0]?.key || selectedAnimationModeKey);
+    setEditorMode('animation');
+  }
+
   return (
     <>
       <div
@@ -3002,6 +3195,18 @@ export default function DenseVenueEditorPage({ venueId }) {
                         onClick={() => setEditorMenuOpen(false)}
                       >
                         Patch list
+                      </a>
+                    </div>
+                    <div className="dense-editor-menu-section">
+                      <a
+                        className="dense-editor-menu-heading dense-editor-menu-external-link"
+                        href={withCurrentSearch('/interpretation')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                        onClick={() => setEditorMenuOpen(false)}
+                      >
+                        Interpretation tree
                       </a>
                     </div>
                     <div className="dense-editor-menu-section">
@@ -3092,7 +3297,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                 className={`view-chip${editorMode === 'animation' ? ' active' : ''}`}
                 role="radio"
                 aria-checked={editorMode === 'animation'}
-                onClick={() => setEditorMode('animation')}
+                onClick={handleOpenAnimationEditor}
               >
                 Animations
               </button>
@@ -3159,9 +3364,11 @@ export default function DenseVenueEditorPage({ venueId }) {
                           <span className="fixture-row-meta dense-fixture-meta">{fixture.fixture_type}</span>
                         ) : null}
                       </span>
-                      <span className="dense-fixture-actions">
-                        <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
-                      </span>
+                      {!fixture.name ? (
+                        <span className="dense-fixture-actions">
+                          <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
+                        </span>
+                      ) : null}
                     </button>
                   ))}
                   {fixtureListGroups.groups.map(({ name, fixtures: groupedFixtures }) => (
@@ -3215,9 +3422,11 @@ export default function DenseVenueEditorPage({ venueId }) {
                                 <span className="fixture-row-meta dense-fixture-meta">{fixture.fixture_type}</span>
                               ) : null}
                             </span>
-                            <span className="dense-fixture-actions">
-                              <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
-                            </span>
+                            {!fixture.name ? (
+                              <span className="dense-fixture-actions">
+                                <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
+                              </span>
+                            ) : null}
                           </button>
                         ))}
                       </div>

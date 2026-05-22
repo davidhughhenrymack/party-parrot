@@ -1,4 +1,5 @@
 from parrot.director.color_schemes import (
+    PRIDE_MIN_HUE_DISTANCE,
     generate_pride_scheme,
     scheme_berlin,
     scheme_pride,
@@ -24,6 +25,25 @@ def test_generate_pride_scheme_orders_by_rgb_sum_descending():
         bg_sum = sum(s.bg.rgb)
         bc_sum = sum(s.bg_contrast.rgb)
         assert fg_sum >= bg_sum >= bc_sum
+
+
+def test_generate_pride_scheme_enforces_minimum_hue_distance():
+    for _ in range(200):
+        s = generate_pride_scheme()
+        colors = (s.fg, s.bg, s.bg_contrast)
+        for i, color in enumerate(colors):
+            for other in colors[i + 1:]:
+                distance = min(abs(color.hue - other.hue), 1.0 - abs(color.hue - other.hue))
+                assert distance >= PRIDE_MIN_HUE_DISTANCE
+
+
+def test_scheme_pride_enforces_minimum_hue_distance():
+    for s in scheme_pride:
+        colors = (s.fg, s.bg, s.bg_contrast)
+        for i, color in enumerate(colors):
+            for other in colors[i + 1:]:
+                distance = min(abs(color.hue - other.hue), 1.0 - abs(color.hue - other.hue))
+                assert distance >= PRIDE_MIN_HUE_DISTANCE
 
 
 def test_scheme_pride_length_matches_other_themes():

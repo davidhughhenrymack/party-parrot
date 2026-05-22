@@ -3,6 +3,7 @@ import re
 import time
 import os
 from collections import defaultdict
+from collections.abc import Callable
 from colorama import Fore, Style
 from parrot.director.frame import Frame, FrameSignal
 
@@ -84,13 +85,19 @@ def _flatten_interpreter_rows(
 
 
 class Director:
-    def __init__(self, state: State, vj_director=None):
+    def __init__(
+        self,
+        state: State,
+        vj_director=None,
+        interpretation_tree_publisher: Callable[[dict[str, object]], None] | None = None,
+    ):
         self.scheme = LerpAnimator(random.choice(color_schemes), 4)
         self.last_shift_time = time.time()
         self.shift_count = 0
         self.start_time = time.time()
         self.state = state
         self.vj_director = vj_director
+        self._interpretation_tree_publisher = interpretation_tree_publisher
 
         # Initialize position manager first (so fixtures have positions before interpreters are created)
         self.position_manager = FixturePositionManager(state)
@@ -349,6 +356,61 @@ class Director:
 
         return result
 
+    def _lighting_tree_sections(
+        self,
+    ) -> list[tuple[str | None, list[tuple[list[FixtureBase], str]]]]:
+        blend = self._interpretation_blend
+        sections: list[tuple[str | None, list[tuple[list[FixtureBase], str]]]] = []
+        for idx, (name, interpreter) in enumerate(
+            zip(self.fixture_group_names, self.interpreters)
+        ):
+            if blend is not None and idx in blend.bucket_indices:
+                interpreter = blend.incoming_interpreters[idx]
+            rows = _flatten_interpreter_rows(interpreter)
+            if rows:
+                sections.append((name, rows))
+        return sections
+
+    def structured_lighting_tree(self, mode_name: str | None = None) -> dict[str, object]:
+        mode = mode_name or self.state.mode.name
+        root_children: list[dict[str, object]] = []
+        for group_name, rows in self._lighting_tree_sections():
+            group_children = []
+            for group, interpreter_str_raw in rows:
+                group_children.append(
+                    {
+                        "kind": "interpreter",
+                        "label": re.sub(r"\x1b\[[0-9;]*m", "", interpreter_str_raw),
+                        "fixture_label": self.format_fixture_names(group),
+                        "fixtures": [str(fixture) for fixture in group],
+                    }
+                )
+            root_children.append(
+                {
+                    "kind": "group",
+                    "label": group_name if group_name is not None else "ungrouped",
+                    "children": group_children,
+                }
+            )
+        return {
+            "version": 1,
+            "updated_at": time.time(),
+            "mode": mode,
+            "tree": {
+                "kind": "mode",
+                "label": f"{mode.capitalize()} interpretation",
+                "children": root_children,
+            },
+        }
+
+    def _publish_lighting_tree(self, mode_name: str | None = None) -> None:
+        if self._interpretation_tree_publisher is None:
+            return
+        try:
+            self._interpretation_tree_publisher(self.structured_lighting_tree(mode_name))
+        except Exception:
+            pass
+
     def generate_interpreters(self):
         """Generate interpreters for lighting only (does not affect VJ)"""
         if self._interpretation_blend is not None:
@@ -358,6 +420,7 @@ class Director:
         if n == 0:
             self.interpreters = []
             print(self.print_lighting_tree(self.state.mode.name))
+            self._publish_lighting_tree(self.state.mode.name)
             return
         is_regen = (
             not self._force_fresh_interpreters
@@ -382,6 +445,7 @@ class Director:
             ]
 
         print(self.print_lighting_tree(self.state.mode.name))
+        self._publish_lighting_tree(self.state.mode.name)
 
     def generate_all(self):
         """Generate both lighting interpreters and VJ visuals"""
@@ -432,6 +496,7 @@ class Director:
         self.ensure_each_signal_is_enabled()
         self.shift_count += 1
         print(self.print_lighting_tree(self.state.mode.name))
+        self._publish_lighting_tree(self.state.mode.name)
 
     def shift_vj_only(self):
         """Full shift of VJ visuals only (no lighting changes) - complete regeneration"""
@@ -512,6 +577,7 @@ class Director:
                 self.vj_director.shift(self.state.vj_mode, threshold=0.3)
             self.shift_count += 1
             print(self.print_lighting_tree(self.state.mode.name))
+            self._publish_lighting_tree(self.state.mode.name)
 
     def render(self, dmx):
         # Get manual group and set its dimmer value
@@ -535,3 +601,4 @@ class Director:
         # Regenerate lighting interpreters only (VJ is independent)
         self.generate_interpreters()
         print(self.print_lighting_tree(mode.name))
+        self._publish_lighting_tree(mode.name)

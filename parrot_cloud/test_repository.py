@@ -82,6 +82,70 @@ def test_animation_assignment_crud(venue_repository):
     assert all(a.id != assignment.id for a in deleted.animation_assignments)
 
 
+def test_queer_prom_has_no_legacy_animation_assignments(venue_repository):
+    created = venue_repository.create_venue("Queer Prom")
+    snapshot = venue_repository.get_venue_snapshot(created.summary.id)
+
+    assert [mode.key for mode in snapshot.lighting_modes] == [
+        "chill",
+        "rave",
+        "stroby",
+        "ethereal",
+    ]
+    legacy_assignments = [
+        assignment
+        for assignment in snapshot.animation_assignments
+        if assignment.animation_spec.get("type") == "legacy_mode"
+    ]
+    assert legacy_assignments == []
+    assert {
+        (assignment.lighting_mode_key, assignment.fixture_type)
+        for assignment in snapshot.animation_assignments
+    } >= {
+        ("chill", "par"),
+        ("chill", "moving_head"),
+        ("rave", "par"),
+        ("rave", "moving_head"),
+        ("stroby", "par"),
+        ("stroby", "moving_head"),
+    }
+
+
+def test_seed_removes_existing_legacy_animations(venue_repository):
+    active_snapshot = venue_repository.get_active_venue_snapshot()
+    venue_repository.create_animation_assignment(
+        active_snapshot.summary.id,
+        {
+            "lighting_mode_key": "chill",
+            "animation_spec": {"type": "legacy_mode", "mode": "chill"},
+        },
+    )
+
+    venue_repository.ensure_seed_data()
+    snapshot = venue_repository.get_active_venue_snapshot()
+
+    assert all(
+        assignment.animation_spec != {"type": "legacy_mode", "mode": "chill"}
+        for assignment in snapshot.animation_assignments
+    )
+
+    queer_prom = venue_repository.create_venue("Queer Prom")
+    venue_repository.create_animation_assignment(
+        queer_prom.summary.id,
+        {
+            "lighting_mode_key": "ethereal",
+            "animation_spec": {"type": "legacy_mode", "mode": "ethereal"},
+        },
+    )
+    venue_repository.ensure_seed_data()
+    queer_prom_snapshot = venue_repository.get_venue_snapshot(queer_prom.summary.id)
+
+    assert all(
+        assignment.animation_spec != {"type": "legacy_mode", "mode": "ethereal"}
+        for assignment in queer_prom_snapshot.animation_assignments
+    )
+
+
 def test_seed_is_idempotent(venue_repository):
     first_bootstrap = venue_repository.get_runtime_bootstrap()
     venue_repository.ensure_seed_data()

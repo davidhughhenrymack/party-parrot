@@ -362,34 +362,8 @@ function createThreeSceneController({
   }
 
   function paintVideoWallPlaceholderCanvas(canvas, context) {
-    const palette = [
-      '#ff4d6d',
-      '#fb7185',
-      '#f59e0b',
-      '#fde047',
-      '#34d399',
-      '#22d3ee',
-      '#60a5fa',
-      '#a78bfa',
-    ];
-
-    context.fillStyle = '#0b1020';
+    context.fillStyle = '#000000';
     context.fillRect(0, 0, canvas.width, canvas.height);
-
-    for (let row = 0; row < canvas.height; row += 1) {
-      for (let col = 0; col < canvas.width; col += 1) {
-        const colorIndex = (row * 3 + col * 5 + (row % 3) * 7) % palette.length;
-        context.fillStyle = palette[colorIndex];
-        context.globalAlpha = 0.55 + ((row + col) % 4) * 0.1;
-        context.fillRect(col, row, 1, 1);
-      }
-    }
-
-    context.globalAlpha = 1;
-    context.fillStyle = 'rgba(255,255,255,0.35)';
-    for (let band = 0; band < canvas.height; band += 4) {
-      context.fillRect(0, band, canvas.width, 1);
-    }
   }
 
   function createVideoWallTexture() {
@@ -410,8 +384,7 @@ function createThreeSceneController({
     // viewer's screen — so the default ``flipY=true`` upload leaves the VJ
     // preview visually upside-down. Disable flipY once on the shared texture
     // so JPEG row 0 maps to UV v=0 and the post-rotation image reads right
-    // side up. The placeholder pattern is rotationally symmetric so it is
-    // unaffected by the change.
+    // side up. The black placeholder is unaffected by the change.
     texture.flipY = false;
     // ``toScenePosition`` flips venue X into three.js -X so the default
     // perspective camera (positioned audience-side at +Y, up=+Z) sees the

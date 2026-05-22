@@ -110,7 +110,15 @@ class MicToDmx(object):
         self.vj_director = VJDirector(self.state)
 
         # Initialize director with VJ director
-        self.director = Director(self.state, self.vj_director)
+        self.director = Director(
+            self.state,
+            self.vj_director,
+            interpretation_tree_publisher=(
+                self.runtime_client.push_interpretation_tree
+                if self.runtime_client is not None
+                else None
+            ),
+        )
 
         # Start the web server if not disabled
         if not getattr(self.args, "no_web", False):

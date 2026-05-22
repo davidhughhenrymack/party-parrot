@@ -12,6 +12,7 @@ from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import Universe
 from parrot.interpreters.base import InterpreterArgs
 from parrot.interpreters.movers import MoverRandomGobo, RotatingGobo
+from parrot.interpreters.strobe import StrobeHighSustained
 from parrot.fixtures.mirrorball import Mirrorball
 
 
@@ -109,6 +110,7 @@ class TestFixtureBase:
 
         RotatingGobo([mirrorball], args)
         MoverRandomGobo([mirrorball], args)
+        StrobeHighSustained([mirrorball], args)
 
     def test_render(self):
         """Test that render sets DMX values correctly"""

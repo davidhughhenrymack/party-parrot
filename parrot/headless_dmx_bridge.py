@@ -37,7 +37,14 @@ class HeadlessDmxBridge:
             self.runtime_client.start()
 
         self.audio_analyzer = AudioAnalyzer(self.state.signal_states)
-        self.director = Director(self.state)
+        self.director = Director(
+            self.state,
+            interpretation_tree_publisher=(
+                self.runtime_client.push_interpretation_tree
+                if self.runtime_client is not None
+                else None
+            ),
+        )
         self.dmx = get_controller(self.state.venue)
         self.state.events.on_venue_change += lambda _venue: self._refresh_dmx_controller()
         self.state.events.on_shift_lighting_only_request += self.director.shift_lighting_only

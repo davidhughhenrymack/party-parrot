@@ -104,6 +104,41 @@ def test_runtime_fixture_state_get_returns_current(client):
     assert data["fixtures"][0]["id"] == "a"
 
 
+def test_runtime_interpretation_tree_post_and_get(client):
+    payload = {
+        "version": 1,
+        "mode": "rave",
+        "updated_at": 123.0,
+        "tree": {
+            "kind": "mode",
+            "label": "Rave interpretation",
+            "children": [
+                {
+                    "kind": "group",
+                    "label": "Movers",
+                    "children": [
+                        {
+                            "kind": "interpreter",
+                            "label": "MoveCircles",
+                            "fixture_label": "mover @ 1",
+                            "fixtures": ["mover @ 1"],
+                        }
+                    ],
+                }
+            ],
+        },
+    }
+    post = client.post("/api/runtime/interpretation-tree", json=payload)
+    assert post.status_code == 200
+    assert post.get_json()["tree"]["children"][0]["label"] == "Movers"
+
+    response = client.get("/api/runtime/interpretation-tree")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["mode"] == "rave"
+    assert data["tree"]["children"][0]["children"][0]["label"] == "MoveCircles"
+
+
 def test_named_position_endpoints(client):
     bootstrap = client.get("/api/bootstrap").get_json()
     venue_id = bootstrap["active_venue"]["summary"]["id"]

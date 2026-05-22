@@ -108,7 +108,15 @@ def run_gl_window_app(args):
     vj_director.setup(ctx)
 
     # Initialize director first (creates position manager)
-    director = Director(state, vj_director)
+    director = Director(
+        state,
+        vj_director,
+        interpretation_tree_publisher=(
+            runtime_client.push_interpretation_tree
+            if runtime_client is not None
+            else None
+        ),
+    )
 
     # Remote control "shift" buttons come in over websocket; State queues
     # them and fires these events on the main thread.

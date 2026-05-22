@@ -55,6 +55,15 @@ class TestDirector(unittest.TestCase):
         self.assertIsNotNone(self.director.fixture_groups)
         self.assertIsNotNone(self.director.interpreters)
 
+    def test_structured_lighting_tree_shape(self):
+        """Structured tree mirrors the console interpretation tree for the web UI."""
+        payload = self.director.structured_lighting_tree("chill")
+
+        self.assertEqual(payload["version"], 1)
+        self.assertEqual(payload["mode"], "chill")
+        self.assertEqual(payload["tree"]["kind"], "mode")
+        self.assertIn("children", payload["tree"])
+
     def test_mode_change(self):
         """Test that mode changes trigger interpreter regeneration"""
         with patch.object(self.director, "generate_interpreters") as mock_gen:

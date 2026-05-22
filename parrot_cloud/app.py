@@ -171,6 +171,20 @@ def create_app() -> Flask:
     def get_runtime_fixture_state():
         return jsonify(repository.get_fixture_runtime_state())
 
+    @app.get("/api/runtime/interpretation-tree")
+    def get_runtime_interpretation_tree():
+        return jsonify(repository.get_runtime_interpretation_tree())
+
+    @app.post("/api/runtime/interpretation-tree")
+    def post_runtime_interpretation_tree():
+        data = request.get_json(force=True) or {}
+        payload = repository.set_runtime_interpretation_tree(dict(data))
+        _safe_broadcast(
+            "interpretation_tree",
+            lambda: {"type": "interpretation_tree", "data": payload},
+        )
+        return jsonify(payload)
+
     @app.post("/api/runtime/fixture-state")
     def post_runtime_fixture_state():
         data = request.get_json(force=True) or {}

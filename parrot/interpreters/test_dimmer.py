@@ -181,8 +181,9 @@ class TestSequenceFadeDimmers:
 
     def test_sequence_fade_dimmers_initialization(self):
         """Test SequenceFadeDimmers initialization"""
-        interpreter = SequenceFadeDimmers(self.group, self.args, wait_time=5)
+        interpreter = SequenceFadeDimmers(self.group, self.args, wait_time=5, min=40)
         assert interpreter.wait_time == 5
+        assert interpreter.min == 40
 
     def test_sequence_fade_dimmers_step(self):
         """Test SequenceFadeDimmers creates smooth fades"""
@@ -202,6 +203,19 @@ class TestSequenceFadeDimmers:
         dim2 = self.fixture2.set_dimmer.call_args[0][0]
         assert 0 <= dim1 <= 255
         assert 0 <= dim2 <= 255
+
+    def test_sequence_fade_dimmers_respects_minimum(self):
+        interpreter = SequenceFadeDimmers(self.group, self.args, wait_time=3, min=64)
+        frame = MagicMock()
+        frame.time = 0
+        scheme = MagicMock()
+
+        interpreter.step(frame, scheme)
+
+        dim1 = self.fixture1.set_dimmer.call_args[0][0]
+        dim2 = self.fixture2.set_dimmer.call_args[0][0]
+        assert 64 <= dim1 <= 255
+        assert 64 <= dim2 <= 255
 
 
 class TestDimmersBeatChase:

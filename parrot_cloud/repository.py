@@ -48,7 +48,6 @@ from parrot.director.animation_registry import (
     DEFAULT_PAR_ANIMATION,
     DEFAULT_STROBY_MOVING_LIGHT_ANIMATION,
     DEFAULT_STROBY_PAR_ANIMATION,
-    legacy_mode_spec,
 )
 
 LEGACY_PLAN_UNITS_PER_METER = 50.0
@@ -65,6 +64,20 @@ DEFAULT_EDITABLE_LIGHTING_MODES: tuple[tuple[str, str], ...] = (
     ("rave", "Rave"),
     ("stroby", "Stroby"),
 )
+DEFAULT_LIGHTING_MODE_ANIMATION_ROWS = {
+    "chill": (
+        ("par", DEFAULT_PAR_ANIMATION),
+        ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
+    ),
+    "rave": (
+        ("par", DEFAULT_PAR_ANIMATION),
+        ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
+    ),
+    "stroby": (
+        ("par", DEFAULT_STROBY_PAR_ANIMATION),
+        ("moving_head", DEFAULT_STROBY_MOVING_LIGHT_ANIMATION),
+    ),
+}
 UTILITY_LIGHTING_MODE_KEYS: tuple[str, ...] = ("test", "blackout", "home")
 
 
@@ -200,11 +213,39 @@ STANDARD_SCENE_OBJECT_ORDER = (
 class VenueRepository:
     def __init__(self) -> None:
         self._fixture_runtime_state: dict[str, object] = {"version": 1, "fixtures": []}
+        self._runtime_interpretation_tree: dict[str, object] = {
+            "version": 1,
+            "updated_at": None,
+            "mode": None,
+            "tree": {
+                "kind": "mode",
+                "label": "No interpretation available",
+                "children": [],
+            },
+        }
         self._vj_preview_jpeg: bytes | None = None
         self._vj_preview_updated_at: float | None = None
 
     def get_fixture_runtime_state(self) -> dict[str, object]:
         return dict(self._fixture_runtime_state)
+
+    def get_runtime_interpretation_tree(self) -> dict[str, object]:
+        return dict(self._runtime_interpretation_tree)
+
+    def set_runtime_interpretation_tree(
+        self, data: dict[str, object]
+    ) -> dict[str, object]:
+        tree = data.get("tree")
+        if not isinstance(tree, dict):
+            raise ValueError("Interpretation payload must include a tree object")
+        payload = {
+            "version": int(data.get("version", 1)),
+            "updated_at": float(data.get("updated_at", time.time())),
+            "mode": str(data.get("mode", "")),
+            "tree": dict(tree),
+        }
+        self._runtime_interpretation_tree = payload
+        return self.get_runtime_interpretation_tree()
 
     def set_fixture_runtime_state(self, data: dict[str, object]) -> dict[str, object]:
         version = int(data.get("version", 1))
@@ -1098,6 +1139,13 @@ class VenueRepository:
 
     def _ensure_lighting_modes(self, session, venue: VenueModel) -> None:
         if venue.lighting_modes:
+            removed_mode_keys = self._remove_legacy_default_mode_assignments(session, venue)
+            self._seed_default_animation_assignments(
+                session,
+                venue,
+                {mode.key: mode for mode in venue.lighting_modes},
+                only_mode_keys=removed_mode_keys,
+            )
             return
 
         modes = list(DEFAULT_EDITABLE_LIGHTING_MODES)
@@ -1121,36 +1169,49 @@ class VenueRepository:
             created[key] = row
         session.flush()
 
-        if is_queer_prom:
-            for key, mode in created.items():
-                session.add(
-                    VenueAnimationAssignmentModel(
-                        venue_id=venue.id,
-                        lighting_mode_id=mode.id,
-                        fixture_group_name=None,
-                        fixture_type=None,
-                        order_index=0,
-                        animation_spec=legacy_mode_spec(key),
-                    )
-                )
-            return
+        self._seed_default_animation_assignments(session, venue, created)
 
-        defaults = {
-            "chill": (
-                ("par", DEFAULT_PAR_ANIMATION),
-                ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
-            ),
-            "rave": (
-                ("par", DEFAULT_PAR_ANIMATION),
-                ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
-            ),
-            "stroby": (
-                ("par", DEFAULT_STROBY_PAR_ANIMATION),
-                ("moving_head", DEFAULT_STROBY_MOVING_LIGHT_ANIMATION),
-            ),
-        }
-        for mode_key, rows in defaults.items():
-            mode = created[mode_key]
+    def _remove_legacy_default_mode_assignments(
+        self,
+        session,
+        venue: VenueModel,
+    ) -> set[str]:
+        removed_mode_keys: set[str] = set()
+        for assignment in list(venue.animation_assignments):
+            if assignment.animation_spec.get("type") != "legacy_mode":
+                continue
+            if assignment.animation_spec.get("mode") != assignment.lighting_mode.key:
+                continue
+            removed_mode_keys.add(assignment.lighting_mode.key)
+            session.delete(assignment)
+        if removed_mode_keys:
+            session.flush()
+            self._touch_venue(venue)
+        return removed_mode_keys
+
+    def _seed_default_animation_assignments(
+        self,
+        session,
+        venue: VenueModel,
+        modes_by_key: dict[str, LightingModeModel],
+        *,
+        only_mode_keys: set[str] | None = None,
+    ) -> None:
+        mode_keys = set(DEFAULT_LIGHTING_MODE_ANIMATION_ROWS)
+        if only_mode_keys is not None:
+            mode_keys &= only_mode_keys
+
+        for mode_key in mode_keys:
+            mode = modes_by_key.get(mode_key)
+            if mode is None:
+                continue
+            if any(
+                assignment.lighting_mode_id == mode.id
+                and assignment not in session.deleted
+                for assignment in venue.animation_assignments
+            ):
+                continue
+            rows = DEFAULT_LIGHTING_MODE_ANIMATION_ROWS[mode_key]
             for order_index, (fixture_type, animation_spec) in enumerate(rows):
                 session.add(
                     VenueAnimationAssignmentModel(

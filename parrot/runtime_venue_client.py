@@ -98,6 +98,18 @@ class RuntimeVenueClient:
             with self._fixture_push_lock:
                 self._last_fixture_payload_json = None
 
+    def push_interpretation_tree(self, payload: dict[str, object]) -> None:
+        if self._stop_event.is_set():
+            return
+        try:
+            requests.post(
+                f"{self.base_url}/api/runtime/interpretation-tree",
+                json=payload,
+                timeout=2.0,
+            ).raise_for_status()
+        except Exception:
+            pass
+
     def queue_vj_preview_jpeg(self, jpeg_bytes: bytes) -> None:
         """Enqueue a JPEG snapshot of the VJ framebuffer for upload.
 

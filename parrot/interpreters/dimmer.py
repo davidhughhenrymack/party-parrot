@@ -88,9 +88,10 @@ class SequenceDimmers(InterpreterBase[T]):
 
 @beartype
 class SequenceFadeDimmers(InterpreterBase[T]):
-    def __init__(self, group: list[T], args: InterpreterArgs, wait_time=3):
+    def __init__(self, group: list[T], args: InterpreterArgs, wait_time=3, min=0):
         super().__init__(group, args)
         self.wait_time = wait_time
+        self.min = clamp(min, 0, 255)
 
     def step(self, frame, scheme):
         for i, fixture in enumerate(self.group):
@@ -100,8 +101,8 @@ class SequenceFadeDimmers(InterpreterBase[T]):
             )
             # Map -1 to 1 range to 0 to 1, then apply power to create more low values
             normalized = ((raw_cos + 1) / 2) ** 4
-            # Scale back to 0-255 range
-            fixture.set_dimmer(normalized * 255)
+            # Scale to the configured dimmer floor through full brightness.
+            fixture.set_dimmer(self.min + normalized * (255 - self.min))
 
 
 @beartype

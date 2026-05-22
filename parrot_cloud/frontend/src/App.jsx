@@ -2,6 +2,7 @@ import RemoteControlPage from './RemoteControlPage.jsx';
 import VenuesPage from './VenuesPage.jsx';
 import DenseVenueEditorPage from './DenseVenueEditorPage.jsx';
 import PatchListPage from './PatchListPage.jsx';
+import InterpretationTreePage from './InterpretationTreePage.jsx';
 
 export default function App() {
   const path = window.location.pathname;
@@ -21,6 +22,10 @@ export default function App() {
 
   if (path === '/patch') {
     return <PatchListPage />;
+  }
+
+  if (path === '/interpretation') {
+    return <InterpretationTreePage />;
   }
 
   return <HomePage />;
