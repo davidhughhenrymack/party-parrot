@@ -104,8 +104,17 @@ class TestDmxUtils:
         return_value="/dev/cu.usbserial-EN419206",
     )
     @patch("parrot.utils.dmx_utils.Controller")
-    def test_get_entec_controller_exception(self, mock_controller_class, _find):
-        """Test get_entec_controller falls back to mock when real controller fails."""
+    @patch("parrot.utils.dmx_utils.os.path.exists", return_value=False)
+    def test_get_entec_controller_exception(
+        self, _path_exists, mock_controller_class, _find
+    ):
+        """Test get_entec_controller falls back to mock when real controller fails.
+
+        Patches ``os.path.exists`` to False so the cu./tty. fallback (which the
+        production code attempts when the primary open fails) is skipped — this
+        keeps the assertion deterministic regardless of whether the dev machine
+        actually has an Enttec adapter plugged in.
+        """
         mock_controller_class.side_effect = Exception("USB device not found")
 
         controller = get_entec_controller()

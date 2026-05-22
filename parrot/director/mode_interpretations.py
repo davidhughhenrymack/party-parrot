@@ -34,7 +34,6 @@ from parrot.interpreters.dimmer import (
     Dimmer0,
     Dimmer255,
     DimmerFadeIn,
-    DimmerFadeInLinearSeconds,
     DimmersBeatChase,
     GentlePulse,
     LightningStab,
@@ -62,6 +61,7 @@ from parrot.interpreters.move import (
 )
 from parrot.interpreters.movers import (
     FocusBig,
+    FocusSinePhased,
     FocusSmall,
     MoverGobo,
     MoverNoGobo,
@@ -84,7 +84,6 @@ from parrot.interpreters.slow import (
 from parrot.interpreters.spatial import (
     HardSpatialCenterOutPulse,
     HardSpatialPulse,
-    SoftSpatialPulse,
 )
 from parrot.interpreters.strobe import StrobeChannelSustained, StrobeHighSustained
 
@@ -174,8 +173,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                         AnyColor,
                         signal_switch(
                             randomize(
-                                HardSpatialPulse,
-                                HardSpatialCenterOutPulse,
                                 DimmersBeatChase,
                                 GentlePulse,
                                 with_args(
@@ -247,8 +244,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 AnyColor,
                 signal_switch(
                     randomize(
-                        HardSpatialPulse,
-                        HardSpatialCenterOutPulse,
                         DimmersBeatChase,
                         GentlePulse,
                         with_args(
@@ -605,7 +600,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                     slot=6,
                     rotate_speed=0.3,
                 ),
-                FocusBig,
+                with_args(
+                    "EtherealFocusSinePhased",
+                    FocusSinePhased,
+                    period_seconds=14.0,
+                ),
             )
         ],
         Group("sheer lights"): [combo(Dimmer255, ColorAlternateBg)],

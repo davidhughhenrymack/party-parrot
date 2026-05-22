@@ -38,60 +38,44 @@ class TestLayerComposeOpacity:
         self, gl_context, frame, color_scheme
     ):
         """Test that opacity works correctly with normal blending using pixel verification"""
-        # Create red and black layers (StaticColor expects 0.0-1.0 float values)
-        # Use default VJ dimensions to match LayerCompose
-        red_layer = StaticColor(
-            color=(1.0, 0.0, 0.0), width=1280, height=720
-        )  # Solid red
-        black_layer = StaticColor(
-            color=(0.0, 0.0, 0.0), width=1280, height=720
-        )  # Solid black
+        # Build the composition once and mutate the red layer's opacity between
+        # cases — releasing & recreating a LayerCompose mid-test leaves
+        # ``context.fbo`` dangling on the released framebuffer, which then
+        # blows up on the next ``render()``.
+        red_layer = StaticColor(color=(1.0, 0.0, 0.0), width=1280, height=720)
+        black_layer = StaticColor(color=(0.0, 0.0, 0.0), width=1280, height=720)
+        base_spec = LayerSpec(black_layer, BlendMode.NORMAL)
+        red_spec = LayerSpec(red_layer, BlendMode.NORMAL, opacity=1.0)
+        layer_compose = LayerCompose(base_spec, red_spec)
 
-        # Test different opacity values
-        test_cases = [
-            (1.0, "Full opacity - should be pure red"),
-            (0.5, "Half opacity - should be dark red"),
-            (0.0, "Zero opacity - should be black"),
-        ]
+        layer_compose.enter(gl_context)
+        try:
+            test_cases = [
+                (1.0, "Full opacity - should be pure red"),
+                (0.5, "Half opacity - should be dark red"),
+                (0.0, "Zero opacity - should be black"),
+            ]
 
-        for opacity, description in test_cases:
-            print(f"\nTesting {description}")
+            for opacity, description in test_cases:
+                print(f"\nTesting {description}")
+                red_spec.opacity = opacity
 
-            # Create layer composition: black base + red with opacity
-            layer_compose = LayerCompose(
-                LayerSpec(black_layer, BlendMode.NORMAL),  # Base layer: black
-                LayerSpec(
-                    red_layer, BlendMode.NORMAL, opacity=opacity
-                ),  # Red with opacity
-            )
-
-            # Initialize and render
-            layer_compose.enter(gl_context)
-            try:
                 result_framebuffer = layer_compose.render(
                     frame, color_scheme, gl_context
                 )
 
                 if result_framebuffer:
-                    # Read pixel data
-                    result_framebuffer.use()
-                    pixel_data = result_framebuffer.read()
+                    pixel_data = result_framebuffer.read(components=4)
 
-                    # Convert to numpy array and get center pixel
-                    # Framebuffer is 1080x640 based on actual size
-                    width, height = 1080, 640
+                    width, height = result_framebuffer.width, result_framebuffer.height
                     pixels = np.frombuffer(pixel_data, dtype=np.uint8).reshape(
                         (height, width, 4)
                     )
-                    center_pixel = pixels[
-                        height // 2, width // 2
-                    ]  # Get center pixel (R, G, B, A)
+                    center_pixel = pixels[height // 2, width // 2]
 
                     print(f"Center pixel RGBA: {center_pixel}")
 
-                    # Verify results based on expected opacity blending
                     if opacity == 1.0:
-                        # Full opacity: should be pure red
                         assert (
                             center_pixel[0] > 200
                         ), f"Red channel should be high, got {center_pixel[0]}"
@@ -102,10 +86,8 @@ class TestLayerComposeOpacity:
                             center_pixel[2] < 50
                         ), f"Blue channel should be low, got {center_pixel[2]}"
                     elif opacity == 0.5:
-                        # Half opacity: should be dark red (red mixed with black)
-                        # Expected: red * 0.5 + black * (1-0.5) = red * 0.5 = ~127
                         expected_red = int(255 * opacity)
-                        tolerance = 30  # Allow some tolerance for blending
+                        tolerance = 30
                         assert (
                             abs(center_pixel[0] - expected_red) < tolerance
                         ), f"Red channel should be ~{expected_red}, got {center_pixel[0]}"
@@ -116,7 +98,6 @@ class TestLayerComposeOpacity:
                             center_pixel[2] < 50
                         ), f"Blue channel should be low, got {center_pixel[2]}"
                     elif opacity == 0.0:
-                        # Zero opacity: should be black
                         assert (
                             center_pixel[0] < 50
                         ), f"Red channel should be low, got {center_pixel[0]}"
@@ -126,9 +107,8 @@ class TestLayerComposeOpacity:
                         assert (
                             center_pixel[2] < 50
                         ), f"Blue channel should be low, got {center_pixel[2]}"
-
-            finally:
-                layer_compose.exit()
+        finally:
+            layer_compose.exit()
 
     def test_opacity_additive_blending_pixel_verification(
         self, gl_context, frame, color_scheme
@@ -191,40 +171,36 @@ class TestLayerComposeOpacity:
 
     def test_opacity_comparison_different_values(self, gl_context, frame, color_scheme):
         """Test that different opacity values produce visibly different results"""
+        # Construct once + mutate opacity per iteration — see comment in
+        # ``test_opacity_normal_blending_pixel_verification`` for why
+        # constructing+releasing per iteration is unsafe.
         red_layer = StaticColor(color=(1.0, 0.0, 0.0), width=1280, height=720)
         black_layer = StaticColor(color=(0.0, 0.0, 0.0), width=1280, height=720)
+        base_spec = LayerSpec(black_layer, BlendMode.NORMAL)
+        red_spec = LayerSpec(red_layer, BlendMode.NORMAL, opacity=1.0)
+        layer_compose = LayerCompose(base_spec, red_spec)
 
         opacity_values = [0.2, 0.5, 0.8]
         results = []
 
-        for opacity in opacity_values:
-            layer_compose = LayerCompose(
-                LayerSpec(black_layer, BlendMode.NORMAL),
-                LayerSpec(red_layer, BlendMode.NORMAL, opacity=opacity),
-            )
-
-            layer_compose.enter(gl_context)
-            try:
+        layer_compose.enter(gl_context)
+        try:
+            for opacity in opacity_values:
+                red_spec.opacity = opacity
                 result_framebuffer = layer_compose.render(
                     frame, color_scheme, gl_context
                 )
 
                 if result_framebuffer:
-                    result_framebuffer.use()
-                    pixel_data = result_framebuffer.read()
-
-                    # Framebuffer is 1080x640 based on actual size
-                    width, height = 1080, 640
+                    pixel_data = result_framebuffer.read(components=4)
+                    width, height = result_framebuffer.width, result_framebuffer.height
                     pixels = np.frombuffer(pixel_data, dtype=np.uint8).reshape(
                         (height, width, 4)
                     )
                     center_pixel = pixels[height // 2, width // 2]
-                    results.append(
-                        (opacity, center_pixel[0])
-                    )  # Store opacity and red value
-
-            finally:
-                layer_compose.exit()
+                    results.append((opacity, center_pixel[0]))
+        finally:
+            layer_compose.exit()
 
         # Verify that higher opacity produces higher red values
         print(f"Opacity vs Red values: {results}")

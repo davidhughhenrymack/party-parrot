@@ -1,3 +1,4 @@
+import math
 import random
 from parrot.interpreters.base import (
     ColorFg,
@@ -9,7 +10,12 @@ from parrot.interpreters.move import MoveCircles
 from parrot.interpreters.dimmer import Dimmer255, Dimmer30, SequenceDimmers
 from parrot.interpreters.combo import combo
 from parrot.fixtures.moving_head import MovingHead
-from parrot.utils.colour import Color
+
+
+def _even_phase_spread(n: int) -> list[float]:
+    """Evenly spread fixture phases around one sine cycle."""
+    n = max(n, 1)
+    return [i / n * 2.0 * math.pi for i in range(n)]
 
 
 class MoverFan(InterpreterBase[MovingHead]):
@@ -96,6 +102,34 @@ class FocusSmall(InterpreterBase[MovingHead]):
     def step(self, frame, scheme):
         for fixture in self.group:
             fixture.set_focus(1.0)
+
+
+class FocusSinePhased(InterpreterBase[MovingHead]):
+    """Animate focus with one sine wave phased across the fixture group.
+
+    Focus range follows the MovingHead convention:
+        0.0 = wide / big beam
+        1.0 = tight / small beam
+
+    Fixtures get phases ``i / N * 2π`` so a group covers the full focus wave at
+    once instead of breathing in unison. Deterministic phase assignment keeps
+    regenerations stable.
+    """
+
+    def __init__(
+        self,
+        group,
+        args: InterpreterArgs,
+        period_seconds: float = 14.0,
+    ):
+        super().__init__(group, args)
+        self._omega = 2.0 * math.pi / max(0.001, float(period_seconds))
+        self._phase = _even_phase_spread(len(group))
+
+    def step(self, frame, scheme):
+        for i, fixture in enumerate(self.group):
+            focus = 0.5 + 0.5 * math.sin(frame.time * self._omega + self._phase[i])
+            fixture.set_focus(focus)
 
 
 class RotatingGobo(InterpreterBase[MovingHead]):

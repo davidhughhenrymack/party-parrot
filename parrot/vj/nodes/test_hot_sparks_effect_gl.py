@@ -97,15 +97,19 @@ def test_hot_sparks_shader_compilation(gl_context):
     # Shader should compile successfully
     assert sparks.shader_program is not None
 
-    # Check that required uniforms exist
+    # Check that required uniforms exist — keep this list in sync with the
+    # ``uniform`` declarations in `hot_sparks_effect.py` (and the matching
+    # `self.shader_program[...]` writes in render).
     uniforms = set(sparks.shader_program)
     expected_uniforms = {
         "time",
         "emission_start_time",
+        "emission_stop_time",
         "pulse_seed",
         "num_sparks",
         "spark_lifetime",
-        "spark_color",
+        "is_emitting",
+        "mode_opacity_multiplier",
     }
 
     # All expected uniforms should be present

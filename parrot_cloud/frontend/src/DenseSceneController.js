@@ -1066,6 +1066,57 @@ function createThreeSceneController({
     syncInteractionMode();
   }
 
+  const _annotForwardLocal = new THREE.Vector3();
+  const _annotForwardWorld = new THREE.Vector3();
+  const _annotWorldPos = new THREE.Vector3();
+  const _annotWorldQuat = new THREE.Quaternion();
+
+  /** Per-frame: DMX address labels float above each fixture in world space; front
+   *  arrow shows on the floor in top view only. Sprites/arrows live on
+   *  `sceneContent` (not on the fixture group) so housing tilt/inversion does
+   *  not flip them under the floor. */
+  function updateFixtureAnnotations() {
+    const isTop = localState.currentView === 'top';
+    localState.entityMap.forEach((entity) => {
+      if (entity.type !== 'fixture') {
+        return;
+      }
+      entity.group.updateWorldMatrix(true, false);
+      entity.group.getWorldPosition(_annotWorldPos);
+
+      if (entity.addressLabel) {
+        entity.addressLabel.position.set(
+          _annotWorldPos.x,
+          _annotWorldPos.y,
+          _annotWorldPos.z + entity.addressLabelOffsetZ,
+        );
+      }
+
+      if (entity.topArrow) {
+        entity.topArrow.visible = isTop;
+        if (isTop) {
+          entity.group.getWorldQuaternion(_annotWorldQuat);
+          _annotForwardLocal.set(0, 1, 0);
+          _annotForwardWorld
+            .copy(_annotForwardLocal)
+            .applyQuaternion(_annotWorldQuat);
+          _annotForwardWorld.z = 0;
+          if (_annotForwardWorld.lengthSq() < 1e-6) {
+            entity.topArrow.visible = false;
+          } else {
+            _annotForwardWorld.normalize();
+            entity.topArrow.position.set(
+              _annotWorldPos.x,
+              _annotWorldPos.y,
+              TOP_ARROW_FLOOR_Z,
+            );
+            entity.topArrow.setDirection(_annotForwardWorld);
+          }
+        }
+      }
+    });
+  }
+
   /** Max cone opacity when dimmer is 1; at dimmer 0 the cone is fully faded out. */
   const CONE_OPACITY_AT_FULL_DIM = 0.5;
 
@@ -1230,6 +1281,105 @@ function createThreeSceneController({
     applySelectionVisuals();
   }
 
+  /** Floor-plane height (m) for the top-view front-direction arrow. Floats just above floor to avoid z-fight. */
+  const TOP_ARROW_FLOOR_Z = 0.02;
+
+  /** World-space Z above the fixture origin where the DMX address label floats. */
+  function addressLabelOffsetForProfile(profile) {
+    if (profile.kind === 'mirrorball') {
+      return profile.sphereRadius * 2 + 0.28;
+    }
+    if (profile.kind === 'moving_head') {
+      return (
+        profile.baseHeight + profile.headOffsetZ + profile.headHeight * 0.5 + 0.32
+      );
+    }
+    if (profile.kind === 'motionstrip') {
+      return profile.bodyHeight + 0.28;
+    }
+    if (profile.kind === 'laser') {
+      return profile.bodyHeight + 0.32;
+    }
+    return (profile.bodyHeight ?? 0.4) + 0.3;
+  }
+
+  /** Builds a small canvas-textured sprite showing the fixture's DMX start address. */
+  function buildAddressLabelSprite(address) {
+    const text = address != null ? String(address) : '?';
+    const fontPx = 64;
+    const padX = 22;
+    const padY = 12;
+    const measure = document.createElement('canvas').getContext('2d');
+    measure.font = `600 ${fontPx}px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace`;
+    const textW = Math.ceil(measure.measureText(text).width);
+    const w = textW + padX * 2;
+    const h = fontPx + padY * 2;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.font = `600 ${fontPx}px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // No background fill — labels float on transparent pixels. A dark stroke
+    // around the white glyphs keeps the number legible against both light
+    // (top-down floor) and dark (3D body) backdrops.
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(8, 12, 20, 0.92)';
+    ctx.strokeText(text, w / 2, h / 2 + 2);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillText(text, w / 2, h / 2 + 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const sprite = new THREE.Sprite(material);
+    // World-space sprite scale: keep height fixed regardless of digit count.
+    const heightM = 0.32;
+    sprite.scale.set(heightM * (w / h), heightM, 1);
+    // Draw after fixtures so the label sits on top of the body in all views.
+    sprite.renderOrder = 9999;
+    return sprite;
+  }
+
+  /** Small arrow on the floor plane pointing in the fixture's neutral (+local Y) direction. Top view only. */
+  function buildTopFrontArrow(color) {
+    const arrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 0),
+      0.7,
+      color,
+      0.2,
+      0.14,
+    );
+    // Sit slightly above floor so we win the depth tie with the floor plane.
+    arrow.position.z = TOP_ARROW_FLOOR_Z;
+    arrow.visible = false;
+    if (arrow.line?.material) {
+      arrow.line.material.transparent = true;
+      arrow.line.material.opacity = 0.9;
+      arrow.line.material.depthTest = false;
+    }
+    if (arrow.cone?.material) {
+      arrow.cone.material.transparent = true;
+      arrow.cone.material.opacity = 0.9;
+      arrow.cone.material.depthTest = false;
+    }
+    arrow.renderOrder = 9998;
+    return arrow;
+  }
+
   function createFixtureEntity(fixture) {
     const group = new THREE.Group();
     group.position.copy(toScenePosition(fixture.x, fixture.y, fixture.z));
@@ -1365,6 +1515,22 @@ function createThreeSceneController({
     group.add(hitMesh);
 
     sceneContent.add(group);
+
+    // DMX start address label — sibling of the fixture group so we can keep it at
+    // a world-space Z offset even when the fixture is tilted/inverted on a truss.
+    const addressLabel = buildAddressLabelSprite(fixture.address);
+    addressLabel.userData = { entityKey: fixture.id, isFixtureAnnotation: true };
+    sceneContent.add(addressLabel);
+
+    // Top-view "front" arrow — only meaningful for fixtures that have a single
+    // forward-facing beam axis (skip the mirrorball which radiates in all dirs).
+    let topArrow = null;
+    if (profile.kind !== 'mirrorball') {
+      topArrow = buildTopFrontArrow(fixture.is_manual ? 0xfbbf24 : 0xfb7185);
+      topArrow.userData = { entityKey: fixture.id, isFixtureAnnotation: true };
+      sceneContent.add(topArrow);
+    }
+
     const entityBase = {
       type: 'fixture',
       fixture,
@@ -1383,6 +1549,9 @@ function createThreeSceneController({
       maxBeamLength:
         profile.kind === 'mirrorball' ? profile.beamLength : profile.coneLength,
       focusWidth: 1,
+      addressLabel,
+      addressLabelOffsetZ: addressLabelOffsetForProfile(profile),
+      topArrow,
     };
     if (profile.kind === 'mirrorball') {
       localState.entityMap.set(fixture.id, {
@@ -1915,6 +2084,8 @@ function createThreeSceneController({
         updateFixtureBeamsToFloorClip(entity, floorNd, THREE);
       }
     });
+
+    updateFixtureAnnotations();
 
     renderer.render(scene, localState.activeCamera);
   }

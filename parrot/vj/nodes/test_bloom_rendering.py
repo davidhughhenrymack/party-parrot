@@ -9,7 +9,10 @@ import os
 import tempfile
 import shutil
 
+from unittest.mock import Mock
+
 from parrot.vj.nodes.fixture_visualization import FixtureVisualization
+from parrot.vj.vj_director import VJDirector
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.color_schemes import scheme_halloween
@@ -61,9 +64,15 @@ class TestBloomRendering:
     @pytest.fixture
     def renderer(self, state, position_manager):
         """Create 3D DMX fixture renderer with bloom"""
+        # ``spec=VJDirector`` satisfies beartype's isinstance check without
+        # constructing the real director (which would need an OpenGL context).
+        # ``render`` returns None so the billboard texture path is skipped.
+        vj_director_stub = Mock(spec=VJDirector)
+        vj_director_stub.render.return_value = None
         return FixtureVisualization(
             state=state,
             position_manager=position_manager,
+            vj_director=vj_director_stub,
             width=1920,
             height=1080,
             canvas_width=1200,

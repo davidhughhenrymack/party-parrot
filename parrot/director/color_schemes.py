@@ -55,12 +55,21 @@ def generate_pride_scheme() -> ColorScheme:
 
 scheme_pride = [generate_pride_scheme() for _ in range(10)]
 
-# Red / purple / magenta club palette: each scheme uses at most one chromatic hue
-# plus white (repeats of that hue or white in fg / bg / bg_contrast).
+# Berlin / techno club palette: each scheme uses at most one chromatic hue plus
+# white (repeats of that hue or white in fg / bg / bg_contrast) — see
+# `test_scheme_berlin_is_monochromatic`. Length matches `scheme_pride` so the
+# director can rotate between themes without changing scheme-index math.
 scheme_berlin = [
     ColorScheme(Color("white"), Color("red"), Color("red")),
     ColorScheme(Color("red"), Color("red"), Color("red")),
     ColorScheme(Color("white"), Color("blue"), Color("blue")),
+    ColorScheme(Color("blue"), Color("blue"), Color("blue")),
+    ColorScheme(Color("white"), Color("purple"), Color("purple")),
+    ColorScheme(Color("purple"), Color("purple"), Color("purple")),
+    ColorScheme(Color("white"), Color("magenta"), Color("magenta")),
+    ColorScheme(Color("magenta"), Color("magenta"), Color("magenta")),
+    ColorScheme(Color("white"), Color("white"), Color("red")),
+    ColorScheme(Color("purple"), Color("white"), Color("purple")),
 ]
 
 scheme_halloween = [

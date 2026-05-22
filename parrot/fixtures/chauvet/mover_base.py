@@ -1,3 +1,4 @@
+import time
 from typing import List
 from parrot.fixtures.base import ColorWheelEntry, FixtureBase, GoboWheelEntry
 from parrot.utils.color_extra import color_distance
@@ -7,6 +8,9 @@ from parrot.fixtures.moving_head import MovingHead
 
 
 class ChauvetMoverBase(MovingHead):
+    STARTUP_CONTROL_CHANNEL: str = "control"
+    STARTUP_CONTROL_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = ()
+
     def __init__(
         self,
         patch,
@@ -36,6 +40,9 @@ class ChauvetMoverBase(MovingHead):
         self.strobe_shutter_lower = strobe_shutter_lower
         self.strobe_shutter_upper = strobe_shutter_upper
         self.disable_fine = disable_fine
+        self._startup_step = 0
+        self._startup_phase_t0: float | None = None
+        self._startup_complete = False
 
         self.set_speed(speed_value)
         self.set_shutter_open()
@@ -106,7 +113,7 @@ class ChauvetMoverBase(MovingHead):
         # Find the closest color in the color wheel
         closest = None
         for entry in self.color_wheel:
-            if closest == None or color_distance(entry.color, color) < color_distance(
+            if closest is None or color_distance(entry.color, color) < color_distance(
                 closest.color, color
             ):
                 closest = entry
@@ -177,3 +184,37 @@ class ChauvetMoverBase(MovingHead):
         else:
             # Reverse rotation: 131 (slowest) → 247 (fastest)
             self.set("prism1", int(round(131 + (247 - 131) * (-speed))))
+
+    def render(self, dmx):
+        """Run optional startup hold macros before writing the fixture values.
+
+        Some Chauvet movers latch configuration options from the control channel
+        only after a DMX value has been held continuously for a few seconds
+        (lamp on, blackout while color/gobo wheels are moving, etc.). Subclasses
+        opt in by setting ``STARTUP_CONTROL_HOLD_SEQUENCE`` to ``(value, hold_s)``
+        pairs and, if needed, changing ``STARTUP_CONTROL_CHANNEL``.
+        """
+        seq = self.STARTUP_CONTROL_HOLD_SEQUENCE
+        channel = self.STARTUP_CONTROL_CHANNEL
+        if self._startup_complete or not seq or channel not in self.dmx_layout:
+            super().render(dmx)
+            return
+
+        now = time.time()
+        if self._startup_phase_t0 is None:
+            self._startup_phase_t0 = now
+            self.set(channel, seq[0][0])
+            super().render(dmx)
+            return
+
+        _, hold = seq[self._startup_step]
+        if now - self._startup_phase_t0 >= hold:
+            self._startup_step += 1
+            if self._startup_step >= len(seq):
+                self._startup_complete = True
+                self.set(channel, 0)
+            else:
+                self._startup_phase_t0 = now
+                self.set(channel, seq[self._startup_step][0])
+
+        super().render(dmx)

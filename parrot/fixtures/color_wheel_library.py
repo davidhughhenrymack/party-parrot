@@ -22,40 +22,45 @@ class ColorWheelSlotRow(TypedDict):
     label: NotRequired[str]
 
 
-# --- Chauvet Rogue Beam R2 / R2X Beam (19CH ch 9) — Rogue R2X Beam User Manual Rev. 1
+# --- Chauvet Rogue R2 Beam (18CH ch 9) — Rogue R2 Beam User Manual Rev. 2.
+# DMX midpoints land in each 4-wide slot (000–004 Open, 005–008 Red, …).
 _CHAUVET_ROGUE_BEAM_R2X_WHEEL: list[ColorWheelSlotRow] = [
     {"dmx_value": 2, "color": "white", "label": "Open"},
-    {"dmx_value": 6, "color": "red", "label": "Color 1"},
-    {"dmx_value": 10, "color": "#FF6600", "label": "Color 2"},
-    {"dmx_value": 14, "color": "yellow", "label": "Color 3"},
-    {"dmx_value": 18, "color": "green", "label": "Color 4"},
-    {"dmx_value": 22, "color": "lightgreen", "label": "Color 5"},
-    {"dmx_value": 26, "color": "Turquoise", "label": "Color 6"},
-    {"dmx_value": 30, "color": "#87ceeb", "label": "Color 7"},
-    {"dmx_value": 34, "color": "blue", "label": "Color 8"},
-    {"dmx_value": 38, "color": "magenta", "label": "Color 9"},
-    {"dmx_value": 42, "color": "Lightpink", "label": "Color 10"},
-    {"dmx_value": 46, "color": "pink", "label": "Color 11"},
-    {"dmx_value": 50, "color": "#FFA500", "label": "Color 12"},
-    {"dmx_value": 54, "color": "#FFE4B5", "label": "Color 13"},
-    {"dmx_value": 58, "color": "BlueViolet", "label": "Color 14"},
+    {"dmx_value": 6, "color": "red", "label": "Red (1)"},
+    {"dmx_value": 10, "color": "#FFC900", "label": "Deep yellow (2)"},
+    {"dmx_value": 14, "color": "turquoise", "label": "Turquoise (3)"},
+    {"dmx_value": 18, "color": "green", "label": "Green (4)"},
+    {"dmx_value": 22, "color": "lightgreen", "label": "Light green (5)"},
+    {"dmx_value": 26, "color": "#D8B4F0", "label": "Light purple (6)"},
+    {"dmx_value": 30, "color": "pink", "label": "Pink (7)"},
+    {"dmx_value": 34, "color": "#FFFF99", "label": "Light yellow (8)"},
+    {"dmx_value": 38, "color": "magenta", "label": "Magenta (9)"},
+    {"dmx_value": 42, "color": "blue", "label": "Blue (10)"},
+    {"dmx_value": 46, "color": "#FFB46B", "label": "CTO 3200 K (11)"},
+    {"dmx_value": 50, "color": "#FFEEDD", "label": "CTO 5600 K (12)"},
+    {"dmx_value": 54, "color": "#F0F8FF", "label": "CTO 6500 K (13)"},
+    {"dmx_value": 58, "color": "#4B0082", "label": "UV (14)"},
 ]
 
-# --- Rogue RH1 Hybrid (Intimidator Hybrid 140SR) Rev. 1 (19CH ch 6 / 13CH ch 3)
+# --- Chauvet Rogue™ RH1 Hybrid (20CH ch 8 / 25CH ch 9) — Rogue RH1 Hybrid
+# User Manual Rev. 4, page 27 (20CH) / page 22 (25CH). The same color wheel
+# is used in both personalities; DMX midpoints land in each 4-wide slot:
+# 000–003 Open, 004–007 Red, 008–011 Orange, 012–015 Cyan, …, 052–059 UV.
 _CHAUVET_ROGUE_HYBRID_RH1_WHEEL: list[ColorWheelSlotRow] = [
-    {"dmx_value": 2, "color": "white"},
-    {"dmx_value": 6, "color": "red"},
-    {"dmx_value": 10, "color": "yellow"},
-    {"dmx_value": 14, "color": "green"},
-    {"dmx_value": 18, "color": "#87ceeb", "label": "Sky Blue"},
-    {"dmx_value": 22, "color": "#e6e6fa", "label": "Lavender"},
-    {"dmx_value": 26, "color": "#ffff99", "label": "Canary Yellow"},
-    {"dmx_value": 31, "color": "blue"},
-    {"dmx_value": 36, "color": "magenta"},
-    {"dmx_value": 41, "color": "lime", "label": "Lime Green"},
-    {"dmx_value": 46, "color": "#fff8f0", "label": "Natural White"},
-    {"dmx_value": 51, "color": "#dde8f0", "label": "Cool White"},
-    {"dmx_value": 56, "color": "BlueViolet", "label": "Ultraviolet"},
+    {"dmx_value": 2, "color": "white", "label": "Open"},
+    {"dmx_value": 6, "color": "red", "label": "Red (1)"},
+    {"dmx_value": 10, "color": "#FF6A00", "label": "Orange (2)"},
+    {"dmx_value": 14, "color": "cyan", "label": "Cyan (3)"},
+    {"dmx_value": 18, "color": "lightgreen", "label": "Light green (4)"},
+    {"dmx_value": 22, "color": "#FFFF99", "label": "Light yellow (5)"},
+    {"dmx_value": 26, "color": "green", "label": "Green (6)"},
+    {"dmx_value": 30, "color": "magenta", "label": "Magenta (7)"},
+    {"dmx_value": 34, "color": "#001A66", "label": "Dark blue (8)"},
+    {"dmx_value": 38, "color": "#B58A00", "label": "Dark yellow (9)"},
+    {"dmx_value": 42, "color": "blue", "label": "Blue (10)"},
+    {"dmx_value": 46, "color": "#FFEEDD", "label": "CTO 5600 K (11)"},
+    {"dmx_value": 50, "color": "#F0F8FF", "label": "CTO 6500 K (12)"},
+    {"dmx_value": 56, "color": "#4B0082", "label": "UV (13)"},
 ]
 
 # Keys match canonical ``FixtureTypeDefinition.key`` in ``parrot_cloud.fixture_catalog``.

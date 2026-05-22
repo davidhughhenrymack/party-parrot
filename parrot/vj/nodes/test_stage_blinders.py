@@ -37,11 +37,10 @@ def test_stage_blinders_render():
     # Render
     result = blinders.render(frame, scheme, ctx)
     
-    # Verify result
+    # Verify result — framebuffer matches the dimensions the effect was constructed with.
     assert result is not None
-    # Note: framebuffer defaults to 1920x1080 from canvas_effect_base
-    assert result.width == 1920
-    assert result.height == 1080
+    assert result.width == 800
+    assert result.height == 600
     
     # Clean up
     blinders.exit()

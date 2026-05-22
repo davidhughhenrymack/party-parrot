@@ -32,7 +32,7 @@ const MOVING_HEAD_TYPES = new Set([
   'chauvet_rogue_beam_r2x',
   'chauvet_move_9ch',
   'chauvet_rogue_hybrid_rh1',
-  'chauvet_rogue_hybrid_rh1_13ch',
+  'chauvet_rogue_hybrid_rh1_25ch',
 ]);
 
 export function isMovingHeadFixtureType(fixtureType) {

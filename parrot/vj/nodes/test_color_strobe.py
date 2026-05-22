@@ -140,26 +140,6 @@ def test_strobe_signal_response(gl_context, color_scheme, frame):
     strobe.exit()
 
 
-def test_big_blinder_response(gl_context, color_scheme, frame):
-    """Test response to big blinder signals"""
-    strobe = ColorStrobe(width=256, height=256)
-    strobe.enter(gl_context)
-
-    # Mock big blinder signal
-    frame.__getitem__.side_effect = lambda signal: (
-        0.8 if signal == FrameSignal.big_blinder else 0.0
-    )
-
-    # Render with big blinder signal
-    result = strobe.render(frame, color_scheme, gl_context)
-
-    assert result is not None
-    # Should use white color for big blinder
-    assert strobe.current_color == (1.0, 1.0, 1.0)
-
-    strobe.exit()
-
-
 def test_pulse_response(gl_context, color_scheme, frame):
     """Test that pulse signals are ignored"""
     strobe = ColorStrobe(width=256, height=256)

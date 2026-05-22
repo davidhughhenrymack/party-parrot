@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.mode import Mode
@@ -79,11 +81,11 @@ def test_ethereal_dsl_drives_sheer_moving_heads_and_zeros_others() -> None:
 
 def test_ethereal_dsl_turns_prism_on_for_sheer_moving_heads() -> None:
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetRogueHybridRH1_19Ch,
+        ChauvetRogueHybridRH1_20Ch,
     )
 
     args = InterpreterArgs(True)
-    mh = ChauvetRogueHybridRH1_19Ch(1)
+    mh = ChauvetRogueHybridRH1_20Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
@@ -91,18 +93,21 @@ def test_ethereal_dsl_turns_prism_on_for_sheer_moving_heads() -> None:
     on, speed = mh.get_prism()
     assert on is True
     assert speed > 0.0
-    # Prism 1 DMX channel should be in the forward-rotation band (13..130).
-    v = mh.values[mh.dmx_layout["prism1"]]
-    assert 13 <= v <= 130
+    # CH 14 Prism 1: insert engaged (anywhere in 005–255).
+    insert = mh.values[mh.dmx_layout["prism1"]]
+    assert 5 <= insert <= 255
+    # CH 15 Prism 1 Rotate forward-rotation band per Rev. 4 manual: 128..189.
+    rot = mh.values[mh.dmx_layout["prism1_rotate"]]
+    assert 128 <= rot <= 189
 
 
 def test_ethereal_dsl_applies_rotating_gobo_6_to_hybrid_beams() -> None:
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetRogueHybridRH1_19Ch,
+        ChauvetRogueHybridRH1_20Ch,
     )
 
     args = InterpreterArgs(True)
-    mh = ChauvetRogueHybridRH1_19Ch(1)
+    mh = ChauvetRogueHybridRH1_20Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
@@ -110,38 +115,52 @@ def test_ethereal_dsl_applies_rotating_gobo_6_to_hybrid_beams() -> None:
     slot, speed = mh.get_rotating_gobo()
     assert slot == 6
     assert speed > 0.0
-    # Rotating gobo 6 band is DMX 042..047 per the QRG.
+    # Rev. 4 manual gobo wheel 2: Gobo 6 → DMX 036–041 (midpoint 38).
     v = mh.values[mh.dmx_layout["rotating_gobo"]]
-    assert 42 <= v <= 47
-    # Rotation channel must be inside the forward-rotation band (64..144).
+    assert 36 <= v <= 41
+    # CH 11 Gobo Wheel 2 Rotate forward band per Rev. 4: 064..147.
     gr = mh.values[mh.dmx_layout["gobo_rotation"]]
-    assert 64 <= gr <= 144
+    assert 64 <= gr <= 147
 
 
-def test_ethereal_dsl_applies_focus_big_to_hybrid_beams() -> None:
+def test_ethereal_dsl_applies_phased_sine_focus_to_hybrid_beams() -> None:
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetRogueHybridRH1_19Ch,
+        ChauvetRogueHybridRH1_20Ch,
     )
 
     args = InterpreterArgs(True)
-    mh = ChauvetRogueHybridRH1_19Ch(1)
-    mh.cloud_group_name = "sheer lights"
-    interp = get_interpreter(Mode.ethereal, [mh], args)
+    movers = [ChauvetRogueHybridRH1_20Ch(1 + i * 20) for i in range(4)]
+    for mh in movers:
+        mh.cloud_group_name = "sheer lights"
+    interp = get_interpreter(Mode.ethereal, movers, args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
-    interp.step(_frame(), scheme)
-    assert mh.get_focus() == 0.0
-    assert mh.values[mh.dmx_layout["focus"]] == 0
+    frame = _frame()
+    frame.time = 0.0
+
+    interp.step(frame, scheme)
+
+    # Four fixtures spread over sine phases 0, π/2, π, 3π/2 at t=0:
+    # focus = 0.5 + 0.5*sin(phase) → 0.5, 1.0, 0.5, 0.0.
+    focuses = [mh.get_focus() for mh in movers]
+    assert focuses[0] == pytest.approx(0.5, abs=0.02)
+    assert focuses[1] == pytest.approx(1.0, abs=0.02)
+    assert focuses[2] == pytest.approx(0.5, abs=0.02)
+    assert focuses[3] == pytest.approx(0.0, abs=0.02)
+    for mh in movers:
+        assert mh.values[mh.dmx_layout["focus"]] == pytest.approx(
+            round(mh.get_focus() * 255), abs=1.0
+        )
 
 
 def test_ethereal_dsl_uses_slow_breath_within_configured_range() -> None:
     """SlowBreath replaces GentlePulse on sheer lights: dimmer stays inside [0.25, 0.85]*255
     regardless of frame.time, with no audio signal required."""
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetRogueHybridRH1_19Ch,
+        ChauvetRogueHybridRH1_20Ch,
     )
 
     args = InterpreterArgs(True)
-    mh = ChauvetRogueHybridRH1_19Ch(1)
+    mh = ChauvetRogueHybridRH1_20Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
@@ -160,11 +179,11 @@ def test_ethereal_dsl_uses_slow_breath_within_configured_range() -> None:
 def test_ethereal_sheer_slow_breath_moves_dimmer() -> None:
     """Ethereal sheer group still picks SlowBreath breathing (not collapsed to Dimmer0)."""
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-        ChauvetRogueHybridRH1_19Ch,
+        ChauvetRogueHybridRH1_20Ch,
     )
 
     args = InterpreterArgs(True)
-    mh = ChauvetRogueHybridRH1_19Ch(1)
+    mh = ChauvetRogueHybridRH1_20Ch(1)
     mh.cloud_group_name = "sheer lights"
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))

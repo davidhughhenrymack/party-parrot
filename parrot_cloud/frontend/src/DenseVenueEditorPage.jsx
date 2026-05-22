@@ -2446,6 +2446,8 @@ export default function DenseVenueEditorPage({ venueId }) {
                   {selectedFixture.fixture_type}
                   {' · '}
                   {`${selectedFixture.universe}:${selectedFixture.address}`}
+                  {' · '}
+                  {`${dmxAddressWidthForFixture(selectedFixture, fixtureTypes)} ch`}
                 </p>
               </div>
             ) : null}

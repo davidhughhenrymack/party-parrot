@@ -283,8 +283,8 @@ class TestChauvetRogueBeamR2X:
     def test_initialization(self):
         """Test initialization"""
         assert self.rogue.address == 50
-        assert self.rogue.name == "chauvet rogue beam r2x"
-        assert self.rogue.width == 19
+        assert self.rogue.name == "chauvet rogue beam r2"
+        assert self.rogue.width == 18
         assert len(self.rogue.color_wheel) > 0
         assert len(self.rogue.gobo_wheel) > 0
 
@@ -292,8 +292,8 @@ class TestChauvetRogueBeamR2X:
         assert not self.rogue._startup_complete
 
     def test_startup_sequence_initialization(self):
-        """Control CH19 stays at 0 until the first ``render`` step."""
-        assert self.rogue.values[18] == 0
+        """Control CH 18 stays at 0 until the first ``render`` step."""
+        assert self.rogue.values[17] == 0
 
     @patch("time.time")
     def test_render_startup_sequence_start(self, mock_time):
@@ -302,7 +302,7 @@ class TestChauvetRogueBeamR2X:
         self.rogue.render(self.dmx)
 
         assert not self.rogue._startup_complete
-        assert self.rogue.values[18] == 135
+        assert self.rogue.values[17] == 135
 
     @patch("time.time")
     def test_render_startup_sequence_middle(self, mock_time):
@@ -313,7 +313,7 @@ class TestChauvetRogueBeamR2X:
         mock_time.return_value = 1001.0
         self.rogue.render(self.dmx)
 
-        assert self.rogue.values[18] == 95
+        assert self.rogue.values[17] == 95
 
     @patch("time.time")
     def test_render_startup_sequence_complete(self, mock_time):
@@ -331,7 +331,7 @@ class TestChauvetRogueBeamR2X:
         self.rogue.render(self.dmx)
 
         assert self.rogue._startup_complete
-        assert self.rogue.values[18] == 0
+        assert self.rogue.values[17] == 0
 
     def test_color_wheel_has_expected_colors(self):
         """Test that color wheel contains expected colors"""
@@ -371,4 +371,4 @@ class TestChauvetRogueBeamR2X:
 
     def test_dimmer_upper_limit(self):
         """Test dimmer upper limit"""
-        assert self.rogue.dimmer_upper == 255  # R2X manual ch 6: full 000–255
+        assert self.rogue.dimmer_upper == 255  # R2 Beam manual ch 6: full 000–255

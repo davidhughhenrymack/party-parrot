@@ -13,8 +13,8 @@ from parrot.fixtures.chauvet.derby import ChauvetDerby
 from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-    ChauvetRogueHybridRH1_13Ch,
-    ChauvetRogueHybridRH1_19Ch,
+    ChauvetRogueHybridRH1_20Ch,
+    ChauvetRogueHybridRH1_25Ch,
 )
 from parrot.fixtures.chauvet.move9 import ChauvetMove_9Ch
 from parrot.fixtures.chauvet.par import ChauvetParRGBAWU
@@ -197,7 +197,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
     ),
     "chauvet_rogue_beam_r2x": FixtureTypeDefinition(
         key="chauvet_rogue_beam_r2x",
-        label="Chauvet Rogue Beam R2X",
+        label="Chauvet Rogue R2 Beam (18ch)",
         builder=lambda spec: _apply_transform(
             ChauvetRogueBeamR2X(
                 spec.address,
@@ -216,13 +216,13 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_lower": 0,
             "tilt_upper": 90,
         },
-        dmx_address_width=19,
+        dmx_address_width=18,
     ),
     "chauvet_rogue_hybrid_rh1": FixtureTypeDefinition(
         key="chauvet_rogue_hybrid_rh1",
-        label="Chauvet Rogue RH1 Hybrid (19ch)",
+        label="Chauvet Rogue RH1 Hybrid (20ch)",
         builder=lambda spec: _apply_transform(
-            ChauvetRogueHybridRH1_19Ch(
+            ChauvetRogueHybridRH1_20Ch(
                 spec.address,
                 pan_lower=_option_float(spec, "pan_lower", 0.0),
                 pan_upper=_option_float(spec, "pan_upper", 540.0),
@@ -239,13 +239,13 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_lower": 0,
             "tilt_upper": 270,
         },
-        dmx_address_width=19,
+        dmx_address_width=20,
     ),
-    "chauvet_rogue_hybrid_rh1_13ch": FixtureTypeDefinition(
-        key="chauvet_rogue_hybrid_rh1_13ch",
-        label="Chauvet Rogue RH1 Hybrid (13ch)",
+    "chauvet_rogue_hybrid_rh1_25ch": FixtureTypeDefinition(
+        key="chauvet_rogue_hybrid_rh1_25ch",
+        label="Chauvet Rogue RH1 Hybrid (25ch)",
         builder=lambda spec: _apply_transform(
-            ChauvetRogueHybridRH1_13Ch(
+            ChauvetRogueHybridRH1_25Ch(
                 spec.address,
                 pan_lower=_option_float(spec, "pan_lower", 0.0),
                 pan_upper=_option_float(spec, "pan_upper", 540.0),
@@ -262,7 +262,7 @@ FIXTURE_TYPES: dict[str, FixtureTypeDefinition] = {
             "tilt_lower": 0,
             "tilt_upper": 270,
         },
-        dmx_address_width=13,
+        dmx_address_width=25,
     ),
     "motionstrip_38": FixtureTypeDefinition(
         key="motionstrip_38",

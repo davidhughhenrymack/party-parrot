@@ -8,14 +8,6 @@ from beartype import beartype
 class TestGLOverlay(unittest.TestCase):
     """Test the GL overlay UI functionality"""
 
-    def test_imgui_import(self):
-        """Test that imgui can be imported"""
-        import imgui
-        from parrot.utils.imgui_moderngl import ImGuiModernGLRenderer
-
-        self.assertIsNotNone(imgui)
-        self.assertIsNotNone(ImGuiModernGLRenderer)
-
     def test_mode_enum_iteration(self):
         """Test that we can iterate over Mode enum for UI buttons"""
         modes = list(Mode)

@@ -1,41 +1,42 @@
-"""Chauvet Rogue Beam R2 / Rogue R2X Beam — DMX matches *Rogue R2X Beam User Manual Rev. 1* (19CH).
+"""Chauvet Rogue R2 Beam — DMX matches *Rogue R2 Beam User Manual Rev. 2* (18CH personality).
 
-Physical product may be labeled R2 or R2X; wheel layouts and 19-channel map follow the R2X manual.
+The shipping R2 Beam exposes only 15CH and 18CH personalities; we target 18CH for fine
+dimmer + movement-macro channels. The fixture has a single 8-facet rotating prism plus a
+separate prism zoom channel (NOT two prisms — that was the older 19CH R2X interpretation).
 
-Control channel (CH 19) blackout options follow the same band layout as Chauvet Rogue RH1 Hybrid in QLC+
-(Rogue professional line): 90–99 blackout while color wheel moves; 110–119 while gobo wheels move.
+Control channel (CH 18) blackout-while-moving bands per manual:
+- 090–099 blackout while color wheel moving (3 sec hold)
+- 110–119 blackout while gobo wheels moving (3 sec hold)
+- 130–139 lamp on (~1 sec hold)
 """
 
 from __future__ import annotations
-
-import time
 
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.chauvet.mover_base import ChauvetMoverBase
 from parrot.fixtures.color_wheel_library import color_wheel_entries_for_fixture_type
 from parrot.utils.dmx_utils import Universe
 
-# --- 19CH personality (manual “DMX Values → 19CH”) — channel indices 0-based ---
-DMX_LAYOUT_19 = {
-    "pan_coarse": 0,
-    "pan_fine": 1,
-    "tilt_coarse": 2,
-    "tilt_fine": 3,
-    "speed": 4,
-    "dimmer": 5,
-    "dimmer_fine": 6,
-    "shutter": 7,
-    "color_wheel": 8,
-    "gobo_wheel": 9,
-    "prism1": 10,
-    "prism1_rotate": 11,
-    "prism2": 12,
-    "prism2_rotate": 13,
-    "focus": 14,
-    "frost": 15,
-    "auto_program": 16,
-    "auto_speed": 17,
-    "control": 18,
+# --- 18CH personality (manual “DMX Values → 18CH”) — channel indices 0-based ---
+DMX_LAYOUT_18 = {
+    "pan_coarse": 0,        # CH 1  Pan
+    "pan_fine": 1,          # CH 2  Fine Pan
+    "tilt_coarse": 2,       # CH 3  Tilt
+    "tilt_fine": 3,         # CH 4  Fine Tilt
+    "speed": 4,             # CH 5  Pan/Tilt Speed
+    "dimmer": 5,            # CH 6  Dimmer
+    "dimmer_fine": 6,       # CH 7  Fine Dimmer
+    "shutter": 7,           # CH 8  Shutter
+    "color_wheel": 8,       # CH 9  Color Wheel (14 colors + open + split/scroll)
+    "gobo_wheel": 9,        # CH 10 Gobo Wheel (17 gobos + open + shake/scroll)
+    "prism1": 10,           # CH 11 Prism (no-prism 000–004 / insert 005–255)
+    "prism1_rotate": 11,    # CH 12 Prism Rotate (index / CCW fast→slow / stop / CW slow→fast)
+    "prism_zoom": 12,       # CH 13 Prism Zoom (000–255 0–100%)
+    "focus": 13,            # CH 14 Focus
+    "frost": 14,            # CH 15 Frost
+    "auto_program": 15,     # CH 16 Movement Macros (31 effects + no function)
+    "auto_speed": 16,       # CH 17 Movement Macro Speed
+    "control": 17,          # CH 18 Control (dimmer mode, P/T mode, blackouts, lamp, resets)
 }
 
 # Channel 9 — indexed slots + scroll bands in manual; discrete rows live in
@@ -68,11 +69,20 @@ GOBO_WHEEL: list[GoboWheelEntry] = [
 # Clockwise color scroll 128–189 (fast→slow); one moderate-speed preset for API use.
 COLOR_WHEEL_ROTATE_MODERATE_DMX = 158
 
-# CH 19 Control — lamp + wheel blackout selects (midpoints of manual bands; hold each 3s unless noted).
-CONTROL_LAMP_ON_DMX = 135  # 130–139 Lamp on (~1s hold typical)
+# CH 18 Control — lamp + wheel blackout selects. Values are the midpoints of
+# the manual's bands; each macro is a *latching* option that the fixture
+# remembers across power cycles once the band is held for ~3s (~1s for lamp).
+CONTROL_LAMP_ON_DMX = 135  # 130–139 Lamp on (~1s hold)
 CONTROL_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX = 95  # 90–99 Blackout while color wheel moving (3s hold)
 CONTROL_BLACKOUT_ON_GOBO_WHEELS_MOVE_DMX = 115  # 110–119 Blackout while gobo wheels moving (3s hold)
 
+# On boot we hold each macro on CH 18 long enough for the fixture to latch it,
+# then park the channel at 0. Order matters only insofar as each (value, hold)
+# pair must be on the wire continuously for at least its hold duration; the
+# render loop keeps writing the same value between advances. Result after
+# startup: lamp struck, color-wheel changes blackout in-flight, gobo-wheel
+# changes blackout in-flight — so transitions snap cleanly without color/gobo
+# "scrolls" being visible to the audience.
 STARTUP_CONTROL_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = (
     (CONTROL_LAMP_ON_DMX, 1.0),
     (CONTROL_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX, 3.0),
@@ -81,7 +91,12 @@ STARTUP_CONTROL_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = (
 
 
 class ChauvetRogueBeamR2X(ChauvetMoverBase):
-    """Rogue R2X Beam @ 19CH — preview skips prism/focus visuals; DMX still carries those channels."""
+    """Rogue R2 Beam @ 18CH — preview skips prism/focus visuals; DMX still carries those channels.
+
+    Class name kept as ``ChauvetRogueBeamR2X`` to avoid churning callers / fixture catalog
+    keys (``chauvet_rogue_beam_r2x``). The wire format now matches the R2 Beam Rev. 2 manual,
+    which is what ships in the box (R2X 19CH was never quite right for this hardware).
+    """
 
     supports_prism: bool = False
     supports_focus: bool = False
@@ -102,9 +117,9 @@ class ChauvetRogueBeamR2X(ChauvetMoverBase):
     ):
         super().__init__(
             patch=patch,
-            name="chauvet rogue beam r2x",
-            width=19,
-            dmx_layout=DMX_LAYOUT_19,
+            name="chauvet rogue beam r2",
+            width=18,
+            dmx_layout=DMX_LAYOUT_18,
             color_wheel=COLOR_WHEEL,
             gobo_wheel=GOBO_WHEEL,
             pan_lower=pan_lower,
@@ -123,38 +138,8 @@ class ChauvetRogueBeamR2X(ChauvetMoverBase):
         self.set("dimmer_fine", 0)
         self.set("prism1", 0)
         self.set("prism1_rotate", 0)
-        self.set("prism2", 0)
-        self.set("prism2_rotate", 0)
+        self.set("prism_zoom", 0)
         self.set("auto_program", 0)
         self.set("auto_speed", 0)
         self.set("frost", 0)
         self.set("focus", 0)
-
-        self._startup_step = 0
-        self._startup_phase_t0: float | None = None
-        self._startup_complete = False
-
-    def render(self, dmx):
-        seq = self.STARTUP_CONTROL_HOLD_SEQUENCE
-        if self._startup_complete or not seq:
-            super().render(dmx)
-            return
-
-        now = time.time()
-        if self._startup_phase_t0 is None:
-            self._startup_phase_t0 = now
-            self.set("control", seq[0][0])
-            super().render(dmx)
-            return
-
-        _, hold = seq[self._startup_step]
-        if now - self._startup_phase_t0 >= hold:
-            self._startup_step += 1
-            if self._startup_step >= len(seq):
-                self._startup_complete = True
-                self.set("control", 0)
-            else:
-                self._startup_phase_t0 = now
-                self.set("control", seq[self._startup_step][0])
-
-        super().render(dmx)

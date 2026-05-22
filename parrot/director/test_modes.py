@@ -102,12 +102,12 @@ class TestModes(unittest.TestCase):
     def test_sheer_lights_are_silenced_in_chill(self):
         """Sheer group stays dark in chill, including moving heads."""
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_19Ch,
+            ChauvetRogueHybridRH1_20Ch,
         )
 
-        sheer = ChauvetRogueHybridRH1_19Ch(1)
+        sheer = ChauvetRogueHybridRH1_20Ch(1)
         sheer.cloud_group_name = "sheer lights"
-        other = ChauvetRogueHybridRH1_19Ch(20)
+        other = ChauvetRogueHybridRH1_20Ch(20)
         other.cloud_group_name = None
 
         interp = get_interpreter(Mode.chill, [sheer, other], self.args)
@@ -124,7 +124,7 @@ class TestModes(unittest.TestCase):
         """
         import random as _random
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_19Ch,
+            ChauvetRogueHybridRH1_20Ch,
         )
 
         focus_picks: set[float] = set()
@@ -133,7 +133,7 @@ class TestModes(unittest.TestCase):
         for seed in range(40):
             _random.seed(seed)
             movers = [
-                ChauvetRogueHybridRH1_19Ch(1 + i * 20) for i in range(6)
+                ChauvetRogueHybridRH1_20Ch(1 + i * 20) for i in range(6)
             ]
             for m in movers:
                 m.cloud_group_name = "sheer lights"
@@ -177,7 +177,7 @@ class TestModes(unittest.TestCase):
         """
         import random as _random
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_19Ch,
+            ChauvetRogueHybridRH1_20Ch,
         )
 
         trials = 400
@@ -185,7 +185,7 @@ class TestModes(unittest.TestCase):
         for seed in range(trials):
             _random.seed(seed)
             movers = [
-                ChauvetRogueHybridRH1_19Ch(1 + i * 20) for i in range(4)
+                ChauvetRogueHybridRH1_20Ch(1 + i * 20) for i in range(4)
             ]
             for m in movers:
                 m.cloud_group_name = "sheer lights"
@@ -218,11 +218,11 @@ class TestModes(unittest.TestCase):
         """
         from parrot.director.mode_dispatch import CompositeInterpreter
         from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_19Ch,
+            ChauvetRogueHybridRH1_20Ch,
         )
         from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 
-        sheer = ChauvetRogueHybridRH1_19Ch(1)
+        sheer = ChauvetRogueHybridRH1_20Ch(1)
         sheer.cloud_group_name = "sheer lights"
         rogue = ChauvetRogueBeamR2X(20)
         rogue.cloud_group_name = None

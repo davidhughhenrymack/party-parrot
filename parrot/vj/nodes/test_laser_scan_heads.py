@@ -39,10 +39,10 @@ def test_laser_scan_heads_render():
     # Render
     result = laser_heads.render(frame, scheme, ctx)
 
-    # Verify result
+    # Verify result — framebuffer matches the dimensions the effect was constructed with.
     assert result is not None
-    assert result.width == 1920
-    assert result.height == 1080
+    assert result.width == 800
+    assert result.height == 600
 
     # Clean up
     laser_heads.exit()

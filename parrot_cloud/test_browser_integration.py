@@ -195,10 +195,22 @@ def test_headless_browser_real_editor_loads_without_runtime_errors(parrot_cloud_
         bootstrap = requests.get(f"{base_url}/api/bootstrap", timeout=5).json()
         venue_id = bootstrap["active_venue"]["summary"]["id"]
 
-        page.goto(f"{base_url}/venues/{venue_id}", wait_until="networkidle")
-        page.wait_for_function("document.body.dataset.appReady === 'true'")
-        page.wait_for_selector("#venue-name-input")
-        page.wait_for_selector("#viewport canvas")
+        # The editor pulls Three.js + the venue snapshot + the VJ preview JPEG
+        # on first load; on slower CI/dev machines that easily blows past
+        # Playwright's 30s default before the network goes idle. Use
+        # ``domcontentloaded`` (which fires once the React bundle has parsed)
+        # and then wait for the app to signal readiness explicitly via the
+        # ``data-app-ready`` flag.
+        page.goto(
+            f"{base_url}/venues/{venue_id}",
+            wait_until="domcontentloaded",
+            timeout=60_000,
+        )
+        page.wait_for_function(
+            "document.body.dataset.appReady === 'true'", timeout=60_000
+        )
+        page.wait_for_selector("#venue-name-input", timeout=30_000)
+        page.wait_for_selector("#viewport canvas", timeout=30_000)
 
         assert page_errors == []
         assert console_errors == []

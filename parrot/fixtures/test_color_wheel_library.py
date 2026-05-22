@@ -36,8 +36,14 @@ def test_legacy_catalog_keys_resolve_color_wheel_alias() -> None:
 
 
 def test_api_slots_include_rgb_and_optional_label() -> None:
+    """Web API surfaces RGB triples + manual-page labels for every wheel slot.
+
+    Rogue™ RH1 Hybrid Rev. 4 color wheel slot 4 ("Light green") sits at DMX
+    midpoint 18 in the 016–019 band — confirms both the midpoint math and
+    label plumbing through the API serializer.
+    """
     slots = color_wheel_slots_for_api("chauvet_rogue_hybrid_rh1")
     assert slots is not None
-    sky = next(s for s in slots if s.get("label") == "Sky Blue")
-    assert sky["dmx_value"] == 18
-    assert len(sky["rgb"]) == 3
+    light_green = next(s for s in slots if s.get("label") == "Light green (4)")
+    assert light_green["dmx_value"] == 18
+    assert len(light_green["rgb"]) == 3
