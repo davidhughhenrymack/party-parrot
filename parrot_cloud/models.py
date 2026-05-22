@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 import uuid
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from parrot_cloud.database import Base
@@ -51,6 +51,10 @@ class VenueModel(Base):
         cascade="all, delete-orphan",
         order_by="SceneObjectModel.order_index",
     )
+    fixture_named_positions: Mapped[list["FixtureNamedPositionModel"]] = relationship(
+        back_populates="venue",
+        cascade="all, delete-orphan",
+    )
 
 
 class FixtureModel(Base):
@@ -76,6 +80,55 @@ class FixtureModel(Base):
     options: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 
     venue: Mapped[VenueModel] = relationship(back_populates="fixtures")
+    named_positions: Mapped[list["FixtureNamedPositionModel"]] = relationship(
+        back_populates="fixture",
+        cascade="all, delete-orphan",
+    )
+
+
+class NamedPositionModel(Base):
+    __tablename__ = "named_positions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+
+    fixture_positions: Mapped[list["FixtureNamedPositionModel"]] = relationship(
+        back_populates="named_position",
+        cascade="all, delete-orphan",
+    )
+
+
+class FixtureNamedPositionModel(Base):
+    __tablename__ = "fixture_named_positions"
+    __table_args__ = (
+        UniqueConstraint(
+            "fixture_id",
+            "named_position_id",
+            name="uq_fixture_named_position_fixture_name",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    venue_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    fixture_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("fixtures.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    named_position_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("named_positions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    pan: Mapped[float] = mapped_column(Float, nullable=False)
+    tilt: Mapped[float] = mapped_column(Float, nullable=False)
+
+    venue: Mapped[VenueModel] = relationship(back_populates="fixture_named_positions")
+    fixture: Mapped[FixtureModel] = relationship(back_populates="named_positions")
+    named_position: Mapped[NamedPositionModel] = relationship(
+        back_populates="fixture_positions"
+    )
 
 
 class SceneObjectModel(Base):

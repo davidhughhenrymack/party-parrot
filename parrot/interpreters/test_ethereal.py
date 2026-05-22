@@ -39,15 +39,16 @@ def test_group_matcher_is_case_insensitive() -> None:
 def test_mode_uses_group_matchers_for_modes_that_silence_sheer_lights() -> None:
     """Any mode with a ``Group(...)`` key in its DSL flips into group-aware dispatch.
 
-    Ethereal drives sheer lights; chill / rave explicitly turn them
-    off — all four use group matchers. Blackout and test don't reference groups.
+    Ethereal drives sheer lights; chill / rave explicitly turn them off. Test
+    and home use the track group for mirrorball named-position support.
     """
     assert mode_uses_group_matchers(Mode.ethereal) is True
     assert mode_uses_group_matchers(Mode.chill) is True
     assert mode_uses_group_matchers(Mode.rave) is True
     assert mode_uses_group_matchers(Mode.stroby) is True
     assert mode_uses_group_matchers(Mode.blackout) is False
-    assert mode_uses_group_matchers(Mode.test) is False
+    assert mode_uses_group_matchers(Mode.test) is True
+    assert mode_uses_group_matchers(Mode.home) is True
 
 
 def test_ethereal_dsl_fades_mirrorball_and_zeros_unlisted() -> None:

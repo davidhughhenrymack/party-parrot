@@ -24,6 +24,7 @@ export function createNoopSceneController(
     setSelection() { },
     setInteractionMode() { },
     setLightingMode() { },
+    setNamedPositionPreviewOverride() { },
     applyFixtureRuntimeState() { },
     destroy() { },
   };
@@ -100,6 +101,7 @@ function createThreeSceneController({
     isTransformDragging: false,
     /** Ignore canvas background clicks that immediately follow a transform drag (they clear selection). */
     suppressCanvasDeselectUntil: 0,
+    namedPositionPreviewOverrides: new Map(),
     destroyed: false,
   };
   const fixtureDragSyncIntervalMs = 100;
@@ -1264,7 +1266,16 @@ function createThreeSceneController({
       if (entity.type !== 'fixture') {
         return;
       }
-      const vis = byId.get(String(entity.fixture.id));
+      const fixtureId = String(entity.fixture.id);
+      const override = localState.namedPositionPreviewOverrides.get(fixtureId);
+      let vis = byId.get(fixtureId);
+      if (override) {
+        vis = {
+          ...(vis ?? { id: fixtureId, rgb: [1, 1, 1], dimmer: 0 }),
+          pan_deg: override.pan / 255 * 540,
+          tilt_deg: override.tilt / 255 * 270,
+        };
+      }
       if (!vis || !Array.isArray(vis.rgb) || vis.rgb.length < 3) {
         entity.runtimeStrobe = 0;
         entity.runtimeDimmerForStrobe = 0;
@@ -1286,6 +1297,18 @@ function createThreeSceneController({
       applyFixtureRuntimeVisual(entity, vis, vis.rgb, dim);
     });
     applySelectionVisuals();
+  }
+
+  function setNamedPositionPreviewOverride(fixtureId, override) {
+    const key = String(fixtureId);
+    if (!override) {
+      localState.namedPositionPreviewOverrides.delete(key);
+    } else {
+      localState.namedPositionPreviewOverrides.set(key, {
+        pan: Number(override.pan),
+        tilt: Number(override.tilt),
+      });
+    }
   }
 
   /** Floor-plane height (m) for the top-view front-direction arrow. Floats just above floor to avoid z-fight. */
@@ -2110,6 +2133,7 @@ function createThreeSceneController({
     setSelection,
     setInteractionMode,
     setLightingMode,
+    setNamedPositionPreviewOverride,
     applyFixtureRuntimeState,
     destroy() {
       localState.destroyed = true;

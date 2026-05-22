@@ -189,6 +189,61 @@ class FixtureSpec:
 
 @beartype
 @dataclass(frozen=True)
+class NamedPositionSpec:
+    id: str
+    name: str
+
+    def to_dict(self) -> JsonDict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> "NamedPositionSpec":
+        return cls(
+            id=str(data["id"]),
+            name=str(data["name"]),
+        )
+
+
+@beartype
+@dataclass(frozen=True)
+class FixtureNamedPositionSpec:
+    id: str
+    venue_id: str
+    fixture_id: str
+    named_position_id: str
+    position_name: str
+    pan: float
+    tilt: float
+
+    def to_dict(self) -> JsonDict:
+        return {
+            "id": self.id,
+            "venue_id": self.venue_id,
+            "fixture_id": self.fixture_id,
+            "named_position_id": self.named_position_id,
+            "position_name": self.position_name,
+            "pan": self.pan,
+            "tilt": self.tilt,
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> "FixtureNamedPositionSpec":
+        return cls(
+            id=str(data["id"]),
+            venue_id=str(data["venue_id"]),
+            fixture_id=str(data["fixture_id"]),
+            named_position_id=str(data["named_position_id"]),
+            position_name=str(data["position_name"]),
+            pan=float(data["pan"]),
+            tilt=float(data["tilt"]),
+        )
+
+
+@beartype
+@dataclass(frozen=True)
 class VenueSnapshot:
     summary: VenueSummary
     floor_width: float
@@ -197,6 +252,10 @@ class VenueSnapshot:
     video_wall: VideoWallSpec
     fixtures: tuple[FixtureSpec, ...]
     scene_objects: tuple[SceneObjectSpec, ...] = field(default_factory=tuple)
+    named_positions: tuple[NamedPositionSpec, ...] = field(default_factory=tuple)
+    fixture_named_positions: tuple[FixtureNamedPositionSpec, ...] = field(
+        default_factory=tuple
+    )
 
     def to_dict(self) -> JsonDict:
         return {
@@ -207,6 +266,10 @@ class VenueSnapshot:
             "video_wall": self.video_wall.to_dict(),
             "fixtures": [fixture.to_dict() for fixture in self.fixtures],
             "scene_objects": [scene_object.to_dict() for scene_object in self.scene_objects],
+            "named_positions": [position.to_dict() for position in self.named_positions],
+            "fixture_named_positions": [
+                position.to_dict() for position in self.fixture_named_positions
+            ],
         }
 
     @classmethod
@@ -224,6 +287,14 @@ class VenueSnapshot:
             scene_objects=tuple(
                 SceneObjectSpec.from_dict(dict(scene_object_data))
                 for scene_object_data in data.get("scene_objects", [])
+            ),
+            named_positions=tuple(
+                NamedPositionSpec.from_dict(dict(position_data))
+                for position_data in data.get("named_positions", [])
+            ),
+            fixture_named_positions=tuple(
+                FixtureNamedPositionSpec.from_dict(dict(position_data))
+                for position_data in data.get("fixture_named_positions", [])
             ),
         )
 

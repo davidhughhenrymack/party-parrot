@@ -20,6 +20,7 @@ const PAN_RANGE_FULL_DEG = Object.freeze({
 const PAN_CENTER_DEG = 270;
 const PAN_HALF_MAX_DEG = 270;
 const TILT_MAX_DEG = 270;
+const DIRECT_DMX_MAX = 255;
 
 const PAN_TILT_RANGE_KEYS = ['pan_lower', 'pan_upper', 'tilt_lower', 'tilt_upper'];
 
@@ -110,6 +111,14 @@ function rgbTripleToCss(rgb) {
   const g = Math.round(Math.max(0, Math.min(1, rgb[1])) * 255);
   const b = Math.round(Math.max(0, Math.min(1, rgb[2])) * 255);
   return `rgb(${r},${g},${b})`;
+}
+
+function clampDirectDmx(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(DIRECT_DMX_MAX, numeric));
 }
 
 async function postShiftTarget(target) {
@@ -613,6 +622,209 @@ function DenseFixtureNameInput({ fixture, onCommit }) {
   );
 }
 
+function NamedPositionsPanel({
+  fixture,
+  namedPositions,
+  assignments,
+  activeEdit,
+  onStartEdit,
+  onStopEdit,
+  onAddAssignment,
+  onCreateAndAddAssignment,
+  onUpdateAssignment,
+  onDeleteAssignment,
+}) {
+  const assignedNameIds = new Set(assignments.map((position) => position.named_position_id));
+  const availableNames = namedPositions.filter((position) => !assignedNameIds.has(position.id));
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addPositionId, setAddPositionId] = useState('');
+  const [newName, setNewName] = useState('');
+  const [editStepMode, setEditStepMode] = useState('coarse');
+  const createNewValue = '__create_new_named_position__';
+  const addId = addPositionId || availableNames[0]?.id || createNewValue;
+  const isCreatingNew = addId === createNewValue;
+  const editStep = editStepMode === 'fine' ? 0.01 : 1;
+
+  useEffect(() => {
+    if (
+      addPositionId &&
+      addPositionId !== createNewValue &&
+      !availableNames.some((position) => position.id === addPositionId)
+    ) {
+      setAddPositionId('');
+    }
+  }, [addPositionId, availableNames, createNewValue]);
+
+  return (
+    <div className="panel dense-panel named-positions-panel">
+      <div className="dense-section-header named-positions-header">
+        <h3>Named positions</h3>
+        <button
+          type="button"
+          className="small-button secondary-button named-position-add-button"
+          aria-label="Add named position"
+          onClick={() => setAddModalOpen(true)}
+        >
+          +
+        </button>
+      </div>
+
+      <div className="named-position-list">
+        {assignments.length === 0 ? (
+          <p className="named-position-empty">No named positions programmed for this light.</p>
+        ) : (
+          assignments.map((position) => {
+            const isActive =
+              activeEdit?.fixtureId === fixture.id &&
+              activeEdit?.namedPositionId === position.named_position_id;
+            return (
+              <div key={position.id} className={`named-position-card${isActive ? ' active' : ''}`}>
+                <div className="named-position-card-header">
+                  <strong>{position.position_name}</strong>
+                  <div className="named-position-header-actions">
+                    <button
+                      type="button"
+                      className={`small-button secondary-button named-position-icon-button${isActive ? ' active' : ''}`}
+                      aria-label={isActive ? 'Stop editing named position' : 'Edit named position live'}
+                      title={isActive ? 'Stop editing' : 'Edit live'}
+                      onClick={() => (isActive ? onStopEdit() : onStartEdit(position))}
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className="small-button danger-button named-position-icon-button"
+                      aria-label="Delete named position from fixture"
+                      title="Delete position"
+                      onClick={() => onDeleteAssignment(position.named_position_id)}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+                {isActive ? (
+                  <div className="named-position-card-actions">
+                    <div className="named-position-step-toggle" role="radiogroup" aria-label="Edit step size">
+                      <button
+                        type="button"
+                        className={`small-button secondary-button${editStepMode === 'coarse' ? ' active' : ''}`}
+                        aria-checked={editStepMode === 'coarse'}
+                        role="radio"
+                        onClick={() => setEditStepMode('coarse')}
+                      >
+                        Coarse
+                      </button>
+                      <button
+                        type="button"
+                        className={`small-button secondary-button${editStepMode === 'fine' ? ' active' : ''}`}
+                        aria-checked={editStepMode === 'fine'}
+                        role="radio"
+                        onClick={() => setEditStepMode('fine')}
+                      >
+                        Fine
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="named-position-values">
+                  <label>
+                    Pan
+                    <input
+                      type="number"
+                      min="0"
+                      max="255"
+                      step={isActive ? editStep : 1}
+                      value={position.pan}
+                      onChange={(event) =>
+                        onUpdateAssignment(position.named_position_id, {
+                          pan: clampDirectDmx(event.target.value),
+                          tilt: position.tilt,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Tilt
+                    <input
+                      type="number"
+                      min="0"
+                      max="255"
+                      step={isActive ? editStep : 1}
+                      value={position.tilt}
+                      onChange={(event) =>
+                        onUpdateAssignment(position.named_position_id, {
+                          pan: position.pan,
+                          tilt: clampDirectDmx(event.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <Modal
+        open={addModalOpen}
+        title={`Add position for ${fixture.name || fixture.fixture_type}`}
+        onClose={() => setAddModalOpen(false)}
+      >
+        <form
+          className="modal-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (isCreatingNew) {
+              await onCreateAndAddAssignment(newName);
+              setNewName('');
+            } else {
+              await onAddAssignment(addId);
+            }
+            setAddPositionId('');
+            setAddModalOpen(false);
+          }}
+        >
+          <label>
+            Named position
+            <select value={addId} onChange={(event) => setAddPositionId(event.target.value)}>
+              {availableNames.map((position) => (
+                <option key={position.id} value={position.id}>
+                  {position.name}
+                </option>
+              ))}
+              <option value={createNewValue}>Create new named position...</option>
+            </select>
+          </label>
+          {isCreatingNew ? (
+            <label>
+              New name
+              <input
+                type="text"
+                placeholder="Mirrorball"
+                value={newName}
+                onChange={(event) => setNewName(event.target.value)}
+              />
+            </label>
+          ) : null}
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setAddModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <button type="submit" disabled={isCreatingNew ? !newName.trim() : !addId}>
+              Add position
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+
 export default function DenseVenueEditorPage({ venueId }) {
   const viewportRef = useRef(null);
   const sceneControllerRef = useRef(null);
@@ -696,6 +908,7 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [sceneControllerEpoch, setSceneControllerEpoch] = useState(0);
   const [editorMenuOpen, setEditorMenuOpen] = useState(false);
   const [editorMenuSection, setEditorMenuSection] = useState(null);
+  const [activeNamedPositionEdit, setActiveNamedPositionEdit] = useState(null);
 
   /** Primary fixture for detail actions (last clicked in multi-select). */
   const selectedFixtureId =
@@ -724,6 +937,15 @@ export default function DenseVenueEditorPage({ venueId }) {
       (f) => idSet.has(f.id) && isMovingHeadFixtureType(f.fixture_type),
     );
   }, [venueSnapshot, selectedFixtureIds]);
+
+  const selectedFixtureNamedPositions = useMemo(() => {
+    if (!venueSnapshot || !selectedFixture) {
+      return [];
+    }
+    return (venueSnapshot.fixture_named_positions || [])
+      .filter((position) => position.fixture_id === selectedFixture.id)
+      .sort((a, b) => a.position_name.localeCompare(b.position_name));
+  }, [venueSnapshot, selectedFixture]);
 
   const selectedSceneObject = useMemo(() => {
     if (!venueSnapshot || !selectedKind) {
@@ -1091,6 +1313,40 @@ export default function DenseVenueEditorPage({ venueId }) {
     sceneControllerRef.current?.setView(currentView);
   }, [currentView]);
 
+  useEffect(() => {
+    if (!activeNamedPositionEdit || !venueSnapshot) {
+      return;
+    }
+    const assignment = (venueSnapshot.fixture_named_positions || []).find(
+      (position) =>
+        position.fixture_id === activeNamedPositionEdit.fixtureId &&
+        position.named_position_id === activeNamedPositionEdit.namedPositionId,
+    );
+    if (!assignment) {
+      sceneControllerRef.current?.setNamedPositionPreviewOverride(
+        activeNamedPositionEdit.fixtureId,
+        null,
+      );
+      void apiPostNamedPositionOverride({
+        active: false,
+        fixture_id: activeNamedPositionEdit.fixtureId,
+      });
+      setActiveNamedPositionEdit(null);
+      return;
+    }
+    sceneControllerRef.current?.setNamedPositionPreviewOverride(assignment.fixture_id, {
+      pan: assignment.pan,
+      tilt: assignment.tilt,
+    });
+    void apiPostNamedPositionOverride({
+      active: true,
+      fixture_id: assignment.fixture_id,
+      position_name: assignment.position_name,
+      pan: assignment.pan,
+      tilt: assignment.tilt,
+    }).catch(() => {});
+  }, [activeNamedPositionEdit, venueSnapshot]);
+
   // Orthographic views (top/front/side) orbit awkwardly; if the user was orbiting
   // in perspective, switch to pan when entering those views.
   useEffect(() => {
@@ -1318,6 +1574,25 @@ export default function DenseVenueEditorPage({ venueId }) {
       sceneControllerRef.current?.setSelection(null, { notifyParent: false });
     }
   }, [selectedFixtureIds, selectedKind]);
+
+  useEffect(() => {
+    if (
+      activeNamedPositionEdit &&
+      (selectedKind !== 'fixture' ||
+        selectedFixtureIds.length !== 1 ||
+        selectedFixtureIds[0] !== activeNamedPositionEdit.fixtureId)
+    ) {
+      sceneControllerRef.current?.setNamedPositionPreviewOverride(
+        activeNamedPositionEdit.fixtureId,
+        null,
+      );
+      void apiPostNamedPositionOverride({
+        active: false,
+        fixture_id: activeNamedPositionEdit.fixtureId,
+      });
+      setActiveNamedPositionEdit(null);
+    }
+  }, [activeNamedPositionEdit, selectedFixtureIds, selectedKind]);
 
   function bumpLiveLightingPulse() {
     if (activeVenueIdRef.current !== venueId) {
@@ -1818,6 +2093,115 @@ export default function DenseVenueEditorPage({ venueId }) {
     setVenueSnapshot(snapshot);
   }
 
+  function handleStartNamedPositionEdit(position) {
+    setActiveNamedPositionEdit({
+      fixtureId: position.fixture_id,
+      namedPositionId: position.named_position_id,
+    });
+    sceneControllerRef.current?.setNamedPositionPreviewOverride(position.fixture_id, {
+      pan: position.pan,
+      tilt: position.tilt,
+    });
+    void apiPostNamedPositionOverride({
+      active: true,
+      fixture_id: position.fixture_id,
+      position_name: position.position_name,
+      pan: position.pan,
+      tilt: position.tilt,
+    }).catch(() => {});
+  }
+
+  function handleStopNamedPositionEdit() {
+    if (!activeNamedPositionEdit) {
+      return;
+    }
+    sceneControllerRef.current?.setNamedPositionPreviewOverride(
+      activeNamedPositionEdit.fixtureId,
+      null,
+    );
+    void apiPostNamedPositionOverride({
+      active: false,
+      fixture_id: activeNamedPositionEdit.fixtureId,
+    }).catch(() => {});
+    setActiveNamedPositionEdit(null);
+  }
+
+  async function handleAddFixtureNamedPosition(positionId) {
+    if (!venueSnapshot || !selectedFixture) {
+      return;
+    }
+    const snap = await apiPutFixtureNamedPosition(
+      venueSnapshot.summary.id,
+      selectedFixture.id,
+      positionId,
+      { pan: 128, tilt: 128 },
+    );
+    setVenueSnapshot(snap);
+  }
+
+  async function handleUpdateFixtureNamedPosition(positionId, values) {
+    if (!venueSnapshot || !selectedFixture) {
+      return;
+    }
+    const pan = clampDirectDmx(values.pan);
+    const tilt = clampDirectDmx(values.tilt);
+    const snap = await apiPutFixtureNamedPosition(
+      venueSnapshot.summary.id,
+      selectedFixture.id,
+      positionId,
+      { pan, tilt },
+    );
+    setVenueSnapshot(snap);
+    if (
+      activeNamedPositionEdit?.fixtureId === selectedFixture.id &&
+      activeNamedPositionEdit?.namedPositionId === positionId
+    ) {
+      const positionName =
+        (venueSnapshot.named_positions || []).find((position) => position.id === positionId)?.name ??
+        '';
+      sceneControllerRef.current?.setNamedPositionPreviewOverride(selectedFixture.id, {
+        pan,
+        tilt,
+      });
+      void apiPostNamedPositionOverride({
+        active: true,
+        fixture_id: selectedFixture.id,
+        position_name: positionName,
+        pan,
+        tilt,
+      }).catch(() => {});
+    }
+  }
+
+  async function handleDeleteFixtureNamedPosition(positionId) {
+    if (!venueSnapshot || !selectedFixture) {
+      return;
+    }
+    if (activeNamedPositionEdit?.namedPositionId === positionId) {
+      handleStopNamedPositionEdit();
+    }
+    const snap = await apiDeleteFixtureNamedPosition(
+      venueSnapshot.summary.id,
+      selectedFixture.id,
+      positionId,
+    );
+    setVenueSnapshot(snap);
+  }
+
+  async function handleCreateAndAddFixtureNamedPosition(name) {
+    if (!venueSnapshot || !selectedFixture) {
+      return;
+    }
+    const position = await apiCreateNamedPosition(name);
+    const snap = await apiPutFixtureNamedPosition(
+      venueSnapshot.summary.id,
+      selectedFixture.id,
+      position.id,
+      { pan: 128, tilt: 128 },
+    );
+    setVenueSnapshot(snap);
+  }
+
   async function apiActivateVenue(targetVenueId) {
     await fetchJson(`/api/venues/${targetVenueId}/activate`, { method: 'POST' });
   }
@@ -1871,6 +2255,42 @@ export default function DenseVenueEditorPage({ venueId }) {
   async function apiMagicRepatchFixtures(targetVenueId) {
     return fetchJson(`/api/venues/${targetVenueId}/fixtures/magic-repatch`, {
       method: 'POST',
+    });
+  }
+
+  async function apiCreateNamedPosition(name) {
+    return fetchJson('/api/named-positions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async function apiPutFixtureNamedPosition(targetVenueId, fixtureId, positionId, data) {
+    return fetchJson(
+      `/api/venues/${targetVenueId}/fixtures/${fixtureId}/named-positions/${positionId}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async function apiDeleteFixtureNamedPosition(targetVenueId, fixtureId, positionId) {
+    return fetchJson(
+      `/api/venues/${targetVenueId}/fixtures/${fixtureId}/named-positions/${positionId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+  }
+
+  async function apiPostNamedPositionOverride(data) {
+    return fetchJson('/api/runtime/named-position-override', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     });
   }
 
@@ -2068,42 +2488,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                         ) : null}
                       </span>
                       <span className="dense-fixture-actions">
-                        {selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? (
-                          <>
-                            <button
-                              className="icon-button small-button link-button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setAddressModalOpen(true);
-                              }}
-                            >
-                              {`${fixture.universe}:${fixture.address}`}
-                            </button>
-                            <button
-                              type="button"
-                              className="icon-button small-button secondary-button"
-                              aria-label="Clone light"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void handleCloneFixture(fixture);
-                              }}
-                            >
-                              Clone
-                            </button>
-                            <button
-                              className="icon-button small-button danger-button"
-                              aria-label="Delete light"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void handleRemoveFixture();
-                              }}
-                            >
-                              🗑
-                            </button>
-                          </>
-                        ) : (
-                          <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
-                        )}
+                        <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
                       </span>
                     </button>
                   ))}
@@ -2152,42 +2537,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                               ) : null}
                             </span>
                             <span className="dense-fixture-actions">
-                              {selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? (
-                                <>
-                                  <button
-                                    className="icon-button small-button link-button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setAddressModalOpen(true);
-                                    }}
-                                  >
-                                    {`${fixture.universe}:${fixture.address}`}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="icon-button small-button secondary-button"
-                                    aria-label="Clone light"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      void handleCloneFixture(fixture);
-                                    }}
-                                  >
-                                    Clone
-                                  </button>
-                                  <button
-                                    className="icon-button small-button danger-button"
-                                    aria-label="Delete light"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      void handleRemoveFixture();
-                                    }}
-                                  >
-                                    🗑
-                                  </button>
-                                </>
-                              ) : (
-                                <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
-                              )}
+                              <span className="fixture-row-meta">{`${fixture.universe}:${fixture.address}`}</span>
                             </span>
                           </button>
                         ))}
@@ -2421,6 +2771,24 @@ export default function DenseVenueEditorPage({ venueId }) {
                       Group
                     </button>
                   ) : null}
+                  {selectedKind === 'fixture' && selectedFixtureIds.length === 1 && selectedFixture ? (
+                    <>
+                      <button
+                        type="button"
+                        className="small-button secondary-button"
+                        onClick={() => void handleCloneFixture(selectedFixture)}
+                      >
+                        Clone
+                      </button>
+                      <button
+                        type="button"
+                        className="small-button danger-button"
+                        onClick={() => void handleRemoveFixture()}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : null}
                   <button
                     type="button"
                     className="small-button secondary-button"
@@ -2459,6 +2827,15 @@ export default function DenseVenueEditorPage({ venueId }) {
                   {' · '}
                   {`${dmxAddressWidthForFixture(selectedFixture, fixtureTypes)} ch`}
                 </p>
+                <div className="dense-selection-fixture-actions">
+                  <button
+                    type="button"
+                    className="small-button link-button"
+                    onClick={() => setAddressModalOpen(true)}
+                  >
+                    Edit patch
+                  </button>
+                </div>
               </div>
             ) : null}
 
@@ -2490,6 +2867,24 @@ export default function DenseVenueEditorPage({ venueId }) {
               <PanTiltRangePanel
                 fixtures={selectedMovingHeadFixtures}
                 onPatch={handleUpdateFixturePanTiltRange}
+              />
+            ) : null}
+
+            {selectedKind === 'fixture' &&
+            selectedFixtureIds.length === 1 &&
+            selectedFixture &&
+            isMovingHeadFixtureType(selectedFixture.fixture_type) ? (
+              <NamedPositionsPanel
+                fixture={selectedFixture}
+                namedPositions={venueSnapshot?.named_positions || []}
+                assignments={selectedFixtureNamedPositions}
+                activeEdit={activeNamedPositionEdit}
+                onStartEdit={handleStartNamedPositionEdit}
+                onStopEdit={handleStopNamedPositionEdit}
+                onAddAssignment={handleAddFixtureNamedPosition}
+                onCreateAndAddAssignment={handleCreateAndAddFixtureNamedPosition}
+                onUpdateAssignment={handleUpdateFixtureNamedPosition}
+                onDeleteAssignment={handleDeleteFixtureNamedPosition}
               />
             ) : null}
           </aside>

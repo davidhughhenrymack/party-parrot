@@ -239,6 +239,23 @@ class Director:
                     out[str(cid)] = b.lerp_fixtures[i][k]
         return out
 
+    def _apply_named_position_programming_overrides(self, scheme: ColorScheme) -> None:
+        overrides = self.state.named_position_programming_overrides
+        if not overrides:
+            return
+        for fixture in _flatten_runtime_fixtures(get_runtime_fixtures(self.state)):
+            cid = fixture.cloud_spec_id
+            if cid is None or str(cid) not in overrides:
+                continue
+            _, pan, tilt = overrides[str(cid)]
+            output_fixture = self.resolve_output_fixture(fixture)
+            color_slots = (scheme.fg, scheme.bg, scheme.bg_contrast)
+            slot_idx = sum(ord(ch) for ch in str(cid)) % len(color_slots)
+            output_fixture.set_dimmer(255)
+            output_fixture.set_color(color_slots[slot_idx])
+            output_fixture.set_pan_direct_dmx(pan)
+            output_fixture.set_tilt_direct_dmx(tilt)
+
     def _effective_interpreters_for_signals(self) -> list[InterpreterBase]:
         if self._interpretation_blend is None:
             return self.interpreters
@@ -463,6 +480,8 @@ class Director:
                         b.incoming_fixtures[i][k],
                         t,
                     )
+
+        self._apply_named_position_programming_overrides(scheme)
 
         # Pass frame and scheme to VJ system for rendering
         if self.vj_director:

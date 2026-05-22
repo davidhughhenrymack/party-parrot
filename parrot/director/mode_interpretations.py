@@ -14,6 +14,7 @@ from parrot.director.mode import Mode
 from parrot.director.mode_dispatch import Group, Matcher
 from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
+from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 from parrot.fixtures.chauvet.rotosphere import ChauvetRotosphere_28Ch
 from parrot.fixtures.laser import Laser
 from parrot.fixtures.led_par import Par
@@ -56,6 +57,7 @@ from parrot.interpreters.move import (
     MoveCircles,
     MoveFan,
     MoveFigureEight,
+    MoveNamedPosition,
     MoveNod,
     MoveSmoothWalk,
 )
@@ -227,6 +229,23 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         Mirrorball: [
             weighted_randomize(
                 (10, combo(StabPulse, AnyColor)),
+                (90, Dimmer0),
+            )
+        ],
+        (Group("track"), ChauvetRogueBeamR2X): [
+            weighted_randomize(
+                (
+                    10,
+                    combo(
+                        StabPulse,
+                        AnyColor,
+                        with_args(
+                            "MirrorballPosition",
+                            MoveNamedPosition,
+                            position_name="Mirrorball",
+                        ),
+                    ),
+                ),
                 (90, Dimmer0),
             )
         ],
@@ -437,6 +456,26 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 ),
             )
         ],
+        (Group("track"), ChauvetRogueBeamR2X): [
+            combo(
+                randomize(StrobeChannelSustained, Noop),
+                weighted_randomize(
+                    (
+                        10,
+                        combo(
+                            StabPulse,
+                            AnyColor,
+                            with_args(
+                                "MirrorballPosition",
+                                MoveNamedPosition,
+                                position_name="Mirrorball",
+                            ),
+                        ),
+                    ),
+                    (90, Dimmer0),
+                ),
+            )
+        ],
         Par: [
             combo(
                 randomize(StrobeChannelSustained, Noop),
@@ -584,6 +623,17 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 ColorAlternateBg,
             ),
         ],
+        (Group("track"), ChauvetRogueBeamR2X): [
+            combo(
+                Dimmer255,
+                ColorAlternateBg,
+                with_args(
+                    "MirrorballPosition",
+                    MoveNamedPosition,
+                    position_name="Mirrorball",
+                ),
+            ),
+        ],
         (Group("sheer lights"), MovingHead): [
             combo(
                 with_args(
@@ -615,6 +665,13 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
     },
     Mode.test: {
         Mirrorball: [combo(Dimmer255, RigColorCycle)],
+        (Group("track"), ChauvetRogueBeamR2X): [
+            combo(
+                Dimmer255,
+                RigColorCycle,
+                with_args("MirrorballPosition", MoveNamedPosition, position_name="Mirrorball"),
+            )
+        ],
         Par: [combo(Dimmer255, RigColorCycle)],
         MovingHead: [
             combo(
@@ -634,6 +691,13 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
     },
     Mode.home: {
         Mirrorball: [combo(Dimmer255, RigColorCycle)],
+        (Group("track"), ChauvetRogueBeamR2X): [
+            combo(
+                Dimmer255,
+                RigColorCycle,
+                with_args("MirrorballPosition", MoveNamedPosition, position_name="Mirrorball"),
+            )
+        ],
         Par: [combo(Dimmer255, RigColorCycle)],
         MovingHead: [
             combo(

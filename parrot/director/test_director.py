@@ -61,6 +61,29 @@ class TestDirector(unittest.TestCase):
             self.director.on_mode_change(Mode.rave)
             mock_gen.assert_called_once()
 
+    def test_named_position_programming_override_forces_visible_fixture(self):
+        fixture = MagicMock()
+        fixture.cloud_spec_id = "fixture-a"
+        self.state._runtime_patch = [fixture]
+        self.state.apply_named_position_programming_override(
+            {
+                "active": True,
+                "fixture_id": "fixture-a",
+                "position_name": "Mirrorball",
+                "pan": 120.5,
+                "tilt": 88.25,
+            }
+        )
+
+        self.director._apply_named_position_programming_overrides(
+            self.director.scheme.render()
+        )
+
+        fixture.set_dimmer.assert_called_once_with(255)
+        fixture.set_color.assert_called_once()
+        fixture.set_pan_direct_dmx.assert_called_once_with(120.5)
+        fixture.set_tilt_direct_dmx.assert_called_once_with(88.25)
+
     def test_shift_color_scheme(self):
         """Test that color scheme shifting works"""
         original_scheme = self.director.scheme.render()

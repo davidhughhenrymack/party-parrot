@@ -92,6 +92,7 @@ def _apply_transform(fixture: FixtureBase, spec: FixtureSpec) -> FixtureBase:
     fixture.cloud_fixture_type = spec.fixture_type
     fixture.cloud_group_name = spec.group_name
     fixture.cloud_is_manual = spec.is_manual
+    fixture.named_positions = {}
     _apply_live_fixture_options(fixture, spec)
     return fixture
 
@@ -449,6 +450,28 @@ def create_fixture_instance(spec: FixtureSpec) -> FixtureBase:
     return fixture
 
 
+def _named_positions_for_fixture(
+    snapshot: VenueSnapshot,
+    fixture_id: str,
+) -> dict[str, tuple[float, float]]:
+    return {
+        position.position_name: (float(position.pan), float(position.tilt))
+        for position in snapshot.fixture_named_positions
+        if position.fixture_id == fixture_id and position.position_name
+    }
+
+
+def _apply_named_positions(
+    fixture: FixtureBase,
+    snapshot: VenueSnapshot,
+) -> None:
+    cid = fixture.cloud_spec_id
+    if cid is None:
+        fixture.named_positions = {}
+        return
+    fixture.named_positions = _named_positions_for_fixture(snapshot, str(cid))
+
+
 def build_runtime_fixture_groups(snapshot: VenueSnapshot) -> tuple[list[FixtureBase], ManualGroup | None]:
     grouped: dict[str, list[FixtureBase]] = {}
     ungrouped: list[FixtureBase] = []
@@ -456,6 +479,7 @@ def build_runtime_fixture_groups(snapshot: VenueSnapshot) -> tuple[list[FixtureB
 
     for spec in snapshot.fixtures:
         fixture = create_fixture_instance(spec)
+        _apply_named_positions(fixture, snapshot)
         if spec.is_manual:
             manual_fixtures.append(fixture)
             continue
@@ -520,6 +544,7 @@ def update_runtime_fixture_transforms(
     for spec in snapshot.fixtures:
         fixture = current_by_id[spec.id]
         _apply_transform(fixture, spec)
+        _apply_named_positions(fixture, snapshot)
         if spec.name:
             fixture.name = spec.name
 

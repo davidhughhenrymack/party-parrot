@@ -107,6 +107,26 @@ class TestChauvetMoverBase:
         expected_angle = expected_projected / 255 * 270
         assert self.mover.get_tilt_angle() == expected_angle
 
+    def test_direct_pan_tilt_bypasses_configured_range(self):
+        self.mover.set_pan_direct_dmx(128.5)
+        self.mover.set_tilt_direct_dmx(64.25)
+
+        assert self.mover.values[0] == 128
+        assert self.mover.values[1] == int(0.5 * 255)
+        assert self.mover.get_pan_angle() == pytest.approx(128.5 / 255 * 540)
+        assert self.mover.values[2] == 64
+        assert self.mover.values[3] == int(0.25 * 255)
+        assert self.mover.get_tilt_angle() == pytest.approx(64.25 / 255 * 270)
+
+    def test_direct_pan_tilt_clamps_to_dmx_range(self):
+        self.mover.set_pan_direct_dmx(300)
+        self.mover.set_tilt_direct_dmx(-10)
+
+        assert self.mover.values[0] == 255
+        assert self.mover.values[1] == 0
+        assert self.mover.values[2] == 0
+        assert self.mover.values[3] == 0
+
     def test_set_speed(self):
         """Test speed setting"""
         self.mover.set_speed(200)

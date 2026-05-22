@@ -299,6 +299,23 @@ class TestModes(unittest.TestCase):
         test_interp.step(self.frame, self.scheme)
         self.assertEqual(mb2.get_dimmer(), 255)
 
+    def test_track_rogue_home_mode_aims_at_mirrorball_named_position(self):
+        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
+
+        rogue = ChauvetRogueBeamR2X(1)
+        rogue.cloud_group_name = "track"
+        rogue.named_positions = {"Mirrorball": (144.5, 77.25)}
+
+        interp = get_interpreter(Mode.home, [rogue], self.args)
+        interp.step(self.frame, self.scheme)
+
+        self.assertIn("MirrorballPosition", str(interp))
+        self.assertEqual(rogue.get_dimmer(), 255)
+        self.assertEqual(rogue.values[0], 144)
+        self.assertEqual(rogue.values[1], int(0.5 * 255))
+        self.assertEqual(rogue.values[2], 77)
+        self.assertEqual(rogue.values[3], int(0.25 * 255))
+
 
 if __name__ == "__main__":
     unittest.main()

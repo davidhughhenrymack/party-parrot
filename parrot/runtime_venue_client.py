@@ -196,6 +196,10 @@ class RuntimeVenueClient:
                 self.state.queue_runtime_shift("color_scheme")
             elif message_type == "shift_vj_only":
                 self.state.queue_runtime_shift("vj_only")
+            elif message_type == "named_position_programming_override":
+                self.state.queue_runtime_named_position_override(
+                    dict(payload.get("data", {}) or {})
+                )
 
         def on_error(_, error):
             print(f"Venue websocket error: {error}")

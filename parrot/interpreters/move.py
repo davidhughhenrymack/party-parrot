@@ -231,3 +231,29 @@ class MoveSmoothWalk(InterpreterBase):
             )
             fixture.set_pan(max(1.0, min(255.0, pan)))
             fixture.set_tilt(max(1.0, min(255.0, tilt)))
+
+
+@beartype
+class MoveNamedPosition(InterpreterBase):
+    """Recall a fixture-specific named direct-DMX pan/tilt position."""
+
+    def __init__(
+        self,
+        group: list[FixtureBase],
+        args: InterpreterArgs,
+        position_name: str,
+    ):
+        super().__init__(group, args)
+        self.position_name = str(position_name)
+
+    def __str__(self) -> str:
+        return f"📍 {Fore.GREEN}{self.position_name}{Style.RESET_ALL}"
+
+    def step(self, frame, scheme):
+        for fixture in self.group:
+            position = fixture.named_positions.get(self.position_name)
+            if position is None:
+                continue
+            pan, tilt = position
+            fixture.set_pan_direct_dmx(pan)
+            fixture.set_tilt_direct_dmx(tilt)

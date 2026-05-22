@@ -914,6 +914,13 @@ label {
   overflow-wrap: anywhere;
 }
 
+.dense-selection-fixture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 /* Section dividers edge-to-edge; horizontal padding lives on each panel */
 .dense-sidebar .panel {
   background: transparent;
@@ -1525,6 +1532,106 @@ label {
   flex: 1;
   padding: 5px 8px;
   font-size: 12px;
+}
+
+.named-position-empty {
+  margin: 0 0 10px;
+  color: #9ba8b4;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.named-position-card-actions,
+.named-position-values {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.named-positions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.named-position-add-button {
+  min-width: 32px;
+  padding: 4px 10px;
+}
+
+.named-position-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.named-position-card {
+  padding: 10px;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  background: #11161d;
+}
+
+.named-position-card.active {
+  border-color: #58a6ff;
+  background: #07172d;
+  box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.45) inset;
+}
+
+.named-position-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.named-position-card-actions {
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.named-position-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.named-position-icon-button {
+  min-width: 32px;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.named-position-icon-button.active {
+  border-color: #58a6ff;
+  background: #1d4ed8;
+}
+
+.named-position-step-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.8);
+}
+
+.named-position-step-toggle .small-button.active {
+  border-color: #58a6ff;
+  background: #1d4ed8;
+}
+
+.named-position-values label {
+  flex: 1;
+}
+
+.named-position-name-actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #21262d;
 }
 
 .floating-view-switcher {

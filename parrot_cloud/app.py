@@ -272,6 +272,31 @@ def create_app() -> Flask:
         broadcast_command(f"shift_{target}", {"target": target})
         return jsonify({"success": True, "target": target})
 
+    @app.post("/api/runtime/named-position-override")
+    def post_named_position_override():
+        data = request.get_json(force=True) or {}
+        active = bool(data.get("active", False))
+        fixture_id = str(data.get("fixture_id", ""))
+        payload: dict[str, object] = {
+            "active": active,
+            "fixture_id": fixture_id,
+        }
+        if active:
+            if not fixture_id:
+                return jsonify({"error": "fixture_id is required"}), 400
+            try:
+                payload.update(
+                    {
+                        "position_name": str(data.get("position_name", "")),
+                        "pan": max(0.0, min(255.0, float(data["pan"]))),
+                        "tilt": max(0.0, min(255.0, float(data["tilt"]))),
+                    }
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                return jsonify({"error": str(exc)}), 400
+        broadcast_command("named_position_programming_override", payload)
+        return jsonify({"success": True, **payload})
+
     @app.post("/api/seed")
     def seed():
         payload = repository.ensure_seed_data().to_dict()
@@ -282,6 +307,50 @@ def create_app() -> Flask:
     @app.get("/api/fixture-types")
     def fixture_types():
         return jsonify({"fixture_types": list_fixture_types()})
+
+    @app.get("/api/named-positions")
+    def list_named_positions():
+        return jsonify(
+            {
+                "named_positions": [
+                    position.to_dict()
+                    for position in repository.list_named_positions()
+                ]
+            }
+        )
+
+    @app.post("/api/named-positions")
+    def create_named_position():
+        try:
+            position = repository.create_named_position(
+                (request.get_json(force=True) or {}).get("name", "")
+            )
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_active_venue()
+        return jsonify(position.to_dict())
+
+    @app.patch("/api/named-positions/<position_id>")
+    def patch_named_position(position_id: str):
+        try:
+            position = repository.update_named_position(
+                position_id, request.get_json(force=True) or {}
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_active_venue()
+        return jsonify(position.to_dict())
+
+    @app.delete("/api/named-positions/<position_id>")
+    def remove_named_position(position_id: str):
+        try:
+            repository.delete_named_position(position_id)
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        broadcast_active_venue()
+        return jsonify({"success": True})
 
     @app.get("/api/venues")
     def list_venues():
@@ -372,6 +441,41 @@ def create_app() -> Flask:
     @app.delete("/api/venues/<venue_id>/fixtures/<fixture_id>")
     def remove_fixture(venue_id: str, fixture_id: str):
         snapshot = repository.delete_fixture(venue_id, fixture_id)
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.put(
+        "/api/venues/<venue_id>/fixtures/<fixture_id>/named-positions/<position_id>"
+    )
+    def put_fixture_named_position(
+        venue_id: str, fixture_id: str, position_id: str
+    ):
+        try:
+            snapshot = repository.upsert_fixture_named_position(
+                venue_id,
+                fixture_id,
+                position_id,
+                request.get_json(force=True) or {},
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.delete(
+        "/api/venues/<venue_id>/fixtures/<fixture_id>/named-positions/<position_id>"
+    )
+    def remove_fixture_named_position(
+        venue_id: str, fixture_id: str, position_id: str
+    ):
+        try:
+            snapshot = repository.delete_fixture_named_position(
+                venue_id, fixture_id, position_id
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
         broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 

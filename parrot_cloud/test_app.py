@@ -104,6 +104,78 @@ def test_runtime_fixture_state_get_returns_current(client):
     assert data["fixtures"][0]["id"] == "a"
 
 
+def test_named_position_endpoints(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+    mirrorball = next(
+        position
+        for position in bootstrap["active_venue"]["named_positions"]
+        if position["name"] == "Mirrorball"
+    )
+
+    fixture_response = client.post(
+        f"/api/venues/{venue_id}/fixtures",
+        json={
+            "id": "named-position-api-fixture",
+            "fixture_type": "chauvet_rogue_beam_r2x",
+            "address": 1,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+        },
+    )
+    assert fixture_response.status_code == 200
+
+    programmed = client.put(
+        f"/api/venues/{venue_id}/fixtures/named-position-api-fixture/named-positions/{mirrorball['id']}",
+        json={"pan": 200.5, "tilt": 66.25},
+    )
+    assert programmed.status_code == 200
+    assignment = next(
+        position
+        for position in programmed.get_json()["fixture_named_positions"]
+        if position["fixture_id"] == "named-position-api-fixture"
+    )
+    assert assignment["position_name"] == "Mirrorball"
+    assert assignment["pan"] == 200.5
+    assert assignment["tilt"] == 66.25
+
+    new_name = client.post("/api/named-positions", json={"name": "DJ"})
+    assert new_name.status_code == 200
+    renamed = client.patch(
+        f"/api/named-positions/{new_name.get_json()['id']}",
+        json={"name": "DJ Booth"},
+    )
+    assert renamed.status_code == 200
+    assert renamed.get_json()["name"] == "DJ Booth"
+
+    removed = client.delete(
+        f"/api/venues/{venue_id}/fixtures/named-position-api-fixture/named-positions/{mirrorball['id']}"
+    )
+    assert removed.status_code == 200
+    assert removed.get_json()["fixture_named_positions"] == []
+
+
+def test_named_position_override_endpoint(client):
+    response = client.post(
+        "/api/runtime/named-position-override",
+        json={
+            "active": True,
+            "fixture_id": "fixture-1",
+            "position_name": "Mirrorball",
+            "pan": 300,
+            "tilt": -10,
+        },
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["fixture_id"] == "fixture-1"
+    assert data["pan"] == 255.0
+    assert data["tilt"] == 0.0
+
+
 def test_fixture_types_endpoint(client):
     response = client.get("/api/fixture-types")
 

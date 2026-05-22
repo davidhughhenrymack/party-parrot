@@ -5,6 +5,7 @@ from parrot.interpreters.move import (
     MoveCircles,
     MoveFan,
     MoveFigureEight,
+    MoveNamedPosition,
     MoveNod,
     MoveSmoothWalk,
 )
@@ -210,3 +211,27 @@ class TestMoveInterpreters:
     def test_move_smooth_walk_str(self):
         interpreter = MoveSmoothWalk(self.fixtures, self.args)
         assert "SmoothWalk" in str(interpreter)
+
+    def test_move_named_position_applies_direct_dmx_values(self):
+        self.fixture1.named_positions = {"Mirrorball": (140.25, 80.5)}
+        self.fixture2.named_positions = {"Other": (1.0, 2.0)}
+        interpreter = MoveNamedPosition(self.fixtures, self.args, "Mirrorball")
+
+        interpreter.step(self.frame, self.scheme)
+
+        self.fixture1.set_pan_direct_dmx.assert_called_once_with(140.25)
+        self.fixture1.set_tilt_direct_dmx.assert_called_once_with(80.5)
+        self.fixture2.set_pan_direct_dmx.assert_not_called()
+        self.fixture2.set_tilt_direct_dmx.assert_not_called()
+
+    def test_move_named_position_missing_name_soft_fails(self):
+        self.fixture1.named_positions = {}
+        self.fixture2.named_positions = {}
+        interpreter = MoveNamedPosition(self.fixtures, self.args, "Mirrorball")
+
+        interpreter.step(self.frame, self.scheme)
+
+        self.fixture1.set_pan_direct_dmx.assert_not_called()
+        self.fixture1.set_tilt_direct_dmx.assert_not_called()
+        self.fixture2.set_pan_direct_dmx.assert_not_called()
+        self.fixture2.set_tilt_direct_dmx.assert_not_called()

@@ -27,6 +27,9 @@ class State:
         self._theme = themes[0]
         self._venue = venues.dmack
         self._manual_fixture_dimmers: dict[str, float] = {}
+        self._named_position_programming_overrides: dict[
+            str, tuple[str, float, float]
+        ] = {}
         self._show_waveform = True  # New property for waveform visibility
         self._editor_display_mode = EditorDisplayMode.DMX_HEATMAP
         self._available_venues = []
@@ -216,6 +219,9 @@ class State:
         """
         self._gui_update_queue.put(("runtime_shift", target))
 
+    def queue_runtime_named_position_override(self, payload: dict[str, object]):
+        self._gui_update_queue.put(("runtime_named_position_override", payload))
+
     def _apply_runtime_venue_summaries(self, venues: list[VenueSummary]) -> None:
         self._available_venues = list(venues)
         self.events.on_available_venues_change(self._available_venues)
@@ -309,6 +315,28 @@ class State:
         self._push_remote_control_state({"manual_fixture_dimmers": applied})
 
     @property
+    def named_position_programming_overrides(self) -> dict[str, tuple[str, float, float]]:
+        return dict(self._named_position_programming_overrides)
+
+    def apply_named_position_programming_override(
+        self, payload: dict[str, object]
+    ) -> None:
+        fixture_id = str(payload.get("fixture_id", ""))
+        if not fixture_id:
+            return
+        if not bool(payload.get("active", False)):
+            self._named_position_programming_overrides.pop(fixture_id, None)
+            return
+        position_name = str(payload.get("position_name", ""))
+        pan = max(0.0, min(255.0, float(payload.get("pan", 0.0))))
+        tilt = max(0.0, min(255.0, float(payload.get("tilt", 0.0))))
+        self._named_position_programming_overrides[fixture_id] = (
+            position_name,
+            pan,
+            tilt,
+        )
+
+    @property
     def show_waveform(self):
         return self._show_waveform
 
@@ -371,6 +399,8 @@ class State:
                     self.set_effect_thread_safe(eff, value=val)
                 elif update_type == "runtime_shift":
                     self._dispatch_shift(value)
+                elif update_type == "runtime_named_position_override":
+                    self.apply_named_position_programming_override(dict(value))
 
                 self._gui_update_queue.task_done()
 

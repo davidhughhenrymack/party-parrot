@@ -28,6 +28,7 @@ class FixtureBase:
         self.cloud_fixture_type: Optional[str] = None
         self.cloud_group_name: Optional[str] = None
         self.cloud_is_manual = False
+        self.named_positions: dict[str, tuple[float, float]] = {}
 
     def set_position(self, x: int, y: int):
         """Set the position of the fixture in the venue (e.g. it's x,y coordinate from the gui rendering)"""
@@ -65,6 +66,12 @@ class FixtureBase:
         pass
 
     def set_tilt(self, value):
+        pass
+
+    def set_pan_direct_dmx(self, value: float):
+        pass
+
+    def set_tilt_direct_dmx(self, value: float):
         pass
 
     def set_speed(self, value):
@@ -239,6 +246,16 @@ class FixtureGroup(FixtureBase):
         super().set_tilt(value)
         for fixture in self.fixtures:
             fixture.set_tilt(value)
+
+    def set_pan_direct_dmx(self, value: float):
+        super().set_pan_direct_dmx(value)
+        for fixture in self.fixtures:
+            fixture.set_pan_direct_dmx(value)
+
+    def set_tilt_direct_dmx(self, value: float):
+        super().set_tilt_direct_dmx(value)
+        for fixture in self.fixtures:
+            fixture.set_tilt_direct_dmx(value)
 
     def set_speed(self, value):
         super().set_speed(value)

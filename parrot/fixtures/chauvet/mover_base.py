@@ -73,6 +73,20 @@ class ChauvetMoverBase(MovingHead):
             if self.dmx_layout[name] <= self.width:
                 self.values[self.dmx_layout[name]] = value
 
+    def _set_direct_axis_dmx(
+        self,
+        coarse_channel: str,
+        fine_channel: str,
+        value: float,
+        angle_mode_degrees: float,
+    ) -> float:
+        direct = max(0.0, min(255.0, float(value)))
+        coarse = int(direct)
+        self.set(coarse_channel, coarse)
+        if not self.disable_fine:
+            self.set(fine_channel, int((direct - coarse) * 255))
+        return direct / 255.0 * angle_mode_degrees
+
     def set_dimmer(self, value):
         super().set_dimmer(value)
         self.set("dimmer", value / 255 * self.dimmer_upper)
@@ -95,6 +109,14 @@ class ChauvetMoverBase(MovingHead):
 
         if not self.disable_fine:
             self.set("tilt_fine", int((projected - self.values[2]) * 255))
+
+    def set_pan_direct_dmx(self, value: float):
+        direct = self._set_direct_axis_dmx("pan_coarse", "pan_fine", value, 540.0)
+        super().set_pan_angle(direct)
+
+    def set_tilt_direct_dmx(self, value: float):
+        direct = self._set_direct_axis_dmx("tilt_coarse", "tilt_fine", value, 270.0)
+        super().set_tilt_angle(direct)
 
     def set_speed(self, value):
         self.set("speed", value)

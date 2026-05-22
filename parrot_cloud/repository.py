@@ -8,10 +8,13 @@ import uuid
 
 from beartype import beartype
 from sqlalchemy import select
+from sqlalchemy.orm import object_session
 
 from parrot_cloud.domain import (
     ControlState,
+    FixtureNamedPositionSpec,
     FixtureSpec,
+    NamedPositionSpec,
     RuntimeBootstrap,
     SceneObjectSpec,
     VenueSnapshot,
@@ -20,7 +23,9 @@ from parrot_cloud.domain import (
 )
 from parrot_cloud.models import (
     ControlStateModel,
+    FixtureNamedPositionModel,
     FixtureModel,
+    NamedPositionModel,
     SceneObjectModel,
     VenueModel,
 )
@@ -59,6 +64,17 @@ _PAN_TILT_RANGE_FIELDS: tuple[str, ...] = (
     "tilt_lower",
     "tilt_upper",
 )
+
+
+def _normalize_named_position_name(value: object) -> str:
+    name = str(value).strip()
+    if not name:
+        raise ValueError("Named position name cannot be empty")
+    return name
+
+
+def _clamp_dmx_float(value: object) -> float:
+    return max(0.0, min(255.0, float(value)))
 
 
 def _extract_pan_tilt_range(data: dict[str, object]) -> dict[str, float]:
@@ -340,6 +356,127 @@ class VenueRepository:
                 raise KeyError(f"Venue not found: {venue_id}")
             self._ensure_scene_objects(session, venue)
             self._normalize_metric_scene_units(venue)
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def list_named_positions(self) -> list[NamedPositionSpec]:
+        with _session_scope() as session:
+            rows = session.scalars(
+                select(NamedPositionModel).order_by(NamedPositionModel.name)
+            ).all()
+            return [self._named_position_from_model(row) for row in rows]
+
+    def create_named_position(self, name: object) -> NamedPositionSpec:
+        normalized_name = _normalize_named_position_name(name)
+        with _session_scope() as session:
+            existing = session.scalar(
+                select(NamedPositionModel).where(
+                    NamedPositionModel.name == normalized_name
+                )
+            )
+            if existing is not None:
+                raise ValueError(f"Named position already exists: {normalized_name}")
+            row = NamedPositionModel(name=normalized_name)
+            session.add(row)
+            session.flush()
+            return self._named_position_from_model(row)
+
+    def update_named_position(
+        self, named_position_id: str, data: dict[str, object]
+    ) -> NamedPositionSpec:
+        with _session_scope() as session:
+            row = session.get(NamedPositionModel, named_position_id)
+            if row is None:
+                raise KeyError(f"Named position not found: {named_position_id}")
+            if "name" in data:
+                normalized_name = _normalize_named_position_name(data["name"])
+                existing = session.scalar(
+                    select(NamedPositionModel).where(
+                        NamedPositionModel.name == normalized_name,
+                        NamedPositionModel.id != named_position_id,
+                    )
+                )
+                if existing is not None:
+                    raise ValueError(f"Named position already exists: {normalized_name}")
+                row.name = normalized_name
+                self._touch_all_venues(session)
+            session.flush()
+            return self._named_position_from_model(row)
+
+    def delete_named_position(self, named_position_id: str) -> None:
+        with _session_scope() as session:
+            row = session.get(NamedPositionModel, named_position_id)
+            if row is None:
+                raise KeyError(f"Named position not found: {named_position_id}")
+            session.delete(row)
+            self._touch_all_venues(session)
+
+    def upsert_fixture_named_position(
+        self,
+        venue_id: str,
+        fixture_id: str,
+        named_position_id: str,
+        data: dict[str, object],
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            fixture = session.get(FixtureModel, fixture_id)
+            if fixture is None or fixture.venue_id != venue_id:
+                raise KeyError(f"Fixture not found: {fixture_id}")
+            named_position = session.get(NamedPositionModel, named_position_id)
+            if named_position is None:
+                raise KeyError(f"Named position not found: {named_position_id}")
+
+            row = session.scalar(
+                select(FixtureNamedPositionModel).where(
+                    FixtureNamedPositionModel.fixture_id == fixture_id,
+                    FixtureNamedPositionModel.named_position_id == named_position_id,
+                )
+            )
+            if row is None:
+                row = FixtureNamedPositionModel(
+                    venue_id=venue_id,
+                    fixture_id=fixture_id,
+                    named_position_id=named_position_id,
+                    pan=0.0,
+                    tilt=0.0,
+                )
+                session.add(row)
+            row.pan = _clamp_dmx_float(data.get("pan", row.pan))
+            row.tilt = _clamp_dmx_float(data.get("tilt", row.tilt))
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def delete_fixture_named_position(
+        self,
+        venue_id: str,
+        fixture_id: str,
+        named_position_id: str,
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            fixture = session.get(FixtureModel, fixture_id)
+            if fixture is None or fixture.venue_id != venue_id:
+                raise KeyError(f"Fixture not found: {fixture_id}")
+            row = session.scalar(
+                select(FixtureNamedPositionModel).where(
+                    FixtureNamedPositionModel.fixture_id == fixture_id,
+                    FixtureNamedPositionModel.named_position_id == named_position_id,
+                )
+            )
+            if row is None:
+                raise KeyError(
+                    f"Fixture named position not found: {fixture_id}/{named_position_id}"
+                )
+            session.delete(row)
+            self._touch_venue(venue)
+            session.flush()
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
@@ -718,6 +855,10 @@ class VenueRepository:
         venue.revision = int(venue.revision) + 1
         venue.updated_at = datetime.utcnow()
 
+    def _touch_all_venues(self, session) -> None:
+        for venue in session.scalars(select(VenueModel)).all():
+            self._touch_venue(venue)
+
     def _touch_control_state(self, control_state: ControlStateModel) -> None:
         control_state.updated_at = datetime.utcnow()
 
@@ -729,6 +870,38 @@ class VenueRepository:
             archived=venue.archived,
             active=venue.active,
             revision=venue.revision,
+        )
+
+    def _all_named_position_models(self, venue: VenueModel) -> list[NamedPositionModel]:
+        session = object_session(venue)
+        if session is None:
+            return []
+        return list(
+            session.scalars(
+                select(NamedPositionModel).order_by(NamedPositionModel.name)
+            ).all()
+        )
+
+    def _named_position_from_model(
+        self, position: NamedPositionModel
+    ) -> NamedPositionSpec:
+        return NamedPositionSpec(
+            id=position.id,
+            name=position.name,
+        )
+
+    def _fixture_named_position_from_model(
+        self, position: FixtureNamedPositionModel
+    ) -> FixtureNamedPositionSpec:
+        named_position = position.named_position
+        return FixtureNamedPositionSpec(
+            id=position.id,
+            venue_id=position.venue_id,
+            fixture_id=position.fixture_id,
+            named_position_id=position.named_position_id,
+            position_name="" if named_position is None else named_position.name,
+            pan=position.pan,
+            tilt=position.tilt,
         )
 
     def _snapshot_from_model(self, venue: VenueModel) -> VenueSnapshot:
@@ -764,6 +937,20 @@ class VenueRepository:
                 ),
             )
             for fixture in venue.fixtures
+        )
+        named_positions = tuple(
+            self._named_position_from_model(position)
+            for position in self._all_named_position_models(venue)
+        )
+        fixture_named_positions = tuple(
+            self._fixture_named_position_from_model(position)
+            for position in sorted(
+                venue.fixture_named_positions,
+                key=lambda item: (
+                    item.fixture.order_index if item.fixture is not None else 0,
+                    item.named_position.name if item.named_position is not None else "",
+                ),
+            )
         )
         return VenueSnapshot(
             summary=self._summary_from_model(venue),
@@ -805,6 +992,8 @@ class VenueRepository:
             ),
             fixtures=fixtures,
             scene_objects=scene_objects,
+            named_positions=named_positions,
+            fixture_named_positions=fixture_named_positions,
         )
 
     def _control_state_from_model(self, control_state: ControlStateModel) -> ControlState:

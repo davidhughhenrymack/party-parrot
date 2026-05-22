@@ -325,3 +325,62 @@ def test_initial_control_state_tracks_active_seed_venue(monkeypatch, tmp_path):
     assert active_venue is not None
     assert control_state.active_venue_id == active_venue.summary.id
     assert control_state.display_mode == "dmx_heatmap"
+
+
+def test_named_positions_seed_and_fixture_assignment_roundtrip(venue_repository):
+    active = venue_repository.get_active_venue_snapshot()
+    names = venue_repository.list_named_positions()
+    mirrorball = next(position for position in names if position.name == "Mirrorball")
+
+    created = venue_repository.add_fixture(
+        active.summary.id,
+        {
+            "id": "named-position-rogue",
+            "fixture_type": "chauvet_rogue_beam_r2x",
+            "address": 1,
+            "universe": "default",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+        },
+    )
+    assert any(f.id == "named-position-rogue" for f in created.fixtures)
+
+    programmed = venue_repository.upsert_fixture_named_position(
+        active.summary.id,
+        "named-position-rogue",
+        mirrorball.id,
+        {"pan": 143.25, "tilt": 88.5},
+    )
+    assignment = next(
+        p
+        for p in programmed.fixture_named_positions
+        if p.fixture_id == "named-position-rogue"
+    )
+    assert assignment.position_name == "Mirrorball"
+    assert assignment.pan == 143.25
+    assert assignment.tilt == 88.5
+
+    deleted = venue_repository.delete_fixture_named_position(
+        active.summary.id,
+        "named-position-rogue",
+        mirrorball.id,
+    )
+    assert not any(
+        p.fixture_id == "named-position-rogue"
+        for p in deleted.fixture_named_positions
+    )
+
+
+def test_named_position_crud_updates_snapshot(venue_repository):
+    created = venue_repository.create_named_position("DJ Booth")
+    assert created.name == "DJ Booth"
+
+    renamed = venue_repository.update_named_position(created.id, {"name": "DJ"})
+    assert renamed.name == "DJ"
+    snapshot = venue_repository.get_active_venue_snapshot()
+    assert any(position.name == "DJ" for position in snapshot.named_positions)
+
+    venue_repository.delete_named_position(created.id)
+    after = venue_repository.get_active_venue_snapshot()
+    assert not any(position.id == created.id for position in after.named_positions)
