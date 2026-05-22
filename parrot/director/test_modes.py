@@ -130,7 +130,7 @@ class TestModes(unittest.TestCase):
         focus_picks: set[float] = set()
         prism_picks: set[bool] = set()
 
-        for seed in range(40):
+        for seed in range(400):
             _random.seed(seed)
             movers = [
                 ChauvetRogueHybridRH1_20Ch(1 + i * 20) for i in range(6)

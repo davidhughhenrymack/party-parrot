@@ -145,6 +145,7 @@ export default function RemoteControlPage() {
   }, []);
 
   const mfd = controlState.manual_fixture_dimmers || {};
+  const visibleEffects = config.effects.filter((effect) => !REMOTE_HIDDEN_EFFECTS.has(effect));
 
   return (
     <div className="remote-shell">
@@ -156,8 +157,16 @@ export default function RemoteControlPage() {
         </div>
       </header>
 
+      <CompactSelector
+        label="Lighting mode"
+        options={config.available_modes}
+        value={controlState.mode}
+        format={labelize}
+        onSelect={(mode) => patchControlState({ mode })}
+        variant="primary-mode"
+      />
+
       <section className="remote-hero-panel">
-        <h2 className="remote-hero-title">Manual lights</h2>
         {manualDimmerSupported ? (
           manualFixtures.map((fixture) => (
             <div key={fixture.id} className="remote-fader-row">
@@ -215,9 +224,9 @@ export default function RemoteControlPage() {
 
       <section className="remote-hero-panel">
         <h2 className="remote-hero-title">Effects</h2>
-        {config.effects.length > 0 ? (
+        {visibleEffects.length > 0 ? (
           <div className="remote-effects-grid">
-            {config.effects.map((effect) => (
+            {visibleEffects.map((effect) => (
               <RemoteEffectButton key={effect} effect={effect} label={labelize(effect)} />
             ))}
           </div>
@@ -227,9 +236,9 @@ export default function RemoteControlPage() {
       </section>
 
       {config.shift_targets.length > 0 && (
-        <section className="remote-hero-panel">
+        <section className="remote-hero-panel remote-shift-panel">
           <h2 className="remote-hero-title">Shift</h2>
-          <div className="remote-effects-grid">
+          <div className="remote-effects-grid remote-shift-grid">
             {config.shift_targets.map((target) => (
               <button
                 key={target}
@@ -263,13 +272,6 @@ export default function RemoteControlPage() {
       )}
 
       <CompactSelector
-        label="Lighting"
-        options={config.available_modes}
-        value={controlState.mode}
-        format={labelize}
-        onSelect={(mode) => patchControlState({ mode })}
-      />
-      <CompactSelector
         label="VJ"
         options={config.available_vj_modes}
         value={controlState.vj_mode}
@@ -284,13 +286,6 @@ export default function RemoteControlPage() {
         onSelect={(theme_name) => patchControlState({ theme_name })}
       />
       <CompactSelector
-        label="Display"
-        options={config.available_display_modes}
-        value={controlState.display_mode}
-        format={formatDisplayModeLabel}
-        onSelect={(display_mode) => patchControlState({ display_mode })}
-      />
-      <CompactSelector
         label="Venue"
         options={venues.map((v) => v.id)}
         value={controlState.active_venue_id}
@@ -303,6 +298,7 @@ export default function RemoteControlPage() {
 
 /** Short tap = one-shot effect (~0.35s server-side); hold = signal stays at 1 until release. */
 const REMOTE_EFFECT_TAP_MS = 280;
+const REMOTE_HIDDEN_EFFECTS = new Set(['rainbow', 'chase']);
 
 function RemoteEffectButton({ effect, label }) {
   const downAtRef = useRef(0);
@@ -344,18 +340,19 @@ function RemoteEffectButton({ effect, label }) {
   );
 }
 
-function CompactSelector({ label, options, value, format, onSelect }) {
+function CompactSelector({ label, options, value, format, onSelect, variant = 'compact' }) {
   if (!options || options.length === 0) {
     return null;
   }
+  const primary = variant === 'primary-mode';
   return (
-    <section className="remote-compact-row">
+    <section className={`remote-compact-row${primary ? ' remote-primary-mode-row' : ''}`}>
       <div className="remote-compact-label">{label}</div>
-      <div className="remote-chip-row">
+      <div className={`remote-chip-row${primary ? ' remote-primary-mode-grid' : ''}`}>
         {options.map((option) => (
           <button
             key={option}
-            className={`chip ${value === option ? 'chip-active' : ''}`}
+            className={`${primary ? 'remote-mode-button' : 'chip'} ${value === option ? (primary ? 'remote-mode-button-active' : 'chip-active') : ''}`}
             onClick={() => onSelect(option)}
           >
             {format(option)}
@@ -438,13 +435,6 @@ function rgbTripleToCss(rgb) {
 
 function formatShiftLabel(target) {
   return SHIFT_LABELS[target] || `Shift ${labelize(target)}`;
-}
-
-function formatDisplayModeLabel(displayMode) {
-  if (displayMode === 'dmx_heatmap') {
-    return 'Heatmap';
-  }
-  return labelize(displayMode);
 }
 
 async function postJson(url, body) {

@@ -30,6 +30,18 @@ WARMUP_SECONDS = max(int(os.environ.get("WARMUP_TIME", "1")), 1)
 INTERPRETATION_BLEND_SECONDS = max(
     float(os.environ.get("INTERPRETATION_BLEND_SECONDS", "2.0")), 0.05
 )
+MODE_INTERPRETATION_BLEND_SECONDS = {
+    "ethereal": 3.0,
+    "chill": 3.0,
+    "rave": 0.5,
+    "stroby": 0.1,
+}
+
+
+def _interpretation_blend_seconds_for_mode(mode) -> float:
+    """Blend duration for entering a lighting mode."""
+    return MODE_INTERPRETATION_BLEND_SECONDS.get(mode.name, INTERPRETATION_BLEND_SECONDS)
+
 
 def _flatten_runtime_fixtures(top_level) -> list[FixtureBase]:
     """Walk runtime patch entries into a flat list of individual fixtures.
@@ -171,6 +183,7 @@ class Director:
             )
         self._interpretation_blend = InterpretationBlend(
             start_time=time.time(),
+            duration_seconds=_interpretation_blend_seconds_for_mode(self.state.mode),
             bucket_indices=frozenset(bucket_indices),
             incoming_interpreters=incoming_interpreters,
             incoming_fixtures=incoming_fixtures,
@@ -409,7 +422,7 @@ class Director:
 
         if self._interpretation_blend is not None:
             b = self._interpretation_blend
-            t_done = (time.time() - b.start_time) / INTERPRETATION_BLEND_SECONDS
+            t_done = (time.time() - b.start_time) / b.duration_seconds
             if t_done >= 1.0:
                 self._finish_interpretation_blend(frame, scheme)
                 scheme = self.scheme.render()
@@ -434,7 +447,7 @@ class Director:
                 b.incoming_interpreters[i].step(frame, scheme)
             t = min(
                 1.0,
-                (time.time() - b.start_time) / INTERPRETATION_BLEND_SECONDS,
+                (time.time() - b.start_time) / b.duration_seconds,
             )
             for i in b.bucket_indices:
                 for k in range(len(self.fixture_groups[i])):

@@ -152,9 +152,8 @@ def test_ethereal_dsl_applies_phased_sine_focus_to_hybrid_beams() -> None:
         )
 
 
-def test_ethereal_dsl_uses_slow_breath_within_configured_range() -> None:
-    """SlowBreath replaces GentlePulse on sheer lights: dimmer stays inside [0.25, 0.85]*255
-    regardless of frame.time, with no audio signal required."""
+def test_ethereal_dsl_uses_low_freq_decay_with_70_percent_floor() -> None:
+    """Sheer moving heads sit at 70%, jump brighter on kick energy, then decay."""
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
         ChauvetRogueHybridRH1_20Ch,
     )
@@ -165,34 +164,48 @@ def test_ethereal_dsl_uses_slow_breath_within_configured_range() -> None:
     interp = get_interpreter(Mode.ethereal, [mh], args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
     frame = _frame()
-    seen: list[float] = []
-    for t in (0.0, 2.5, 5.0, 7.5, 10.0, 14.0):
-        frame.time = t
+
+    # No low-frequency signal: hold the 70% floor.
+    frame.values[FrameSignal.freq_low] = 0.0
+    interp.step(frame, scheme)
+    floor = mh.get_dimmer()
+    assert floor == pytest.approx(0.7 * 255, abs=1.0)
+
+    # Kick hit: lift immediately to the 100% ceiling.
+    frame.values[FrameSignal.freq_low] = 1.0
+    interp.step(frame, scheme)
+    peak = mh.get_dimmer()
+    assert peak == pytest.approx(255, abs=1.0)
+
+    # Signal drops: decay toward the 70% floor instead of snapping down.
+    frame.values[FrameSignal.freq_low] = 0.0
+    interp.step(frame, scheme)
+    after_one_decay = mh.get_dimmer()
+    assert floor < after_one_decay < peak
+    assert after_one_decay == pytest.approx(0.9 * 255, abs=1.0)
+
+    for _ in range(12):
         interp.step(frame, scheme)
-        seen.append(mh.get_dimmer())
-    for dim in seen:
-        assert 0.25 * 255 - 1.0 <= dim <= 0.85 * 255 + 1.0
-    # Dimmer must actually move (not stuck) across a full breathing period.
-    assert max(seen) - min(seen) > 5.0
+    assert 0.7 * 255 - 1.0 <= mh.get_dimmer() < after_one_decay
 
 
-def test_ethereal_sheer_slow_breath_moves_dimmer() -> None:
-    """Ethereal sheer group still picks SlowBreath breathing (not collapsed to Dimmer0)."""
+def test_ethereal_sheer_low_freq_decay_applies_to_whole_group() -> None:
+    """The low-frequency decay dimmer drives all sheer movers together."""
     from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
         ChauvetRogueHybridRH1_20Ch,
     )
 
     args = InterpreterArgs(True)
-    mh = ChauvetRogueHybridRH1_20Ch(1)
-    mh.cloud_group_name = "sheer lights"
-    interp = get_interpreter(Mode.ethereal, [mh], args)
+    movers = [ChauvetRogueHybridRH1_20Ch(1 + i * 20) for i in range(3)]
+    for mh in movers:
+        mh.cloud_group_name = "sheer lights"
+    interp = get_interpreter(Mode.ethereal, movers, args)
     scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
     frame = _frame()
-    dims: list[float] = []
-    for t in (0.0, 3.5, 7.0, 10.5, 14.0):
-        frame.time = t
-        interp.step(frame, scheme)
-        dims.append(mh.get_dimmer())
-    assert max(dims) - min(dims) > 5.0
-    for dim in dims:
-        assert 0.25 * 255 - 1.0 <= dim <= 0.85 * 255 + 1.0
+    frame.values[FrameSignal.freq_low] = 0.5
+
+    interp.step(frame, scheme)
+
+    expected = (0.7 + 0.3 * 0.5) * 255
+    dims = [mh.get_dimmer() for mh in movers]
+    assert dims == pytest.approx([expected, expected, expected], abs=1.0)

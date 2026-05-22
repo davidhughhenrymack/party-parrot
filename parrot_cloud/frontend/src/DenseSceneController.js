@@ -1105,6 +1105,13 @@ function createThreeSceneController({
             entity.topArrow.visible = false;
           } else {
             _annotForwardWorld.normalize();
+            // Top-view front marker uses the venue-editor convention: rotate
+            // the fixture's local +Y forward vector 90° counter-clockwise on
+            // the floor plane (x, y) without affecting the actual fixture
+            // transform or beam direction.
+            const x = _annotForwardWorld.x;
+            _annotForwardWorld.x = -_annotForwardWorld.y;
+            _annotForwardWorld.y = x;
             entity.topArrow.position.set(
               _annotWorldPos.x,
               _annotWorldPos.y,

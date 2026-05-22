@@ -39,7 +39,6 @@ from parrot.interpreters.dimmer import (
     LightningStab,
     SequenceDimmers,
     SequenceFadeDimmers,
-    SlowBreath,
     StabPulse,
     Twinkle,
 )
@@ -81,11 +80,18 @@ from parrot.interpreters.slow import (
     SlowSustained,
     VerySlowDecay,
 )
-from parrot.interpreters.spatial import (
-    HardSpatialCenterOutPulse,
-    HardSpatialPulse,
+from parrot.interpreters.strobe import (
+    StrobeChannelSustained,
+    StrobeHighSustained,
+    StrobeOff,
+    StrobeOn,
 )
-from parrot.interpreters.strobe import StrobeChannelSustained, StrobeHighSustained
+
+
+def _sheer_ethereal_low_freq_dimmer(signal_value: float) -> float:
+    """Map low-frequency/kick energy onto the sheer-light 70–100% dimmer band."""
+    x = max(0.0, min(1.0, float(signal_value)))
+    return 0.7 + 0.3 * x
 
 
 mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
@@ -371,8 +377,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
             ),
         ],
     },
-    # Stroby: rave-like energy with only short / pulsy dimmer interpreters, plus
-    # ``randomize(StrobeChannelSustained, Noop)`` so some partitions get strobed DMX.
+    # Stroby: rave-like energy with only short / pulsy dimmer interpreters
     Mode.stroby: {
         (Group("sheer lights"), MovingHead): [
             combo(
@@ -384,8 +389,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                             AnyColor,
                             signal_switch(
                                 randomize(
-                                    HardSpatialPulse,
-                                    HardSpatialCenterOutPulse,
                                     DimmersBeatChase,
                                     StabPulse,
                                     with_args(
@@ -414,6 +417,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                             ),
                             randomize(FocusBig, FocusSmall),
                             randomize(RotatePrism, PrismOff),
+                            randomize(StrobeOn, StrobeOff),
                         ),
                     ),
                     (70, Dimmer0),
@@ -455,8 +459,6 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 AnyColor,
                 signal_switch(
                     randomize(
-                        HardSpatialPulse,
-                        HardSpatialCenterOutPulse,
                         DimmersBeatChase,
                         StabPulse,
                         with_args(
@@ -470,6 +472,7 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 randomize(
                     MoveCircles, MoveNod, MoveFigureEight, MoveFan, MoveSmoothWalk
                 ),
+                randomize(StrobeOn, StrobeOff),
                 weighted_randomize(
                     (10, MoverRandomGobo),
                     (90, MoverNoGobo),
@@ -583,11 +586,11 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         (Group("sheer lights"), MovingHead): [
             combo(
                 with_args(
-                    "EtherealSlowBreath",
-                    SlowBreath,
-                    period_seconds=14.0,
-                    low=0.25,
-                    high=0.85,
+                    "EtherealLowKickDecay",
+                    SlowDecay,
+                    signal=FrameSignal.freq_low,
+                    decay_rate=0.1,
+                    signal_fn=_sheer_ethereal_low_freq_dimmer,
                 ),
                 ColorAlternateBg,
                 # Circles multiplier is 5x slower than the previous 0.16 for a drifty feel.

@@ -43,6 +43,18 @@ def test_rh1_25ch_width_and_dimmer_channel():
     assert "dimmer_fine" in m.dmx_layout
 
 
+def test_rh1_caps_interpreter_strobe_to_slower_shutter_band():
+    """Full-scale strobe should stay in a slower RH1-specific band, not at 131."""
+    m20 = ChauvetRogueHybridRH1_20Ch(1)
+    m25 = ChauvetRogueHybridRH1_25Ch(1)
+
+    for m in (m20, m25):
+        m.set_strobe(255)
+        assert m.strobe_shutter_lower == 16
+        assert m.strobe_shutter_upper == 64
+        assert m.values[m.dmx_layout["shutter"]] == 64
+
+
 def test_rh1_prism_off_writes_zero_to_both_prism_channels():
     """Per Rev. 4, prism insert and prism rotation live on separate channels."""
     m = ChauvetRogueHybridRH1_20Ch(1)

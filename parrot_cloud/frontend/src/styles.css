@@ -428,8 +428,21 @@ label {
 }
 
 .remote-shift-button {
+  min-height: 42px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
   background: linear-gradient(180deg, #7c3aed, #5b21b6);
   border-color: #5b21b6;
+}
+
+.remote-shift-panel {
+  padding: 12px;
+}
+
+.remote-shift-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .remote-shift-colors {
@@ -442,27 +455,27 @@ label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .remote-shift-swatches {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
 }
 
 .remote-shift-swatch {
   display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .remote-shift-label {
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -477,6 +490,14 @@ label {
   border-radius: 10px;
 }
 
+.remote-primary-mode-row {
+  display: block;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(31, 111, 235, 0.18), rgba(13, 17, 23, 0.78));
+  border-color: rgba(88, 166, 255, 0.36);
+  border-radius: 16px;
+}
+
 .remote-compact-label {
   flex: 0 0 64px;
   font-size: 12px;
@@ -485,12 +506,48 @@ label {
   color: #8b949e;
 }
 
+.remote-primary-mode-row .remote-compact-label {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #c9d7ee;
+}
+
 .remote-chip-row {
   flex: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
+}
+
+.remote-primary-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.remote-mode-button {
+  width: 100%;
+  min-height: 76px;
+  margin-top: 0;
+  padding: 14px 12px;
+  border-radius: 14px;
+  border: 1px solid #30363d;
+  background: #161b22;
+  color: #f0f6fc;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.remote-mode-button:active {
+  transform: scale(0.98);
+}
+
+.remote-mode-button-active {
+  background: linear-gradient(180deg, #2f81f7, #1d4ed8);
+  border-color: #79c0ff;
+  box-shadow: 0 0 0 1px rgba(121, 192, 255, 0.25), 0 10px 24px rgba(31, 111, 235, 0.28);
 }
 
 .chip {
@@ -521,6 +578,19 @@ label {
   }
 
   .remote-effects-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .remote-primary-mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .remote-mode-button {
+    min-height: 68px;
+    font-size: 18px;
+  }
+
+  .remote-shift-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

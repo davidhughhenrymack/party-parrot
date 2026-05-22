@@ -82,6 +82,11 @@ COLOR_WHEEL = color_wheel_entries_for_fixture_type("chauvet_rogue_hybrid_rh1")
 # middle of the band so the rainbow effect runs at a steady pace.
 COLOR_WHEEL_ROTATE_MODERATE_DMX = 203
 
+# CH 7 / CH 8 Shutter: manual strobe band is 016–131 (slow → fast). The top of
+# that range is too frantic for the RH1 in this rig, so cap interpreter strobe
+# requests to the slower lower-middle of the band.
+SLOW_STROBE_SHUTTER_UPPER_DMX = 64
+
 # Gobo Wheel 1 (static, CH 9 in 20CH). Manual midpoints: 13 gobos + open;
 # the wide 043–059 "Open" band is included so interpreters can ask for "open"
 # explicitly without colliding with the gobo-shake bands above 060.
@@ -229,10 +234,10 @@ class ChauvetRogueHybridRH1_20Ch(_RogueHybridRH1Base):
             # Shutter "Open" band per Rev. 4 manual is 008–015; pick the middle.
             shutter_open=12,
             speed_value=0,
-            # Strobe band per manual is 016–131 (slow → fast); render `set_strobe`
-            # linearly across it.
+            # Strobe band per manual is 016–131 (slow → fast), but cap our
+            # interpreter-driven strobe lower so held remote strobe is usable.
             strobe_shutter_lower=16,
-            strobe_shutter_upper=131,
+            strobe_shutter_upper=SLOW_STROBE_SHUTTER_UPPER_DMX,
             disable_fine=False,
             universe=universe,
         )
@@ -286,7 +291,7 @@ class ChauvetRogueHybridRH1_25Ch(ChauvetRogueHybridRH1_20Ch):
             shutter_open=12,
             speed_value=0,
             strobe_shutter_lower=16,
-            strobe_shutter_upper=131,
+            strobe_shutter_upper=SLOW_STROBE_SHUTTER_UPPER_DMX,
             disable_fine=False,
             universe=universe,
         )

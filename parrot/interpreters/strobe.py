@@ -7,6 +7,20 @@ from parrot.interpreters.base import InterpreterBase
 
 
 @beartype
+class StrobeOn(InterpreterBase[FixtureBase]):
+    def step(self, frame, scheme):
+        for i in self.group:
+            i.set_strobe(220)
+
+
+@beartype
+class StrobeOff(InterpreterBase[FixtureBase]):
+    def step(self, frame, scheme):
+        for i in self.group:
+            i.set_strobe(0)
+
+
+@beartype
 class StrobeHighSustained(InterpreterBase[MovingHead]):
     def step(self, frame, scheme):
         for i in self.group:

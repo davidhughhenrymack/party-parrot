@@ -11,6 +11,7 @@ class InterpretationBlend:
     """Tracks parallel outgoing (primary) + incoming fixture copies + lerp output."""
 
     start_time: float
+    duration_seconds: float
     bucket_indices: frozenset[int]
     incoming_interpreters: dict[int, InterpreterBase]
     incoming_fixtures: dict[int, list[FixtureBase]]

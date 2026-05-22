@@ -7,6 +7,7 @@ import unittest
 
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
+from parrot.director.mode import Mode
 from parrot.director import director as director_mod
 from parrot.fixtures.led_par import ParRGB
 from parrot.state import State
@@ -69,6 +70,28 @@ class TestInterpretationBlend(unittest.TestCase):
         out = ParRGB(3)
         out.lerp_into(a, b, 0.5)
         self.assertAlmostEqual(out.get_dimmer(), 50.0, places=3)
+
+    def test_blend_duration_is_selected_by_target_mode(self):
+        cases = [
+            (Mode.ethereal, 3.0),
+            (Mode.chill, 3.0),
+            (Mode.rave, 0.5),
+            (Mode.stroby, 0.1),
+            (Mode.blackout, director_mod.INTERPRETATION_BLEND_SECONDS),
+        ]
+
+        for mode, expected in cases:
+            with self.subTest(mode=mode):
+                self.director._interpretation_blend = None
+                self.state._mode = mode
+                self.director._start_interpretation_blend(
+                    [0],
+                    {0: self.director._default_interpreter_args_for_bucket_index(0)},
+                )
+                self.assertEqual(
+                    self.director._interpretation_blend.duration_seconds,
+                    expected,
+                )
 
 
 if __name__ == "__main__":
