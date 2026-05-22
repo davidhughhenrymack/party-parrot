@@ -279,6 +279,35 @@ def test_animation_registry_and_assignment_endpoints(client):
     assert updated["animation_spec"]["type"] == "weighted_randomize"
 
 
+def test_lighting_mode_entry_seconds_endpoint(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+
+    created = client.post(
+        f"/api/venues/{venue_id}/lighting-modes",
+        json={"label": "Slow Fade", "entry_seconds": 1.75},
+    )
+    assert created.status_code == 200
+    mode = next(
+        mode
+        for mode in created.get_json()["lighting_modes"]
+        if mode["key"] == "slow_fade"
+    )
+    assert mode["entry_seconds"] == 1.75
+
+    patched = client.patch(
+        f"/api/venues/{venue_id}/lighting-modes/{mode['id']}",
+        json={"entry_seconds": 0.25},
+    )
+    assert patched.status_code == 200
+    changed = next(
+        item
+        for item in patched.get_json()["lighting_modes"]
+        if item["id"] == mode["id"]
+    )
+    assert changed["entry_seconds"] == 0.25
+
+
 def test_dmx_address_width_for_fixture_helper():
     from parrot_cloud.fixture_catalog import dmx_address_width_for_fixture
 

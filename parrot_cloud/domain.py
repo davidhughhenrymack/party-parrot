@@ -251,6 +251,7 @@ class LightingModeSpec:
     label: str
     order_index: int
     editable: bool = True
+    entry_seconds: float = 2.0
 
     def to_dict(self) -> JsonDict:
         return {
@@ -260,6 +261,7 @@ class LightingModeSpec:
             "label": self.label,
             "order_index": self.order_index,
             "editable": self.editable,
+            "entry_seconds": self.entry_seconds,
         }
 
     @classmethod
@@ -271,6 +273,7 @@ class LightingModeSpec:
             label=str(data["label"]),
             order_index=int(data.get("order_index", 0)),
             editable=bool(data.get("editable", True)),
+            entry_seconds=float(data.get("entry_seconds", 2.0)),
         )
 
 

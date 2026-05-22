@@ -30,6 +30,14 @@ def test_seed_creates_demo_venue(venue_repository):
         "stroby",
     ]
     assert {
+        mode.key: mode.entry_seconds
+        for mode in bootstrap.active_venue.lighting_modes
+    } == {
+        "chill": 3.0,
+        "rave": 0.5,
+        "stroby": 0.1,
+    }
+    assert {
         (assignment.lighting_mode_key, assignment.fixture_type)
         for assignment in bootstrap.active_venue.animation_assignments
     } >= {
@@ -80,6 +88,26 @@ def test_animation_assignment_crud(venue_repository):
         assignment.id,
     )
     assert all(a.id != assignment.id for a in deleted.animation_assignments)
+
+
+def test_lighting_mode_entry_seconds_crud(venue_repository):
+    active_snapshot = venue_repository.get_active_venue_snapshot()
+    created = venue_repository.create_lighting_mode(
+        active_snapshot.summary.id,
+        {"label": "Afterparty", "entry_seconds": 1.25},
+    )
+    mode = next(mode for mode in created.lighting_modes if mode.key == "afterparty")
+
+    assert mode.entry_seconds == 1.25
+
+    updated = venue_repository.update_lighting_mode(
+        active_snapshot.summary.id,
+        mode.id,
+        {"entry_seconds": 0.75},
+    )
+    changed = next(item for item in updated.lighting_modes if item.id == mode.id)
+
+    assert changed.entry_seconds == 0.75
 
 
 def test_queer_prom_has_no_legacy_animation_assignments(venue_repository):

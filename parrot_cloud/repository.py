@@ -64,6 +64,12 @@ DEFAULT_EDITABLE_LIGHTING_MODES: tuple[tuple[str, str], ...] = (
     ("rave", "Rave"),
     ("stroby", "Stroby"),
 )
+DEFAULT_LIGHTING_MODE_ENTRY_SECONDS: dict[str, float] = {
+    "ethereal": 3.0,
+    "chill": 3.0,
+    "rave": 0.5,
+    "stroby": 0.1,
+}
 DEFAULT_LIGHTING_MODE_ANIMATION_ROWS = {
     "chill": (
         ("par", DEFAULT_PAR_ANIMATION),
@@ -114,6 +120,14 @@ def _normalize_lighting_mode_key(value: object) -> str:
 
 def _lighting_mode_label_from_key(key: str) -> str:
     return key.replace("_", " ").title()
+
+
+def _lighting_mode_entry_seconds_from_key(key: str) -> float:
+    return DEFAULT_LIGHTING_MODE_ENTRY_SECONDS.get(key, 2.0)
+
+
+def _normalize_entry_seconds(value: object) -> float:
+    return max(0.05, float(value))
 
 
 def _clamp_dmx_float(value: object) -> float:
@@ -511,6 +525,9 @@ class VenueRepository:
                 label=label or _lighting_mode_label_from_key(key),
                 order_index=order_index,
                 editable=True,
+                entry_seconds=_normalize_entry_seconds(
+                    data.get("entry_seconds", _lighting_mode_entry_seconds_from_key(key))
+                ),
             )
             session.add(mode)
             self._touch_venue(venue)
@@ -540,6 +557,8 @@ class VenueRepository:
                 mode.label = label
             if "order_index" in data and data["order_index"] is not None:
                 mode.order_index = int(data["order_index"])
+            if "entry_seconds" in data and data["entry_seconds"] is not None:
+                mode.entry_seconds = _normalize_entry_seconds(data["entry_seconds"])
             self._touch_venue(venue)
             session.flush()
             session.refresh(venue)
@@ -1164,6 +1183,7 @@ class VenueRepository:
                 label=label,
                 order_index=order_index,
                 editable=True,
+                entry_seconds=_lighting_mode_entry_seconds_from_key(key),
             )
             session.add(row)
             created[key] = row
@@ -1285,6 +1305,7 @@ class VenueRepository:
             label=mode.label,
             order_index=mode.order_index,
             editable=mode.editable,
+            entry_seconds=mode.entry_seconds,
         )
 
     def _animation_assignment_from_model(

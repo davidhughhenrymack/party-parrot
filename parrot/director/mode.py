@@ -7,6 +7,13 @@ Mode = Enum(
 )
 
 
+def mode_key(mode: object) -> str:
+    """Return the string key for enum-backed and database-backed lighting modes."""
+    if isinstance(mode, Mode):
+        return mode.name
+    return str(mode)
+
+
 # Canonical ordering of lighting modes by hype/intensity, lowest to highest.
 # This is the single source of truth for UI listings (remote + desktop) and
 # for up/down keyboard navigation. Keep it in sync with ``Mode`` — every mode

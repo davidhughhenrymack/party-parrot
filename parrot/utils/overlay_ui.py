@@ -3,7 +3,7 @@
 import imgui
 from imgui.integrations.pyglet import create_renderer
 from beartype import beartype
-from parrot.director.mode import MODES_BY_HYPE, Mode
+from parrot.director.mode import MODES_BY_HYPE, Mode, mode_key
 from parrot.vj.vj_mode import VJMode, vj_mode_menu_label
 from parrot.state import State
 from parrot.director.themes import themes
@@ -190,7 +190,7 @@ class OverlayUI:
         """Top-left, always-visible current lighting mode name at ~20pt."""
         # ImGui's default font is 13px; scale so the rendered text reads ~20pt.
         font_scale = 20.0 / 13.0
-        mode_text = self.state.mode.name.upper()
+        mode_text = mode_key(self.state.mode).upper()
         # Size the backing window to fit the text at our chosen scale, then
         # anchor it to the top-left corner with a small margin.
         text_w, text_h = imgui.calc_text_size(mode_text)

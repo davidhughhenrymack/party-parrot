@@ -7,12 +7,18 @@ import unittest
 
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
-from parrot.director.mode import Mode
+from parrot.director.mode import Mode, mode_key
 from parrot.director import director as director_mod
 from parrot.interpreters.base import InterpreterBase
 from parrot.fixtures.led_par import ParRGB
 from parrot.state import State
 from parrot.utils.colour import Color
+from parrot_cloud.domain import (
+    LightingModeSpec,
+    VenueSnapshot,
+    VenueSummary,
+    VideoWallSpec,
+)
 
 
 class TestInterpretationBlend(unittest.TestCase):
@@ -94,6 +100,49 @@ class TestInterpretationBlend(unittest.TestCase):
                     expected,
                 )
 
+    def test_blend_duration_uses_runtime_venue_lighting_mode_entry_seconds(self):
+        self.state._runtime_venue_snapshot = VenueSnapshot(
+            summary=VenueSummary(
+                id="venue",
+                slug="venue",
+                name="Venue",
+                archived=False,
+                active=True,
+                revision=1,
+            ),
+            floor_width=20.0,
+            floor_depth=15.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=0.0,
+                y=0.0,
+                z=0.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(),
+            lighting_modes=(
+                LightingModeSpec(
+                    id="mode",
+                    venue_id="venue",
+                    key="rave",
+                    label="Rave",
+                    order_index=0,
+                    entry_seconds=1.25,
+                ),
+            ),
+        )
+        self.state._mode = Mode.rave
+
+        self.director._start_interpretation_blend(
+            [0],
+            {0: self.director._default_interpreter_args_for_bucket_index(0)},
+        )
+
+        self.assertEqual(self.director._interpretation_blend.duration_seconds, 1.25)
+
     def test_lighting_tree_prints_blend_destination(self):
         self.director.interpreters[0] = _NamedInterpreter(
             self.director.fixture_groups[0],
@@ -112,7 +161,7 @@ class TestInterpretationBlend(unittest.TestCase):
             "DESTINATION",
         )
 
-        tree = self.director.print_lighting_tree(self.state.mode.name)
+        tree = self.director.print_lighting_tree(mode_key(self.state.mode))
 
         self.assertIn("DESTINATION", tree)
         self.assertNotIn("CURRENT", tree)

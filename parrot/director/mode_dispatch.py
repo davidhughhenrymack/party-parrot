@@ -14,7 +14,7 @@ from beartype import beartype
 
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame
-from parrot.director.mode import Mode
+from parrot.director.mode import Mode, mode_key
 from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.chauvet.colorband_pix import ChauvetColorBandPiX_36Ch
 from parrot.fixtures.chauvet.derby import ChauvetDerby
@@ -229,15 +229,16 @@ def _assignment_sort_key(
 
 
 def _assignments_for_mode(
-    phrase: Mode,
+    phrase: Mode | str,
     venue_snapshot: VenueSnapshot | None,
 ) -> list[VenueAnimationAssignmentSpec]:
     if venue_snapshot is None:
         return []
+    key = mode_key(phrase)
     return [
         assignment
         for assignment in venue_snapshot.animation_assignments
-        if assignment.lighting_mode_key == phrase.name
+        if assignment.lighting_mode_key == key
     ]
 
 
@@ -360,7 +361,7 @@ def _build_category_combo(
 
 
 def get_interpreter(
-    phrase: Mode,
+    phrase: Mode | str,
     fixture_group: List[FixtureBase],
     args: InterpreterArgs,
     venue_snapshot: VenueSnapshot | None = None,
@@ -380,12 +381,18 @@ def get_interpreter(
     unrelated groups (TRACK vs TRUSS MOVERS) end up with independent random
     picks rather than being lumped under one ``MovingHead`` row.
     """
-    fixed_modes = {Mode.blackout, Mode.test, Mode.home}
+    key = mode_key(phrase)
+    fixed_mode_keys = {"blackout", "test", "home"}
     if venue_snapshot is None:
+        if not isinstance(phrase, Mode):
+            return Dimmer0(fixture_group, args)
         return _legacy_get_interpreter(phrase, fixture_group, args)
     assignments = _assignments_for_mode(phrase, venue_snapshot)
-    if phrase in fixed_modes or _uses_legacy_reference(assignments):
-        return _legacy_get_interpreter(phrase, fixture_group, args)
+    if key in fixed_mode_keys or _uses_legacy_reference(assignments):
+        legacy_mode = Mode[key] if key in Mode.__members__ else None
+        if legacy_mode is None:
+            return Dimmer0(fixture_group, args)
+        return _legacy_get_interpreter(legacy_mode, fixture_group, args)
 
     if not fixture_group:
         return Dimmer0(fixture_group, args)

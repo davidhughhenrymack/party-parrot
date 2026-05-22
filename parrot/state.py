@@ -4,7 +4,7 @@ from typing import Callable, Optional, cast
 from events import Events
 from beartype import beartype
 from parrot.director.frame import FrameSignal
-from parrot.director.mode import Mode
+from parrot.director.mode import Mode, mode_key
 from parrot.vj.vj_mode import VJMode, parse_vj_mode_string
 from parrot.director.themes import themes, get_theme_by_name
 from parrot.gl_display_mode import DISPLAY_MODE_CYCLE, EditorDisplayMode
@@ -22,7 +22,7 @@ class State:
         self.events = Events()
 
         # Default values
-        self._mode = Mode.chill  # Default mode
+        self._mode: Mode | str = Mode.chill  # Default mode
         self._vj_mode = VJMode.prom_dmack  # Default VJ mode
         self._theme = themes[0]
         self._venue = venues.dmack
@@ -56,15 +56,15 @@ class State:
     def mode(self):
         return self._mode
 
-    def set_mode(self, value: Mode):
+    def set_mode(self, value: Mode | str):
         if self._mode == value:
             return
 
         self._mode = value
         self.events.on_mode_change(self._mode)
-        self._push_remote_control_state({"mode": value.name})
+        self._push_remote_control_state({"mode": mode_key(value)})
 
-    def set_mode_thread_safe(self, value: Mode):
+    def set_mode_thread_safe(self, value: Mode | str):
         """Set the mode (web server runs on main thread; no extra threading needed)."""
         self.set_mode(value)
 
@@ -235,7 +235,7 @@ class State:
     def _apply_control_state(self, control_state: ControlState):
         self._suppress_remote_control_sync = True
         try:
-            next_mode = Mode[control_state.mode]
+            next_mode = Mode[control_state.mode] if control_state.mode in Mode.__members__ else control_state.mode
             if self._mode != next_mode:
                 self._mode = next_mode
                 self.events.on_mode_change(self._mode)

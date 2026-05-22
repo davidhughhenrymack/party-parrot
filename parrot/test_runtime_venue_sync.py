@@ -1,5 +1,6 @@
 from parrot.director.director import Director
 from parrot.gl_display_mode import EditorDisplayMode
+from parrot.director.mode import mode_key
 from parrot.state import State
 from parrot.vj.nodes.fixture_visualization import FixtureVisualization
 from parrot.vj.vj_director import VJDirector
@@ -73,7 +74,7 @@ def test_state_applies_runtime_bootstrap():
     state.apply_runtime_bootstrap(bootstrap)
 
     assert state.venue.name == "Demo Venue"
-    assert state.mode.name == "rave"
+    assert mode_key(state.mode) == "rave"
     assert state.runtime_patch is not None
     assert len(state.runtime_patch) == 1
     assert state.runtime_patch[0].address == 10

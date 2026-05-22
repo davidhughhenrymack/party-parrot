@@ -6,6 +6,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from colorama import Fore, Style
 from parrot.director.frame import Frame, FrameSignal
+from parrot.director.mode import mode_key
 
 from parrot.fixtures.base import FixtureBase, FixtureGroup, ManualGroup
 
@@ -39,10 +40,15 @@ MODE_INTERPRETATION_BLEND_SECONDS = {
 }
 
 
-def _interpretation_blend_seconds_for_mode(mode) -> float:
+def _interpretation_blend_seconds_for_mode(mode, venue_snapshot=None) -> float:
     """Blend duration for entering a lighting mode."""
+    key = mode_key(mode)
+    if venue_snapshot is not None:
+        for lighting_mode in venue_snapshot.lighting_modes:
+            if lighting_mode.key == key:
+                return max(float(lighting_mode.entry_seconds), 0.05)
     return MODE_INTERPRETATION_BLEND_SECONDS.get(
-        mode.name, INTERPRETATION_BLEND_SECONDS
+        key, INTERPRETATION_BLEND_SECONDS
     )
 
 
@@ -196,7 +202,10 @@ class Director:
             )
         self._interpretation_blend = InterpretationBlend(
             start_time=time.time(),
-            duration_seconds=_interpretation_blend_seconds_for_mode(self.state.mode),
+            duration_seconds=_interpretation_blend_seconds_for_mode(
+                self.state.mode,
+                self.state.runtime_venue_snapshot,
+            ),
             bucket_indices=frozenset(bucket_indices),
             incoming_interpreters=incoming_interpreters,
             incoming_fixtures=incoming_fixtures,
@@ -317,7 +326,7 @@ class Director:
         why two otherwise-identical fixture classes may receive different
         randomized picks.
         """
-        name_for_header = (mode_name or self.state.mode.name).capitalize()
+        name_for_header = (mode_name or mode_key(self.state.mode)).capitalize()
         result = f"{name_for_header} interpretation:\n"
 
         if not self.interpreters:
@@ -372,7 +381,7 @@ class Director:
         return sections
 
     def structured_lighting_tree(self, mode_name: str | None = None) -> dict[str, object]:
-        mode = mode_name or self.state.mode.name
+        mode = mode_name or mode_key(self.state.mode)
         root_children: list[dict[str, object]] = []
         for group_name, rows in self._lighting_tree_sections():
             group_children = []
@@ -419,8 +428,8 @@ class Director:
         n = len(self.fixture_groups)
         if n == 0:
             self.interpreters = []
-            print(self.print_lighting_tree(self.state.mode.name))
-            self._publish_lighting_tree(self.state.mode.name)
+            print(self.print_lighting_tree(mode_key(self.state.mode)))
+            self._publish_lighting_tree(mode_key(self.state.mode))
             return
         is_regen = (
             not self._force_fresh_interpreters
@@ -444,8 +453,8 @@ class Director:
                 for idx, group in enumerate(self.fixture_groups)
             ]
 
-        print(self.print_lighting_tree(self.state.mode.name))
-        self._publish_lighting_tree(self.state.mode.name)
+        print(self.print_lighting_tree(mode_key(self.state.mode)))
+        self._publish_lighting_tree(mode_key(self.state.mode))
 
     def generate_all(self):
         """Generate both lighting interpreters and VJ visuals"""
@@ -495,8 +504,8 @@ class Director:
         self.generate_interpreters()
         self.ensure_each_signal_is_enabled()
         self.shift_count += 1
-        print(self.print_lighting_tree(self.state.mode.name))
-        self._publish_lighting_tree(self.state.mode.name)
+        print(self.print_lighting_tree(mode_key(self.state.mode)))
+        self._publish_lighting_tree(mode_key(self.state.mode))
 
     def shift_vj_only(self):
         """Full shift of VJ visuals only (no lighting changes) - complete regeneration"""
@@ -576,8 +585,8 @@ class Director:
             if self.vj_director:
                 self.vj_director.shift(self.state.vj_mode, threshold=0.3)
             self.shift_count += 1
-            print(self.print_lighting_tree(self.state.mode.name))
-            self._publish_lighting_tree(self.state.mode.name)
+            print(self.print_lighting_tree(mode_key(self.state.mode)))
+            self._publish_lighting_tree(mode_key(self.state.mode))
 
     def render(self, dmx):
         # Get manual group and set its dimmer value
@@ -597,8 +606,9 @@ class Director:
 
     def on_mode_change(self, mode):
         """Handle mode changes, including those from the web interface."""
-        print(f"mode changed to: {mode.name}")
+        key = mode_key(mode)
+        print(f"mode changed to: {key}")
         # Regenerate lighting interpreters only (VJ is independent)
         self.generate_interpreters()
-        print(self.print_lighting_tree(mode.name))
-        self._publish_lighting_tree(mode.name)
+        print(self.print_lighting_tree(key))
+        self._publish_lighting_tree(key)

@@ -5,6 +5,7 @@ from parrot.state import State
 from parrot.director.mode import Mode
 from parrot.director.themes import themes
 from parrot_cloud.domain import (
+    ControlState,
     FixtureSpec,
     SceneObjectSpec,
     VenueSnapshot,
@@ -56,6 +57,25 @@ class TestState:
         state.set_mode_thread_safe(Mode.chill)
 
         assert state.mode == Mode.chill
+
+    def test_runtime_control_state_accepts_database_mode_keys(self):
+        state = State()
+        mock_handler = Mock()
+        state.events.on_mode_change += mock_handler
+
+        state._apply_control_state(
+            ControlState(
+                mode="stage_focus",
+                vj_mode="prom_dmack",
+                theme_name="Rave",
+                active_venue_id=None,
+                display_mode="dmx_heatmap",
+                show_waveform=True,
+            )
+        )
+
+        assert state.mode == "stage_focus"
+        mock_handler.assert_called_once_with("stage_focus")
 
     def test_set_theme(self):
         """Test setting theme triggers events."""

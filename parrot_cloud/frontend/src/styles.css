@@ -824,7 +824,7 @@ label {
 }
 
 .dense-editor-shell.dense-editor-shell-animation {
-  grid-template-columns: minmax(840px, 960px) minmax(0, 1fr);
+  grid-template-columns: minmax(640px, 720px) minmax(0, 1fr);
 }
 
 .dense-sidebar {
@@ -850,7 +850,7 @@ label {
 }
 
 .dense-sidebar-animation {
-  min-width: 840px;
+  min-width: 640px;
 }
 
 .editor-mode-toggle {
@@ -873,6 +873,22 @@ label {
   width: 100%;
 }
 
+.animation-mode-entry-seconds {
+  display: grid;
+  grid-template-columns: auto minmax(0, 92px) auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: #9ba8b4;
+  font-size: 12px;
+}
+
+.animation-mode-entry-seconds input {
+  width: 100%;
+  margin-top: 0;
+  padding: 6px 8px;
+}
+
 .animation-editor-workspace {
   display: flex;
   align-items: flex-start;
@@ -880,7 +896,7 @@ label {
 }
 
 .animation-destinations-panel {
-  flex: 1 1 auto;
+  flex: 0 1 56%;
   min-width: 0;
 }
 
@@ -936,14 +952,18 @@ label {
 .animation-palette-chip {
   width: auto;
   margin-top: 0;
-  border: 1px solid #30363d;
+  border: 1px solid var(--animation-category-border, #30363d);
   border-radius: 999px;
   padding: 4px 7px;
-  color: #dbeafe;
-  background: #172033;
+  color: var(--animation-category-fg, #dbeafe);
+  background: var(--animation-category-bg, #172033);
   cursor: grab;
   font-size: 11px;
   line-height: 1.15;
+}
+
+.animation-palette-chip:hover {
+  border-color: var(--animation-category-fg, #58a6ff);
 }
 
 .animation-destination {
@@ -989,33 +1009,19 @@ label {
 
 .animation-assignment-row {
   flex-wrap: wrap;
-  margin-top: 6px;
-  padding: 4px 0;
+  margin-top: 2px;
+  padding: 1px 0;
   border-radius: 0;
   background: transparent;
   font-size: 12px;
 }
 
 .animation-assignment-category-group {
-  margin-top: 10px;
-  padding: 8px;
-  border: 1px solid #212a35;
+  margin-top: 6px;
+  padding: 5px 7px;
+  border: 1px solid var(--animation-category-border, #212a35);
   border-radius: 10px;
-  background: rgba(9, 13, 19, 0.35);
-}
-
-.animation-assignment-category-heading {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 2px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: #172033;
-  color: #8ec5ff;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  background: var(--animation-category-bg, rgba(9, 13, 19, 0.35));
 }
 
 .animation-assignment-main {
@@ -1024,6 +1030,13 @@ label {
   gap: 6px;
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.animation-assignment-name {
+  min-width: 0;
+  max-width: 100%;
+  color: #dbeafe;
+  overflow-wrap: anywhere;
 }
 
 .animation-assignment-actions {
@@ -1059,6 +1072,7 @@ label {
   width: 54px;
   margin-top: 0;
   padding: 5px 6px;
+  background: rgba(13, 17, 23, 0.2);
 }
 
 .animation-assignment-expand,
@@ -1122,21 +1136,26 @@ label {
   display: grid;
   gap: 6px;
   margin: 4px 0 0 30px;
+  max-width: calc(100% - 30px);
+  min-width: 0;
 }
 
 .animation-parameter-row {
   flex: 1 0 100%;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   margin-top: 2px;
   font-size: 11px;
+  min-width: 0;
 }
 
 .animation-parameter-row input,
 .animation-parameter-row select {
+  min-width: 0;
   width: 100%;
+  max-width: 100%;
   margin-top: 0;
   padding: 6px 8px;
 }

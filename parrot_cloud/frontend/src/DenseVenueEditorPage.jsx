@@ -155,6 +155,20 @@ function summarizeAnimationSpec(spec) {
   return spec.type || 'Animation';
 }
 
+function animationDisplayNameForSpec(spec, registryEntryByKey) {
+  if (!spec || typeof spec !== 'object') {
+    return 'Animation';
+  }
+  if (spec.type === 'animation' || spec.type === 'with_args') {
+    const label = registryEntryByKey.get(spec.key)?.label || spec.name || spec.key || 'Animation';
+    if (spec.key === 'MoveNamedPosition' && spec.params?.position_name) {
+      return `${label}: ${spec.params.position_name}`;
+    }
+    return label;
+  }
+  return summarizeAnimationSpec(spec);
+}
+
 function animationCategoryForSpec(spec, registryEntryByKey) {
   if (!spec || typeof spec !== 'object') {
     return 'Animation';
@@ -177,6 +191,27 @@ function animationCategoryForSpec(spec, registryEntryByKey) {
     return 'Stack';
   }
   return 'Animation';
+}
+
+const ANIMATION_CATEGORY_COLORS = {
+  Color: { fg: '#f0abfc', bg: 'rgba(192, 38, 211, 0.16)', border: 'rgba(240, 171, 252, 0.36)' },
+  Dimmer: { fg: '#fde68a', bg: 'rgba(202, 138, 4, 0.18)', border: 'rgba(253, 230, 138, 0.34)' },
+  Movement: { fg: '#93c5fd', bg: 'rgba(37, 99, 235, 0.18)', border: 'rgba(147, 197, 253, 0.36)' },
+  Strobe: { fg: '#fca5a5', bg: 'rgba(220, 38, 38, 0.17)', border: 'rgba(252, 165, 165, 0.34)' },
+  Gobo: { fg: '#c4b5fd', bg: 'rgba(124, 58, 237, 0.17)', border: 'rgba(196, 181, 253, 0.36)' },
+  Focus: { fg: '#99f6e4', bg: 'rgba(13, 148, 136, 0.17)', border: 'rgba(153, 246, 228, 0.34)' },
+  Prism: { fg: '#86efac', bg: 'rgba(22, 163, 74, 0.17)', border: 'rgba(134, 239, 172, 0.34)' },
+  Stack: { fg: '#cbd5e1', bg: 'rgba(100, 116, 139, 0.17)', border: 'rgba(203, 213, 225, 0.3)' },
+  Animation: { fg: '#8ec5ff', bg: 'rgba(88, 166, 255, 0.16)', border: 'rgba(142, 197, 255, 0.34)' },
+};
+
+function animationCategoryStyle(category) {
+  const color = ANIMATION_CATEGORY_COLORS[category] || ANIMATION_CATEGORY_COLORS.Animation;
+  return {
+    '--animation-category-fg': color.fg,
+    '--animation-category-bg': color.bg,
+    '--animation-category-border': color.border,
+  };
 }
 
 function formatWeightPlaceholder(value) {
@@ -935,6 +970,7 @@ function AnimationEditorPanel({
   selectedModeKey,
   onSelectedModeKeyChange,
   onCreateLightingMode,
+  onPatchLightingMode,
   onAddAssignment,
   onPatchAssignment,
   onDeleteAssignment,
@@ -948,6 +984,11 @@ function AnimationEditorPanel({
   const [addModeModalOpen, setAddModeModalOpen] = useState(false);
   const [newModeLabel, setNewModeLabel] = useState('');
   const [expandedAssignmentIds, setExpandedAssignmentIds] = useState(() => new Set());
+  const selectedMode = modes.find((mode) => mode.key === selectedModeKey) || modes[0] || null;
+  const [entrySecondsDraft, setEntrySecondsDraft] = useState('');
+  useEffect(() => {
+    setEntrySecondsDraft(selectedMode ? String(selectedMode.entry_seconds ?? 2) : '');
+  }, [selectedMode?.id, selectedMode?.entry_seconds]);
   const registryByCategory = useMemo(() => {
     const groups = new Map();
     for (const entry of animationRegistry?.animations || []) {
@@ -1246,6 +1287,23 @@ function AnimationEditorPanel({
     setAddModeModalOpen(false);
   }
 
+  function commitEntrySecondsDraft() {
+    if (!selectedMode || entrySecondsDraft === '') {
+      return;
+    }
+    const numeric = Number(entrySecondsDraft);
+    if (!Number.isFinite(numeric)) {
+      setEntrySecondsDraft(String(selectedMode.entry_seconds ?? 2));
+      return;
+    }
+    const next = Math.max(0.05, numeric);
+    if (next === Number(selectedMode.entry_seconds ?? 2)) {
+      setEntrySecondsDraft(String(next));
+      return;
+    }
+    void onPatchLightingMode(selectedMode.id, { entry_seconds: next });
+  }
+
   function renderDestination(destination) {
     const rows = assignmentsForDestination(destination);
     const isEmpty = rows.length === 0;
@@ -1285,8 +1343,11 @@ function AnimationEditorPanel({
             const blankPlaceholder =
               blankCount > 0 ? formatWeightPlaceholder(Math.max(0, 100 - explicitTotal) / blankCount) : '';
             return (
-              <div key={category} className="animation-assignment-category-group">
-                <div className="animation-assignment-category-heading">{category}</div>
+              <div
+                key={category}
+                className="animation-assignment-category-group"
+                style={animationCategoryStyle(category)}
+              >
                 {assignmentsInCategory.map((assignment) => {
                   const registryEntry = registryEntryForAnimationSpec(assignment.animation_spec, registryEntryByKey);
                   const parameters = registryEntry?.parameters || [];
@@ -1296,7 +1357,9 @@ function AnimationEditorPanel({
                   return (
                     <div key={assignment.id} className="animation-assignment-row">
                       <span className="animation-assignment-main">
-                        <span>{summarizeAnimationSpec(assignment.animation_spec)}</span>
+                        <span className="animation-assignment-name">
+                          {animationDisplayNameForSpec(assignment.animation_spec, registryEntryByKey)}
+                        </span>
                         {hasExpandedControls ? (
                           <button
                             type="button"
@@ -1358,7 +1421,7 @@ function AnimationEditorPanel({
                         <div className="animation-weight-list">
                           {(assignment.animation_spec.options || []).map((option, index) => (
                             <label key={index} className="animation-weight-row">
-                              <span>{summarizeAnimationSpec(option.animation)}</span>
+                              <span>{animationDisplayNameForSpec(option.animation, registryEntryByKey)}</span>
                               <input
                                 type="number"
                                 min="1"
@@ -1408,6 +1471,24 @@ function AnimationEditorPanel({
             </option>
           ))}
         </select>
+        <label className="animation-mode-entry-seconds">
+          <span>Entry fade</span>
+          <input
+            type="number"
+            min="0.05"
+            step="0.05"
+            value={entrySecondsDraft}
+            disabled={!selectedMode}
+            onChange={(event) => setEntrySecondsDraft(event.target.value)}
+            onBlur={commitEntrySecondsDraft}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.currentTarget.blur();
+              }
+            }}
+          />
+          <span>sec</span>
+        </label>
       </div>
 
       <div className="animation-editor-workspace">
@@ -1454,6 +1535,7 @@ function AnimationEditorPanel({
                     key={entry.key}
                     type="button"
                     className="animation-palette-chip"
+                    style={animationCategoryStyle(entry.category)}
                     draggable
                     onDragStart={(event) => handleDragStart(event, entry)}
                     title="Drag onto a destination"
@@ -2978,6 +3060,14 @@ export default function DenseVenueEditorPage({ venueId }) {
     return snap;
   }
 
+  async function handlePatchLightingMode(lightingModeId, data) {
+    if (!venueSnapshot) {
+      return;
+    }
+    const snap = await apiPatchLightingMode(venueSnapshot.summary.id, lightingModeId, data);
+    setVenueSnapshot(snap);
+  }
+
   async function handlePatchAnimationAssignment(assignmentId, data) {
     if (!venueSnapshot) {
       return;
@@ -3097,6 +3187,14 @@ export default function DenseVenueEditorPage({ venueId }) {
   async function apiCreateLightingMode(targetVenueId, data) {
     return fetchJson(`/api/venues/${targetVenueId}/lighting-modes`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiPatchLightingMode(targetVenueId, lightingModeId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/lighting-modes/${lightingModeId}`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
@@ -3312,6 +3410,7 @@ export default function DenseVenueEditorPage({ venueId }) {
               selectedModeKey={selectedAnimationModeKey}
               onSelectedModeKeyChange={setSelectedAnimationModeKey}
               onCreateLightingMode={handleCreateLightingMode}
+              onPatchLightingMode={handlePatchLightingMode}
               onAddAssignment={handleAddAnimationAssignment}
               onPatchAssignment={handlePatchAnimationAssignment}
               onDeleteAssignment={handleDeleteAnimationAssignment}

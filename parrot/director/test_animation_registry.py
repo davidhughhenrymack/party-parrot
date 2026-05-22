@@ -9,12 +9,20 @@ from parrot.director.animation_registry import (
     weighted_randomize_spec,
 )
 from parrot.director.frame import FrameSignal
-from parrot.director.mode_dispatch import _build_category_combo
+from parrot.director.mode import Mode
+from parrot.director.mode_dispatch import _build_category_combo, get_interpreter
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
 from parrot.fixtures.led_par import ParRGB
-from parrot_cloud.domain import VenueAnimationAssignmentSpec
+from parrot.interpreters.dimmer import SequenceDimmers
+from parrot_cloud.domain import (
+    LightingModeSpec,
+    VenueAnimationAssignmentSpec,
+    VenueSnapshot,
+    VenueSummary,
+    VideoWallSpec,
+)
 
 
 def test_builds_randomize_expression():
@@ -38,6 +46,115 @@ def test_builds_weighted_randomize_expression():
     interp = factory([ParRGB(1)], InterpreterArgs(True))
 
     assert interp is not None
+
+
+def test_database_assignments_instantiate_once_for_whole_matching_group():
+    pars = [ParRGB(1), ParRGB(8), ParRGB(15)]
+    for fixture in pars:
+        fixture.cloud_group_name = "track"
+        fixture.cloud_fixture_type = "par"
+    snapshot = VenueSnapshot(
+        summary=VenueSummary(
+            id="venue",
+            slug="venue",
+            name="Venue",
+            archived=False,
+            active=True,
+            revision=1,
+        ),
+        floor_width=20.0,
+        floor_depth=15.0,
+        floor_height=10.0,
+        video_wall=VideoWallSpec(
+            x=0.0,
+            y=0.0,
+            z=0.0,
+            width=10.0,
+            height=6.0,
+            depth=0.25,
+            locked=False,
+        ),
+        fixtures=(),
+        lighting_modes=(
+            LightingModeSpec(
+                id="mode",
+                venue_id="venue",
+                key="chill",
+                label="Chill",
+                order_index=0,
+            ),
+        ),
+        animation_assignments=(
+            VenueAnimationAssignmentSpec(
+                id="assignment",
+                venue_id="venue",
+                lighting_mode_id="mode",
+                lighting_mode_key="chill",
+                fixture_group_name="track",
+                fixture_type="par",
+                order_index=0,
+                animation_spec=animation("SequenceDimmers"),
+            ),
+        ),
+    )
+
+    interp = get_interpreter(Mode.chill, pars, InterpreterArgs(True), snapshot)
+
+    assert isinstance(interp, SequenceDimmers)
+    assert interp.group == pars
+
+
+def test_database_assignments_support_modes_not_in_python_enum():
+    pars = [ParRGB(1), ParRGB(8)]
+    snapshot = VenueSnapshot(
+        summary=VenueSummary(
+            id="venue",
+            slug="venue",
+            name="Venue",
+            archived=False,
+            active=True,
+            revision=1,
+        ),
+        floor_width=20.0,
+        floor_depth=15.0,
+        floor_height=10.0,
+        video_wall=VideoWallSpec(
+            x=0.0,
+            y=0.0,
+            z=0.0,
+            width=10.0,
+            height=6.0,
+            depth=0.25,
+            locked=False,
+        ),
+        fixtures=(),
+        lighting_modes=(
+            LightingModeSpec(
+                id="mode",
+                venue_id="venue",
+                key="stage_focus",
+                label="Stage Focus",
+                order_index=0,
+            ),
+        ),
+        animation_assignments=(
+            VenueAnimationAssignmentSpec(
+                id="assignment",
+                venue_id="venue",
+                lighting_mode_id="mode",
+                lighting_mode_key="stage_focus",
+                fixture_group_name=None,
+                fixture_type="par",
+                order_index=0,
+                animation_spec=animation("SequenceDimmers"),
+            ),
+        ),
+    )
+
+    interp = get_interpreter("stage_focus", pars, InterpreterArgs(True), snapshot)
+
+    assert isinstance(interp, SequenceDimmers)
+    assert interp.group == pars
 
 
 def test_registry_defaults_are_applied_to_bare_animation_specs():

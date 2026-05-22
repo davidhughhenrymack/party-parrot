@@ -3,7 +3,7 @@ import socket
 import threading
 import logging
 from flask import Flask, jsonify, request, send_from_directory
-from parrot.director.mode import MODES_BY_HYPE, Mode
+from parrot.director.mode import MODES_BY_HYPE, Mode, mode_key
 from parrot.vj.vj_mode import VJMode
 from parrot.state import State
 
@@ -36,7 +36,7 @@ def get_mode():
     if state_instance and state_instance.mode:
         return jsonify(
             {
-                "mode": state_instance.mode.name,
+                "mode": mode_key(state_instance.mode),
                 "available_modes": available_modes,
             }
         )
@@ -55,10 +55,10 @@ def set_mode():
 
     mode_name = data["mode"]
     try:
-        mode = Mode[mode_name]
+        mode = Mode[mode_name] if mode_name in Mode.__members__ else str(mode_name)
 
         # Return success immediately to make the web UI responsive
-        response = jsonify({"success": True, "mode": mode.name})
+        response = jsonify({"success": True, "mode": mode_key(mode)})
 
         # Use the thread-safe method to set the mode (after preparing the response)
         state_instance.set_mode_thread_safe(mode)
