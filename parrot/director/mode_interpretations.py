@@ -664,15 +664,16 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
         Group("sheer lights"): [combo(Dimmer255, ColorAlternateBg)],
     },
     Mode.test: {
-        Mirrorball: [combo(Dimmer255, RigColorCycle)],
+        Mirrorball: [combo(Dimmer255, RigColorCycle, StrobeOff)],
         (Group("track"), ChauvetRogueBeamR2X): [
             combo(
                 Dimmer255,
                 RigColorCycle,
+                StrobeOff,
                 with_args("MirrorballPosition", MoveNamedPosition, position_name="Mirrorball"),
             )
         ],
-        Par: [combo(Dimmer255, RigColorCycle)],
+        Par: [combo(Dimmer255, RigColorCycle, StrobeOff)],
         MovingHead: [
             combo(
                 Dimmer255,
@@ -681,24 +682,26 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 MoverNoGobo,
                 PrismOff,
                 FocusSmall,
+                StrobeOff,
             )
         ],
-        Motionstrip: [combo(Dimmer255, RigColorCycle)],
-        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, for_bulbs(RigColorCycle))],
-        Laser: [combo(Dimmer255, RigColorCycle)],
-        ChauvetRotosphere_28Ch: [combo(Dimmer255, RigColorCycle)],
-        ChauvetDerby: [combo(Dimmer255, RigColorCycle)],
+        Motionstrip: [combo(Dimmer255, RigColorCycle, StrobeOff)],
+        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, for_bulbs(RigColorCycle), StrobeOff)],
+        Laser: [combo(Dimmer255, RigColorCycle, StrobeOff)],
+        ChauvetRotosphere_28Ch: [combo(Dimmer255, RigColorCycle, StrobeOff)],
+        ChauvetDerby: [combo(Dimmer255, RigColorCycle, StrobeOff)],
     },
     Mode.home: {
-        Mirrorball: [combo(Dimmer255, RigColorCycle)],
+        Mirrorball: [combo(Dimmer255, RigColorCycle, StrobeOff)],
         (Group("track"), ChauvetRogueBeamR2X): [
             combo(
                 Dimmer255,
                 RigColorCycle,
+                StrobeOff,
                 with_args("MirrorballPosition", MoveNamedPosition, position_name="Mirrorball"),
             )
         ],
-        Par: [combo(Dimmer255, RigColorCycle)],
+        Par: [combo(Dimmer255, RigColorCycle, StrobeOff)],
         MovingHead: [
             combo(
                 Dimmer255,
@@ -707,12 +710,13 @@ mode_interpretations: Dict[Mode, Dict[Matcher, List[InterpreterBase]]] = {
                 MoverNoGobo,
                 PrismOff,
                 FocusSmall,
+                StrobeOff,
             )
         ],
-        Motionstrip: [combo(Dimmer255, RigColorCycle)],
-        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, for_bulbs(RigColorCycle))],
-        Laser: [combo(Dimmer255, RigColorCycle)],
-        ChauvetRotosphere_28Ch: [combo(Dimmer255, RigColorCycle)],
-        ChauvetDerby: [combo(Dimmer255, RigColorCycle)],
+        Motionstrip: [combo(Dimmer255, RigColorCycle, StrobeOff)],
+        ChauvetColorBandPiX_36Ch: [combo(Dimmer255, for_bulbs(RigColorCycle), StrobeOff)],
+        Laser: [combo(Dimmer255, RigColorCycle, StrobeOff)],
+        ChauvetRotosphere_28Ch: [combo(Dimmer255, RigColorCycle, StrobeOff)],
+        ChauvetDerby: [combo(Dimmer255, RigColorCycle, StrobeOff)],
     },
 }

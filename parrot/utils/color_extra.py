@@ -4,6 +4,12 @@ from .math import clamp
 from parrot.utils.lerp import lerp
 
 
+def hue_distance(a: float, b: float) -> float:
+    """Shortest distance between two normalized hues on the color wheel."""
+    direct = abs(a - b)
+    return min(direct, 1.0 - direct)
+
+
 def lerp_color(a: Color, b: Color, t: float) -> Color:
     return Color(
         rgb=(lerp(a.red, b.red, t), lerp(a.green, b.green, t), lerp(a.blue, b.blue, t))
@@ -11,11 +17,12 @@ def lerp_color(a: Color, b: Color, t: float) -> Color:
 
 
 def color_distance(a: Color, b: Color) -> float:
-    # Hue distance plus saturation distance plus value distance
+    # Hue is what operators most notice on saturated fixture colors. Treat hue
+    # as circular so red near 0.0 and red near 1.0 still match each other.
     return (
-        abs(a.hue - b.hue)
-        + abs(a.saturation - b.saturation)
-        + abs(a.luminance - b.luminance)
+        3.0 * hue_distance(a.hue, b.hue)
+        + 0.65 * abs(a.saturation - b.saturation)
+        + 0.35 * abs(a.luminance - b.luminance)
     )
 
 
