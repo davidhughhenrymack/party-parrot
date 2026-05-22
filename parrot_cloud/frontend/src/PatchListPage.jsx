@@ -131,6 +131,7 @@ export default function PatchListPage() {
                   <th>Width</th>
                   <th>Fixture Type</th>
                   <th>Fixture Name</th>
+                  <th>Group</th>
                   <th>Pan Angle Mode</th>
                   <th>Tilt Angle Mode</th>
                 </tr>
@@ -143,6 +144,7 @@ export default function PatchListPage() {
                     <td>{width}</td>
                     <td>{fixtureType}</td>
                     <td>{fixture.name || '-'}</td>
+                    <td>{fixture.group_name || '-'}</td>
                     <td>{panMode}</td>
                     <td>{tiltMode}</td>
                   </tr>
