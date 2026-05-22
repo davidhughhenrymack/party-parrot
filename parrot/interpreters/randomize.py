@@ -57,9 +57,15 @@ def weighted_randomize(
             super().__init__(group, args)
 
             filtered_interpreters = [i for i in interpreters if i[1].acceptable(args)]
+            if len(filtered_interpreters) == 0:
+                self.interpreter = Dimmer0(group, args)
+                return
 
             total = sum([i[0] for i in filtered_interpreters])
-            weights = [i[0] / total for i in filtered_interpreters]
+            if total <= 0:
+                weights = [1.0] * len(filtered_interpreters)
+            else:
+                weights = [i[0] / total for i in filtered_interpreters]
 
             self.interpreter = random.choices(
                 [i[1] for i in filtered_interpreters], weights=weights

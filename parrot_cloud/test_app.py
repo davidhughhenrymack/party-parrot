@@ -198,6 +198,52 @@ def test_fixture_types_endpoint(client):
     assert all(0.0 <= float(c) <= 1.0 for c in wheel[0]["rgb"])
 
 
+def test_animation_registry_and_assignment_endpoints(client):
+    registry = client.get("/api/animation-registry")
+    assert registry.status_code == 200
+    assert any(
+        animation["key"] == "Dimmer255"
+        for animation in registry.get_json()["animations"]
+    )
+
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+    created = client.post(
+        f"/api/venues/{venue_id}/animations",
+        json={
+            "lighting_mode_key": "chill",
+            "fixture_type": "par",
+            "animation_spec": {"type": "animation", "key": "Dimmer255"},
+        },
+    )
+    assert created.status_code == 200
+    assignment = next(
+        assignment
+        for assignment in created.get_json()["animation_assignments"]
+        if assignment["animation_spec"].get("key") == "Dimmer255"
+    )
+
+    patched = client.patch(
+        f"/api/venues/{venue_id}/animations/{assignment['id']}",
+        json={
+            "animation_spec": {
+                "type": "weighted_randomize",
+                "options": [
+                    {"weight": 10, "animation": {"type": "animation", "key": "Dimmer0"}},
+                    {"weight": 90, "animation": {"type": "animation", "key": "Dimmer255"}},
+                ],
+            }
+        },
+    )
+    assert patched.status_code == 200
+    updated = next(
+        item
+        for item in patched.get_json()["animation_assignments"]
+        if item["id"] == assignment["id"]
+    )
+    assert updated["animation_spec"]["type"] == "weighted_randomize"
+
+
 def test_dmx_address_width_for_fixture_helper():
     from parrot_cloud.fixture_catalog import dmx_address_width_for_fixture
 

@@ -10,6 +10,9 @@ from parrot.fixtures.base import (
 )
 from parrot.utils.colour import Color
 from parrot.utils.dmx_utils import Universe
+from parrot.interpreters.base import InterpreterArgs
+from parrot.interpreters.movers import MoverRandomGobo, RotatingGobo
+from parrot.fixtures.mirrorball import Mirrorball
 
 
 class TestFixtureBase:
@@ -85,6 +88,27 @@ class TestFixtureBase:
         # These should not raise errors
         self.fixture.set_pan(128)
         self.fixture.set_tilt(64)
+
+    def test_optional_property_methods_are_safe_on_base_fixtures(self):
+        self.fixture.set_gobo("dots")
+        self.fixture.set_prism(True, 2.0)
+        self.fixture.set_rotating_gobo(3, -2.0)
+        self.fixture.set_focus(2.0)
+        self.fixture.set_color_wheel_rotate(True)
+
+        assert self.fixture.get_gobo() == "dots"
+        assert self.fixture.get_prism() == (True, 1.0)
+        assert self.fixture.get_rotating_gobo() == (3, -1.0)
+        assert self.fixture.get_focus() == 1.0
+        assert self.fixture.get_color_wheel_rotate() is True
+        assert self.fixture.gobo_wheel[0].name == "open"
+
+    def test_mover_interpreters_do_not_crash_on_basic_fixtures(self):
+        mirrorball = Mirrorball(1)
+        args = InterpreterArgs(True)
+
+        RotatingGobo([mirrorball], args)
+        MoverRandomGobo([mirrorball], args)
 
     def test_render(self):
         """Test that render sets DMX values correctly"""
@@ -251,6 +275,20 @@ class TestFixtureGroup:
         self.group.set_speed(180)
 
         # These should not raise errors (base fixtures have pass methods)
+
+    def test_optional_property_methods_propagate_to_group_members(self):
+        self.group.set_gobo("dots")
+        self.group.set_prism(True, 0.5)
+        self.group.set_rotating_gobo(2, -0.25)
+        self.group.set_focus(0.75)
+        self.group.set_color_wheel_rotate(True)
+
+        for fixture in [self.fixture1, self.fixture2]:
+            assert fixture.get_gobo() == "dots"
+            assert fixture.get_prism() == (True, 0.5)
+            assert fixture.get_rotating_gobo() == (2, -0.25)
+            assert fixture.get_focus() == 0.75
+            assert fixture.get_color_wheel_rotate() is True
 
     def test_iteration(self):
         """Test that group can be iterated"""

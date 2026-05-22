@@ -55,6 +55,16 @@ class VenueModel(Base):
         back_populates="venue",
         cascade="all, delete-orphan",
     )
+    lighting_modes: Mapped[list["LightingModeModel"]] = relationship(
+        back_populates="venue",
+        cascade="all, delete-orphan",
+        order_by="LightingModeModel.order_index",
+    )
+    animation_assignments: Mapped[list["VenueAnimationAssignmentModel"]] = relationship(
+        back_populates="venue",
+        cascade="all, delete-orphan",
+        order_by="VenueAnimationAssignmentModel.order_index",
+    )
 
 
 class FixtureModel(Base):
@@ -83,6 +93,53 @@ class FixtureModel(Base):
     named_positions: Mapped[list["FixtureNamedPositionModel"]] = relationship(
         back_populates="fixture",
         cascade="all, delete-orphan",
+    )
+
+
+class LightingModeModel(Base):
+    __tablename__ = "lighting_modes"
+    __table_args__ = (
+        UniqueConstraint("venue_id", "key", name="uq_lighting_modes_venue_key"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    venue_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    editable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    venue: Mapped[VenueModel] = relationship(back_populates="lighting_modes")
+    animation_assignments: Mapped[list["VenueAnimationAssignmentModel"]] = relationship(
+        back_populates="lighting_mode",
+        cascade="all, delete-orphan",
+        order_by="VenueAnimationAssignmentModel.order_index",
+    )
+
+
+class VenueAnimationAssignmentModel(Base):
+    __tablename__ = "venue_animation_assignments"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    venue_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    lighting_mode_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("lighting_modes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    fixture_group_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    fixture_type: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    animation_spec: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+
+    venue: Mapped[VenueModel] = relationship(back_populates="animation_assignments")
+    lighting_mode: Mapped[LightingModeModel] = relationship(
+        back_populates="animation_assignments"
     )
 
 

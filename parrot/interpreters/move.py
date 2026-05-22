@@ -241,7 +241,7 @@ class MoveNamedPosition(InterpreterBase):
         self,
         group: list[FixtureBase],
         args: InterpreterArgs,
-        position_name: str,
+        position_name: str = "",
     ):
         super().__init__(group, args)
         self.position_name = str(position_name)

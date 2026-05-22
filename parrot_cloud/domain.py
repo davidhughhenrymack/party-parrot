@@ -244,6 +244,84 @@ class FixtureNamedPositionSpec:
 
 @beartype
 @dataclass(frozen=True)
+class LightingModeSpec:
+    id: str
+    venue_id: str
+    key: str
+    label: str
+    order_index: int
+    editable: bool = True
+
+    def to_dict(self) -> JsonDict:
+        return {
+            "id": self.id,
+            "venue_id": self.venue_id,
+            "key": self.key,
+            "label": self.label,
+            "order_index": self.order_index,
+            "editable": self.editable,
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> "LightingModeSpec":
+        return cls(
+            id=str(data["id"]),
+            venue_id=str(data["venue_id"]),
+            key=str(data["key"]),
+            label=str(data["label"]),
+            order_index=int(data.get("order_index", 0)),
+            editable=bool(data.get("editable", True)),
+        )
+
+
+@beartype
+@dataclass(frozen=True)
+class VenueAnimationAssignmentSpec:
+    id: str
+    venue_id: str
+    lighting_mode_id: str
+    lighting_mode_key: str
+    fixture_group_name: str | None
+    fixture_type: str | None
+    order_index: int
+    animation_spec: JsonDict
+
+    def to_dict(self) -> JsonDict:
+        return {
+            "id": self.id,
+            "venue_id": self.venue_id,
+            "lighting_mode_id": self.lighting_mode_id,
+            "lighting_mode_key": self.lighting_mode_key,
+            "fixture_group_name": self.fixture_group_name,
+            "fixture_type": self.fixture_type,
+            "order_index": self.order_index,
+            "animation_spec": dict(self.animation_spec),
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> "VenueAnimationAssignmentSpec":
+        return cls(
+            id=str(data["id"]),
+            venue_id=str(data["venue_id"]),
+            lighting_mode_id=str(data["lighting_mode_id"]),
+            lighting_mode_key=str(data.get("lighting_mode_key", "")),
+            fixture_group_name=(
+                str(data["fixture_group_name"])
+                if data.get("fixture_group_name") not in (None, "")
+                else None
+            ),
+            fixture_type=(
+                str(data["fixture_type"])
+                if data.get("fixture_type") not in (None, "")
+                else None
+            ),
+            order_index=int(data.get("order_index", 0)),
+            animation_spec=dict(data.get("animation_spec", {})),
+        )
+
+
+@beartype
+@dataclass(frozen=True)
 class VenueSnapshot:
     summary: VenueSummary
     floor_width: float
@@ -254,6 +332,10 @@ class VenueSnapshot:
     scene_objects: tuple[SceneObjectSpec, ...] = field(default_factory=tuple)
     named_positions: tuple[NamedPositionSpec, ...] = field(default_factory=tuple)
     fixture_named_positions: tuple[FixtureNamedPositionSpec, ...] = field(
+        default_factory=tuple
+    )
+    lighting_modes: tuple[LightingModeSpec, ...] = field(default_factory=tuple)
+    animation_assignments: tuple[VenueAnimationAssignmentSpec, ...] = field(
         default_factory=tuple
     )
 
@@ -269,6 +351,10 @@ class VenueSnapshot:
             "named_positions": [position.to_dict() for position in self.named_positions],
             "fixture_named_positions": [
                 position.to_dict() for position in self.fixture_named_positions
+            ],
+            "lighting_modes": [mode.to_dict() for mode in self.lighting_modes],
+            "animation_assignments": [
+                assignment.to_dict() for assignment in self.animation_assignments
             ],
         }
 
@@ -295,6 +381,14 @@ class VenueSnapshot:
             fixture_named_positions=tuple(
                 FixtureNamedPositionSpec.from_dict(dict(position_data))
                 for position_data in data.get("fixture_named_positions", [])
+            ),
+            lighting_modes=tuple(
+                LightingModeSpec.from_dict(dict(mode_data))
+                for mode_data in data.get("lighting_modes", [])
+            ),
+            animation_assignments=tuple(
+                VenueAnimationAssignmentSpec.from_dict(dict(assignment_data))
+                for assignment_data in data.get("animation_assignments", [])
             ),
         )
 

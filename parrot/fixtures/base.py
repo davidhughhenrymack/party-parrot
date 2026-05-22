@@ -22,6 +22,13 @@ class FixtureBase:
         self.dimmer_value = 0
         self.strobe_value = 0
         self.speed_value = 0
+        self.gobo_name = "open"
+        self.prism_on = False
+        self.prism_rotate_speed = 0.0
+        self.rotating_gobo_slot = 0
+        self.rotating_gobo_rotate_speed = 0.0
+        self.focus_value = 0.0
+        self._color_wheel_rotate = False
         self.x: Optional[int] = None
         self.y: Optional[int] = None
         self.cloud_spec_id: Optional[str] = None
@@ -73,6 +80,42 @@ class FixtureBase:
 
     def set_tilt_direct_dmx(self, value: float):
         pass
+
+    @property
+    def gobo_wheel(self) -> list["GoboWheelEntry"]:
+        return [GoboWheelEntry("open", 0)]
+
+    def set_gobo(self, name: str):
+        self.gobo_name = str(name)
+
+    def get_gobo(self) -> str:
+        return self.gobo_name
+
+    def set_prism(self, on: bool, rotate_speed: float = 0.0) -> None:
+        self.prism_on = bool(on)
+        self.prism_rotate_speed = max(-1.0, min(1.0, float(rotate_speed)))
+
+    def get_prism(self) -> tuple[bool, float]:
+        return self.prism_on, self.prism_rotate_speed
+
+    def set_rotating_gobo(self, slot: int, rotate_speed: float = 0.0) -> None:
+        self.rotating_gobo_slot = max(0, int(slot))
+        self.rotating_gobo_rotate_speed = max(-1.0, min(1.0, float(rotate_speed)))
+
+    def get_rotating_gobo(self) -> tuple[int, float]:
+        return self.rotating_gobo_slot, self.rotating_gobo_rotate_speed
+
+    def set_focus(self, value: float) -> None:
+        self.focus_value = max(0.0, min(1.0, float(value)))
+
+    def get_focus(self) -> float:
+        return self.focus_value
+
+    def set_color_wheel_rotate(self, enabled: bool) -> None:
+        self._color_wheel_rotate = bool(enabled)
+
+    def get_color_wheel_rotate(self) -> bool:
+        return self._color_wheel_rotate
 
     def set_speed(self, value):
         self.speed_value = value
@@ -256,6 +299,31 @@ class FixtureGroup(FixtureBase):
         super().set_tilt_direct_dmx(value)
         for fixture in self.fixtures:
             fixture.set_tilt_direct_dmx(value)
+
+    def set_gobo(self, name: str):
+        super().set_gobo(name)
+        for fixture in self.fixtures:
+            fixture.set_gobo(name)
+
+    def set_prism(self, on: bool, rotate_speed: float = 0.0) -> None:
+        super().set_prism(on, rotate_speed)
+        for fixture in self.fixtures:
+            fixture.set_prism(on, rotate_speed)
+
+    def set_rotating_gobo(self, slot: int, rotate_speed: float = 0.0) -> None:
+        super().set_rotating_gobo(slot, rotate_speed)
+        for fixture in self.fixtures:
+            fixture.set_rotating_gobo(slot, rotate_speed)
+
+    def set_focus(self, value: float) -> None:
+        super().set_focus(value)
+        for fixture in self.fixtures:
+            fixture.set_focus(value)
+
+    def set_color_wheel_rotate(self, enabled: bool) -> None:
+        super().set_color_wheel_rotate(enabled)
+        for fixture in self.fixtures:
+            fixture.set_color_wheel_rotate(enabled)
 
     def set_speed(self, value):
         super().set_speed(value)

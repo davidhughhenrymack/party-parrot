@@ -22,6 +22,11 @@ def parse_arguments():
         "--vj-fullscreen", action="store_true", help="Run VJ in fullscreen mode"
     )
     parser.add_argument(
+        "--windowed",
+        action="store_true",
+        help="Run the desktop GL window. By default the Python client is a headless DMX bridge.",
+    )
+    parser.add_argument(
         "--debug-frame",
         action="store_true",
         help="Capture frame 20 and exit for debugging",
@@ -39,12 +44,26 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def run(args) -> None:
+    wants_window = bool(
+        args.windowed
+        or args.vj_fullscreen
+        or args.debug_frame
+        or args.screenshot
+        or args.start_with_overlay
+    )
+    if wants_window:
+        from parrot.gl_window_app import run_gl_window_app
+
+        run_gl_window_app(args)
+    else:
+        from parrot.headless_dmx_bridge import run_headless_dmx_bridge
+
+        run_headless_dmx_bridge(args)
+
+
 if __name__ == "__main__":
     # Enable beartype runtime type checking for the parrot package
     # beartype_package("parrot")  # Temporarily disabled due to type issues
 
-    args = parse_arguments()
-
-    from parrot.gl_window_app import run_gl_window_app
-
-    run_gl_window_app(args)
+    run(parse_arguments())

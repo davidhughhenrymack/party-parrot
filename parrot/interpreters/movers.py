@@ -50,7 +50,7 @@ class MoverRandomGobo(InterpreterBase[MovingHead]):
 
 class MoverGobo(InterpreterBase[MovingHead]):
 
-    def __init__(self, group, args: InterpreterArgs, gobo: str):
+    def __init__(self, group, args: InterpreterArgs, gobo: str = "open"):
         super().__init__(group, args)
 
         for fixture in self.group:
@@ -146,7 +146,7 @@ class RotatingGobo(InterpreterBase[MovingHead]):
         self,
         group,
         args: InterpreterArgs,
-        slot: int,
+        slot: int = 1,
         rotate_speed: float = 0.3,
     ):
         super().__init__(group, args)

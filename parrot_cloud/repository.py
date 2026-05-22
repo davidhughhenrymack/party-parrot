@@ -14,9 +14,11 @@ from parrot_cloud.domain import (
     ControlState,
     FixtureNamedPositionSpec,
     FixtureSpec,
+    LightingModeSpec,
     NamedPositionSpec,
     RuntimeBootstrap,
     SceneObjectSpec,
+    VenueAnimationAssignmentSpec,
     VenueSnapshot,
     VenueSummary,
     VideoWallSpec,
@@ -25,8 +27,10 @@ from parrot_cloud.models import (
     ControlStateModel,
     FixtureNamedPositionModel,
     FixtureModel,
+    LightingModeModel,
     NamedPositionModel,
     SceneObjectModel,
+    VenueAnimationAssignmentModel,
     VenueModel,
 )
 from parrot_cloud.database import create_session
@@ -39,6 +43,13 @@ from parrot_cloud.fixture_type_aliases import normalize_fixture_type_key
 from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import parse_vj_mode_string
+from parrot.director.animation_registry import (
+    DEFAULT_MOVING_LIGHT_ANIMATION,
+    DEFAULT_PAR_ANIMATION,
+    DEFAULT_STROBY_MOVING_LIGHT_ANIMATION,
+    DEFAULT_STROBY_PAR_ANIMATION,
+    legacy_mode_spec,
+)
 
 LEGACY_PLAN_UNITS_PER_METER = 50.0
 DJ_HEIGHT_METERS = 1.8288
@@ -49,6 +60,12 @@ DJ_TABLE_WIDTH_METERS = 2.4384
 DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.0
 DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.08
 DISPLAY_MODE_VALUES = {"venue", "dmx_heatmap", "vj"}
+DEFAULT_EDITABLE_LIGHTING_MODES: tuple[tuple[str, str], ...] = (
+    ("chill", "Chill"),
+    ("rave", "Rave"),
+    ("stroby", "Stroby"),
+)
+UTILITY_LIGHTING_MODE_KEYS: tuple[str, ...] = ("test", "blackout", "home")
 
 
 def _is_manual_dimmer_channel_type(fixture_type: str) -> bool:
@@ -71,6 +88,19 @@ def _normalize_named_position_name(value: object) -> str:
     if not name:
         raise ValueError("Named position name cannot be empty")
     return name
+
+
+def _normalize_lighting_mode_key(value: object) -> str:
+    key = str(value).strip().lower().replace(" ", "_")
+    if not key:
+        raise ValueError("Lighting mode key cannot be empty")
+    if key in UTILITY_LIGHTING_MODE_KEYS:
+        raise ValueError(f"Lighting mode {key!r} is fixed and cannot be edited")
+    return key
+
+
+def _lighting_mode_label_from_key(key: str) -> str:
+    return key.replace("_", " ").title()
 
 
 def _clamp_dmx_float(value: object) -> float:
@@ -345,6 +375,7 @@ class VenueRepository:
             if venue is None:
                 return None
             self._ensure_scene_objects(session, venue)
+            self._ensure_lighting_modes(session, venue)
             self._normalize_metric_scene_units(venue)
             session.refresh(venue)
             return self._snapshot_from_model(venue)
@@ -355,6 +386,7 @@ class VenueRepository:
             if venue is None:
                 raise KeyError(f"Venue not found: {venue_id}")
             self._ensure_scene_objects(session, venue)
+            self._ensure_lighting_modes(session, venue)
             self._normalize_metric_scene_units(venue)
             session.refresh(venue)
             return self._snapshot_from_model(venue)
@@ -410,6 +442,181 @@ class VenueRepository:
                 raise KeyError(f"Named position not found: {named_position_id}")
             session.delete(row)
             self._touch_all_venues(session)
+
+    def create_lighting_mode(
+        self,
+        venue_id: str,
+        data: dict[str, object],
+    ) -> VenueSnapshot:
+        key = _normalize_lighting_mode_key(data.get("key", data.get("label", "")))
+        label = str(data.get("label") or _lighting_mode_label_from_key(key)).strip()
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            self._ensure_lighting_modes(session, venue)
+            existing = session.scalar(
+                select(LightingModeModel).where(
+                    LightingModeModel.venue_id == venue_id,
+                    LightingModeModel.key == key,
+                )
+            )
+            if existing is not None:
+                raise ValueError(f"Lighting mode already exists: {key}")
+            order_index = len(venue.lighting_modes)
+            mode = LightingModeModel(
+                venue_id=venue_id,
+                key=key,
+                label=label or _lighting_mode_label_from_key(key),
+                order_index=order_index,
+                editable=True,
+            )
+            session.add(mode)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def update_lighting_mode(
+        self,
+        venue_id: str,
+        lighting_mode_id: str,
+        data: dict[str, object],
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            mode = session.get(LightingModeModel, lighting_mode_id)
+            if mode is None or mode.venue_id != venue_id:
+                raise KeyError(f"Lighting mode not found: {lighting_mode_id}")
+            if not mode.editable:
+                raise ValueError(f"Lighting mode {mode.key!r} is not editable")
+            if "label" in data and data["label"] is not None:
+                label = str(data["label"]).strip()
+                if not label:
+                    raise ValueError("Lighting mode label cannot be empty")
+                mode.label = label
+            if "order_index" in data and data["order_index"] is not None:
+                mode.order_index = int(data["order_index"])
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def delete_lighting_mode(self, venue_id: str, lighting_mode_id: str) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            mode = session.get(LightingModeModel, lighting_mode_id)
+            if mode is None or mode.venue_id != venue_id:
+                raise KeyError(f"Lighting mode not found: {lighting_mode_id}")
+            if not mode.editable:
+                raise ValueError(f"Lighting mode {mode.key!r} is not editable")
+            session.delete(mode)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def create_animation_assignment(
+        self,
+        venue_id: str,
+        data: dict[str, object],
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            self._ensure_lighting_modes(session, venue)
+            lighting_mode = self._resolve_lighting_mode_for_animation(session, venue_id, data)
+            spec = data.get("animation_spec")
+            if not isinstance(spec, dict):
+                raise TypeError("animation_spec must be a JSON object")
+            fixture_type = data.get("fixture_type")
+            assignment = VenueAnimationAssignmentModel(
+                venue_id=venue_id,
+                lighting_mode_id=lighting_mode.id,
+                fixture_group_name=(
+                    str(data["fixture_group_name"]).strip()
+                    if data.get("fixture_group_name") not in (None, "")
+                    else None
+                ),
+                fixture_type=(
+                    normalize_fixture_type_key(str(fixture_type))
+                    if fixture_type not in (None, "")
+                    and str(fixture_type) not in ("par", "moving_head")
+                    else (str(fixture_type) if fixture_type not in (None, "") else None)
+                ),
+                order_index=int(data.get("order_index", len(venue.animation_assignments))),
+                animation_spec=dict(spec),
+            )
+            session.add(assignment)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def update_animation_assignment(
+        self,
+        venue_id: str,
+        assignment_id: str,
+        data: dict[str, object],
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            assignment = session.get(VenueAnimationAssignmentModel, assignment_id)
+            if assignment is None or assignment.venue_id != venue_id:
+                raise KeyError(f"Animation assignment not found: {assignment_id}")
+            if "lighting_mode_id" in data or "lighting_mode_key" in data:
+                assignment.lighting_mode_id = self._resolve_lighting_mode_for_animation(
+                    session, venue_id, data
+                ).id
+            if "fixture_group_name" in data:
+                assignment.fixture_group_name = (
+                    str(data["fixture_group_name"]).strip()
+                    if data.get("fixture_group_name") not in (None, "")
+                    else None
+                )
+            if "fixture_type" in data:
+                raw_type = data.get("fixture_type")
+                assignment.fixture_type = (
+                    normalize_fixture_type_key(str(raw_type))
+                    if raw_type not in (None, "")
+                    and str(raw_type) not in ("par", "moving_head")
+                    else (str(raw_type) if raw_type not in (None, "") else None)
+                )
+            if "order_index" in data and data["order_index"] is not None:
+                assignment.order_index = int(data["order_index"])
+            if "animation_spec" in data:
+                if not isinstance(data["animation_spec"], dict):
+                    raise TypeError("animation_spec must be a JSON object")
+                assignment.animation_spec = dict(data["animation_spec"])
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def delete_animation_assignment(
+        self,
+        venue_id: str,
+        assignment_id: str,
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            assignment = session.get(VenueAnimationAssignmentModel, assignment_id)
+            if assignment is None or assignment.venue_id != venue_id:
+                raise KeyError(f"Animation assignment not found: {assignment_id}")
+            session.delete(assignment)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
 
     def upsert_fixture_named_position(
         self,
@@ -491,6 +698,7 @@ class VenueRepository:
                     break
             if target is None:
                 raise KeyError(f"Venue not found: {venue_id}")
+            self._ensure_lighting_modes(session, target)
             self._set_active_venue(session, control_state, target.id)
             return self._snapshot_from_model(target)
 
@@ -507,6 +715,7 @@ class VenueRepository:
             session.add(venue)
             session.flush()
             self._ensure_scene_objects(session, venue)
+            self._ensure_lighting_modes(session, venue)
             self._sync_legacy_scene_fields(venue)
             return self._snapshot_from_model(venue)
 
@@ -516,6 +725,7 @@ class VenueRepository:
             if venue is None:
                 raise KeyError(f"Venue not found: {venue_id}")
             self._ensure_scene_objects(session, venue)
+            self._ensure_lighting_modes(session, venue)
             floor_object = self._scene_object_by_kind(venue, "floor")
 
             if "name" in data and data["name"] is not None:
@@ -793,7 +1003,13 @@ class VenueRepository:
     def ensure_seed_data(self) -> RuntimeBootstrap:
         for seed in build_seed_venues():
             self._upsert_seed(seed)
+        self._ensure_all_venues_have_lighting_modes()
         return self.get_runtime_bootstrap()
+
+    def _ensure_all_venues_have_lighting_modes(self) -> None:
+        with _session_scope() as session:
+            for venue in session.scalars(select(VenueModel)).all():
+                self._ensure_lighting_modes(session, venue)
 
     def _upsert_seed(self, seed: SeedVenueDefinition) -> None:
         with _session_scope() as session:
@@ -849,7 +1065,103 @@ class VenueRepository:
                 fixture_model.rotation_z = fixture_spec.rotation_z
                 fixture_model.options = dict(fixture_spec.options)
 
+            self._ensure_lighting_modes(session, venue)
             self._touch_venue(venue)
+
+    def _resolve_lighting_mode_for_animation(
+        self,
+        session,
+        venue_id: str,
+        data: dict[str, object],
+    ) -> LightingModeModel:
+        lighting_mode_id = data.get("lighting_mode_id")
+        if lighting_mode_id not in (None, ""):
+            mode = session.get(LightingModeModel, str(lighting_mode_id))
+            if mode is None or mode.venue_id != venue_id:
+                raise KeyError(f"Lighting mode not found: {lighting_mode_id}")
+            return mode
+        if data.get("lighting_mode_key") not in (None, ""):
+            key = _normalize_lighting_mode_key(data["lighting_mode_key"])
+        elif data.get("mode_key") not in (None, ""):
+            key = _normalize_lighting_mode_key(data["mode_key"])
+        else:
+            raise ValueError("lighting_mode_id or lighting_mode_key is required")
+        mode = session.scalar(
+            select(LightingModeModel).where(
+                LightingModeModel.venue_id == venue_id,
+                LightingModeModel.key == key,
+            )
+        )
+        if mode is None:
+            raise KeyError(f"Lighting mode not found: {key}")
+        return mode
+
+    def _ensure_lighting_modes(self, session, venue: VenueModel) -> None:
+        if venue.lighting_modes:
+            return
+
+        modes = list(DEFAULT_EDITABLE_LIGHTING_MODES)
+        is_queer_prom = (
+            "queer-prom" in venue.slug.casefold()
+            or "queer prom" in venue.name.casefold()
+        )
+        if is_queer_prom:
+            modes.append(("ethereal", "Ethereal"))
+
+        created: dict[str, LightingModeModel] = {}
+        for order_index, (key, label) in enumerate(modes):
+            row = LightingModeModel(
+                venue_id=venue.id,
+                key=key,
+                label=label,
+                order_index=order_index,
+                editable=True,
+            )
+            session.add(row)
+            created[key] = row
+        session.flush()
+
+        if is_queer_prom:
+            for key, mode in created.items():
+                session.add(
+                    VenueAnimationAssignmentModel(
+                        venue_id=venue.id,
+                        lighting_mode_id=mode.id,
+                        fixture_group_name=None,
+                        fixture_type=None,
+                        order_index=0,
+                        animation_spec=legacy_mode_spec(key),
+                    )
+                )
+            return
+
+        defaults = {
+            "chill": (
+                ("par", DEFAULT_PAR_ANIMATION),
+                ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
+            ),
+            "rave": (
+                ("par", DEFAULT_PAR_ANIMATION),
+                ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
+            ),
+            "stroby": (
+                ("par", DEFAULT_STROBY_PAR_ANIMATION),
+                ("moving_head", DEFAULT_STROBY_MOVING_LIGHT_ANIMATION),
+            ),
+        }
+        for mode_key, rows in defaults.items():
+            mode = created[mode_key]
+            for order_index, (fixture_type, animation_spec) in enumerate(rows):
+                session.add(
+                    VenueAnimationAssignmentModel(
+                        venue_id=venue.id,
+                        lighting_mode_id=mode.id,
+                        fixture_group_name=None,
+                        fixture_type=fixture_type,
+                        order_index=order_index,
+                        animation_spec=dict(animation_spec),
+                    )
+                )
 
     def _touch_venue(self, venue: VenueModel) -> None:
         venue.revision = int(venue.revision) + 1
@@ -904,6 +1216,31 @@ class VenueRepository:
             tilt=position.tilt,
         )
 
+    def _lighting_mode_from_model(self, mode: LightingModeModel) -> LightingModeSpec:
+        return LightingModeSpec(
+            id=mode.id,
+            venue_id=mode.venue_id,
+            key=mode.key,
+            label=mode.label,
+            order_index=mode.order_index,
+            editable=mode.editable,
+        )
+
+    def _animation_assignment_from_model(
+        self, assignment: VenueAnimationAssignmentModel
+    ) -> VenueAnimationAssignmentSpec:
+        lighting_mode = assignment.lighting_mode
+        return VenueAnimationAssignmentSpec(
+            id=assignment.id,
+            venue_id=assignment.venue_id,
+            lighting_mode_id=assignment.lighting_mode_id,
+            lighting_mode_key="" if lighting_mode is None else lighting_mode.key,
+            fixture_group_name=assignment.fixture_group_name,
+            fixture_type=assignment.fixture_type,
+            order_index=assignment.order_index,
+            animation_spec=dict(assignment.animation_spec or {}),
+        )
+
     def _snapshot_from_model(self, venue: VenueModel) -> VenueSnapshot:
         scene_objects = tuple(
             self._scene_object_from_model(scene_object)
@@ -952,6 +1289,22 @@ class VenueRepository:
                 ),
             )
         )
+        lighting_modes = tuple(
+            self._lighting_mode_from_model(mode)
+            for mode in sorted(venue.lighting_modes, key=lambda item: item.order_index)
+        )
+        animation_assignments = tuple(
+            self._animation_assignment_from_model(assignment)
+            for assignment in sorted(
+                venue.animation_assignments,
+                key=lambda item: (
+                    item.lighting_mode.order_index if item.lighting_mode is not None else 0,
+                    item.fixture_group_name or "",
+                    item.fixture_type or "",
+                    item.order_index,
+                ),
+            )
+        )
         return VenueSnapshot(
             summary=self._summary_from_model(venue),
             floor_width=(
@@ -994,6 +1347,8 @@ class VenueRepository:
             scene_objects=scene_objects,
             named_positions=named_positions,
             fixture_named_positions=fixture_named_positions,
+            lighting_modes=lighting_modes,
+            animation_assignments=animation_assignments,
         )
 
     def _control_state_from_model(self, control_state: ControlStateModel) -> ControlState:

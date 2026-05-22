@@ -84,6 +84,13 @@ export default function RemoteControlPage() {
           setVenues(payload.data?.venues || []);
         } else if (payload.type === 'venue_snapshot' && payload.data?.summary?.active) {
           const fixtures = payload.data.fixtures || [];
+          setConfig((current) => ({
+            ...current,
+            available_modes: [
+              ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
+              ...(payload.data.lighting_modes || []).map((mode) => mode.key),
+            ],
+          }));
           setManualFixtures(
             fixtures
               .filter((f) => f.is_manual)
@@ -114,6 +121,13 @@ export default function RemoteControlPage() {
           null,
       }));
       const fixtures = bootstrap.active_venue?.fixtures || [];
+      setConfig((current) => ({
+        ...current,
+        available_modes: [
+          ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
+          ...(bootstrap.active_venue?.lighting_modes || []).map((mode) => mode.key),
+        ],
+      }));
       setManualFixtures(
         fixtures
           .filter((f) => f.is_manual)

@@ -12,6 +12,7 @@ from parrot_cloud.database import get_repo_root
 from parrot_cloud.fixture_catalog import list_fixture_types
 from parrot_cloud.repository import VenueRepository
 from parrot_cloud.ws_hub import VenueUpdateHub
+from parrot.director.animation_registry import animation_registry_payload
 from parrot.director.frame import FrameSignal
 from parrot.director.mode import MODES_BY_HYPE, Mode
 from parrot.director.themes import themes
@@ -130,6 +131,13 @@ def create_app() -> Flask:
 
     @app.get("/api/config")
     def config():
+        active_venue = repository.get_active_venue_snapshot()
+        editable_modes = (
+            [mode.key for mode in active_venue.lighting_modes]
+            if active_venue is not None
+            else []
+        )
+        utility_modes = [mode.name for mode in MODES_BY_HYPE if mode.name in {"test", "blackout", "home"}]
         return jsonify(
             {
                 "fixture_types": list_fixture_types(),
@@ -137,7 +145,7 @@ def create_app() -> Flask:
                     {"value": Universe.default.value, "label": "Enttec Pro"},
                     {"value": Universe.art1.value, "label": "Art-Net 1"},
                 ],
-                "available_modes": [mode.name for mode in MODES_BY_HYPE],
+                "available_modes": [*utility_modes, *editable_modes],
                 "available_vj_modes": [mode.value for mode in VJMode],
                 "available_display_modes": ["venue", "dmx_heatmap", "vj"],
                 "theme_names": [theme.name for theme in themes],
@@ -214,10 +222,17 @@ def create_app() -> Flask:
     @app.get("/api/mode")
     def get_mode():
         control_state = repository.get_control_state()
+        active_venue = repository.get_active_venue_snapshot()
+        editable_modes = (
+            [mode.key for mode in active_venue.lighting_modes]
+            if active_venue is not None
+            else []
+        )
+        utility_modes = [mode.name for mode in MODES_BY_HYPE if mode.name in {"test", "blackout", "home"}]
         return jsonify(
             {
                 "mode": control_state.mode,
-                "available_modes": [mode.name for mode in MODES_BY_HYPE],
+                "available_modes": [*utility_modes, *editable_modes],
             }
         )
 
@@ -308,6 +323,10 @@ def create_app() -> Flask:
     def fixture_types():
         return jsonify({"fixture_types": list_fixture_types()})
 
+    @app.get("/api/animation-registry")
+    def animation_registry():
+        return jsonify(animation_registry_payload())
+
     @app.get("/api/named-positions")
     def list_named_positions():
         return jsonify(
@@ -374,6 +393,78 @@ def create_app() -> Flask:
     def patch_venue(venue_id: str):
         snapshot = repository.update_venue(venue_id, request.get_json(force=True))
         broadcast_venues()
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.post("/api/venues/<venue_id>/lighting-modes")
+    def create_lighting_mode(venue_id: str):
+        try:
+            snapshot = repository.create_lighting_mode(
+                venue_id, request.get_json(force=True) or {}
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.patch("/api/venues/<venue_id>/lighting-modes/<lighting_mode_id>")
+    def patch_lighting_mode(venue_id: str, lighting_mode_id: str):
+        try:
+            snapshot = repository.update_lighting_mode(
+                venue_id, lighting_mode_id, request.get_json(force=True) or {}
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.delete("/api/venues/<venue_id>/lighting-modes/<lighting_mode_id>")
+    def remove_lighting_mode(venue_id: str, lighting_mode_id: str):
+        try:
+            snapshot = repository.delete_lighting_mode(venue_id, lighting_mode_id)
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.post("/api/venues/<venue_id>/animations")
+    def create_animation_assignment(venue_id: str):
+        try:
+            snapshot = repository.create_animation_assignment(
+                venue_id, request.get_json(force=True) or {}
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.patch("/api/venues/<venue_id>/animations/<assignment_id>")
+    def patch_animation_assignment(venue_id: str, assignment_id: str):
+        try:
+            snapshot = repository.update_animation_assignment(
+                venue_id, assignment_id, request.get_json(force=True) or {}
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.delete("/api/venues/<venue_id>/animations/<assignment_id>")
+    def remove_animation_assignment(venue_id: str, assignment_id: str):
+        try:
+            snapshot = repository.delete_animation_assignment(venue_id, assignment_id)
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
         broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 

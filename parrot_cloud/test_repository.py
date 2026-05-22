@@ -24,6 +24,22 @@ def test_seed_creates_demo_venue(venue_repository):
     assert bootstrap.active_venue.summary.slug == "mtn-lotus-demo"
     assert len(bootstrap.active_venue.fixtures) == 0
     assert bootstrap.control_state.mode == "chill"
+    assert [mode.key for mode in bootstrap.active_venue.lighting_modes] == [
+        "chill",
+        "rave",
+        "stroby",
+    ]
+    assert {
+        (assignment.lighting_mode_key, assignment.fixture_type)
+        for assignment in bootstrap.active_venue.animation_assignments
+    } >= {
+        ("chill", "par"),
+        ("chill", "moving_head"),
+        ("rave", "par"),
+        ("rave", "moving_head"),
+        ("stroby", "par"),
+        ("stroby", "moving_head"),
+    }
     assert {scene_object.kind for scene_object in bootstrap.active_venue.scene_objects} == {
         "floor",
         "video_wall",
@@ -31,6 +47,39 @@ def test_seed_creates_demo_venue(venue_repository):
         "dj_cutout",
     }
     assert bootstrap.vj_preview is None
+
+
+def test_animation_assignment_crud(venue_repository):
+    active_snapshot = venue_repository.get_active_venue_snapshot()
+
+    created = venue_repository.create_animation_assignment(
+        active_snapshot.summary.id,
+        {
+            "lighting_mode_key": "chill",
+            "fixture_type": "par",
+            "animation_spec": {"type": "animation", "key": "Dimmer255"},
+        },
+    )
+    assignment = next(
+        a
+        for a in created.animation_assignments
+        if a.animation_spec.get("key") == "Dimmer255"
+    )
+    assert assignment.lighting_mode_key == "chill"
+
+    updated = venue_repository.update_animation_assignment(
+        active_snapshot.summary.id,
+        assignment.id,
+        {"animation_spec": {"type": "randomize", "options": [{"type": "animation", "key": "Dimmer0"}]}},
+    )
+    changed = next(a for a in updated.animation_assignments if a.id == assignment.id)
+    assert changed.animation_spec["type"] == "randomize"
+
+    deleted = venue_repository.delete_animation_assignment(
+        active_snapshot.summary.id,
+        assignment.id,
+    )
+    assert all(a.id != assignment.id for a in deleted.animation_assignments)
 
 
 def test_seed_is_idempotent(venue_repository):

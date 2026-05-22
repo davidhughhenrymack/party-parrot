@@ -107,6 +107,9 @@ class Director:
         self.state.events.on_mode_change += self.on_mode_change
         self.state.events.on_theme_change += lambda s: self.generate_color_scheme()
         self.state.events.on_venue_change += lambda s: self.setup_patch(reset_vj=False)
+        self.state.events.on_runtime_scene_change += (
+            lambda s: self.generate_interpreters()
+        )
 
     def setup_patch(self, reset_vj: bool = False):
         self._interpretation_blend = None
@@ -182,6 +185,7 @@ class Director:
                 self.state.mode,
                 incoming_fixtures[i],
                 args_by_bucket[i],
+                self.state.runtime_venue_snapshot,
             )
         self._interpretation_blend = InterpretationBlend(
             start_time=time.time(),
@@ -372,6 +376,7 @@ class Director:
                     self.state.mode,
                     group,
                     self._default_interpreter_args_for_bucket_index(idx),
+                    self.state.runtime_venue_snapshot,
                 )
                 for idx, group in enumerate(self.fixture_groups)
             ]

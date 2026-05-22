@@ -113,6 +113,88 @@ function rgbTripleToCss(rgb) {
   return `rgb(${r},${g},${b})`;
 }
 
+function animationSpecForKey(key) {
+  return { type: 'animation', key };
+}
+
+function summarizeAnimationSpec(spec) {
+  if (!spec || typeof spec !== 'object') {
+    return 'Animation';
+  }
+  if (spec.type === 'animation') {
+    if (spec.key === 'MoveNamedPosition' && spec.params?.position_name) {
+      return `Named Position: ${spec.params.position_name}`;
+    }
+    return spec.key || 'Animation';
+  }
+  if (spec.type === 'with_args') {
+    if (spec.key === 'MoveNamedPosition' && spec.params?.position_name) {
+      return `Named Position: ${spec.params.position_name}`;
+    }
+    return spec.name || spec.key || 'Animation';
+  }
+  if (spec.type === 'combo') {
+    return `Stack (${(spec.children || []).length})`;
+  }
+  if (spec.type === 'randomize') {
+    return `Randomize (${(spec.options || []).length})`;
+  }
+  if (spec.type === 'weighted_randomize') {
+    return `Weighted Randomize (${(spec.options || []).length})`;
+  }
+  if (spec.type === 'signal_switch') {
+    return `Signal Switch: ${summarizeAnimationSpec(spec.animation)}`;
+  }
+  if (spec.type === 'for_bulbs') {
+    return `For Bulbs (${(spec.children || []).length})`;
+  }
+  if (spec.type === 'legacy_mode') {
+    return `Legacy ${spec.mode}`;
+  }
+  return spec.type || 'Animation';
+}
+
+function animationCategoryForSpec(spec, registryEntryByKey) {
+  if (!spec || typeof spec !== 'object') {
+    return 'Animation';
+  }
+  if (spec.type === 'animation' || spec.type === 'with_args') {
+    return registryEntryByKey.get(spec.key)?.category || 'Animation';
+  }
+  if (spec.type === 'signal_switch') {
+    return animationCategoryForSpec(spec.animation, registryEntryByKey);
+  }
+  if (spec.type === 'randomize') {
+    const categories = new Set((spec.options || []).map((option) => animationCategoryForSpec(option, registryEntryByKey)));
+    return categories.size === 1 ? [...categories][0] : 'Stack';
+  }
+  if (spec.type === 'weighted_randomize') {
+    const categories = new Set((spec.options || []).map((option) => animationCategoryForSpec(option.animation, registryEntryByKey)));
+    return categories.size === 1 ? [...categories][0] : 'Stack';
+  }
+  if (spec.type === 'combo') {
+    return 'Stack';
+  }
+  return 'Animation';
+}
+
+function formatWeightPlaceholder(value) {
+  if (!Number.isFinite(value)) {
+    return '';
+  }
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+function isNamedPositionAnimationSpec(spec) {
+  return (
+    spec &&
+    typeof spec === 'object' &&
+    (spec.type === 'animation' || spec.type === 'with_args') &&
+    spec.key === 'MoveNamedPosition'
+  );
+}
+
 function clampDirectDmx(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) {
@@ -825,6 +907,468 @@ function NamedPositionsPanel({
   );
 }
 
+function AnimationEditorPanel({
+  venueSnapshot,
+  fixtureTypes,
+  animationRegistry,
+  selectedModeKey,
+  onSelectedModeKeyChange,
+  onCreateLightingMode,
+  onAddAssignment,
+  onPatchAssignment,
+  onDeleteAssignment,
+}) {
+  const modes = venueSnapshot?.lighting_modes || [];
+  const assignments = venueSnapshot?.animation_assignments || [];
+  const namedPositions = venueSnapshot?.named_positions || [];
+  const [customTargetDraft, setCustomTargetDraft] = useState({ groupName: '', fixtureType: '' });
+  const [customTargets, setCustomTargets] = useState([]);
+  const [addTargetModalOpen, setAddTargetModalOpen] = useState(false);
+  const [addModeModalOpen, setAddModeModalOpen] = useState(false);
+  const [newModeLabel, setNewModeLabel] = useState('');
+  const registryByCategory = useMemo(() => {
+    const groups = new Map();
+    for (const entry of animationRegistry?.animations || []) {
+      if (!groups.has(entry.category)) {
+        groups.set(entry.category, []);
+      }
+      groups.get(entry.category).push(entry);
+    }
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [animationRegistry]);
+  const registryEntryByKey = useMemo(
+    () => new Map((animationRegistry?.animations || []).map((entry) => [entry.key, entry])),
+    [animationRegistry],
+  );
+  const fixtureTypeLabelByKey = useMemo(
+    () => new Map(fixtureTypes.map((fixtureType) => [fixtureType.key, fixtureType.label])),
+    [fixtureTypes],
+  );
+  const groupNames = useMemo(
+    () => [...new Set((venueSnapshot?.fixtures || []).map((f) => f.group_name).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [venueSnapshot],
+  );
+  const venueFixtureTypes = useMemo(
+    () => [...new Set((venueSnapshot?.fixtures || []).map((f) => f.fixture_type).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [venueSnapshot],
+  );
+  const destinationGroups = useMemo(() => {
+    const fixtureTypeTargets = [
+      { key: 'all', label: 'All', fixture_group_name: null, fixture_type: null },
+      { key: 'moving_head', label: 'Movers', fixture_group_name: null, fixture_type: 'moving_head' },
+      { key: 'par', label: 'Pars', fixture_group_name: null, fixture_type: 'par' },
+    ];
+    const groupTargets = groupNames.map((groupName) => ({
+      key: `group:${groupName}`,
+      label: groupName,
+      fixture_group_name: groupName,
+      fixture_type: null,
+    }));
+    const definedTargetPairs = new Map();
+    for (const target of customTargets) {
+      definedTargetPairs.set(`${target.groupName}:${target.fixtureType}`, target);
+    }
+    for (const assignment of assignments) {
+      if (
+        assignment.lighting_mode_key === selectedModeKey &&
+        assignment.fixture_group_name &&
+        assignment.fixture_type
+      ) {
+        definedTargetPairs.set(`${assignment.fixture_group_name}:${assignment.fixture_type}`, {
+          groupName: assignment.fixture_group_name,
+          fixtureType: assignment.fixture_type,
+        });
+      }
+    }
+    const definedTargets = [...definedTargetPairs.values()]
+      .filter((target) => groupNames.includes(target.groupName) && venueFixtureTypes.includes(target.fixtureType))
+      .map((target) => ({
+        key: `custom:${target.groupName}:type:${target.fixtureType}`,
+        label: `${target.groupName} · ${fixtureTypeLabelByKey.get(target.fixtureType) || target.fixtureType}`,
+        fixture_group_name: target.groupName,
+        fixture_type: target.fixtureType,
+      }));
+    return [
+      { key: 'fixture-type', title: 'Fixture Type', targets: fixtureTypeTargets },
+      { key: 'group', title: 'Group', targets: groupTargets },
+      { key: 'defined', title: 'Defined Targets', targets: definedTargets },
+    ];
+  }, [assignments, customTargets, fixtureTypeLabelByKey, groupNames, selectedModeKey, venueFixtureTypes]);
+  const modeAssignments = assignments.filter((a) => a.lighting_mode_key === selectedModeKey);
+  const assignmentsForDestination = (destination) =>
+    modeAssignments.filter(
+      (a) =>
+        (a.fixture_group_name || null) === destination.fixture_group_name &&
+        (a.fixture_type || null) === destination.fixture_type,
+    );
+
+  function handleDragStart(event, entry) {
+    event.dataTransfer.setData(
+      'application/x-parrot-animation',
+      JSON.stringify(animationSpecForKey(entry.key)),
+    );
+    event.dataTransfer.effectAllowed = 'copy';
+  }
+
+  function handleDrop(event, destination) {
+    event.preventDefault();
+    const raw = event.dataTransfer.getData('application/x-parrot-animation');
+    if (!raw) {
+      return;
+    }
+    const spec = JSON.parse(raw);
+    if (isNamedPositionAnimationSpec(spec) && namedPositions[0]?.name) {
+      spec.params = { ...(spec.params || {}), position_name: namedPositions[0].name };
+    }
+    void onAddAssignment({
+      lighting_mode_key: selectedModeKey,
+      fixture_group_name: destination.fixture_group_name,
+      fixture_type: destination.fixture_type,
+      animation_spec: spec,
+    });
+  }
+
+  function handleWeightedOptionWeight(assignment, index, value) {
+    const numeric = Math.max(1, Math.floor(Number(value) || 1));
+    const nextOptions = (assignment.animation_spec.options || []).map((option, i) =>
+      i === index ? { ...option, weight: numeric } : option,
+    );
+    void onPatchAssignment(assignment.id, {
+      animation_spec: { ...assignment.animation_spec, options: nextOptions },
+    });
+  }
+
+  function handleAssignmentWeightPercent(assignment, value) {
+    const nextSpec = { ...assignment.animation_spec };
+    if (value === '') {
+      delete nextSpec.weight_percent;
+    } else {
+      nextSpec.weight_percent = Math.max(0, Math.min(100, Math.floor(Number(value) || 0)));
+    }
+    void onPatchAssignment(assignment.id, { animation_spec: nextSpec });
+  }
+
+  function handleNamedPositionAnimationPosition(assignment, positionName) {
+    void onPatchAssignment(assignment.id, {
+      animation_spec: {
+        ...assignment.animation_spec,
+        params: {
+          ...(assignment.animation_spec.params || {}),
+          position_name: positionName,
+        },
+      },
+    });
+  }
+
+  function handleAddCustomTarget() {
+    const groupName = customTargetDraft.groupName;
+    const fixtureType = customTargetDraft.fixtureType;
+    if (!groupName || !fixtureType) {
+      return;
+    }
+    const key = `${groupName}:${fixtureType}`;
+    if (customTargets.some((target) => `${target.groupName}:${target.fixtureType}` === key)) {
+      return;
+    }
+    setCustomTargets((targets) => [...targets, { groupName, fixtureType }]);
+    setCustomTargetDraft({ groupName: '', fixtureType: '' });
+    setAddTargetModalOpen(false);
+  }
+
+  async function handleAddLightingMode() {
+    const label = newModeLabel.trim();
+    if (!label) {
+      return;
+    }
+    const snapshot = await onCreateLightingMode({ label });
+    const createdMode = (snapshot?.lighting_modes || []).find((mode) => mode.label === label);
+    if (createdMode) {
+      onSelectedModeKeyChange(createdMode.key);
+    }
+    setNewModeLabel('');
+    setAddModeModalOpen(false);
+  }
+
+  function renderDestination(destination) {
+    const rows = assignmentsForDestination(destination);
+    const isEmpty = rows.length === 0;
+    const rowsByCategory = new Map();
+    for (const assignment of rows) {
+      const category = animationCategoryForSpec(assignment.animation_spec, registryEntryByKey);
+      if (!rowsByCategory.has(category)) {
+        rowsByCategory.set(category, []);
+      }
+      rowsByCategory.get(category).push(assignment);
+    }
+    const categoryRows = [...rowsByCategory.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    return (
+      <div
+        key={destination.key}
+        className={`animation-destination${isEmpty ? ' animation-destination-empty' : ''}`}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => handleDrop(event, destination)}
+      >
+        <div className="animation-destination-header">
+          <strong>{destination.label}</strong>
+        </div>
+        {isEmpty ? (
+          <p className="animation-empty-drop">Drop here</p>
+        ) : (
+          categoryRows.map(([category, assignmentsInCategory]) => {
+            const explicitTotal = assignmentsInCategory.reduce(
+              (total, assignment) =>
+                assignment.animation_spec?.weight_percent == null
+                  ? total
+                  : total + Number(assignment.animation_spec.weight_percent),
+              0,
+            );
+            const blankCount = assignmentsInCategory.filter(
+              (assignment) => assignment.animation_spec?.weight_percent == null,
+            ).length;
+            const blankPlaceholder =
+              blankCount > 0 ? formatWeightPlaceholder(Math.max(0, 100 - explicitTotal) / blankCount) : '';
+            return (
+              <div key={category} className="animation-assignment-category-group">
+                <div className="animation-assignment-category-heading">{category}</div>
+                {assignmentsInCategory.map((assignment) => (
+                  <div key={assignment.id} className="animation-assignment-row">
+                    <span className="animation-assignment-main">
+                      <span>{summarizeAnimationSpec(assignment.animation_spec)}</span>
+                    </span>
+                    <label className="animation-weight-percent">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={assignment.animation_spec?.weight_percent ?? ''}
+                        placeholder={assignment.animation_spec?.weight_percent == null ? blankPlaceholder : ''}
+                        onChange={(event) => handleAssignmentWeightPercent(assignment, event.target.value)}
+                      />
+                      <span>%</span>
+                    </label>
+                    <button type="button" className="small-button danger-button" onClick={() => onDeleteAssignment(assignment.id)}>
+                      Delete
+                    </button>
+                    {isNamedPositionAnimationSpec(assignment.animation_spec) ? (
+                      <label className="animation-named-position-row">
+                        <span>Position</span>
+                        <select
+                          value={assignment.animation_spec?.params?.position_name || ''}
+                          disabled={namedPositions.length === 0}
+                          onChange={(event) =>
+                            handleNamedPositionAnimationPosition(assignment, event.target.value)
+                          }
+                        >
+                          <option value="">
+                            {namedPositions.length === 0 ? 'No named positions' : 'Choose position'}
+                          </option>
+                          {namedPositions.map((position) => (
+                            <option key={position.id} value={position.name}>
+                              {position.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+                    {assignment.animation_spec?.type === 'weighted_randomize' ? (
+                      <div className="animation-weight-list">
+                        {(assignment.animation_spec.options || []).map((option, index) => (
+                          <label key={index} className="animation-weight-row">
+                            <span>{summarizeAnimationSpec(option.animation)}</span>
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={option.weight}
+                              onChange={(event) =>
+                                handleWeightedOptionWeight(assignment, index, event.target.value)
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            );
+          })
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="panel dense-panel animation-mode-panel">
+        <div className="dense-section-header">
+          <h3>Animation mode</h3>
+          <button
+            type="button"
+            className="small-button secondary-button dense-lights-add-icon"
+            aria-label="Add animation mode"
+            onClick={() => setAddModeModalOpen(true)}
+          >
+            +
+          </button>
+        </div>
+        <select
+          className="animation-mode-select"
+          value={selectedModeKey || modes[0]?.key || ''}
+          onChange={(event) => onSelectedModeKeyChange(event.target.value)}
+        >
+          {modes.map((mode) => (
+            <option key={mode.id} value={mode.key}>
+              {mode.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="animation-editor-workspace">
+        <div className="panel dense-panel animation-destinations-panel">
+          <div className="dense-section-header">
+            <h3>Destinations</h3>
+          </div>
+          {destinationGroups.map((group) => (
+            <div key={group.key} className="animation-target-group">
+              <div className="animation-target-group-header">
+                <div className="section-subtitle">{group.title}</div>
+                {group.key === 'defined' ? (
+                  <button
+                    type="button"
+                    className="small-button secondary-button animation-add-target-button"
+                    aria-label="Add selection target"
+                    onClick={() => setAddTargetModalOpen(true)}
+                  >
+                    +
+                  </button>
+                ) : null}
+              </div>
+              {group.targets.length > 0 ? (
+                group.targets.map((destination) => renderDestination(destination))
+              ) : (
+                <p className="animation-empty-group">No targets yet.</p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="panel dense-panel animation-palette-panel">
+          <div className="dense-section-header">
+            <h3>Animations</h3>
+          </div>
+          {registryByCategory.map(([category, entries]) => (
+            <div key={category} className="animation-palette-category">
+              <div className="section-subtitle">{category}</div>
+              <div className="animation-palette-grid">
+                {entries.map((entry) => (
+                  <button
+                    key={entry.key}
+                    type="button"
+                    className="animation-palette-chip"
+                    draggable
+                    onDragStart={(event) => handleDragStart(event, entry)}
+                    title="Drag onto a destination"
+                  >
+                    {entry.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <Modal
+        open={addModeModalOpen}
+        title="Add Animation Mode"
+        onClose={() => setAddModeModalOpen(false)}
+      >
+        <form
+          className="modal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleAddLightingMode();
+          }}
+        >
+          <label>
+            Mode name
+            <input
+              value={newModeLabel}
+              onChange={(event) => setNewModeLabel(event.target.value)}
+              placeholder="Afterparty"
+              autoFocus
+            />
+          </label>
+          <div className="modal-actions">
+            <button type="button" className="secondary-button" onClick={() => setAddModeModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" disabled={!newModeLabel.trim()}>
+              Add Mode
+            </button>
+          </div>
+        </form>
+      </Modal>
+      <Modal
+        open={addTargetModalOpen}
+        title="Add Selection Target"
+        onClose={() => setAddTargetModalOpen(false)}
+      >
+        <form
+          className="modal-form animation-target-modal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleAddCustomTarget();
+          }}
+        >
+          <label>
+            Group
+            <select
+              value={customTargetDraft.groupName}
+              onChange={(event) =>
+                setCustomTargetDraft((draft) => ({ ...draft, groupName: event.target.value }))
+              }
+            >
+              <option value="">Choose a group</option>
+              {groupNames.map((groupName) => (
+                <option key={groupName} value={groupName}>
+                  {groupName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Fixture type
+            <select
+              value={customTargetDraft.fixtureType}
+              onChange={(event) =>
+                setCustomTargetDraft((draft) => ({ ...draft, fixtureType: event.target.value }))
+              }
+            >
+              <option value="">Choose a fixture type</option>
+              {venueFixtureTypes.map((fixtureType) => (
+                <option key={fixtureType} value={fixtureType}>
+                  {fixtureTypeLabelByKey.get(fixtureType) || fixtureType}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="modal-actions">
+            <button type="button" className="secondary-button" onClick={() => setAddTargetModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" disabled={!customTargetDraft.groupName || !customTargetDraft.fixtureType}>
+              Add Target
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </>
+  );
+}
+
 export default function DenseVenueEditorPage({ venueId }) {
   const viewportRef = useRef(null);
   const sceneControllerRef = useRef(null);
@@ -848,6 +1392,9 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [venueSummaries, setVenueSummaries] = useState([]);
   const [venueSnapshot, setVenueSnapshot] = useState(null);
   const [fixtureTypes, setFixtureTypes] = useState([]);
+  const [animationRegistry, setAnimationRegistry] = useState({ animations: [], combinators: [] });
+  const [editorMode, setEditorMode] = useState('fixture');
+  const [selectedAnimationModeKey, setSelectedAnimationModeKey] = useState('chill');
   const [supportedUniverses, setSupportedUniverses] = useState([]);
   const [currentView, setCurrentView] = useState('perspective');
   const [interactionMode, setInteractionMode] = useState('rotate');
@@ -960,8 +1507,20 @@ export default function DenseVenueEditorPage({ venueId }) {
     return null;
   }, [selectedKind, venueSnapshot]);
 
+  useEffect(() => {
+    const modes = venueSnapshot?.lighting_modes || [];
+    if (modes.length === 0) {
+      return;
+    }
+    if (!modes.some((mode) => mode.key === selectedAnimationModeKey)) {
+      setSelectedAnimationModeKey(modes[0].key);
+    }
+  }, [selectedAnimationModeKey, venueSnapshot]);
+
   const selectionInspectorVisible =
-    Boolean(selectedKind) && !(selectedKind === 'fixture' && selectedFixtureIds.length === 0);
+    editorMode === 'fixture' &&
+    Boolean(selectedKind) &&
+    !(selectedKind === 'fixture' && selectedFixtureIds.length === 0);
 
   const selectionSidebarTitle = useMemo(() => {
     if (!selectedKind) {
@@ -1166,6 +1725,12 @@ export default function DenseVenueEditorPage({ venueId }) {
         ...current,
         universe: config.supported_universes[0]?.value || 'default',
       }));
+
+      const nextAnimationRegistry = await fetchJson('/api/animation-registry');
+      if (disposed) {
+        return;
+      }
+      setAnimationRegistry(nextAnimationRegistry);
 
       const nextBootstrap = await fetchJson('/api/bootstrap');
       if (disposed) {
@@ -2202,6 +2767,47 @@ export default function DenseVenueEditorPage({ venueId }) {
     setVenueSnapshot(snap);
   }
 
+  async function handleAddAnimationAssignment(data) {
+    if (!venueSnapshot) {
+      return;
+    }
+    const snap = await apiCreateAnimationAssignment(venueSnapshot.summary.id, data);
+    setVenueSnapshot(snap);
+  }
+
+  async function handleCreateLightingMode(data) {
+    if (!venueSnapshot) {
+      return null;
+    }
+    const snap = await apiCreateLightingMode(venueSnapshot.summary.id, data);
+    setVenueSnapshot(snap);
+    const nextModes = (snap.lighting_modes || []).map((mode) => mode.key);
+    setRemoteConfig((current) => ({
+      ...current,
+      available_modes: [
+        ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
+        ...nextModes,
+      ],
+    }));
+    return snap;
+  }
+
+  async function handlePatchAnimationAssignment(assignmentId, data) {
+    if (!venueSnapshot) {
+      return;
+    }
+    const snap = await apiPatchAnimationAssignment(venueSnapshot.summary.id, assignmentId, data);
+    setVenueSnapshot(snap);
+  }
+
+  async function handleDeleteAnimationAssignment(assignmentId) {
+    if (!venueSnapshot) {
+      return;
+    }
+    const snap = await apiDeleteAnimationAssignment(venueSnapshot.summary.id, assignmentId);
+    setVenueSnapshot(snap);
+  }
+
   async function apiActivateVenue(targetVenueId) {
     await fetchJson(`/api/venues/${targetVenueId}/activate`, { method: 'POST' });
   }
@@ -2294,12 +2900,42 @@ export default function DenseVenueEditorPage({ venueId }) {
     });
   }
 
+  async function apiCreateAnimationAssignment(targetVenueId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/animations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiCreateLightingMode(targetVenueId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/lighting-modes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiPatchAnimationAssignment(targetVenueId, assignmentId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/animations/${assignmentId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiDeleteAnimationAssignment(targetVenueId, assignmentId) {
+    return fetchJson(`/api/venues/${targetVenueId}/animations/${assignmentId}`, {
+      method: 'DELETE',
+    });
+  }
+
   return (
     <>
       <div
-        className={`dense-editor-shell${selectionInspectorVisible ? ' dense-editor-shell-inspector-open' : ''}`}
+        className={`dense-editor-shell${selectionInspectorVisible ? ' dense-editor-shell-inspector-open' : ''}${editorMode === 'animation' ? ' dense-editor-shell-animation' : ''}`}
       >
-        <aside className="dense-sidebar">
+        <aside className={`dense-sidebar${editorMode === 'animation' ? ' dense-sidebar-animation' : ''}`}>
           <div className="panel dense-header-panel">
             <div className="dense-header-top" ref={editorMenuRef}>
               <div className="dense-header-leading">
@@ -2319,13 +2955,17 @@ export default function DenseVenueEditorPage({ venueId }) {
                         : 'This venue is the active runtime venue'
                     }
                   >
-                    {liveLightingPulse ? (
-                      <span className="dense-live-pulse-dot" aria-hidden />
-                    ) : null}
-                    <span className="dense-venue-active-label">ACTIVE</span>
+                    <span className={`dense-live-pulse-dot${liveLightingPulse ? ' is-pulsing' : ''}`} aria-hidden />
                   </span>
                 ) : null}
               </div>
+              <textarea
+                id="venue-name-input"
+                className="venue-name-input"
+                rows="1"
+                value={venueNameDraft}
+                onChange={(event) => setVenueNameDraft(event.target.value)}
+              />
               <div className="dense-editor-menu-wrap">
                 <button
                   type="button"
@@ -2437,17 +3077,42 @@ export default function DenseVenueEditorPage({ venueId }) {
                 ) : null}
               </div>
             </div>
-            <div className="dense-venue-name-row">
-              <textarea
-                id="venue-name-input"
-                className="venue-name-input"
-                rows="1"
-                value={venueNameDraft}
-                onChange={(event) => setVenueNameDraft(event.target.value)}
-              />
+            <div className="editor-mode-toggle" role="radiogroup" aria-label="Editor mode">
+              <button
+                type="button"
+                className={`view-chip${editorMode === 'fixture' ? ' active' : ''}`}
+                role="radio"
+                aria-checked={editorMode === 'fixture'}
+                onClick={() => setEditorMode('fixture')}
+              >
+                Fixtures
+              </button>
+              <button
+                type="button"
+                className={`view-chip${editorMode === 'animation' ? ' active' : ''}`}
+                role="radio"
+                aria-checked={editorMode === 'animation'}
+                onClick={() => setEditorMode('animation')}
+              >
+                Animations
+              </button>
             </div>
           </div>
 
+          {editorMode === 'animation' ? (
+            <AnimationEditorPanel
+              venueSnapshot={venueSnapshot}
+              fixtureTypes={fixtureTypes}
+              animationRegistry={animationRegistry}
+              selectedModeKey={selectedAnimationModeKey}
+              onSelectedModeKeyChange={setSelectedAnimationModeKey}
+              onCreateLightingMode={handleCreateLightingMode}
+              onAddAssignment={handleAddAnimationAssignment}
+              onPatchAssignment={handlePatchAnimationAssignment}
+              onDeleteAssignment={handleDeleteAnimationAssignment}
+            />
+          ) : (
+            <>
           <div className="panel dense-panel">
             <div className="dense-section-header dense-lights-header">
               <h3>Lights</h3>
@@ -2474,12 +3139,19 @@ export default function DenseVenueEditorPage({ venueId }) {
                       key={fixture.id}
                       type="button"
                       className={`fixture-row dense-fixture-row${selectedFixtureIds.includes(fixture.id) ? ' active-choice' : ''}`}
+                      aria-label={selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? `${fixture.universe}:${fixture.address}` : undefined}
                       onMouseDown={(event) => {
                         if (event.shiftKey || event.metaKey || event.ctrlKey) {
                           event.preventDefault();
                         }
                       }}
-                      onClick={(event) => handleFixtureListRowClick(fixture, event)}
+                      onClick={(event) => {
+                        if (selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id) {
+                          setAddressModalOpen(true);
+                          return;
+                        }
+                        handleFixtureListRowClick(fixture, event);
+                      }}
                     >
                       <span className="dense-fixture-main">
                         <span className="dense-fixture-name">{fixture.name || fixture.fixture_type}</span>
@@ -2523,12 +3195,19 @@ export default function DenseVenueEditorPage({ venueId }) {
                             key={fixture.id}
                             type="button"
                             className={`fixture-row dense-fixture-row dense-fixture-row-nested${selectedFixtureIds.includes(fixture.id) ? ' active-choice' : ''}`}
+                            aria-label={selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id ? `${fixture.universe}:${fixture.address}` : undefined}
                             onMouseDown={(event) => {
                               if (event.shiftKey || event.metaKey || event.ctrlKey) {
                                 event.preventDefault();
                               }
                             }}
-                            onClick={(event) => handleFixtureListRowClick(fixture, event)}
+                            onClick={(event) => {
+                              if (selectedFixtureIds.length === 1 && selectedFixtureId === fixture.id) {
+                                setAddressModalOpen(true);
+                                return;
+                              }
+                              handleFixtureListRowClick(fixture, event);
+                            }}
                           >
                             <span className="dense-fixture-main">
                               <span className="dense-fixture-name">{fixture.name || fixture.fixture_type}</span>
@@ -2652,6 +3331,8 @@ export default function DenseVenueEditorPage({ venueId }) {
               </label>
             </div>
           </div>
+            </>
+          )}
         </aside>
 
         <main className="dense-viewport-shell">
