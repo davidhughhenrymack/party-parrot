@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from parrot.launch_stack import _active_venue_editor_url
+from parrot.launch_stack import _active_venue_editor_url, _run_runtime_command
 
 
 def _mock_response(json_payload, ok=True):
@@ -54,3 +54,39 @@ def test_active_venue_editor_url_returns_base_on_non_ok_response():
     with patch("parrot.launch_stack.requests.get", return_value=response):
         url = _active_venue_editor_url("http://127.0.0.1:4041")
     assert url == "http://127.0.0.1:4041"
+
+
+def test_run_runtime_command_terminates_child_on_interrupt():
+    process = MagicMock()
+    process.wait.side_effect = [KeyboardInterrupt, 0]
+    process.poll.return_value = None
+
+    with patch("parrot.launch_stack.subprocess.Popen", return_value=process):
+        try:
+            _run_runtime_command(["python", "-m", "parrot.main"])
+        except KeyboardInterrupt:
+            pass
+
+    process.terminate.assert_called_once_with()
+    process.kill.assert_not_called()
+
+
+def test_run_runtime_command_kills_child_when_terminate_hangs():
+    process = MagicMock()
+    process.wait.side_effect = [
+        KeyboardInterrupt,
+        TimeoutError,
+    ]
+    process.poll.return_value = None
+
+    with (
+        patch("parrot.launch_stack.subprocess.Popen", return_value=process),
+        patch("parrot.launch_stack.subprocess.TimeoutExpired", TimeoutError),
+    ):
+        try:
+            _run_runtime_command(["python", "-m", "parrot.main"])
+        except KeyboardInterrupt:
+            pass
+
+    process.terminate.assert_called_once_with()
+    process.kill.assert_called_once_with()

@@ -65,6 +65,24 @@ def service_is_healthy(base_url: str) -> bool:
         return False
 
 
+def _terminate_process(process: subprocess.Popen) -> None:
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+
+
+def _run_runtime_command(runtime_command: list[str]) -> int:
+    runtime_process = subprocess.Popen(runtime_command)
+    try:
+        return int(runtime_process.wait())
+    finally:
+        _terminate_process(runtime_process)
+
+
 def main() -> int:
     runtime_args = list(sys.argv[1:])
     user_disabled_web = "--no-web" in runtime_args
@@ -104,15 +122,10 @@ def main() -> int:
         _open_venue_service_when_ready(service_url)
 
     try:
-        completed = subprocess.call(runtime_command)
-        return int(completed)
+        return _run_runtime_command(runtime_command)
     finally:
         if service_process is not None:
-            service_process.terminate()
-            try:
-                service_process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                service_process.kill()
+            _terminate_process(service_process)
 
 
 if __name__ == "__main__":
