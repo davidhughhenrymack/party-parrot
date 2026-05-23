@@ -374,6 +374,18 @@ class TestStabPulse:
             # StabPulse should have decayed more (lower value)
             assert stab_dim < gentle_dim
 
+    def test_stab_pulse_randomly_selects_signal_on_init(self):
+        with patch(
+            "parrot.interpreters.dimmer.random.choice",
+            return_value=FrameSignal.freq_high,
+        ) as mock_choice:
+            interpreter = StabPulse(self.group, self.args)
+
+        mock_choice.assert_called_once_with(
+            [FrameSignal.freq_high, FrameSignal.freq_low, FrameSignal.freq_all]
+        )
+        assert interpreter.signal == FrameSignal.freq_high
+
 
 class TestLightingStab:
     def setup_method(self):

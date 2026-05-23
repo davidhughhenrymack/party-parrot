@@ -16,6 +16,7 @@ from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
 from parrot.fixtures.led_par import ParRGB
 from parrot.interpreters.dimmer import SequenceDimmers
+from parrot.interpreters.signal import SignalSwitchInterpreter
 from parrot_cloud.domain import (
     LightingModeSpec,
     VenueAnimationAssignmentSpec,
@@ -100,7 +101,8 @@ def test_database_assignments_instantiate_once_for_whole_matching_group():
 
     interp = get_interpreter(Mode.chill, pars, InterpreterArgs(True), snapshot)
 
-    assert isinstance(interp, SequenceDimmers)
+    assert isinstance(interp, SignalSwitchInterpreter)
+    assert isinstance(interp.interp_std, SequenceDimmers)
     assert interp.group == pars
 
 
@@ -153,7 +155,8 @@ def test_database_assignments_support_modes_not_in_python_enum():
 
     interp = get_interpreter("stage_focus", pars, InterpreterArgs(True), snapshot)
 
-    assert isinstance(interp, SequenceDimmers)
+    assert isinstance(interp, SignalSwitchInterpreter)
+    assert isinstance(interp.interp_std, SequenceDimmers)
     assert interp.group == pars
 
 
@@ -245,6 +248,12 @@ def test_registered_interpreters_do_not_require_non_core_constructor_args():
             in {inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY}
         ]
         assert required == [], f"{key} requires non-default args: {required}"
+
+
+def test_stab_pulse_registry_does_not_expose_signal_parameter():
+    assert [parameter.key for parameter in REGISTRY["StabPulse"].parameters] == [
+        "trigger_level"
+    ]
 
 
 def test_build_category_combo_randomizes_within_each_animation_category():

@@ -214,11 +214,13 @@ class StabPulse(InterpreterBase[T]):
         self,
         group: list[T],
         args: InterpreterArgs,
-        signal=FrameSignal.freq_all,
+        signal: object | None = None,
         trigger_level=0.2,
     ):
         super().__init__(group, args)
-        self.signal = signal
+        self.signal = random.choice(
+            [FrameSignal.freq_high, FrameSignal.freq_low, FrameSignal.freq_all]
+        )
         self.on = False
         self.memory = [0] * len(self.group)
         self.trigger_level = trigger_level

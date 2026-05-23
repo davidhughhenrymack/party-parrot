@@ -1,8 +1,12 @@
 from parrot.director.color_schemes import (
     PRIDE_MIN_HUE_DISTANCE,
     generate_pride_scheme,
-    scheme_berlin,
+    scheme_barbie,
+    scheme_blue,
     scheme_pride,
+    scheme_purple,
+    scheme_red,
+    scheme_uv,
 )
 from parrot.utils.colour import Color
 
@@ -50,20 +54,20 @@ def test_scheme_pride_length_matches_other_themes():
     assert len(scheme_pride) == 10
 
 
-def test_scheme_berlin_length_matches_other_themes():
-    assert len(scheme_berlin) == 10
+def test_solid_color_schemes_are_single_color():
+    assert _scheme_hexes(scheme_red[0]) == [Color("red").hex_l] * 3
+    assert _scheme_hexes(scheme_blue[0]) == [Color("blue").hex_l] * 3
+    assert _scheme_hexes(scheme_purple[0]) == [Color("purple").hex_l] * 3
+    assert _scheme_hexes(scheme_uv[0]) == [Color("#4B0082").hex_l] * 3
 
 
-def test_scheme_berlin_is_monochromatic():
-    """Each Berlin option uses at most one non-white color (repeats + white ok)."""
-    white_hex = Color("white").hex_l.lower()
+def test_scheme_barbie_is_magenta_lavender_magenta():
+    assert _scheme_hexes(scheme_barbie[0]) == [
+        Color("magenta").hex_l,
+        Color("#D8B4F0").hex_l,
+        Color("magenta").hex_l,
+    ]
 
-    def non_white_hexes(scheme):
-        return {
-            c.hex_l.lower()
-            for c in (scheme.fg, scheme.bg, scheme.bg_contrast)
-            if c.hex_l.lower() != white_hex
-        }
 
-    for s in scheme_berlin:
-        assert len(non_white_hexes(s)) <= 1
+def _scheme_hexes(scheme):
+    return [scheme.fg.hex_l, scheme.bg.hex_l, scheme.bg_contrast.hex_l]

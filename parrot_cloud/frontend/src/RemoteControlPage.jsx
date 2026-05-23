@@ -373,13 +373,34 @@ function orderRemoteLightingModes(modes) {
 
 function RemoteEffectButton({ effect, label }) {
   const downAtRef = useRef(0);
+  const pressedRef = useRef(false);
+
+  function releaseEffect(event) {
+    event.preventDefault();
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!pressedRef.current) {
+      return;
+    }
+    pressedRef.current = false;
+    const dt = performance.now() - downAtRef.current;
+    if (effect !== 'strobe' && dt < REMOTE_EFFECT_TAP_MS) {
+      void postJson('/api/effect', { effect });
+      return;
+    }
+    void postJson('/api/effect', { effect, value: 0 });
+  }
 
   return (
     <button
       type="button"
       className="remote-effect-button"
-      style={{ touchAction: 'manipulation' }}
+      onContextMenu={(e) => e.preventDefault()}
+      onSelectStart={(e) => e.preventDefault()}
       onPointerDown={(e) => {
+        e.preventDefault();
+        pressedRef.current = true;
         try {
           e.currentTarget.setPointerCapture(e.pointerId);
         } catch {
@@ -388,22 +409,20 @@ function RemoteEffectButton({ effect, label }) {
         downAtRef.current = performance.now();
         void postJson('/api/effect', { effect, value: 1 });
       }}
-      onPointerUp={(e) => {
+      onPointerUp={releaseEffect}
+      onPointerCancel={(e) => {
+        e.preventDefault();
         if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
           e.currentTarget.releasePointerCapture(e.pointerId);
         }
-        const dt = performance.now() - downAtRef.current;
-        if (dt < REMOTE_EFFECT_TAP_MS) {
-          void postJson('/api/effect', { effect });
-        } else {
+        pressedRef.current = false;
+        void postJson('/api/effect', { effect, value: 0 });
+      }}
+      onBlur={() => {
+        if (pressedRef.current) {
+          pressedRef.current = false;
           void postJson('/api/effect', { effect, value: 0 });
         }
-      }}
-      onPointerCancel={(e) => {
-        if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
-          e.currentTarget.releasePointerCapture(e.pointerId);
-        }
-        void postJson('/api/effect', { effect, value: 0 });
       }}
     >
       {label}

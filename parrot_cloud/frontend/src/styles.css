@@ -470,6 +470,10 @@ label {
   background: linear-gradient(180deg, #1f6feb, #1d4ed8);
   border: 1px solid #1d4ed8;
   color: #f0f6fc;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .remote-effect-button:active {

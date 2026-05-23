@@ -28,6 +28,7 @@ from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.interpreters.dimmer import Dimmer0
 from parrot.interpreters.combo import combo
 from parrot.interpreters.randomize import randomize, weighted_randomize
+from parrot.interpreters.signal import signal_switch
 from parrot.director.animation_registry import REGISTRY, build_interpreter_factory
 from parrot_cloud.domain import VenueAnimationAssignmentSpec, VenueSnapshot
 
@@ -416,7 +417,8 @@ def get_interpreter(
             continue
         matched_ids = {id(f) for f in matched}
         remaining = [f for f in remaining if id(f) not in matched_ids]
-        children.append(_build_category_combo(scoped_assignments)(matched, args))
+        group_factory = signal_switch(_build_category_combo(scoped_assignments))
+        children.append(group_factory(matched, args))
     if remaining:
         children.append(Dimmer0(remaining, args))
     if not children:

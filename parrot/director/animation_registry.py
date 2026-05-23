@@ -235,10 +235,7 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Stab Pulse",
         "Dimmer",
         StabPulse,
-        (
-            _param("signal", "Signal", "signal", FrameSignal.freq_all.name),
-            _param("trigger_level", "Trigger", "number", 0.2),
-        ),
+        (_param("trigger_level", "Trigger", "number", 0.2),),
     ),
     "Twinkle": AnimationRegistryEntry("Twinkle", "Twinkle", "Dimmer", Twinkle),
     "SlowDecay": AnimationRegistryEntry(

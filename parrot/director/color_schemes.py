@@ -63,7 +63,7 @@ def _hue_distance(a: Color, b: Color) -> float:
 
 def _hues_are_spaced(colors: list[Color]) -> bool:
     for i, color in enumerate(colors):
-        for other in colors[i + 1:]:
+        for other in colors[i + 1 :]:
             if _hue_distance(color, other) < PRIDE_MIN_HUE_DISTANCE:
                 return False
     return True
@@ -79,21 +79,24 @@ def _sample_pride_color_names() -> list[str]:
 
 scheme_pride = [generate_pride_scheme() for _ in range(10)]
 
-# Berlin / techno club palette: each scheme uses at most one chromatic hue plus
-# white (repeats of that hue or white in fg / bg / bg_contrast) — see
-# `test_scheme_berlin_is_monochromatic`. Length matches `scheme_pride` so the
-# director can rotate between themes without changing scheme-index math.
-scheme_berlin = [
-    ColorScheme(Color("white"), Color("red"), Color("red")),
+scheme_red = [
     ColorScheme(Color("red"), Color("red"), Color("red")),
-    ColorScheme(Color("white"), Color("blue"), Color("blue")),
+]
+
+scheme_blue = [
     ColorScheme(Color("blue"), Color("blue"), Color("blue")),
-    ColorScheme(Color("white"), Color("purple"), Color("purple")),
+]
+
+scheme_purple = [
     ColorScheme(Color("purple"), Color("purple"), Color("purple")),
-    ColorScheme(Color("white"), Color("magenta"), Color("magenta")),
-    ColorScheme(Color("magenta"), Color("magenta"), Color("magenta")),
-    ColorScheme(Color("white"), Color("white"), Color("red")),
-    ColorScheme(Color("purple"), Color("white"), Color("purple")),
+]
+
+scheme_uv = [
+    ColorScheme(Color("#4B0082"), Color("#4B0082"), Color("#4B0082")),
+]
+
+scheme_barbie = [
+    ColorScheme(Color("magenta"), Color("#D8B4F0"), Color("#4B0082")),
 ]
 
 scheme_halloween = [
