@@ -207,20 +207,20 @@ def test_rh1_startup_sequence_holds_blackout_macros_on_control_channel():
 
     base = _time.time()
     with patch("parrot.fixtures.chauvet.mover_base.time.time") as t:
-        # First render: enters phase 0 — lamp on (200–209).
+        # First render: enters phase 0 — lamp on (130–139).
         t.return_value = base
         m.render(dmx)
-        assert 200 <= m.values[ctrl] <= 209
+        assert 130 <= m.values[ctrl] <= 139
 
-        # After the 1 s lamp-on hold, step into color-wheel blackout (100–109).
+        # After the 1 s lamp-on hold, step into color-wheel blackout (090–099).
         t.return_value = base + 1.1
         m.render(dmx)
-        assert 100 <= m.values[ctrl] <= 109
+        assert 90 <= m.values[ctrl] <= 99
 
         # Advance virtual time past the color-wheel hold to step into gobo blackout.
         t.return_value = base + 4.2
         m.render(dmx)
-        assert 120 <= m.values[ctrl] <= 129  # gobo-wheel blackout band
+        assert 110 <= m.values[ctrl] <= 119  # gobo-wheel blackout band
 
         # After both holds expire, control is parked at 0 (no function).
         t.return_value = base + 7.3
@@ -246,7 +246,7 @@ def test_rh1_startup_sequence_reasserts_control_hold_to_dmx():
         m.render(dmx)
         dmx.set_channel.assert_any_call(
             control_channel,
-            105,
+            95,
             universe=m.universe,
         )
 
@@ -255,9 +255,9 @@ def test_rh1_startup_sequence_reasserts_control_hold_to_dmx():
         t.return_value = base + 2.0
         m.render(dmx)
 
-        assert m.values[ctrl] == 105
+        assert m.values[ctrl] == 95
         dmx.set_channel.assert_any_call(
             control_channel,
-            105,
+            95,
             universe=m.universe,
         )

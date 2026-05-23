@@ -8,10 +8,10 @@ adds Fine Dimmer, Fine Focus, Fine Zoom, and two Movement-Macro channels
 between the 20CH channels — every other slot keeps the same role.
 
 CH 20 (Control) blackout macros — used by the startup hold sequence below:
-    100–109 Blackout while color wheel moving (3 sec hold)
-    120–129 Blackout while gobo wheels moving (3 sec hold)
-    200–209 Lamp on
-    240–247 Lamp off
+    090–099 Blackout while color wheel moving (3 sec hold)
+    110–119 Blackout while gobo wheels moving (3 sec hold)
+    130–139 Lamp on
+    230–239 Lamp off
 """
 
 from __future__ import annotations
@@ -111,9 +111,9 @@ STATIC_GOBO_WHEEL: list[GoboWheelEntry] = [
 # CH 20 Control — startup macros that strike the lamp and latch the fixture
 # into "blackout while wheel is moving" for both wheels. Hold each code long
 # enough for the fixture to latch it, then park control at 0 ("No function").
-CONTROL_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX = 105  # 100–109 band
-CONTROL_BLACKOUT_ON_GOBO_WHEEL_MOVE_DMX = 125  # 120–129 band
-CONTROL_LAMP_ON_DMX = 205  # 200–209 Lamp on
+CONTROL_BLACKOUT_ON_COLOR_WHEEL_MOVE_DMX = 95  # 090–099 band
+CONTROL_BLACKOUT_ON_GOBO_WHEEL_MOVE_DMX = 115  # 110–119 band
+CONTROL_LAMP_ON_DMX = 135  # 130–139 Lamp on
 
 STARTUP_CONTROL_HOLD_SEQUENCE: tuple[tuple[int, float], ...] = (
     (CONTROL_LAMP_ON_DMX, 1.0),

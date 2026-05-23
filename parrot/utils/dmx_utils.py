@@ -2,7 +2,6 @@ from DMXEnttecPro import Controller
 import math
 import os
 import enum
-import serial.tools.list_ports
 from serial.serialutil import SerialException
 
 from beartype import beartype
@@ -190,7 +189,7 @@ artnet_config = {
 @beartype
 def get_entec_controller():
     """Get Entec controller or mock if not available"""
-    if os.environ.get("MOCK_DMX", False) != False:
+    if os.environ.get("MOCK_DMX", False):
         return MockDmxController()
 
     # Try to find the Entec port
