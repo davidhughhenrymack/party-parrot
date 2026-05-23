@@ -7,3 +7,4 @@ test_output/
 parrot_cloud.db-wal
 parrot_cloud.db-shm
 parrot_cloud.db-journal
+.cursor/debug-*.log
