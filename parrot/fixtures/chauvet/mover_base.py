@@ -238,5 +238,9 @@ class ChauvetMoverBase(MovingHead):
             else:
                 self._startup_phase_t0 = now
                 self.set(channel, seq[self._startup_step][0])
+        else:
+            # Reassert every frame so the fixture sees a continuous hold even if
+            # another path touched the values array between renders.
+            self.set(channel, seq[self._startup_step][0])
 
         super().render(dmx)

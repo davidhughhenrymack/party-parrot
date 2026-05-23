@@ -47,9 +47,7 @@ def _interpretation_blend_seconds_for_mode(mode, venue_snapshot=None) -> float:
         for lighting_mode in venue_snapshot.lighting_modes:
             if lighting_mode.key == key:
                 return max(float(lighting_mode.entry_seconds), 0.05)
-    return MODE_INTERPRETATION_BLEND_SECONDS.get(
-        key, INTERPRETATION_BLEND_SECONDS
-    )
+    return MODE_INTERPRETATION_BLEND_SECONDS.get(key, INTERPRETATION_BLEND_SECONDS)
 
 
 def _flatten_runtime_fixtures(top_level) -> list[FixtureBase]:
@@ -95,7 +93,9 @@ class Director:
         self,
         state: State,
         vj_director=None,
-        interpretation_tree_publisher: Callable[[dict[str, object]], None] | None = None,
+        interpretation_tree_publisher: (
+            Callable[[dict[str, object]], None] | None
+        ) = None,
     ):
         self.scheme = LerpAnimator(random.choice(color_schemes), 4)
         self.last_shift_time = time.time()
@@ -186,7 +186,9 @@ class Director:
         self,
         bucket_indices: list[int],
         args_by_bucket: dict[int, InterpreterArgs],
+        target_mode=None,
     ) -> None:
+        mode = self.state.mode if target_mode is None else target_mode
         incoming_interpreters: dict[int, InterpreterBase] = {}
         incoming_fixtures: dict[int, list[FixtureBase]] = {}
         lerp_fixtures: dict[int, list[FixtureBase]] = {}
@@ -195,7 +197,7 @@ class Director:
             incoming_fixtures[i] = [f.transition_clone() for f in group]
             lerp_fixtures[i] = [f.transition_clone() for f in group]
             incoming_interpreters[i] = get_interpreter(
-                self.state.mode,
+                mode,
                 incoming_fixtures[i],
                 args_by_bucket[i],
                 self.state.runtime_venue_snapshot,
@@ -203,7 +205,7 @@ class Director:
         self._interpretation_blend = InterpretationBlend(
             start_time=time.time(),
             duration_seconds=_interpretation_blend_seconds_for_mode(
-                self.state.mode,
+                mode,
                 self.state.runtime_venue_snapshot,
             ),
             bucket_indices=frozenset(bucket_indices),
@@ -380,7 +382,9 @@ class Director:
                 sections.append((name, rows))
         return sections
 
-    def structured_lighting_tree(self, mode_name: str | None = None) -> dict[str, object]:
+    def structured_lighting_tree(
+        self, mode_name: str | None = None
+    ) -> dict[str, object]:
         mode = mode_name or mode_key(self.state.mode)
         root_children: list[dict[str, object]] = []
         for group_name, rows in self._lighting_tree_sections():
@@ -416,15 +420,18 @@ class Director:
         if self._interpretation_tree_publisher is None:
             return
         try:
-            self._interpretation_tree_publisher(self.structured_lighting_tree(mode_name))
+            self._interpretation_tree_publisher(
+                self.structured_lighting_tree(mode_name)
+            )
         except Exception:
             pass
 
-    def generate_interpreters(self):
+    def generate_interpreters(self, target_mode=None):
         """Generate interpreters for lighting only (does not affect VJ)"""
         if self._interpretation_blend is not None:
             self._pending_regenerate_interpreters = True
             return
+        mode = self.state.mode if target_mode is None else target_mode
         n = len(self.fixture_groups)
         if n == 0:
             self.interpreters = []
@@ -441,11 +448,11 @@ class Director:
                 idx: self._default_interpreter_args_for_bucket_index(idx)
                 for idx in range(n)
             }
-            self._start_interpretation_blend(list(range(n)), args_by_bucket)
+            self._start_interpretation_blend(list(range(n)), args_by_bucket, mode)
         else:
             self.interpreters = [
                 get_interpreter(
-                    self.state.mode,
+                    mode,
                     group,
                     self._default_interpreter_args_for_bucket_index(idx),
                     self.state.runtime_venue_snapshot,
@@ -609,6 +616,6 @@ class Director:
         key = mode_key(mode)
         print(f"mode changed to: {key}")
         # Regenerate lighting interpreters only (VJ is independent)
-        self.generate_interpreters()
+        self.generate_interpreters(mode)
         print(self.print_lighting_tree(key))
         self._publish_lighting_tree(key)

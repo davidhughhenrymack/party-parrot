@@ -186,7 +186,9 @@ def test_sequence_fade_minimum_override_is_applied_from_animation_params():
 
 
 def test_numeric_animation_params_accept_string_input_from_web_editor():
-    factory = build_interpreter_factory(animation("RotatingGobo", slot="2", rotate_speed="0.1"))
+    factory = build_interpreter_factory(
+        animation("RotatingGobo", slot="2", rotate_speed="0.1")
+    )
 
     fixture = MovingHead(1, "moving", 16, [GoboWheelEntry("open", 0)])
     factory([fixture], InterpreterArgs(True))

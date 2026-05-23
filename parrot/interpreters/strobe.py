@@ -22,14 +22,14 @@ class StrobeOn(InterpreterBase[FixtureBase]):
 
     def exit(self, frame: Frame, scheme: ColorScheme):
         for i in self.group:
-            i.set_strobe(0)
+            i.clear_strobe()
 
 
 @beartype
 class StrobeOff(InterpreterBase[FixtureBase]):
     def step(self, frame, scheme):
         for i in self.group:
-            i.set_strobe(0)
+            i.clear_strobe()
 
 
 @beartype
@@ -50,7 +50,7 @@ class StrobeHighSustained(InterpreterBase[FixtureBase]):
 
     def exit(self, frame: Frame, scheme: ColorScheme):
         for i in self.group:
-            i.set_strobe(0)
+            i.clear_strobe()
             i.set_dimmer(0)
 
 
@@ -73,4 +73,4 @@ class StrobeChannelSustained(InterpreterBase[FixtureBase]):
 
     def exit(self, frame: Frame, scheme: ColorScheme) -> None:
         for i in self.group:
-            i.set_strobe(0)
+            i.clear_strobe()

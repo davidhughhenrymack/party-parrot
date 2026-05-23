@@ -90,7 +90,7 @@ class SignalSwitchInterpreter(InterpreterBase[T]):
 
             else:
                 for fixture in self.group:
-                    fixture.set_strobe(0)
+                    fixture.clear_strobe()
 
         if self.responds_to.get(FrameSignal.big_blinder, False):
             if frame[FrameSignal.big_blinder] > 0.5:
@@ -149,15 +149,18 @@ class SignalSwitchInterpreter(InterpreterBase[T]):
         # Rainbow / chase look wrong with strobe artifacts; force strobe off while active.
         if self.rainbow_active or self.chase_active:
             for fixture in self.group:
-                fixture.set_strobe(0)
+                fixture.clear_strobe()
                 if isinstance(fixture, FixtureWithBulbs):
                     for bulb in fixture.get_bulbs():
-                        bulb.set_strobe(0)
+                        bulb.clear_strobe()
 
     def exit(self, frame: Frame, scheme: ColorScheme):
         self.interp_std.exit(frame, scheme)
         for fixture in self.group:
-            fixture.set_strobe(0)
+            fixture.clear_strobe()
+            if isinstance(fixture, FixtureWithBulbs):
+                for bulb in fixture.get_bulbs():
+                    bulb.clear_strobe()
 
         if self.chase_interp:
             self.chase_interp.exit(frame, scheme)

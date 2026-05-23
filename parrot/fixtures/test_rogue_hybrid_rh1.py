@@ -226,3 +226,38 @@ def test_rh1_startup_sequence_holds_blackout_macros_on_control_channel():
         t.return_value = base + 7.3
         m.render(dmx)
         assert m.values[ctrl] == 0
+
+
+def test_rh1_startup_sequence_reasserts_control_hold_to_dmx():
+    import time as _time
+    from unittest.mock import MagicMock, patch
+
+    m = ChauvetRogueHybridRH1_20Ch(1)
+    ctrl = m.dmx_layout["control"]
+    control_channel = m.address + ctrl
+    dmx = MagicMock()
+    base = _time.time()
+
+    with patch("parrot.fixtures.chauvet.mover_base.time.time") as t:
+        t.return_value = base
+        m.render(dmx)
+
+        t.return_value = base + 1.1
+        m.render(dmx)
+        dmx.set_channel.assert_any_call(
+            control_channel,
+            105,
+            universe=m.universe,
+        )
+
+        dmx.reset_mock()
+        m.values[ctrl] = 0
+        t.return_value = base + 2.0
+        m.render(dmx)
+
+        assert m.values[ctrl] == 105
+        dmx.set_channel.assert_any_call(
+            control_channel,
+            105,
+            universe=m.universe,
+        )

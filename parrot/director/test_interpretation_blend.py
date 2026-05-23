@@ -143,6 +143,54 @@ class TestInterpretationBlend(unittest.TestCase):
 
         self.assertEqual(self.director._interpretation_blend.duration_seconds, 1.25)
 
+    def test_mode_change_blend_duration_uses_destination_mode_entry_seconds(self):
+        self.state._runtime_venue_snapshot = VenueSnapshot(
+            summary=VenueSummary(
+                id="venue",
+                slug="venue",
+                name="Venue",
+                archived=False,
+                active=True,
+                revision=1,
+            ),
+            floor_width=20.0,
+            floor_depth=15.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=0.0,
+                y=0.0,
+                z=0.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(),
+            lighting_modes=(
+                LightingModeSpec(
+                    id="chill",
+                    venue_id="venue",
+                    key="chill",
+                    label="Chill",
+                    order_index=0,
+                    entry_seconds=9.0,
+                ),
+                LightingModeSpec(
+                    id="rave",
+                    venue_id="venue",
+                    key="rave",
+                    label="Rave",
+                    order_index=1,
+                    entry_seconds=1.25,
+                ),
+            ),
+        )
+        self.state._mode = Mode.chill
+
+        self.director.on_mode_change(Mode.rave)
+
+        self.assertEqual(self.director._interpretation_blend.duration_seconds, 1.25)
+
     def test_lighting_tree_prints_blend_destination(self):
         self.director.interpreters[0] = _NamedInterpreter(
             self.director.fixture_groups[0],

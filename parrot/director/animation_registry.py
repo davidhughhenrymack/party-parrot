@@ -321,7 +321,7 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
     "MoverGobo": AnimationRegistryEntry(
         "MoverGobo", "Set Gobo", "Gobo", MoverGobo, (_param("gobo", "Gobo", "string", "open"),)
     ),
-    "MoverNoGobo": AnimationRegistryEntry("MoverNoGobo", "Open Gobo", "Gobo", MoverNoGobo),
+    "MoverNoGobo": AnimationRegistryEntry("MoverNoGobo", "No Gobo", "Gobo", MoverNoGobo),
     "MoverRandomGobo": AnimationRegistryEntry(
         "MoverRandomGobo", "Random Gobo", "Gobo", MoverRandomGobo
     ),

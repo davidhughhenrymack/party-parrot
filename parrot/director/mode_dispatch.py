@@ -204,7 +204,10 @@ def _assignment_matches(
     fixture: FixtureBase,
 ) -> bool:
     if assignment.fixture_group_name is not None:
-        if _fixture_cloud_group_casefold(fixture) != assignment.fixture_group_name.casefold():
+        if (
+            _fixture_cloud_group_casefold(fixture)
+            != assignment.fixture_group_name.casefold()
+        ):
             return False
     return _fixture_type_matches(assignment.fixture_type, fixture)
 
@@ -212,7 +215,10 @@ def _assignment_matches(
 def _assignment_sort_key(
     assignment: VenueAnimationAssignmentSpec,
 ) -> tuple[int, str, str, int]:
-    if assignment.fixture_group_name is not None and assignment.fixture_type is not None:
+    if (
+        assignment.fixture_group_name is not None
+        and assignment.fixture_type is not None
+    ):
         specificity = 0
     elif assignment.fixture_group_name is not None:
         specificity = 1
@@ -252,7 +258,9 @@ def _uses_legacy_reference(assignments: list[VenueAnimationAssignmentSpec]) -> b
 def _group_assignments_by_scope(
     assignments: list[VenueAnimationAssignmentSpec],
 ) -> list[tuple[VenueAnimationAssignmentSpec, list[VenueAnimationAssignmentSpec]]]:
-    grouped: dict[tuple[str | None, str | None], list[VenueAnimationAssignmentSpec]] = {}
+    grouped: dict[tuple[str | None, str | None], list[VenueAnimationAssignmentSpec]] = (
+        {}
+    )
     for assignment in sorted(assignments, key=_assignment_sort_key):
         key = (assignment.fixture_group_name, assignment.fixture_type)
         grouped.setdefault(key, []).append(assignment)
@@ -273,7 +281,9 @@ def _animation_category(spec: dict) -> str:
         child_categories = {_animation_category(child) for child in children}
         return child_categories.pop() if len(child_categories) == 1 else "Stack"
     if expression_type in {"randomize", "combo"}:
-        children = [dict(child) for child in spec.get("options", spec.get("children", []))]
+        children = [
+            dict(child) for child in spec.get("options", spec.get("children", []))
+        ]
         child_categories = {_animation_category(child) for child in children}
         return child_categories.pop() if len(child_categories) == 1 else "Stack"
     if expression_type == "weighted_randomize":
@@ -342,9 +352,7 @@ def _build_category_combo(
             )
             unset_count = sum(1 for weight, _factory in options if weight is None)
             unset_weight = (
-                max(0, 100 - explicit_total) / unset_count
-                if unset_count > 0
-                else 0
+                max(0, 100 - explicit_total) / unset_count if unset_count > 0 else 0
             )
             weighted_options = [
                 (weight if weight is not None else unset_weight, factory)

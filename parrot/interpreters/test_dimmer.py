@@ -80,9 +80,9 @@ class TestDimmer0:
         interpreter.step(frame, scheme)
 
         self.fixture1.set_dimmer.assert_called_with(0)
-        self.fixture1.set_strobe.assert_called_with(0)
+        self.fixture1.clear_strobe.assert_called_with()
         self.fixture2.set_dimmer.assert_called_with(0)
-        self.fixture2.set_strobe.assert_called_with(0)
+        self.fixture2.clear_strobe.assert_called_with()
 
 
 class TestDimmerFadeIn:
@@ -482,6 +482,16 @@ class TestLightingStab:
             # Both fixtures should be affected
             assert self.fixture1.set_dimmer.called
             assert self.fixture2.set_dimmer.called
+
+    def test_lighting_stab_exit_clears_strobe(self):
+        interpreter = LightningStab(self.group, self.args, trigger_level=0.2)
+        frame = Frame({signal: 0.0 for signal in FrameSignal})
+        scheme = ColorScheme(Color("red"), Color("blue"), Color("green"))
+
+        interpreter.exit(frame, scheme)
+
+        self.fixture1.clear_strobe.assert_called_with()
+        self.fixture2.clear_strobe.assert_called_with()
 
 
 class TestTwinkle:

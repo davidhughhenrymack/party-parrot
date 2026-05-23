@@ -66,6 +66,11 @@ class FixtureBase:
         """Set strobe value - uses max(existing, new) for highest-takes-precedence behavior"""
         self.strobe_value = max(self.strobe_value, value)
 
+    def clear_strobe(self):
+        """Force strobe off, bypassing highest-takes-precedence accumulation."""
+        self.strobe_value = 0
+        self.set_strobe(0)
+
     def get_strobe(self):
         return self.strobe_value
 
@@ -196,6 +201,11 @@ class FixtureWithBulbs(FixtureBase):
         for bulb in self.bulbs:
             bulb.begin()
 
+    def clear_strobe(self):
+        super().clear_strobe()
+        for bulb in self.bulbs:
+            bulb.clear_strobe()
+
     def get_bulbs(self) -> list[FixtureBase]:
         return self.bulbs
 
@@ -279,6 +289,11 @@ class FixtureGroup(FixtureBase):
         super().set_strobe(value)
         for fixture in self.fixtures:
             fixture.set_strobe(value)
+
+    def clear_strobe(self):
+        super().clear_strobe()
+        for fixture in self.fixtures:
+            fixture.clear_strobe()
 
     def set_pan(self, value):
         super().set_pan(value)

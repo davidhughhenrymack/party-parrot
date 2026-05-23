@@ -455,7 +455,7 @@ class TestFlashBeat:
         # Should set dimmer based on signal and no strobe
         expected_dimmer = 0.6 * 255
         self.fixture1.set_dimmer.assert_called_with(expected_dimmer)
-        self.fixture1.set_strobe.assert_called_with(0)
+        self.fixture1.clear_strobe.assert_called_with()
 
     def test_flash_beat_low_signal(self):
         """Test FlashBeat with low signal"""
@@ -471,7 +471,17 @@ class TestFlashBeat:
 
         # Should turn off
         self.fixture1.set_dimmer.assert_called_with(0)
-        self.fixture1.set_strobe.assert_called_with(0)
+        self.fixture1.clear_strobe.assert_called_with()
+
+    def test_flash_beat_exit_clears_strobe(self):
+        interpreter = FlashBeat(self.group, self.args)
+        frame = Frame({signal: 0.0 for signal in FrameSignal})
+        scheme = ColorScheme(Color("red"), Color("blue"), Color("green"))
+
+        interpreter.exit(frame, scheme)
+
+        self.fixture1.clear_strobe.assert_called_with()
+        self.fixture2.clear_strobe.assert_called_with()
 
     def test_flash_beat_str(self):
         """Test FlashBeat string representation"""

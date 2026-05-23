@@ -13,6 +13,7 @@ from parrot.utils.dmx_utils import Universe
 from parrot.interpreters.base import InterpreterArgs
 from parrot.interpreters.movers import MoverRandomGobo, RotatingGobo
 from parrot.interpreters.strobe import StrobeHighSustained
+from parrot.fixtures.led_par import ParRGB
 from parrot.fixtures.mirrorball import Mirrorball
 
 
@@ -71,6 +72,22 @@ class TestFixtureBase:
         # Reset and verify
         self.fixture.begin()
         assert self.fixture.get_strobe() == 0
+
+    def test_clear_strobe_bypasses_max_behavior(self):
+        self.fixture.set_strobe(200)
+
+        self.fixture.clear_strobe()
+
+        assert self.fixture.get_strobe() == 0
+
+    def test_clear_strobe_updates_concrete_dmx_channel(self):
+        par = ParRGB(1)
+        par.set_strobe(200)
+
+        par.clear_strobe()
+
+        assert par.get_strobe() == 0
+        assert par.values[4] == 0
 
     def test_speed_setting(self):
         """Test speed setting and getting"""

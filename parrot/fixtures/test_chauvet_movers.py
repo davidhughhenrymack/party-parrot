@@ -336,6 +336,33 @@ class TestChauvetRogueBeamR2X:
         assert self.rogue.values[17] == 95
 
     @patch("time.time")
+    def test_render_startup_sequence_reasserts_control_hold_to_dmx(self, mock_time):
+        """Control latch values must be written on every render during their hold."""
+        mock_time.return_value = 1000.0
+        self.rogue.render(self.dmx)
+
+        mock_time.return_value = 1001.1
+        self.rogue.render(self.dmx)
+        control_channel = self.rogue.address + self.rogue.dmx_layout["control"]
+        self.dmx.set_channel.assert_any_call(
+            control_channel,
+            95,
+            universe=self.rogue.universe,
+        )
+
+        self.dmx.reset_mock()
+        self.rogue.values[self.rogue.dmx_layout["control"]] = 0
+        mock_time.return_value = 1002.0
+        self.rogue.render(self.dmx)
+
+        assert self.rogue.values[17] == 95
+        self.dmx.set_channel.assert_any_call(
+            control_channel,
+            95,
+            universe=self.rogue.universe,
+        )
+
+    @patch("time.time")
     def test_render_startup_sequence_complete(self, mock_time):
         """Full sequence: 1s lamp + 3s + 3s wheel-macros (one advance per ``render``)."""
         mock_time.return_value = 1000.0

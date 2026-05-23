@@ -32,7 +32,7 @@ class Dimmer0(InterpreterBase):
     def step(self, frame, scheme):
         for i in self.group:
             i.set_dimmer(0)
-            i.set_strobe(0)
+            i.clear_strobe()
 
 
 @beartype
@@ -115,7 +115,7 @@ class DimmersBeatChase(InterpreterBase[T]):
     def step(self, frame, scheme):
 
         if frame[self.signal] > 0.3:
-            if self.on == False:
+            if not self.on:
                 self.bulb = random.randint(0, len(self.group) - 1)
                 self.on = True
 
@@ -194,7 +194,7 @@ class GentlePulse(InterpreterBase[T]):
 
     def step(self, frame, scheme):
         if frame[self.signal] > self.trigger_level:
-            if self.on == False:
+            if not self.on:
                 self.bulb = random.randint(0, len(self.group) - 1)
                 self.on = True
 
@@ -225,7 +225,7 @@ class StabPulse(InterpreterBase[T]):
 
     def step(self, frame, scheme):
         if frame[self.signal] > self.trigger_level:
-            if self.on == False:
+            if not self.on:
                 self.bulb = random.randint(0, len(self.group) - 1)
                 self.on = True
 
@@ -260,7 +260,7 @@ class LightningStab(InterpreterBase[T]):
     def step(self, frame, scheme):
         # Handle freq_low - existing stab behavior
         if frame[FrameSignal.freq_low] > self.trigger_level:
-            if self.on_low == False:
+            if not self.on_low:
                 self.bulb = random.randint(0, len(self.group) - 1)
                 self.on_low = True
 
@@ -272,7 +272,7 @@ class LightningStab(InterpreterBase[T]):
 
         # Handle freq_high - white brief strobe
         if frame[FrameSignal.freq_high] > self.trigger_level:
-            if self.on_high == False:
+            if not self.on_high:
                 self.strobe_bulb = random.randint(0, len(self.group) - 1)
                 self.on_high = True
 
@@ -291,9 +291,13 @@ class LightningStab(InterpreterBase[T]):
             else:
                 # Otherwise use normal stab effect
                 fixture.set_dimmer(self.memory[idx] * 255)
-                fixture.set_strobe(0)
+                fixture.clear_strobe()
 
             self.memory[idx] *= 0.5
+
+    def exit(self, frame: Frame, scheme: ColorScheme) -> None:
+        for fixture in self.group:
+            fixture.clear_strobe()
 
 
 @beartype

@@ -9,7 +9,12 @@ from parrot.vj.vj_mode import VJMode, parse_vj_mode_string
 from parrot.director.themes import themes, get_theme_by_name
 from parrot.gl_display_mode import DISPLAY_MODE_CYCLE, EditorDisplayMode
 from parrot.patch_bay import venues
-from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
+from parrot_cloud.domain import (
+    ControlState,
+    RuntimeBootstrap,
+    VenueSnapshot,
+    VenueSummary,
+)
 from parrot_cloud.fixture_catalog import (
     build_runtime_fixture_groups,
     update_runtime_fixture_transforms,
@@ -50,7 +55,6 @@ class State:
         self.signal_states = SignalStates()
         # Auto-release timers for one-shot remote pulses (see ``set_effect_thread_safe``).
         self._effect_release_timers: dict[FrameSignal, threading.Timer] = {}
-
 
     @property
     def mode(self):
@@ -235,7 +239,11 @@ class State:
     def _apply_control_state(self, control_state: ControlState):
         self._suppress_remote_control_sync = True
         try:
-            next_mode = Mode[control_state.mode] if control_state.mode in Mode.__members__ else control_state.mode
+            next_mode = (
+                Mode[control_state.mode]
+                if control_state.mode in Mode.__members__
+                else control_state.mode
+            )
             if self._mode != next_mode:
                 self._mode = next_mode
                 self.events.on_mode_change(self._mode)
@@ -287,8 +295,8 @@ class State:
             )
             structure_changed = not updated_in_place
         if structure_changed:
-            self._runtime_patch, self._runtime_manual_group = build_runtime_fixture_groups(
-                snapshot
+            self._runtime_patch, self._runtime_manual_group = (
+                build_runtime_fixture_groups(snapshot)
             )
         if venue_changed or structure_changed:
             self.events.on_venue_change(self._venue)
@@ -315,7 +323,9 @@ class State:
         self._push_remote_control_state({"manual_fixture_dimmers": applied})
 
     @property
-    def named_position_programming_overrides(self) -> dict[str, tuple[str, float, float]]:
+    def named_position_programming_overrides(
+        self,
+    ) -> dict[str, tuple[str, float, float]]:
         return dict(self._named_position_programming_overrides)
 
     def apply_named_position_programming_override(
@@ -359,7 +369,11 @@ class State:
         self._editor_display_mode = value
         self.events.on_show_fixture_mode_change(self.show_fixture_mode)
         self._push_remote_control_state(
-            {"display_mode": self._display_mode_to_control_state(self._editor_display_mode)}
+            {
+                "display_mode": self._display_mode_to_control_state(
+                    self._editor_display_mode
+                )
+            }
         )
 
     def cycle_editor_display_mode(self) -> None:

@@ -210,7 +210,11 @@ class FlashBeat(InterpreterBase):
                 i.set_strobe(200)
             elif frame[self.signal] > 0.4:
                 i.set_dimmer(frame[self.signal] * 255)
-                i.set_strobe(0)
+                i.clear_strobe()
             else:
                 i.set_dimmer(0)
-                i.set_strobe(0)
+                i.clear_strobe()
+
+    def exit(self, frame: Frame, scheme: ColorScheme) -> None:
+        for i in self.group:
+            i.clear_strobe()

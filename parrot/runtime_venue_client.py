@@ -13,7 +13,12 @@ from parrot.director.color_scheme import ColorScheme
 from parrot.fixtures.base import FixtureBase
 from parrot.runtime_fixture_state import build_fixture_runtime_payload
 from parrot.state import State
-from parrot_cloud.domain import ControlState, RuntimeBootstrap, VenueSnapshot, VenueSummary
+from parrot_cloud.domain import (
+    ControlState,
+    RuntimeBootstrap,
+    VenueSnapshot,
+    VenueSummary,
+)
 
 # Minimum time between POSTs to /api/runtime/fixture-state. ~30 Hz matches the
 # desktop GL audio step (~30ms) so web fixture visuals track DMX without the

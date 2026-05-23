@@ -15,6 +15,7 @@ import pytest
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame, FrameSignal
 from parrot.fixtures.led_par import ParRGB
+from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.interpreters.base import ColorBg, InterpreterArgs
 from parrot.interpreters.combo import combo
 from parrot.interpreters.dimmer import GentlePulse
@@ -25,6 +26,12 @@ from parrot.utils.colour import Color
 def _quiet_frame(*, rainbow: float) -> Frame:
     values = {signal: 0.0 for signal in FrameSignal}
     values[FrameSignal.rainbow] = rainbow
+    return Frame(values)
+
+
+def _carrier_frame(signal: FrameSignal, value: float) -> Frame:
+    values = {s: 0.0 for s in FrameSignal}
+    values[signal] = value
     return Frame(values)
 
 
@@ -87,3 +94,21 @@ def test_legacy_signal_switch_then_color_bg_collapses_rainbow_to_solid_slot(
     expected = _rgb_tuple(getattr(scheme, slot))
     for p in pars:
         assert _rgb_tuple(p.get_color()) == expected
+
+
+def test_signal_switch_exit_clears_strobe_on_parent_and_bulbs(
+    scheme: ColorScheme, args: InterpreterArgs
+):
+    fixture = Motionstrip38(1)
+    SignalSwitchCls = signal_switch(GentlePulse)
+    interp = SignalSwitchCls([fixture], args)
+    interp.responds_to[FrameSignal.strobe] = True
+
+    interp.step(_carrier_frame(FrameSignal.strobe, 1.0), scheme)
+    assert fixture.get_strobe() == 220
+    assert all(bulb.get_strobe() == 220 for bulb in fixture.get_bulbs())
+
+    interp.exit(_carrier_frame(FrameSignal.strobe, 0.0), scheme)
+
+    assert fixture.get_strobe() == 0
+    assert all(bulb.get_strobe() == 0 for bulb in fixture.get_bulbs())
