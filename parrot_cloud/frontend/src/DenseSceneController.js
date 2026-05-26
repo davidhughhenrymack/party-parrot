@@ -893,6 +893,32 @@ function createThreeSceneController({
     return t;
   }
 
+  function clipRayToFloorAndMirrorballs(origin, dir, maxLen, planeN, planeD) {
+    let clip = clipRayToPlaneNd(origin, dir, maxLen, planeN, planeD);
+    const center = new THREE.Vector3();
+    localState.entityMap.forEach((entity) => {
+      if (
+        entity.type !== 'fixture' ||
+        entity.profile?.kind !== 'mirrorball' ||
+        !entity.mirrorballBeamsGroup
+      ) {
+        return;
+      }
+      entity.mirrorballBeamsGroup.getWorldPosition(center);
+      const hit = raySphereHitDistance(
+        origin,
+        dir,
+        center,
+        entity.profile.sphereRadius * 1.35,
+        clip,
+      );
+      if (hit !== null) {
+        clip = Math.min(clip, hit);
+      }
+    });
+    return clip;
+  }
+
   function fixtureBeamRayWorld(entity, THREE) {
     if (!entity.beamParent || !entity.beamTipLocal || entity.profile?.kind === 'mirrorball') {
       return null;
@@ -1166,7 +1192,7 @@ function createThreeSceneController({
       bp.localToWorld(o);
       bp.localToWorld(far);
       const dir = far.clone().sub(o).normalize();
-      const clip = clipRayToPlaneNd(o, dir, maxL, n, d);
+      const clip = clipRayToFloorAndMirrorballs(o, dir, maxL, n, d);
       entity.coneMesh.scale.set(fy, clip / maxL, fy);
       entity.coneMesh.position.set(0, tipL.y + clip / 2, tipL.z);
     }
@@ -1179,7 +1205,7 @@ function createThreeSceneController({
         sub.localToWorld(narrow);
         sub.localToWorld(wide);
         const dir = wide.clone().sub(narrow).normalize();
-        const clip = clipRayToPlaneNd(narrow, dir, maxL, n, d);
+        const clip = clipRayToFloorAndMirrorballs(narrow, dir, maxL, n, d);
         sub.scale.set(fy, clip / maxL, fy);
         sub.position.set(0, clip / 2, 0);
       }
