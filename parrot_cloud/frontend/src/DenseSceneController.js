@@ -657,8 +657,12 @@ function createThreeSceneController({
       let strongest = 0;
       const mirrorballRotation = entity.mirrorballBeamsGroup.getWorldQuaternion(new THREE.Quaternion());
       for (const record of entity.mirrorballBeamRecords) {
+        // Mirrorball cones have their narrow tip at the sphere and their wide
+        // end away from it, so their visible travel direction is opposite the
+        // stored surface direction.
         rayDirWorld.copy(record.directionLocal)
           .applyQuaternion(mirrorballRotation)
+          .multiplyScalar(-1)
           .normalize();
         let bestScore = 0;
         let bestHit = null;
