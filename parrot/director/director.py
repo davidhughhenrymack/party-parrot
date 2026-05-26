@@ -33,6 +33,7 @@ INTERPRETATION_BLEND_SECONDS = max(
     float(os.environ.get("INTERPRETATION_BLEND_SECONDS", "2.0")), 0.05
 )
 MODE_INTERPRETATION_BLEND_SECONDS = {
+    "blackout": 0.5,
     "ethereal": 3.0,
     "chill": 3.0,
     "rave": 0.5,
@@ -97,7 +98,7 @@ class Director:
             Callable[[dict[str, object]], None] | None
         ) = None,
     ):
-        self.scheme = LerpAnimator(random.choice(color_schemes), 4)
+        self.scheme = LerpAnimator(random.choice(color_schemes), 2)
         self.last_shift_time = time.time()
         self.shift_count = 0
         self.start_time = time.time()
@@ -177,10 +178,16 @@ class Director:
             self.fixture_group_names.append(None)
 
     def _default_interpreter_args_for_bucket_index(self, idx: int) -> InterpreterArgs:
-        return InterpreterArgs(self.state.theme.allow_rainbows)
+        return InterpreterArgs(
+            self.state.theme.allows_rainbow,
+            self.state.theme.always_rainbow,
+        )
 
     def _interpreter_args_for_auto_shift_eviction(self) -> InterpreterArgs:
-        return InterpreterArgs(self.state.theme.allow_rainbows)
+        return InterpreterArgs(
+            self.state.theme.allows_rainbow,
+            self.state.theme.always_rainbow,
+        )
 
     def _start_interpretation_blend(
         self,
@@ -483,9 +490,7 @@ class Director:
         ct = current.to_list()
         idx = random.randint(0, 2)
         ct[idx] = st[idx]
-        new_scheme = ColorScheme.from_list(
-            ct, allows_rainbow=current.allows_rainbow or s.allows_rainbow
-        )
+        new_scheme = ColorScheme.from_list(ct)
         self.scheme.push(new_scheme)
         print(f"Shifting to {format_color_scheme(new_scheme)}")
 

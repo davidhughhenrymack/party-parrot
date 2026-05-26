@@ -25,6 +25,7 @@ class TestInterpreterArgs:
         """Test InterpreterArgs namedtuple creation"""
         args = InterpreterArgs(allow_rainbows=True)
         assert args.allow_rainbows is True
+        assert args.always_rainbow is False
 
 
 class TestAcceptableTest:
@@ -50,7 +51,7 @@ class TestInterpreterBase:
         self.fixture1 = MagicMock(spec=FixtureBase)
         self.fixture2 = MagicMock(spec=FixtureBase)
         self.group = [self.fixture1, self.fixture2]
-        self.args = InterpreterArgs(allow_rainbows=True)
+        self.args = InterpreterArgs(allow_rainbows=True, always_rainbow=True)
 
         # Create test frame
         frame_values = {
@@ -196,6 +197,20 @@ class TestColorFg:
         self.fixture1.set_color.assert_called_with(Color("red"))
         self.fixture2.set_color.assert_called_with(Color("red"))
 
+    def test_color_fg_delegates_to_rainbow_when_theme_always_rainbow(self):
+        interpreter = ColorFg(self.group, InterpreterArgs(True, True))
+        scheme = ColorScheme(
+            fg=Color("red"),
+            bg=Color("blue"),
+            bg_contrast=Color("green"),
+        )
+        frame = Frame({})
+        frame.time = 2.0
+
+        interpreter.step(frame, scheme)
+
+        _assert_distinct_fixture_hues(self.fixture1, self.fixture2)
+
     def test_color_fg_str(self):
         """Test ColorFg string representation"""
         interpreter = ColorFg(self.group, self.args)
@@ -227,6 +242,20 @@ class TestColorAlternateBg:
         self.fixture2.set_color.assert_called_with(Color("green"))  # index 1 (odd)
         self.fixture3.set_color.assert_called_with(Color("blue"))  # index 2 (even)
 
+    def test_color_alternate_bg_delegates_to_rainbow_when_theme_always_rainbow(self):
+        interpreter = ColorAlternateBg(self.group, InterpreterArgs(True, True))
+        scheme = ColorScheme(
+            fg=Color("red"),
+            bg=Color("blue"),
+            bg_contrast=Color("green"),
+        )
+        frame = Frame({})
+        frame.time = 2.0
+
+        interpreter.step(frame, scheme)
+
+        _assert_distinct_fixture_hues(self.fixture1, self.fixture2)
+
     def test_color_alternate_bg_str(self):
         """Test ColorAlternateBg string representation"""
         interpreter = ColorAlternateBg(self.group, self.args)
@@ -256,6 +285,21 @@ class TestColorBg:
         self.fixture1.set_color.assert_called_with(Color("blue"))
         self.fixture2.set_color.assert_called_with(Color("blue"))
 
+    def test_color_bg_delegates_to_rainbow_when_theme_always_rainbow(self):
+        with patch("parrot.interpreters.base.random.choice", return_value="bg"):
+            interpreter = ColorBg(self.group, InterpreterArgs(True, True))
+        scheme = ColorScheme(
+            fg=Color("red"),
+            bg=Color("blue"),
+            bg_contrast=Color("green"),
+        )
+        frame = Frame({})
+        frame.time = 2.0
+
+        interpreter.step(frame, scheme)
+
+        _assert_distinct_fixture_hues(self.fixture1, self.fixture2)
+
     def test_color_bg_str(self):
         """Test ColorBg string representation"""
         interpreter = ColorBg(self.group, self.args)
@@ -273,7 +317,6 @@ class TestAnyColor:
             fg=Color("red"),
             bg=Color("blue"),
             bg_contrast=Color("green"),
-            allows_rainbow=True,
         )
 
     def test_any_color_has_no_rainbow_flag(self):
@@ -284,38 +327,45 @@ class TestAnyColor:
         assert AnyColor.acceptable(args) is True
 
     def test_any_color_solid_slots_assigned_at_init(self):
-        with patch("parrot.interpreters.base.random.random", return_value=1.0), patch(
-            "parrot.interpreters.base.random.choice", return_value="fg"
-        ) as chooser:
-            interpreter = AnyColor(self.group, self.args)
+        scheme = ColorScheme(
+            fg=Color("red"),
+            bg=Color("blue"),
+            bg_contrast=Color("green"),
+        )
+        args = InterpreterArgs(allow_rainbows=False)
+        with patch("parrot.interpreters.base.random.choice", return_value="fg") as chooser:
+            interpreter = AnyColor(self.group, args)
             frame = Frame({})
             frame.time = 0.0
-            interpreter.step(frame, self.scheme)
-            interpreter.step(frame, self.scheme)
+            interpreter.step(frame, scheme)
+            interpreter.step(frame, scheme)
         assert chooser.call_count == 2
         c = Color("red")
         self.fixture1.set_color.assert_called_with(c)
         self.fixture2.set_color.assert_called_with(c)
 
     def test_any_color_per_fixture_slots(self):
-        with patch("parrot.interpreters.base.random.random", return_value=1.0), patch(
-            "parrot.interpreters.base.random.choice", side_effect=["fg", "bg"]
-        ):
-            interpreter = AnyColor(self.group, self.args)
+        scheme = ColorScheme(
+            fg=Color("red"),
+            bg=Color("blue"),
+            bg_contrast=Color("green"),
+        )
+        args = InterpreterArgs(allow_rainbows=False)
+        with patch("parrot.interpreters.base.random.choice", side_effect=["fg", "bg"]):
+            interpreter = AnyColor(self.group, args)
             frame = Frame({})
-            interpreter.step(frame, self.scheme)
+            interpreter.step(frame, scheme)
         self.fixture1.set_color.assert_called_with(Color("red"))
         self.fixture2.set_color.assert_called_with(Color("blue"))
 
     def test_any_color_rainbow_branch_delegates(self):
-        with patch("parrot.interpreters.base.random.random", return_value=0.0):
-            interpreter = AnyColor(self.group, self.args)
-            frame0 = Frame({})
-            frame0.time = 0.0
-            frame1 = Frame({})
-            frame1.time = 3.0
-            interpreter.step(frame0, self.scheme)
-            interpreter.step(frame1, self.scheme)
+        interpreter = AnyColor(self.group, InterpreterArgs(True, True))
+        frame0 = Frame({})
+        frame0.time = 0.0
+        frame1 = Frame({})
+        frame1.time = 3.0
+        interpreter.step(frame0, self.scheme)
+        interpreter.step(frame1, self.scheme)
         c0 = self.fixture1.set_color.call_args_list[0][0][0]
         c1 = self.fixture1.set_color.call_args_list[1][0][0]
         assert c0.hue != c1.hue
@@ -325,12 +375,9 @@ class TestAnyColor:
             fg=Color("red"),
             bg=Color("blue"),
             bg_contrast=Color("green"),
-            allows_rainbow=False,
         )
-        with patch("parrot.interpreters.base.random.random", return_value=0.0), patch(
-            "parrot.interpreters.base.random.choice", side_effect=["fg", "bg"]
-        ):
-            interpreter = AnyColor(self.group, self.args)
+        with patch("parrot.interpreters.base.random.choice", side_effect=["fg", "bg"]):
+            interpreter = AnyColor(self.group, InterpreterArgs(allow_rainbows=False))
             interpreter.step(Frame({}), scheme_no_rb)
         self.fixture1.set_color.assert_called_once_with(Color("red"))
         self.fixture2.set_color.assert_called_once_with(Color("blue"))
@@ -488,3 +535,8 @@ class TestFlashBeat:
         interpreter = FlashBeat(self.group, self.args)
         str_repr = str(interpreter)
         assert "FlashBeat" in str_repr
+
+
+def _assert_distinct_fixture_hues(*fixtures):
+    hues = [fixture.set_color.call_args[0][0].hue for fixture in fixtures]
+    assert len(set(hues)) == len(hues)

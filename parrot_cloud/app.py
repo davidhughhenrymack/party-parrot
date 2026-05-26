@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import random
 import sys
 import traceback
+from functools import lru_cache
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, request, send_from_directory
@@ -15,7 +17,7 @@ from parrot_cloud.ws_hub import VenueUpdateHub
 from parrot.director.animation_registry import animation_registry_payload
 from parrot.director.frame import FrameSignal
 from parrot.director.mode import MODES_BY_HYPE, Mode
-from parrot.director.themes import themes
+from parrot.director.themes import get_theme_by_name, themes
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import VJMode
 
@@ -23,6 +25,36 @@ from parrot.vj.vj_mode import VJMode
 # Shift actions the remote control can trigger on the desktop director.
 # Each target corresponds to a Director method: ``shift_<target>``.
 SHIFT_TARGETS: tuple[str, ...] = ("lighting_only", "color_scheme", "vj_only")
+
+
+def _scheme_palette_payload(scheme) -> list[list[float]]:
+    return [
+        [float(scheme.fg.red), float(scheme.fg.green), float(scheme.fg.blue)],
+        [float(scheme.bg.red), float(scheme.bg.green), float(scheme.bg.blue)],
+        [
+            float(scheme.bg_contrast.red),
+            float(scheme.bg_contrast.green),
+            float(scheme.bg_contrast.blue),
+        ],
+    ]
+
+
+@lru_cache(maxsize=None)
+def _example_palette_for_theme(theme_name: str) -> list[list[float]]:
+    theme = get_theme_by_name(theme_name)
+    return _scheme_palette_payload(random.choice(theme.color_scheme))
+
+
+def _theme_color_examples_payload() -> list[dict[str, object]]:
+    return [
+        {
+            "name": theme.name,
+            "palette": _example_palette_for_theme(theme.name),
+            "allows_rainbow": bool(theme.allows_rainbow),
+            "always_rainbow": bool(theme.always_rainbow),
+        }
+        for theme in themes
+    ]
 
 
 def create_app() -> Flask:
@@ -149,6 +181,7 @@ def create_app() -> Flask:
                 "available_vj_modes": [mode.value for mode in VJMode],
                 "available_display_modes": ["venue", "dmx_heatmap", "vj"],
                 "theme_names": [theme.name for theme in themes],
+                "theme_color_examples": _theme_color_examples_payload(),
                 "effects": [
                     FrameSignal.strobe.value,
                     FrameSignal.big_blinder.value,

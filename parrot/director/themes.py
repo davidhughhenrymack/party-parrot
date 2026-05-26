@@ -12,18 +12,18 @@ from parrot.director.color_schemes import (
 )
 
 
-Theme = namedtuple("Theme", ["name", "allow_rainbows", "color_scheme"])
+Theme = namedtuple("Theme", ["name", "allows_rainbow", "always_rainbow", "color_scheme"])
 
 themes = [
-    Theme("Rave", True, scheme_standard),
-    Theme("Pride", True, scheme_pride),
-    Theme("Red", False, scheme_red),
-    Theme("Blue", False, scheme_blue),
-    Theme("Purple", False, scheme_purple),
-    Theme("UV", False, scheme_uv),
-    Theme("Barbie", False, scheme_barbie),
-    Theme("Tropical", True, scheme_tropical),
-    Theme("Halloween", False, scheme_halloween),
+    Theme("Rave", False, False, scheme_standard),
+    Theme("Rainbow", True, True, scheme_pride),
+    Theme("Red", False, False, scheme_red),
+    Theme("Blue", False, False, scheme_blue),
+    Theme("Purple", False, False, scheme_purple),
+    Theme("UV", False, False, scheme_uv),
+    Theme("Barbie", False, False, scheme_barbie),
+    Theme("Tropical", True, False, scheme_tropical),
+    Theme("Halloween", False, False, scheme_halloween),
 ]
 
 

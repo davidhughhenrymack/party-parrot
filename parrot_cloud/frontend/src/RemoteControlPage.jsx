@@ -6,10 +6,10 @@ export default function RemoteControlPage() {
     available_vj_modes: [],
     available_display_modes: [],
     theme_names: [],
+    theme_color_examples: [],
     effects: [],
     shift_targets: [],
   });
-  const [venues, setVenues] = useState([]);
   const [controlState, setControlState] = useState({
     mode: 'chill',
     vj_mode: 'prom_dmack',
@@ -44,6 +44,7 @@ export default function RemoteControlPage() {
         available_vj_modes: nextConfig.available_vj_modes || [],
         available_display_modes: nextConfig.available_display_modes || [],
         theme_names: nextConfig.theme_names || [],
+        theme_color_examples: nextConfig.theme_color_examples || [],
         effects: nextConfig.effects || [],
         shift_targets: nextConfig.shift_targets || [],
       });
@@ -80,8 +81,6 @@ export default function RemoteControlPage() {
         } else if (payload.type === 'fixture_runtime_state') {
           const pal = readColorPaletteFromFixturePayload(payload.data);
           setLiveColorPalette(pal);
-        } else if (payload.type === 'venues') {
-          setVenues(payload.data?.venues || []);
         } else if (payload.type === 'venue_snapshot' && payload.data?.summary?.active) {
           const fixtures = payload.data.fixtures || [];
           setConfig((current) => ({
@@ -110,7 +109,6 @@ export default function RemoteControlPage() {
     }
 
     function applyBootstrap(bootstrap) {
-      setVenues(bootstrap.venues || []);
       setControlState((current) => ({
         ...current,
         ...bootstrap.control_state,
@@ -166,11 +164,15 @@ export default function RemoteControlPage() {
   const canShiftLighting = config.shift_targets.includes('lighting_only');
   const canShiftColors = config.shift_targets.includes('color_scheme');
   const canShiftVj = config.shift_targets.includes('vj_only');
+  const themeExampleByName = new Map(
+    (config.theme_color_examples || []).map((example) => [example.name, example]),
+  );
+  const selectedThemeExample = themeExampleByName.get(controlState.theme_name);
+  const selectedThemeAlwaysRainbow = selectedThemeExample?.always_rainbow === true;
 
   return (
     <div className="remote-shell">
       <CompactSelector
-        label="Lighting mode"
         options={orderRemoteLightingModes(config.available_modes)}
         value={controlState.mode}
         format={labelize}
@@ -293,6 +295,54 @@ export default function RemoteControlPage() {
         </section>
       )}
 
+      <section className="remote-hero-panel remote-color-panel">
+        {canShiftColors ? (
+          <button
+            type="button"
+            className={`remote-color-shift-button${selectedThemeAlwaysRainbow ? ' rainbow-gradient-bg' : ''}`}
+            style={{
+              '--remote-shift-gradient': paletteToGradient(liveColorPalette ?? DEFAULT_REMOTE_COLOR_PALETTE),
+            }}
+            onClick={() => postJson('/api/shift', { target: 'color_scheme' })}
+          >
+            <span className="remote-shift-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M17.7 6.3A7.95 7.95 0 0 0 12 4a8 8 0 0 0-7.75 6h2.1A6 6 0 0 1 16.3 7.7L14 10h6V4l-2.3 2.3Z" />
+                <path d="M6.3 17.7A7.95 7.95 0 0 0 12 20a8 8 0 0 0 7.75-6h-2.1A6 6 0 0 1 7.7 16.3L10 14H4v6l2.3-2.3Z" />
+              </svg>
+            </span>
+            <span className="remote-shift-swatches remote-color-shift-swatches" aria-hidden="true">
+              {(liveColorPalette ?? DEFAULT_REMOTE_COLOR_PALETTE).map((rgb, i) => (
+                <span
+                  key={i}
+                  className={`remote-shift-swatch${i === 0 && selectedThemeAlwaysRainbow ? ' rainbow-hue-tile' : ''}`}
+                  style={i === 0 && selectedThemeAlwaysRainbow ? undefined : { background: rgbTripleToCss(rgb) }}
+                />
+              ))}
+            </span>
+            <span>{formatShiftLabel('color_scheme')}</span>
+          </button>
+        ) : null}
+        <div className="remote-color-grid">
+          {config.theme_names.map((themeName) => {
+            const example = themeExampleByName.get(themeName);
+            const palette = example?.palette ?? DEFAULT_REMOTE_COLOR_PALETTE;
+            const alwaysRainbow = example?.always_rainbow === true;
+            return (
+              <button
+                key={themeName}
+                type="button"
+                className={`remote-color-button${controlState.theme_name === themeName ? ' remote-color-button-active' : ''}${alwaysRainbow ? ' rainbow-gradient-bg' : ''}`}
+                style={{ '--remote-theme-gradient': paletteToGradient(palette) }}
+                onClick={() => patchControlState({ theme_name: themeName })}
+              >
+                <span className="remote-color-button-label">{themeName}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <CompactSelector
         label="VJ"
         options={config.available_vj_modes}
@@ -310,41 +360,6 @@ export default function RemoteControlPage() {
           </button>
         ) : null}
       </CompactSelector>
-      <CompactSelector
-        label="Color"
-        options={config.theme_names}
-        value={controlState.theme_name}
-        format={(v) => v}
-        onSelect={(theme_name) => patchControlState({ theme_name })}
-      >
-        {canShiftColors ? (
-          <div className="remote-color-shift-row">
-            <span className="remote-shift-swatches remote-color-shift-swatches" aria-hidden="true">
-              {(liveColorPalette ?? DEFAULT_REMOTE_COLOR_PALETTE).map((rgb, i) => (
-                <span
-                  key={i}
-                  className="remote-shift-swatch"
-                  style={{ background: rgbTripleToCss(rgb) }}
-                />
-              ))}
-            </span>
-            <button
-              type="button"
-              className="remote-inline-shift-button"
-              onClick={() => postJson('/api/shift', { target: 'color_scheme' })}
-            >
-              {formatShiftLabel('color_scheme')}
-            </button>
-          </div>
-        ) : null}
-      </CompactSelector>
-      <CompactSelector
-        label="Venue"
-        options={venues.map((v) => v.id)}
-        value={controlState.active_venue_id}
-        format={(id) => venues.find((v) => v.id === id)?.name || id}
-        onSelect={(active_venue_id) => patchControlState({ active_venue_id })}
-      />
     </div>
   );
 }
@@ -443,7 +458,7 @@ function CompactSelector({ label, options, value, format, onSelect, variant = 'c
     : [];
   return (
     <section className={`remote-compact-row${primary ? ' remote-primary-mode-row' : ''}`}>
-      <div className="remote-compact-label">{label}</div>
+      {label ? <div className="remote-compact-label">{label}</div> : null}
       <div className={`remote-chip-row${primary ? ' remote-primary-mode-grid' : ''}`}>
         {primaryNormalOptions.map((option) => (
           <button
@@ -541,6 +556,16 @@ function rgbTripleToCss(rgb) {
   const g = Math.round(Math.max(0, Math.min(1, rgb[1])) * 255);
   const b = Math.round(Math.max(0, Math.min(1, rgb[2])) * 255);
   return `rgb(${r},${g},${b})`;
+}
+
+function paletteToGradient(palette) {
+  const colors = Array.isArray(palette) && palette.length > 0
+    ? palette.map(rgbTripleToCss)
+    : DEFAULT_REMOTE_COLOR_PALETTE.map(rgbTripleToCss);
+  if (colors.length === 1) {
+    return colors[0];
+  }
+  return `linear-gradient(135deg, ${colors.join(',')})`;
 }
 
 function formatShiftLabel(target) {

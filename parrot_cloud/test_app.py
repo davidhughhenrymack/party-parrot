@@ -35,6 +35,31 @@ def test_bootstrap_endpoint_returns_active_venue(client):
     }
 
 
+def test_config_includes_theme_color_examples(client):
+    response = client.get("/api/config")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    examples = data["theme_color_examples"]
+    assert [example["name"] for example in examples] == data["theme_names"]
+    assert "Rainbow" in data["theme_names"]
+    assert "Pride" not in data["theme_names"]
+    allow_rainbow_examples = [example for example in examples if example["allows_rainbow"]]
+    assert [example["name"] for example in allow_rainbow_examples] == [
+        "Rainbow",
+        "Tropical",
+    ]
+    always_rainbow_examples = [example for example in examples if example["always_rainbow"]]
+    assert [example["name"] for example in always_rainbow_examples] == ["Rainbow"]
+    for example in examples:
+        assert isinstance(example["allows_rainbow"], bool)
+        assert isinstance(example["always_rainbow"], bool)
+        assert len(example["palette"]) == 3
+        for rgb in example["palette"]:
+            assert len(rgb) == 3
+            assert all(0.0 <= channel <= 1.0 for channel in rgb)
+
+
 def test_runtime_fixture_state_post_broadcast_shape(client):
     response = client.post(
         "/api/runtime/fixture-state",

@@ -1,11 +1,8 @@
-"""Integration tests for rainbow carrier vs ``ColorBg`` / ``AnyColor`` ordering.
+"""Integration tests for rainbow carrier and color interpreter ordering.
 
-``Combo`` runs children in order. ``ColorRainbow`` runs inside ``SignalSwitch``. If a
-solid color interpreter (``ColorBg``, ``AnyColor``, ``for_bulbs(AnyColor)``) runs
-*after* ``SignalSwitch``, it overwrites per-fixture rainbow hues every frame.
-
-Chill / rave / stroby rigs were updated so solid color runs first, then
-``SignalSwitch``, so the rainbow carrier is visible while held.
+``Combo`` runs children in order, so these checks make sure rainbow-capable
+color interpreters leave per-fixture hues visible even when composed before or
+after a signal-switch rainbow carrier.
 """
 
 from __future__ import annotations
@@ -45,7 +42,6 @@ def scheme() -> ColorScheme:
         Color("#ff0000"),
         Color("#0033cc"),
         Color("#aaaaaa"),
-        allows_rainbow=True,
     )
 
 
@@ -75,10 +71,9 @@ def test_chill_par_combo_color_bg_then_signal_switch_shows_rainbow_hues(
     )
 
 
-def test_legacy_signal_switch_then_color_bg_collapses_rainbow_to_solid_slot(
+def test_signal_switch_then_color_bg_still_shows_rainbow_hues(
     scheme: ColorScheme, args: InterpreterArgs
 ):
-    """Documents the old bug: ``combo(signal_switch(...), ColorBg)`` wipes rainbow."""
     pars = [ParRGB(patch=1), ParRGB(patch=20)]
     ComboCls = combo(signal_switch(GentlePulse), ColorBg)
     interp = ComboCls(pars, args)
@@ -90,10 +85,8 @@ def test_legacy_signal_switch_then_color_bg_collapses_rainbow_to_solid_slot(
 
     interp.step(frame, scheme)
 
-    slot = interp.interpreters[1].slot
-    expected = _rgb_tuple(getattr(scheme, slot))
-    for p in pars:
-        assert _rgb_tuple(p.get_color()) == expected
+    rgbs = {_rgb_tuple(p.get_color()) for p in pars}
+    assert len(rgbs) >= 2
 
 
 def test_signal_switch_exit_clears_strobe_on_parent_and_bulbs(

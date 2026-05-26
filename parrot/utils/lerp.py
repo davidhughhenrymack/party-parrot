@@ -26,6 +26,7 @@ class LerpAnimator(Generic[T]):
         self.start_time = None
 
     def push(self, target: T):
+        self.subject = self.render()
         self.target = target
         self.start_time = time.time()
 

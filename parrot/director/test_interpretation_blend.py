@@ -84,7 +84,7 @@ class TestInterpretationBlend(unittest.TestCase):
             (Mode.chill, 3.0),
             (Mode.rave, 0.5),
             (Mode.stroby, 0.1),
-            (Mode.blackout, director_mod.INTERPRETATION_BLEND_SECONDS),
+            (Mode.blackout, 0.5),
         ]
 
         for mode, expected in cases:

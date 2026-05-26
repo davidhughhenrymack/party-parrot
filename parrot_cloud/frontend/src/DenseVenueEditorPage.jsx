@@ -114,6 +114,16 @@ function rgbTripleToCss(rgb) {
   return `rgb(${r},${g},${b})`;
 }
 
+function paletteToGradient(palette) {
+  const colors = Array.isArray(palette) && palette.length > 0
+    ? palette.map(rgbTripleToCss)
+    : DEFAULT_EDITOR_COLOR_PALETTE.map(rgbTripleToCss);
+  if (colors.length === 1) {
+    return colors[0];
+  }
+  return `linear-gradient(135deg, ${colors.join(',')})`;
+}
+
 function animationSpecForKey(key) {
   return { type: 'animation', key };
 }
@@ -1708,6 +1718,7 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [remoteConfig, setRemoteConfig] = useState({
     available_modes: [],
     theme_names: [],
+    theme_color_examples: [],
     shift_targets: [],
   });
   /** Live fg/bg/bg_contrast from desktop fixture-state push; null until first valid `color_palette`. */
@@ -1981,6 +1992,7 @@ export default function DenseVenueEditorPage({ venueId }) {
       setRemoteConfig({
         available_modes: config.available_modes || [],
         theme_names: config.theme_names || [],
+        theme_color_examples: config.theme_color_examples || [],
         shift_targets: config.shift_targets || [],
       });
       setNewFixtureValues((current) => ({
@@ -3221,6 +3233,12 @@ export default function DenseVenueEditorPage({ venueId }) {
     setEditorMode('animation');
   }
 
+  const themeExampleByName = new Map(
+    (remoteConfig.theme_color_examples || []).map((example) => [example.name, example]),
+  );
+  const selectedThemeExample = themeExampleByName.get(controlState.theme_name);
+  const selectedThemeAlwaysRainbow = selectedThemeExample?.always_rainbow === true;
+
   return (
     <>
       <div
@@ -3356,23 +3374,41 @@ export default function DenseVenueEditorPage({ venueId }) {
                       </button>
                       {editorMenuSection === 'color_scheme' ? (
                         <div className="dense-editor-menu-sub" role="group" aria-label="Color scheme">
-                          {remoteConfig.theme_names.map((themeName) => (
-                            <label key={themeName} className="dense-editor-menu-option">
-                              <input
-                                type="radio"
-                                name="remote-color-scheme"
-                                checked={controlState.theme_name === themeName}
-                                onChange={() => {
-                                  void patchControlState({ theme_name: themeName }).then((next) => {
-                                    setControlState((current) => ({ ...current, ...next }));
-                                  });
-                                  setEditorMenuOpen(false);
-                                  setEditorMenuSection(null);
-                                }}
-                              />
-                              <span>{themeName}</span>
-                            </label>
-                          ))}
+                          {remoteConfig.theme_names.map((themeName) => {
+                            const example = themeExampleByName.get(themeName);
+                            const palette = example?.palette ?? DEFAULT_EDITOR_COLOR_PALETTE;
+                            const alwaysRainbow = example?.always_rainbow === true;
+                            return (
+                              <label
+                                key={themeName}
+                                className={`dense-editor-menu-option dense-editor-color-option${alwaysRainbow ? ' rainbow-gradient-bg' : ''}`}
+                                style={{ '--dense-color-option-gradient': paletteToGradient(palette) }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="remote-color-scheme"
+                                  checked={controlState.theme_name === themeName}
+                                  onChange={() => {
+                                    void patchControlState({ theme_name: themeName }).then((next) => {
+                                      setControlState((current) => ({ ...current, ...next }));
+                                    });
+                                    setEditorMenuOpen(false);
+                                    setEditorMenuSection(null);
+                                  }}
+                                />
+                                <span className="dense-editor-color-option-swatches" aria-hidden="true">
+                                  {palette.map((rgb, i) => (
+                                    <span
+                                      key={i}
+                                      className={`dense-editor-color-option-swatch${i === 0 && alwaysRainbow ? ' rainbow-hue-tile' : ''}`}
+                                      style={i === 0 && alwaysRainbow ? undefined : { background: rgbTripleToCss(rgb) }}
+                                    />
+                                  ))}
+                                </span>
+                                <span>{themeName}</span>
+                              </label>
+                            );
+                          })}
                         </div>
                       ) : null}
                     </div>
@@ -3733,8 +3769,8 @@ export default function DenseVenueEditorPage({ venueId }) {
                 {(liveColorPalette ?? DEFAULT_EDITOR_COLOR_PALETTE).map((rgb, i) => (
                   <span
                     key={i}
-                    className="floating-bottom-bar-palette-swatch"
-                    style={{ background: rgbTripleToCss(rgb) }}
+                    className={`floating-bottom-bar-palette-swatch${i === 0 && selectedThemeAlwaysRainbow ? ' rainbow-hue-tile' : ''}`}
+                    style={i === 0 && selectedThemeAlwaysRainbow ? undefined : { background: rgbTripleToCss(rgb) }}
                   />
                 ))}
               </span>

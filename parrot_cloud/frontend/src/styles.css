@@ -30,6 +30,48 @@ button:hover {
   border-color: #58a6ff;
 }
 
+@keyframes rainbow-gradient-scroll {
+  0% {
+    background-position: 0% 50%, 0% 50%;
+  }
+  100% {
+    background-position: 0% 50%, 100% 50%;
+  }
+}
+
+@keyframes rainbow-hue-cycle {
+  0% {
+    background: hsl(0deg 100% 50%);
+  }
+  16.666% {
+    background: hsl(60deg 100% 50%);
+  }
+  33.333% {
+    background: hsl(120deg 100% 50%);
+  }
+  50% {
+    background: hsl(180deg 100% 50%);
+  }
+  66.666% {
+    background: hsl(240deg 100% 50%);
+  }
+  83.333% {
+    background: hsl(300deg 100% 50%);
+  }
+  100% {
+    background: hsl(360deg 100% 50%);
+  }
+}
+
+.rainbow-gradient-bg {
+  background-size: 100% 100%, 240% 240%;
+  animation: rainbow-gradient-scroll 18s linear infinite alternate;
+}
+
+.rainbow-hue-tile {
+  animation: rainbow-hue-cycle 4s linear infinite;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -658,21 +700,106 @@ label {
   transform: scale(0.98);
 }
 
-.remote-color-shift-row {
-  flex: 1 1 100%;
+.remote-color-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.remote-color-shift-button {
+  width: 100%;
+  min-height: 54px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  background:
+    linear-gradient(rgba(30, 20, 48, 0.18), rgba(30, 20, 48, 0.34)),
+    var(--remote-shift-gradient, linear-gradient(180deg, #7c3aed, #5b21b6));
+  color: #f5f3ff;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
-  min-width: 0;
-  max-width: 100%;
-  margin-top: 2px;
-  margin-left: 74px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
+}
+
+.remote-color-shift-button:active {
+  transform: scale(0.98);
+}
+
+.remote-shift-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.remote-shift-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
 
 .remote-color-shift-swatches .remote-shift-swatch {
   width: 16px;
   height: 16px;
+}
+
+.remote-color-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.remote-color-button {
+  width: 100%;
+  min-height: 58px;
+  margin-top: 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid #30363d;
+  background:
+    linear-gradient(rgba(80, 86, 96, 0.34), rgba(30, 35, 44, 0.44)),
+    var(--remote-theme-gradient, #111827);
+  color: #f0f6fc;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  opacity: 0.94;
+}
+
+.remote-color-button:active {
+  transform: scale(0.98);
+}
+
+.remote-color-button-active {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.16)),
+    var(--remote-theme-gradient, linear-gradient(180deg, #2f81f7, #1d4ed8));
+  border-color: #ffffff;
+  box-shadow:
+    0 0 0 3px #79c0ff,
+    0 0 0 5px rgba(121, 192, 255, 0.28),
+    0 10px 24px rgba(31, 111, 235, 0.34);
+  opacity: 1;
+}
+
+.remote-color-button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chip {
@@ -729,8 +856,8 @@ label {
     align-items: flex-start;
   }
 
-  .remote-color-shift-row {
-    margin-left: 0;
+  .remote-color-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .remote-compact-label {
@@ -2452,8 +2579,44 @@ label {
   accent-color: #58a6ff;
 }
 
+.dense-editor-color-option {
+  background:
+    linear-gradient(rgba(13, 17, 23, 0.58), rgba(13, 17, 23, 0.68)),
+    var(--dense-color-option-gradient, #161b22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
+.dense-editor-color-option:hover {
+  background:
+    linear-gradient(rgba(13, 17, 23, 0.36), rgba(13, 17, 23, 0.48)),
+    var(--dense-color-option-gradient, #161b22);
+}
+
+.dense-editor-color-option-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.dense-editor-color-option-swatch {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+}
+
 .dense-editor-menu-make-active {
   color: #58a6ff;
+}
+
+.remote-color-button.rainbow-gradient-bg,
+.remote-color-shift-button.rainbow-gradient-bg,
+.dense-editor-color-option.rainbow-gradient-bg {
+  background-size: 100% 100%, 240% 240%;
+  animation: rainbow-gradient-scroll 18s linear infinite alternate;
 }
 
 a.dense-editor-menu-external-link {
