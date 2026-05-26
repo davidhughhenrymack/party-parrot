@@ -9,6 +9,7 @@ export default function RemoteControlPage() {
     theme_color_examples: [],
     effects: [],
     shift_targets: [],
+    lighting_modes: [],
   });
   const [controlState, setControlState] = useState({
     mode: 'chill',
@@ -47,6 +48,7 @@ export default function RemoteControlPage() {
         theme_color_examples: nextConfig.theme_color_examples || [],
         effects: nextConfig.effects || [],
         shift_targets: nextConfig.shift_targets || [],
+        lighting_modes: [],
       });
       applyBootstrap(bootstrap);
       connectWebSocket();
@@ -89,6 +91,7 @@ export default function RemoteControlPage() {
               ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
               ...(payload.data.lighting_modes || []).map((mode) => mode.key),
             ],
+            lighting_modes: payload.data.lighting_modes || [],
           }));
           setManualFixtures(
             fixtures
@@ -125,6 +128,7 @@ export default function RemoteControlPage() {
           ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
           ...(bootstrap.active_venue?.lighting_modes || []).map((mode) => mode.key),
         ],
+        lighting_modes: bootstrap.active_venue?.lighting_modes || [],
       }));
       setManualFixtures(
         fixtures
@@ -155,6 +159,26 @@ export default function RemoteControlPage() {
       ws?.close();
     };
   }, []);
+
+  useEffect(() => {
+    function onLightingModeHotkey(event) {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+        return;
+      }
+      if (event.key.length !== 1 || isEditableKeyboardTarget(event.target)) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      const mode = (config.lighting_modes || []).find((candidate) => candidate.hotkey === key);
+      if (!mode || mode.key === controlState.mode) {
+        return;
+      }
+      event.preventDefault();
+      void patchControlState({ mode: mode.key });
+    }
+    window.addEventListener('keydown', onLightingModeHotkey);
+    return () => window.removeEventListener('keydown', onLightingModeHotkey);
+  }, [config.lighting_modes, controlState.mode]);
 
   const mfd = controlState.manual_fixture_dimmers || {};
   const visibleEffects = config.effects.filter((effect) => !REMOTE_HIDDEN_EFFECTS.has(effect));
@@ -496,6 +520,15 @@ function manualDimmerPercentFor(manualFixtureDimmers, fixtureId) {
 
 function labelize(value) {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function isEditableKeyboardTarget(target) {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  );
 }
 
 function formatVjModeLabel(mode) {

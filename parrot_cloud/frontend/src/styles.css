@@ -1020,6 +1020,23 @@ label {
   padding: 6px 8px;
 }
 
+.animation-mode-hotkey {
+  display: grid;
+  grid-template-columns: auto 42px;
+  align-items: center;
+  gap: 8px;
+  color: #9ba8b4;
+  font-size: 12px;
+}
+
+.animation-mode-hotkey input {
+  width: 100%;
+  margin-top: 0;
+  padding: 6px 8px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .animation-editor-workspace {
   display: flex;
   align-items: flex-start;

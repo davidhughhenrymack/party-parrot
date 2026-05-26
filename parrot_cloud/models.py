@@ -111,6 +111,7 @@ class LightingModeModel(Base):
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     editable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     entry_seconds: Mapped[float] = mapped_column(Float, nullable=False, default=2.0)
+    hotkey: Mapped[str | None] = mapped_column(String(1), nullable=True)
 
     venue: Mapped[VenueModel] = relationship(back_populates="lighting_modes")
     animation_assignments: Mapped[list["VenueAnimationAssignmentModel"]] = relationship(

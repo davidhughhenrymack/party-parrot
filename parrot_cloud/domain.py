@@ -252,6 +252,7 @@ class LightingModeSpec:
     order_index: int
     editable: bool = True
     entry_seconds: float = 2.0
+    hotkey: str | None = None
 
     def to_dict(self) -> JsonDict:
         return {
@@ -262,10 +263,12 @@ class LightingModeSpec:
             "order_index": self.order_index,
             "editable": self.editable,
             "entry_seconds": self.entry_seconds,
+            "hotkey": self.hotkey,
         }
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> "LightingModeSpec":
+        hotkey = data.get("hotkey")
         return cls(
             id=str(data["id"]),
             venue_id=str(data["venue_id"]),
@@ -274,6 +277,7 @@ class LightingModeSpec:
             order_index=int(data.get("order_index", 0)),
             editable=bool(data.get("editable", True)),
             entry_seconds=float(data.get("entry_seconds", 2.0)),
+            hotkey=None if hotkey in (None, "") else str(hotkey),
         )
 
 

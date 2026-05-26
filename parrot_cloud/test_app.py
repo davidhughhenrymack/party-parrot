@@ -333,6 +333,48 @@ def test_lighting_mode_entry_seconds_endpoint(client):
     assert changed["entry_seconds"] == 0.25
 
 
+def test_lighting_mode_hotkey_endpoint(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+
+    created = client.post(
+        f"/api/venues/{venue_id}/lighting-modes",
+        json={"label": "Hot Mode", "hotkey": "H"},
+    )
+    assert created.status_code == 200
+    mode = next(
+        mode
+        for mode in created.get_json()["lighting_modes"]
+        if mode["key"] == "hot_mode"
+    )
+    assert mode["hotkey"] == "h"
+
+    patched = client.patch(
+        f"/api/venues/{venue_id}/lighting-modes/{mode['id']}",
+        json={"hotkey": ""},
+    )
+    assert patched.status_code == 200
+    changed = next(
+        item
+        for item in patched.get_json()["lighting_modes"]
+        if item["id"] == mode["id"]
+    )
+    assert changed["hotkey"] is None
+
+
+def test_lighting_mode_rejects_multi_character_hotkey(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+    mode = bootstrap["active_venue"]["lighting_modes"][0]
+
+    response = client.patch(
+        f"/api/venues/{venue_id}/lighting-modes/{mode['id']}",
+        json={"hotkey": "ab"},
+    )
+
+    assert response.status_code == 400
+
+
 def test_dmx_address_width_for_fixture_helper():
     from parrot_cloud.fixture_catalog import dmx_address_width_for_fixture
 

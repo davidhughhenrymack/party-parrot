@@ -66,6 +66,19 @@ function labelizeRemoteMode(value) {
     .replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
+function isEditableKeyboardTarget(target) {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  );
+}
+
+function normalizeHotkeyInput(value) {
+  return String(value || '').trim().slice(0, 1).toLowerCase();
+}
+
 async function patchControlState(body) {
   const response = await fetch('/api/control-state', {
     method: 'PATCH',
@@ -1013,9 +1026,11 @@ function AnimationEditorPanel({
   const [expandedAssignmentIds, setExpandedAssignmentIds] = useState(() => new Set());
   const selectedMode = modes.find((mode) => mode.key === selectedModeKey) || modes[0] || null;
   const [entrySecondsDraft, setEntrySecondsDraft] = useState('');
+  const [hotkeyDraft, setHotkeyDraft] = useState('');
   useEffect(() => {
     setEntrySecondsDraft(selectedMode ? String(selectedMode.entry_seconds ?? 2) : '');
-  }, [selectedMode?.id, selectedMode?.entry_seconds]);
+    setHotkeyDraft(selectedMode?.hotkey || '');
+  }, [selectedMode?.id, selectedMode?.entry_seconds, selectedMode?.hotkey]);
   const registryByCategory = useMemo(() => {
     const groups = new Map();
     for (const entry of animationRegistry?.animations || []) {
@@ -1331,6 +1346,18 @@ function AnimationEditorPanel({
     void onPatchLightingMode(selectedMode.id, { entry_seconds: next });
   }
 
+  function commitHotkeyDraft() {
+    if (!selectedMode) {
+      return;
+    }
+    const next = normalizeHotkeyInput(hotkeyDraft);
+    if (next === (selectedMode.hotkey || '')) {
+      setHotkeyDraft(next);
+      return;
+    }
+    void onPatchLightingMode(selectedMode.id, { hotkey: next });
+  }
+
   function renderDestination(destination) {
     const rows = assignmentsForDestination(destination);
     const isEmpty = rows.length === 0;
@@ -1515,6 +1542,22 @@ function AnimationEditorPanel({
             }}
           />
           <span>sec</span>
+        </label>
+        <label className="animation-mode-hotkey">
+          <span>Hot key</span>
+          <input
+            type="text"
+            maxLength={1}
+            value={hotkeyDraft}
+            disabled={!selectedMode}
+            onChange={(event) => setHotkeyDraft(normalizeHotkeyInput(event.target.value))}
+            onBlur={commitHotkeyDraft}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.currentTarget.blur();
+              }
+            }}
+          />
         </label>
       </div>
 
@@ -2311,17 +2354,38 @@ export default function DenseVenueEditorPage({ venueId }) {
   }, [interactionMode]);
 
   useEffect(() => {
+    function onLightingModeHotkey(event) {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+        return;
+      }
+      if (event.key.length !== 1 || isEditableKeyboardTarget(event.target)) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      const mode = (venueSnapshot?.lighting_modes || []).find(
+        (candidate) => candidate.hotkey === key,
+      );
+      if (!mode || mode.key === controlState.mode) {
+        return;
+      }
+      event.preventDefault();
+      void patchControlState({ mode: mode.key }).then((next) => {
+        setControlState((current) => ({ ...current, ...next }));
+      });
+    }
+    window.addEventListener('keydown', onLightingModeHotkey);
+    return () => window.removeEventListener('keydown', onLightingModeHotkey);
+  }, [controlState.mode, venueSnapshot]);
+
+  useEffect(() => {
     function onViewportToolKey(event) {
+      if (event.defaultPrevented) {
+        return;
+      }
       if (event.metaKey || event.ctrlKey || event.altKey) {
         return;
       }
-      const el = event.target;
-      if (
-        el instanceof HTMLInputElement ||
-        el instanceof HTMLTextAreaElement ||
-        el instanceof HTMLSelectElement ||
-        (el instanceof HTMLElement && el.isContentEditable)
-      ) {
+      if (isEditableKeyboardTarget(event.target)) {
         return;
       }
       const k = event.key.toLowerCase();

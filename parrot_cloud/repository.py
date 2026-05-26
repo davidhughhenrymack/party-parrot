@@ -130,6 +130,15 @@ def _normalize_entry_seconds(value: object) -> float:
     return max(0.05, float(value))
 
 
+def _normalize_lighting_mode_hotkey(value: object) -> str | None:
+    text = str(value).strip().lower()
+    if not text:
+        return None
+    if len(text) != 1:
+        raise ValueError("Lighting mode hotkey must be a single character")
+    return text
+
+
 def _clamp_dmx_float(value: object) -> float:
     return max(0.0, min(255.0, float(value)))
 
@@ -528,6 +537,11 @@ class VenueRepository:
                 entry_seconds=_normalize_entry_seconds(
                     data.get("entry_seconds", _lighting_mode_entry_seconds_from_key(key))
                 ),
+                hotkey=(
+                    _normalize_lighting_mode_hotkey(data["hotkey"])
+                    if "hotkey" in data and data["hotkey"] is not None
+                    else None
+                ),
             )
             session.add(mode)
             self._touch_venue(venue)
@@ -559,6 +573,12 @@ class VenueRepository:
                 mode.order_index = int(data["order_index"])
             if "entry_seconds" in data and data["entry_seconds"] is not None:
                 mode.entry_seconds = _normalize_entry_seconds(data["entry_seconds"])
+            if "hotkey" in data:
+                mode.hotkey = (
+                    None
+                    if data["hotkey"] is None
+                    else _normalize_lighting_mode_hotkey(data["hotkey"])
+                )
             self._touch_venue(venue)
             session.flush()
             session.refresh(venue)
@@ -1306,6 +1326,7 @@ class VenueRepository:
             order_index=mode.order_index,
             editable=mode.editable,
             entry_seconds=mode.entry_seconds,
+            hotkey=mode.hotkey,
         )
 
     def _animation_assignment_from_model(
