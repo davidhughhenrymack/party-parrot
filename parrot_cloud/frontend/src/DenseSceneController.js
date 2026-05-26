@@ -558,6 +558,137 @@ function createThreeSceneController({
     return Math.min(maxLen, t);
   }
 
+  function raySphereHitDistance(origin, dir, center, radius, maxLen) {
+    const oc = origin.clone().sub(center);
+    const b = 2 * oc.dot(dir);
+    const c = oc.dot(oc) - radius * radius;
+    const disc = b * b - 4 * c;
+    if (disc < 0) {
+      return null;
+    }
+    const root = Math.sqrt(disc);
+    const t0 = (-b - root) / 2;
+    const t1 = (-b + root) / 2;
+    const t = t0 > 0 ? t0 : t1 > 0 ? t1 : null;
+    if (t === null || t > maxLen) {
+      return null;
+    }
+    return t;
+  }
+
+  function fixtureBeamRayWorld(entity, THREE) {
+    if (!entity.beamParent || !entity.beamTipLocal || entity.profile?.kind === 'mirrorball') {
+      return null;
+    }
+    const maxLen = entity.maxBeamLength;
+    if (!Number.isFinite(maxLen) || maxLen <= 0) {
+      return null;
+    }
+    const origin = entity.beamTipLocal.clone();
+    const far = entity.beamTipLocal.clone().add(new THREE.Vector3(0, maxLen, 0));
+    entity.beamParent.localToWorld(origin);
+    entity.beamParent.localToWorld(far);
+    const dir = far.sub(origin);
+    if (dir.lengthSq() < 1e-10) {
+      return null;
+    }
+    dir.normalize();
+    return { origin, dir, maxLen };
+  }
+
+  function updateMirrorballReflections(THREE) {
+    const sourceBeams = [];
+    localState.entityMap.forEach((entity) => {
+      if (entity.type !== 'fixture' || entity.profile?.kind === 'mirrorball') {
+        return;
+      }
+      const ray = fixtureBeamRayWorld(entity, THREE);
+      const dim = Math.max(0, Math.min(1, entity.runtimeDimmerForStrobe ?? 0));
+      const gate = entity.runtimeStrobeGate ?? 1;
+      const beamOpacity = dim * CONE_OPACITY_AT_FULL_DIM * gate;
+      if (!ray || beamOpacity <= 1e-4 || !Array.isArray(entity.runtimeRgb)) {
+        return;
+      }
+      sourceBeams.push({
+        ...ray,
+        rgb: entity.runtimeRgb,
+        opacity: beamOpacity,
+        coneRadius: entity.profile?.coneRadius ?? 0.25,
+        focusWidth: entity.focusWidth ?? 1,
+      });
+    });
+
+    const mbCenter = new THREE.Vector3();
+    const rayDirWorld = new THREE.Vector3();
+    localState.entityMap.forEach((entity) => {
+      if (
+        entity.type !== 'fixture' ||
+        entity.profile?.kind !== 'mirrorball' ||
+        !entity.mirrorballBeamRecords?.length ||
+        !entity.mirrorballBeamsGroup
+      ) {
+        return;
+      }
+
+      entity.mirrorballBeamsGroup.getWorldPosition(mbCenter);
+      const sphereRadius = entity.profile.sphereRadius;
+      const hits = [];
+      for (const source of sourceBeams) {
+        const tCenter = Math.max(0, mbCenter.clone().sub(source.origin).dot(source.dir));
+        const coneAtCenter = source.coneRadius * source.focusWidth * (tCenter / source.maxLen);
+        const hit = raySphereHitDistance(
+          source.origin,
+          source.dir,
+          mbCenter,
+          sphereRadius + coneAtCenter,
+          source.maxLen,
+        );
+        if (hit === null) {
+          continue;
+        }
+        hits.push({
+          // Bounce visually back toward the incoming light direction.
+          direction: source.dir.clone().multiplyScalar(-1),
+          rgb: source.rgb,
+          opacity: source.opacity,
+        });
+      }
+
+      let strongest = 0;
+      const mirrorballRotation = entity.mirrorballBeamsGroup.getWorldQuaternion(new THREE.Quaternion());
+      for (const record of entity.mirrorballBeamRecords) {
+        rayDirWorld.copy(record.directionLocal)
+          .applyQuaternion(mirrorballRotation)
+          .normalize();
+        let bestScore = 0;
+        let bestHit = null;
+        for (const hit of hits) {
+          const score = Math.max(0, rayDirWorld.dot(hit.direction));
+          if (score > bestScore) {
+            bestScore = score;
+            bestHit = hit;
+          }
+        }
+        if (!bestHit || bestScore < 0.72) {
+          record.material.userData.runtimeOpacity = 0;
+          record.material.opacity = 0;
+          continue;
+        }
+        const spread = (bestScore - 0.72) / 0.28;
+        const opacity = Math.min(0.32, bestHit.opacity * (0.18 + spread * 0.42));
+        record.material.color.setRGB(
+          Math.min(1, bestHit.rgb[0] + 0.08),
+          Math.min(1, bestHit.rgb[1] + 0.08),
+          Math.min(1, bestHit.rgb[2] + 0.08),
+        );
+        record.material.userData.runtimeOpacity = opacity;
+        record.material.opacity = opacity;
+        strongest = Math.max(strongest, opacity);
+      }
+      entity.runtimeMirrorballOpacity = strongest;
+    });
+  }
+
   function updateFixtureBeamsToFloorClip(entity, floorNd, THREE) {
     const maxL = entity.maxBeamLength;
     if (!Number.isFinite(maxL) || maxL <= 0) {
@@ -697,9 +828,9 @@ function createThreeSceneController({
           if (isSelected) {
             mul *= 1.28;
           }
-          const o = Math.min(1, ro * mul) * strobeGate;
           for (const m of entity.mirrorballBeamMaterials) {
-            m.opacity = o;
+            const mo = m.userData.runtimeOpacity ?? ro;
+            m.opacity = Math.min(1, mo * mul);
           }
         }
       }
@@ -1211,19 +1342,10 @@ function createThreeSceneController({
       entity.stripPanGroup.rotation.x = THREE.MathUtils.degToRad(vis.bar_pan_deg);
     }
     if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
-      const baseOp = dimClamped * 0.14;
-      entity.runtimeMirrorballOpacity = baseOp;
-      // Mirrorball now has a dimmer + RGB DMX footprint — tint the reflected
-      // sparkles with the fixture's raw color (not the dim-pre-multiplied
-      // `r/g/b`), since opacity alone carries the dim. The small floor keeps
-      // a sparkle feel on deep hues.
-      const br = Math.min(1, rgb[0] + 0.08);
-      const bg = Math.min(1, rgb[1] + 0.08);
-      const bb = Math.min(1, rgb[2] + 0.08);
-      const gatedOp = baseOp * (entity.runtimeStrobeGate ?? 1);
+      entity.runtimeMirrorballOpacity = 0;
       for (const m of entity.mirrorballBeamMaterials) {
-        m.color.setRGB(br, bg, bb);
-        m.opacity = gatedOp;
+        m.userData.runtimeOpacity = 0;
+        m.opacity = 0;
       }
     }
   }
@@ -1560,6 +1682,7 @@ function createThreeSceneController({
       localState.entityMap.set(fixture.id, {
         ...entityBase,
         mirrorballBeamMaterials: placed.mirrorballBeamMaterials ?? [],
+        mirrorballBeamRecords: placed.mirrorballBeamRecords ?? [],
         mirrorballBeamsGroup: placed.mirrorballBeamsGroup ?? null,
         runtimeMirrorballOpacity: 0,
         runtimeConeOpacity: 0,
@@ -2031,7 +2154,6 @@ function createThreeSceneController({
     // Strobe gate: same square-wave idea as desktop, but slower Hz so the preview
     // reads clearly (desktop uses ~5–30 Hz in FixtureRenderer.get_effective_dimmer).
     const timeSec = now / 1000;
-    let strobeGateChanged = false;
     localState.entityMap.forEach((entity) => {
       if (entity.type === 'fixture' && entity.mirrorballBeamsGroup) {
         entity.mirrorballBeamsGroup.rotation.z = mbSpin;
@@ -2055,7 +2177,6 @@ function createThreeSceneController({
         }
         if ((entity.runtimeStrobeGate ?? 1) !== gate) {
           entity.runtimeStrobeGate = gate;
-          strobeGateChanged = true;
         }
         // Lens bulb: match beam perception — color = beam RGB × dim × strobe phase.
         if (entity.lensMaterial && entity.runtimeRgb) {
@@ -2077,9 +2198,8 @@ function createThreeSceneController({
         }
       }
     });
-    if (strobeGateChanged) {
-      applySelectionVisuals();
-    }
+    updateMirrorballReflections(THREE);
+    applySelectionVisuals();
 
     const floorNd = floorPlaneNdFromMesh(floorMesh, THREE);
     localState.entityMap.forEach((entity) => {

@@ -106,9 +106,9 @@ function mirrorballModel() {
   return {
     kind: 'mirrorball',
     sphereRadius,
-    beamCount: 36,
+    beamCount: 192,
     beamLength: 7.2,
-    beamConeRadius: bs * 0.07,
+    beamConeRadius: bs * 0.045,
     coneLength: 7.2,
     coneRadius: bs * 0.2,
   };
@@ -180,7 +180,7 @@ export function beamOriginMovingHeadAimLocal(model) {
 
 /**
  * @param {import('three').MeshStandardMaterial} bodyMaterial
- * @returns {{ aimGroup?: import('three').Group, headPivotGroup?: import('three').Group, stripPanGroup?: import('three').Group, mirrorballBeamMaterials?: import('three').MeshBasicMaterial[], mirrorballBeamsGroup?: import('three').Group }}
+ * @returns {{ aimGroup?: import('three').Group, headPivotGroup?: import('three').Group, stripPanGroup?: import('three').Group, mirrorballBeamMaterials?: import('three').MeshBasicMaterial[], mirrorballBeamRecords?: { mesh: import('three').Mesh, material: import('three').MeshBasicMaterial, directionLocal: import('three').Vector3 }[], mirrorballBeamsGroup?: import('three').Group }}
  */
 export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, model, entityKey) {
   const userData = { entityKey };
@@ -197,6 +197,7 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
 
     const dirs = mirrorballDirectionsTHREE(model.beamCount, THREE);
     const beamMaterials = [];
+    const beamRecords = [];
     const L = model.beamLength;
     const tipR = model.beamConeRadius;
     const beamSpinGroup = new THREE.Group();
@@ -218,8 +219,17 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
       cone.position.copy(dir.clone().multiplyScalar(r - L / 2));
       cone.userData = userData;
       beamSpinGroup.add(cone);
+      beamRecords.push({
+        mesh: cone,
+        material: mat,
+        directionLocal: dir.clone(),
+      });
     }
-    return { mirrorballBeamMaterials: beamMaterials, mirrorballBeamsGroup: beamSpinGroup };
+    return {
+      mirrorballBeamMaterials: beamMaterials,
+      mirrorballBeamRecords: beamRecords,
+      mirrorballBeamsGroup: beamSpinGroup,
+    };
   }
 
   if (model.kind === 'moving_head') {
