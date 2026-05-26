@@ -1541,40 +1541,42 @@ function AnimationEditorPanel({
             </option>
           ))}
         </select>
-        <label className="animation-mode-entry-seconds">
-          <span>Entry fade</span>
-          <input
-            type="number"
-            min="0.05"
-            step="0.05"
-            value={entrySecondsDraft}
-            disabled={!selectedMode}
-            onChange={(event) => setEntrySecondsDraft(event.target.value)}
-            onBlur={commitEntrySecondsDraft}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.currentTarget.blur();
-              }
-            }}
-          />
-          <span>sec</span>
-        </label>
-        <label className="animation-mode-hotkey">
-          <span>Hot key</span>
-          <input
-            type="text"
-            maxLength={1}
-            value={hotkeyDraft}
-            disabled={!selectedMode}
-            onChange={(event) => setHotkeyDraft(normalizeHotkeyInput(event.target.value))}
-            onBlur={commitHotkeyDraft}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.currentTarget.blur();
-              }
-            }}
-          />
-        </label>
+        <div className="animation-mode-meta-row">
+          <label className="animation-mode-entry-seconds">
+            <span>Entry fade</span>
+            <input
+              type="number"
+              min="0.05"
+              step="0.05"
+              value={entrySecondsDraft}
+              disabled={!selectedMode}
+              onChange={(event) => setEntrySecondsDraft(event.target.value)}
+              onBlur={commitEntrySecondsDraft}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+            <span>sec</span>
+          </label>
+          <label className="animation-mode-hotkey">
+            <span>Hot key</span>
+            <input
+              type="text"
+              maxLength={1}
+              value={hotkeyDraft}
+              disabled={!selectedMode}
+              onChange={(event) => setHotkeyDraft(normalizeHotkeyInput(event.target.value))}
+              onBlur={commitHotkeyDraft}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="animation-editor-workspace">
@@ -3371,13 +3373,6 @@ export default function DenseVenueEditorPage({ venueId }) {
           <div className="panel dense-header-panel">
             <div className="dense-header-top" ref={editorMenuRef}>
               <div className="dense-header-leading">
-                <button
-                  className="small-button secondary-button icon-only-button"
-                  aria-label="Back to venues"
-                  onClick={() => window.location.assign(withCurrentSearch('/venues'))}
-                >
-                  ←
-                </button>
                 {venueSnapshot && controlState.active_venue_id === venueSnapshot.summary.id ? (
                   <span
                     className="dense-venue-active-badge"
@@ -3414,6 +3409,16 @@ export default function DenseVenueEditorPage({ venueId }) {
                 </button>
                 {editorMenuOpen ? (
                   <div className="dense-editor-menu-dropdown" role="menu">
+                    <div className="dense-editor-menu-section">
+                      <a
+                        className="dense-editor-menu-heading dense-editor-menu-external-link"
+                        href={withCurrentSearch('/venues')}
+                        role="menuitem"
+                        onClick={() => setEditorMenuOpen(false)}
+                      >
+                        Back to venues
+                      </a>
+                    </div>
                     <div className="dense-editor-menu-section">
                       <a
                         className="dense-editor-menu-heading dense-editor-menu-external-link"

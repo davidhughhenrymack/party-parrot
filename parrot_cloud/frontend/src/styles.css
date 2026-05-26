@@ -1004,12 +1004,19 @@ label {
   width: 100%;
 }
 
+.animation-mode-meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
 .animation-mode-entry-seconds {
   display: grid;
   grid-template-columns: auto minmax(0, 92px) auto;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 0;
   color: #9ba8b4;
   font-size: 12px;
 }
@@ -1025,6 +1032,7 @@ label {
   grid-template-columns: auto 42px;
   align-items: center;
   gap: 8px;
+  margin-top: 0;
   color: #9ba8b4;
   font-size: 12px;
 }
