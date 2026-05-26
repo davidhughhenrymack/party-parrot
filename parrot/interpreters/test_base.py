@@ -504,6 +504,25 @@ class TestFlashBeat:
         self.fixture1.set_dimmer.assert_called_with(expected_dimmer)
         self.fixture1.clear_strobe.assert_called_with()
 
+    def test_flash_beat_phases_group_from_signal_history(self):
+        fixture3 = MagicMock(spec=FixtureBase)
+        group = [self.fixture1, self.fixture2, fixture3]
+        interpreter = FlashBeat(group, self.args, phase_spread_samples=2)
+        scheme = MagicMock()
+        frame = Frame(
+            {FrameSignal.freq_high: 0.6, FrameSignal.sustained_low: 0.1},
+            {
+                FrameSignal.freq_high.name: [0.8, 0.2, 0.6],
+                FrameSignal.sustained_low.name: [0.1, 0.1, 0.1],
+            },
+        )
+
+        interpreter.step(frame, scheme)
+
+        self.fixture1.set_dimmer.assert_called_with(0.6 * 255)
+        self.fixture2.set_dimmer.assert_called_with(0)
+        fixture3.set_dimmer.assert_called_with(0.8 * 255)
+
     def test_flash_beat_low_signal(self):
         """Test FlashBeat with low signal"""
         interpreter = FlashBeat(self.group, self.args)

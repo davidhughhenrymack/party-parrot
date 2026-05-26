@@ -222,17 +222,44 @@ class FlashBeat(InterpreterBase):
     def __str__(self):
         return f"⚡{Fore.MAGENTA}FlashBeat{Style.RESET_ALL}"
 
-    def __init__(self, group, args):
+    def __init__(self, group, args, phase_spread_samples: int = 28):
         super().__init__(group, args)
         self.signal = FrameSignal.freq_high
+        self._phase_offsets = self._build_phase_offsets(len(group), phase_spread_samples)
+
+    @staticmethod
+    def _build_phase_offsets(group_size: int, phase_spread_samples: int) -> list[int]:
+        if group_size <= 1:
+            return [0]
+        spread = max(0, int(phase_spread_samples))
+        return [
+            round(spread * idx / (group_size - 1))
+            for idx in range(group_size)
+        ]
+
+    def _phased_signal_value(self, frame: Frame, fixture_index: int) -> float:
+        current = float(frame[self.signal])
+        series = frame.timeseries.get(self.signal.name)
+        if series is None or len(series) == 0:
+            return current
+
+        # Unit tests and synthetic frames often omit real history. In that case,
+        # preserve the old instantaneous behavior instead of phasing against zeros.
+        if max(float(v) for v in series) <= 0:
+            return current
+
+        offset = self._phase_offsets[fixture_index]
+        sample_index = max(0, len(series) - 1 - offset)
+        return float(series[sample_index])
 
     def step(self, frame, scheme):
-        for i in self.group:
+        for idx, i in enumerate(self.group):
+            signal_value = self._phased_signal_value(frame, idx)
             if frame[FrameSignal.sustained_low] > 0.7:
                 i.set_dimmer(100)
                 i.set_strobe(200)
-            elif frame[self.signal] > 0.4:
-                i.set_dimmer(frame[self.signal] * 255)
+            elif signal_value > 0.4:
+                i.set_dimmer(signal_value * 255)
                 i.clear_strobe()
             else:
                 i.set_dimmer(0)
