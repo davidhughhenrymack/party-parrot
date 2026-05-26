@@ -9,7 +9,7 @@ const DEFAULT_INTERPRETATION_COLOR_PALETTE = [
 export default function InterpretationTreePage() {
   const [payload, setPayload] = useState(null);
   const [liveColorPalette, setLiveColorPalette] = useState(null);
-  const [config, setConfig] = useState({ theme_color_examples: [] });
+  const [config, setConfig] = useState({ theme_color_examples: [], shift_targets: [] });
   const [controlState, setControlState] = useState({ theme_name: '' });
   const [error, setError] = useState('');
 
@@ -28,7 +28,10 @@ export default function InterpretationTreePage() {
         return;
       }
       setPayload(next);
-      setConfig({ theme_color_examples: nextConfig.theme_color_examples || [] });
+      setConfig({
+        theme_color_examples: nextConfig.theme_color_examples || [],
+        shift_targets: nextConfig.shift_targets || [],
+      });
       setControlState(bootstrap.control_state || { theme_name: '' });
       setLiveColorPalette(readColorPaletteFromFixturePayload(bootstrap.fixture_runtime_state));
       connectWebSocket();
@@ -77,11 +80,14 @@ export default function InterpretationTreePage() {
   );
   const selectedThemeExample = themeExampleByName.get(controlState.theme_name);
   const selectedThemeAlwaysRainbow = selectedThemeExample?.always_rainbow === true;
+  const canShiftLighting = config.shift_targets.includes('lighting_only');
+  const pageTitle = interpretationModeTitle(payload, controlState);
+  const rootChildren = Array.isArray(payload?.tree?.children) ? payload.tree.children : [];
 
   return (
     <main className="interpretation-page-shell">
       <header className="interpretation-page-header">
-        <h1>Lighting Interpretation</h1>
+        <h1>{pageTitle}</h1>
       </header>
       <section className="interpretation-panel">
         <div
@@ -100,14 +106,28 @@ export default function InterpretationTreePage() {
           </span>
         </div>
         {error ? <p className="interpretation-error">{error}</p> : null}
-        {payload?.tree ? (
+        {rootChildren.length > 0 ? (
           <ul className="interpretation-tree">
-            <InterpretationNode node={payload.tree} />
+            {rootChildren.map((child, index) => (
+              <InterpretationNode key={`${child.kind || 'node'}-${child.label || index}-${index}`} node={child} />
+            ))}
           </ul>
         ) : (
           <p className="interpretation-empty">No interpretation has been published yet.</p>
         )}
       </section>
+      <div className="interpretation-footer-actions">
+        <button
+          type="button"
+          className="interpretation-shift-button"
+          disabled={!canShiftLighting}
+          onClick={() => postJson('/api/shift', { target: 'lighting_only' }).catch((err) => {
+            console.error('Failed to shift lighting interpretation:', err);
+          })}
+        >
+          Shift Interpretation
+        </button>
+      </div>
     </main>
   );
 }
@@ -134,8 +154,28 @@ function InterpretationNode({ node }) {
   );
 }
 
+function interpretationModeTitle(payload, controlState) {
+  const mode = payload?.mode || controlState?.mode || payload?.tree?.label || 'Lighting';
+  return String(mode)
+    .replace(/\s+interpretation\s*$/i, '')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  return response.json();
+}
+
+async function postJson(url, body) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     throw new Error(await response.text());
   }

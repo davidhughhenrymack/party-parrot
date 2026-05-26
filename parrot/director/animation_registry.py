@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Type
 
 from beartype import beartype
 
 from parrot.director.frame import FrameSignal
 from parrot.director.mode import Mode
+from parrot.fixtures.base import FixtureWithBulbs
 from parrot.interpreters.base import (
     AnyColor,
     ColorAlternateBg,
@@ -72,6 +73,8 @@ from parrot.interpreters.strobe import (
 )
 
 JsonDict = dict[str, Any]
+
+_AUTO_FOR_BULBS_CATEGORIES = {"Color", "Dimmer"}
 
 
 @beartype
@@ -458,6 +461,84 @@ def _params(raw: object) -> dict[str, object]:
     return {str(k): _coerce_param(str(k), v) for k, v in raw.items()}
 
 
+def _auto_for_bulbs(interpreter: type[InterpreterBase]) -> type[InterpreterBase]:
+    bulb_interpreter = for_bulbs(interpreter)
+
+    def is_multi_bulb_fixture(fixture: object) -> bool:
+        return isinstance(fixture, FixtureWithBulbs) and len(fixture.get_bulbs()) > 1
+
+    class AutoForBulbs(InterpreterBase):
+        def __new__(cls, group, args):
+            fixture_group = [fixture for fixture in group if not is_multi_bulb_fixture(fixture)]
+            bulb_group = [fixture for fixture in group if is_multi_bulb_fixture(fixture)]
+            if not bulb_group:
+                return interpreter(group, args)
+            if not fixture_group:
+                return bulb_interpreter(group, args)
+            return super().__new__(cls)
+
+        def __init__(self, group, args):
+            super().__init__(group, args)
+            self._fixture_group = [
+                fixture
+                for fixture in group
+                if not is_multi_bulb_fixture(fixture)
+            ]
+            self._bulb_group = [
+                fixture
+                for fixture in group
+                if is_multi_bulb_fixture(fixture)
+            ]
+            self._fixture_interpreter = (
+                interpreter(self._fixture_group, args)
+                if self._fixture_group
+                else None
+            )
+            self._bulb_interpreter = (
+                bulb_interpreter(self._bulb_group, args)
+                if self._bulb_group
+                else None
+            )
+
+        @classmethod
+        def acceptable(cls, args):
+            return interpreter.acceptable(args)
+
+        def step(self, frame, scheme):
+            if self._fixture_interpreter is not None:
+                self._fixture_interpreter.step(frame, scheme)
+            if self._bulb_interpreter is not None:
+                self._bulb_interpreter.step(frame, scheme)
+
+        def exit(self, frame, scheme):
+            if self._fixture_interpreter is not None:
+                self._fixture_interpreter.exit(frame, scheme)
+            if self._bulb_interpreter is not None:
+                self._bulb_interpreter.exit(frame, scheme)
+
+        def __str__(self) -> str:
+            children = [
+                child
+                for child in (self._fixture_interpreter, self._bulb_interpreter)
+                if child is not None
+            ]
+            return " + ".join(str(child) for child in children)
+
+    AutoForBulbs.__name__ = f"AutoForBulbs{interpreter.__name__}"
+    return AutoForBulbs
+
+
+def _maybe_auto_for_bulbs(
+    entry: AnimationRegistryEntry,
+    interpreter: type[InterpreterBase],
+) -> type[InterpreterBase]:
+    if entry.category not in _AUTO_FOR_BULBS_CATEGORIES:
+        return interpreter
+    if entry.key == "AllBulbs255":
+        return interpreter
+    return _auto_for_bulbs(interpreter)
+
+
 @beartype
 def build_interpreter_factory(spec: JsonDict) -> type[InterpreterBase]:
     expression_type = str(spec.get("type", "animation"))
@@ -466,12 +547,18 @@ def build_interpreter_factory(spec: JsonDict) -> type[InterpreterBase]:
         entry = REGISTRY[key]
         params = entry.params_with_defaults(spec.get("params", {}))
         if params:
-            return with_args(str(spec.get("name", key)), entry.interpreter, **params)
-        return entry.interpreter
+            return _maybe_auto_for_bulbs(
+                entry,
+                with_args(str(spec.get("name", key)), entry.interpreter, **params),
+            )
+        return _maybe_auto_for_bulbs(entry, entry.interpreter)
     if expression_type == "with_args":
         key = str(spec["key"])
         entry = REGISTRY[key]
-        return with_args(str(spec.get("name", key)), entry.interpreter, **entry.params_with_defaults(spec.get("params", {})))
+        return _maybe_auto_for_bulbs(
+            entry,
+            with_args(str(spec.get("name", key)), entry.interpreter, **entry.params_with_defaults(spec.get("params", {}))),
+        )
     if expression_type == "combo":
         return combo(*(build_interpreter_factory(dict(child)) for child in spec.get("children", [])))
     if expression_type == "randomize":

@@ -9,14 +9,18 @@ from parrot.director.animation_registry import (
     weighted_randomize_spec,
 )
 from parrot.director.frame import FrameSignal
+from parrot.director.frame import Frame
 from parrot.director.mode import Mode
 from parrot.director.mode_dispatch import _build_category_combo, get_interpreter
+from parrot.director.color_scheme import ColorScheme
 from parrot.fixtures.base import GoboWheelEntry
+from parrot.fixtures.motionstrip import Motionstrip38
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
 from parrot.fixtures.led_par import ParRGB
 from parrot.interpreters.dimmer import SequenceDimmers
 from parrot.interpreters.signal import SignalSwitchInterpreter
+from parrot.utils.colour import Color
 from parrot_cloud.domain import (
     LightingModeSpec,
     VenueAnimationAssignmentSpec,
@@ -205,6 +209,53 @@ def test_float_default_params_stay_float_for_integer_like_input():
     interp = factory([ParRGB(1)], InterpreterArgs(True))
 
     assert interp.interpreter.multiplier == 0.0
+
+
+def test_dimmer_animation_auto_wraps_multi_bulb_fixtures():
+    factory = build_interpreter_factory(animation("SequenceDimmers"))
+    fixture = Motionstrip38(1)
+    frame = Frame({})
+    frame.time = 0.0
+
+    interp = factory([fixture], InterpreterArgs(True))
+    interp.step(frame, ColorScheme(Color("red"), Color("blue"), Color("green")))
+
+    assert fixture.get_dimmer() == 255
+    bulb_dimmers = [bulb.get_dimmer() for bulb in fixture.get_bulbs()]
+    assert bulb_dimmers == [255, 0, 0, 0, 0, 0, 0, 0]
+
+
+def test_dimmer_animation_auto_splits_mixed_single_and_multi_bulb_fixtures():
+    factory = build_interpreter_factory(animation("SequenceDimmers"))
+    par = ParRGB(1)
+    strip = Motionstrip38(20)
+    frame = Frame({})
+    frame.time = 0.0
+
+    interp = factory([par, strip], InterpreterArgs(True))
+    interp.step(frame, ColorScheme(Color("red"), Color("blue"), Color("green")))
+
+    assert par.get_dimmer() == 255
+    assert strip.get_dimmer() == 255
+    bulb_dimmers = [bulb.get_dimmer() for bulb in strip.get_bulbs()]
+    assert bulb_dimmers == [255, 0, 0, 0, 0, 0, 0, 0]
+
+
+def test_color_animation_auto_wraps_multi_bulb_fixtures():
+    factory = build_interpreter_factory(animation("ColorAlternateBg"))
+    fixture = Motionstrip38(1)
+    scheme = ColorScheme(Color("red"), Color("blue"), Color("green"))
+
+    interp = factory([fixture], InterpreterArgs(True))
+    interp.step(Frame({}), scheme)
+
+    bulb_colors = [bulb.get_color().hex_l for bulb in fixture.get_bulbs()]
+    assert bulb_colors[:4] == [
+        Color("blue").hex_l,
+        Color("green").hex_l,
+        Color("blue").hex_l,
+        Color("green").hex_l,
+    ]
 
 
 def test_registry_defaults_coerce_signal_fn_to_callable():

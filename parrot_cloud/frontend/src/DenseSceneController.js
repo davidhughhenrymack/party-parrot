@@ -1211,6 +1211,21 @@ function createThreeSceneController({
       }
     }
 
+    if (entity.motionstripBulbs?.length) {
+      for (const bulb of entity.motionstripBulbs) {
+        const tipL = bulb.beamTipLocal;
+        const bp = entity.beamParent;
+        const o = tipL.clone();
+        const far = tipL.clone().add(new THREE.Vector3(0, maxL, 0));
+        bp.localToWorld(o);
+        bp.localToWorld(far);
+        const dir = far.clone().sub(o).normalize();
+        const clip = clipRayToFloorAndMirrorballs(o, dir, maxL, n, d);
+        bulb.beamMesh.scale.set(fy, clip / maxL, fy);
+        bulb.beamMesh.position.set(tipL.x, tipL.y + clip / 2, tipL.z);
+      }
+    }
+
     const mbGroup = entity.mirrorballBeamsGroup;
     if (mbGroup && entity.profile?.kind === 'mirrorball') {
       const L = entity.profile.beamLength;
@@ -1300,6 +1315,17 @@ function createThreeSceneController({
         if (isSelected) mul *= 1.28;
         // Lens tint/strobe lives in material.color (animate loop); opacity is dim × selection only.
         entity.lensMaterial.opacity = Math.min(1, entity.runtimeLensOpacity * mul);
+      }
+      if (entity.motionstripBulbs?.length) {
+        let mul = 1.0;
+        if (fixtureSelectionActive && !isSelected) mul *= 0.62;
+        if (isSelected) mul *= 1.28;
+        const gate = entity.runtimeStrobeGate ?? 1;
+        for (const bulb of entity.motionstripBulbs) {
+          const dim = bulb.runtimeDimmer ?? 0;
+          bulb.lensMaterial.opacity = Math.min(1, (0.12 + dim * 0.88) * mul);
+          bulb.beamMaterial.opacity = Math.min(1, dim * CONE_OPACITY_AT_FULL_DIM * mul) * gate;
+        }
       }
       if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
         const ro = entity.runtimeMirrorballOpacity ?? 0;
@@ -1829,6 +1855,36 @@ function createThreeSceneController({
     if (entity.stripPanGroup && typeof vis.bar_pan_deg === 'number') {
       entity.stripPanGroup.rotation.x = THREE.MathUtils.degToRad(vis.bar_pan_deg);
     }
+    if (entity.motionstripBulbs?.length) {
+      const bulbStates = Array.isArray(vis.bulbs) ? vis.bulbs : [];
+      entity.motionstripBulbs.forEach((bulb, index) => {
+        const bulbVis = bulbStates[index] || {};
+        const bulbRgb = Array.isArray(bulbVis.rgb) && bulbVis.rgb.length >= 3
+          ? bulbVis.rgb
+          : rgb;
+        const bulbDimmer = typeof bulbVis.dimmer === 'number'
+          ? Math.max(0, Math.min(1, bulbVis.dimmer))
+          : 1;
+        const effectiveDimmer = dimClamped * bulbDimmer;
+        bulb.runtimeRgb = [
+          Math.max(0, Math.min(1, bulbRgb[0])),
+          Math.max(0, Math.min(1, bulbRgb[1])),
+          Math.max(0, Math.min(1, bulbRgb[2])),
+        ];
+        bulb.runtimeDimmer = effectiveDimmer;
+        const br = Math.min(1, bulb.runtimeRgb[0] * effectiveDimmer);
+        const bg = Math.min(1, bulb.runtimeRgb[1] * effectiveDimmer);
+        const bb = Math.min(1, bulb.runtimeRgb[2] * effectiveDimmer);
+        bulb.lensMaterial.color.setRGB(br, bg, bb);
+        bulb.beamMaterial.color.setRGB(
+          Math.min(1, br * 1.15),
+          Math.min(1, bg * 1.15),
+          Math.min(1, bb * 1.15),
+        );
+        bulb.lensMaterial.opacity = 0.12 + effectiveDimmer * 0.88;
+        bulb.beamMaterial.opacity = effectiveDimmer * CONE_OPACITY_AT_FULL_DIM;
+      });
+    }
     if (entity.mirrorballBeamMaterials && entity.mirrorballBeamMaterials.length > 0) {
       entity.runtimeMirrorballOpacity = 0;
       for (const m of entity.mirrorballBeamMaterials) {
@@ -1872,6 +1928,14 @@ function createThreeSceneController({
           entity.runtimeMirrorballOpacity = 0;
           for (const m of entity.mirrorballBeamMaterials) {
             m.opacity = 0;
+          }
+        }
+        if (entity.motionstripBulbs?.length) {
+          for (const bulb of entity.motionstripBulbs) {
+            bulb.runtimeDimmer = 0;
+            bulb.lensMaterial.color.setRGB(0.04, 0.04, 0.045);
+            bulb.lensMaterial.opacity = 0.12;
+            bulb.beamMaterial.opacity = 0;
           }
         }
         return;
@@ -2030,6 +2094,7 @@ function createThreeSceneController({
     let prismGroupRef = null;
     let prismMaterialsRef = [];
     let prismSubMeshesRef = [];
+    const motionstripBulbsRef = [];
     /** @type {import('three').Vector3 | null} */
     let beamTipLocal = null;
     if (profile.kind !== 'mirrorball') {
@@ -2046,26 +2111,76 @@ function createThreeSceneController({
 
       const coneLength = profile.coneLength;
       const coneRadius = profile.coneRadius;
-      coneMaterial = new THREE.MeshBasicMaterial({
-        color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
-        transparent: true,
-        opacity: 0,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        fog: false,
-      });
-      // ConeGeometry: tip at +Y, base at -Y. Beam should be narrow at the lens and widen along the throw;
-      // flip 180° so the tip sits on the lens (same convention as ArrowHelper cone).
-      const coneMesh = new THREE.Mesh(
-        new THREE.ConeGeometry(coneRadius, coneLength, 24, 1, true),
-        coneMaterial
-      );
-      coneMesh.rotateX(Math.PI);
-      coneMesh.position.set(0, beam.y + coneLength / 2, beam.z ?? 0);
-      coneMesh.userData = { entityKey: fixture.id };
-      beamParent.add(coneMesh);
-      coneMesh.layers.set(BEAM_RENDER_LAYER);
-      coneMeshRef = coneMesh;
+      if (profile.kind === 'motionstrip') {
+        const numBulbs = profile.numBulbs ?? 8;
+        const spacing = profile.bulbSpacing ?? 0.22;
+        const startX = -((numBulbs - 1) * spacing) / 2;
+        const bulbRadius = 0.1;
+        for (let i = 0; i < numBulbs; i += 1) {
+          const x = startX + i * spacing;
+          const bulbTipLocal = new THREE.Vector3(x, beam.y, beam.z ?? 0);
+          const beamMaterial = new THREE.MeshBasicMaterial({
+            color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            fog: false,
+          });
+          const beamMesh = new THREE.Mesh(
+            new THREE.ConeGeometry(coneRadius / Math.max(1.8, numBulbs * 0.42), coneLength, 12, 1, true),
+            beamMaterial,
+          );
+          beamMesh.rotateX(Math.PI);
+          beamMesh.position.set(x, beam.y + coneLength / 2, beam.z ?? 0);
+          beamMesh.userData = { entityKey: fixture.id };
+          beamMesh.layers.set(BEAM_RENDER_LAYER);
+          beamParent.add(beamMesh);
+
+          const lensMat = new THREE.MeshBasicMaterial({
+            color: 0x101014,
+            transparent: true,
+            opacity: 0.12,
+          });
+          const lens = new THREE.Mesh(
+            new THREE.SphereGeometry(bulbRadius, 12, 12),
+            lensMat,
+          );
+          lens.position.copy(bulbTipLocal);
+          lens.userData = { entityKey: fixture.id };
+          beamParent.add(lens);
+          secondaryMaterials.push(lensMat);
+          motionstripBulbsRef.push({
+            beamMesh,
+            beamMaterial,
+            lensMaterial: lensMat,
+            beamTipLocal: bulbTipLocal,
+            runtimeRgb: [1, 1, 1],
+            runtimeDimmer: 0,
+          });
+        }
+      } else {
+        coneMaterial = new THREE.MeshBasicMaterial({
+          color: fixture.is_manual ? 0xfbbf24 : 0xfb7185,
+          transparent: true,
+          opacity: 0,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          fog: false,
+        });
+        // ConeGeometry: tip at +Y, base at -Y. Beam should be narrow at the lens and widen along the throw;
+        // flip 180° so the tip sits on the lens (same convention as ArrowHelper cone).
+        const coneMesh = new THREE.Mesh(
+          new THREE.ConeGeometry(coneRadius, coneLength, 24, 1, true),
+          coneMaterial
+        );
+        coneMesh.rotateX(Math.PI);
+        coneMesh.position.set(0, beam.y + coneLength / 2, beam.z ?? 0);
+        coneMesh.userData = { entityKey: fixture.id };
+        beamParent.add(coneMesh);
+        coneMesh.layers.set(BEAM_RENDER_LAYER);
+        coneMeshRef = coneMesh;
+      }
 
       // Prism splay group: 7 thinner cones splayed off-axis around the main beam.
       // Hidden by default; shown when runtime reports `prism_on` for this fixture.
@@ -2110,19 +2225,21 @@ function createThreeSceneController({
         prismGroupRef = prismGroup;
       }
 
-      lensMaterial = new THREE.MeshBasicMaterial({
-        color: fixture.is_manual ? 0xfbbf24 : 0xf8fafc,
-        transparent: true,
-        opacity: 0.95,
-      });
-      const lens = new THREE.Mesh(
-        new THREE.SphereGeometry(lensRadiusForModel(profile), 12, 12),
-        lensMaterial
-      );
-      lens.position.set(0, beam.y, beam.z);
-      lens.userData = { entityKey: fixture.id };
-      beamParent.add(lens);
-      secondaryMaterials.push(lensMaterial);
+      if (profile.kind !== 'motionstrip') {
+        lensMaterial = new THREE.MeshBasicMaterial({
+          color: fixture.is_manual ? 0xfbbf24 : 0xf8fafc,
+          transparent: true,
+          opacity: 0.95,
+        });
+        const lens = new THREE.Mesh(
+          new THREE.SphereGeometry(lensRadiusForModel(profile), 12, 12),
+          lensMaterial
+        );
+        lens.position.set(0, beam.y, beam.z);
+        lens.userData = { entityKey: fixture.id };
+        beamParent.add(lens);
+        secondaryMaterials.push(lensMaterial);
+      }
     }
 
     const hitRadius = profile.kind === 'mirrorball' ? Math.max(0.55, profile.sphereRadius * 1.15) : 0.62;
@@ -2194,6 +2311,7 @@ function createThreeSceneController({
         prismGroup: prismGroupRef,
         prismMaterials: prismMaterialsRef,
         prismSubMeshes: prismSubMeshesRef,
+        motionstripBulbs: motionstripBulbsRef,
         prismOn: false,
         prismRotateSpeed: 0,
       });
@@ -2695,6 +2813,22 @@ function createThreeSceneController({
               Math.min(1, r0 * dim * ph),
               Math.min(1, g0 * dim * ph),
               Math.min(1, b0 * dim * ph),
+            );
+          }
+        }
+        if (entity.motionstripBulbs?.length) {
+          for (const bulb of entity.motionstripBulbs) {
+            const [r0, g0, b0] = bulb.runtimeRgb ?? [1, 1, 1];
+            const dim = Math.max(0, Math.min(1, bulb.runtimeDimmer ?? 0));
+            const phase = strobe > 0 ? gate : 1;
+            const lr = dim < 1e-4 ? 0.04 : Math.min(1, r0 * dim * phase);
+            const lg = dim < 1e-4 ? 0.04 : Math.min(1, g0 * dim * phase);
+            const lb = dim < 1e-4 ? 0.045 : Math.min(1, b0 * dim * phase);
+            bulb.lensMaterial.color.setRGB(lr, lg, lb);
+            bulb.beamMaterial.color.setRGB(
+              Math.min(1, lr * 1.15),
+              Math.min(1, lg * 1.15),
+              Math.min(1, lb * 1.15),
             );
           }
         }

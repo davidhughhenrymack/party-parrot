@@ -2,6 +2,7 @@ from typing import List, TypeVar
 from parrot.fixtures.base import FixtureBase, FixtureWithBulbs
 from parrot.interpreters.base import InterpreterArgs, InterpreterBase
 from parrot.interpreters.combo import Combo
+from parrot.interpreters.dimmer import Dimmer255
 
 T = TypeVar("T")
 
@@ -22,6 +23,7 @@ def for_bulbs(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:
             args: InterpreterArgs,
         ):
             super().__init__(group, args)
+            self.main_dimmer = Dimmer255(group, args)
             self.interpreter = Combo(group_to_bulbs(group), args, interpreters)
 
         @classmethod
@@ -29,6 +31,7 @@ def for_bulbs(*interpreters: List[InterpreterBase[T]]) -> Combo[T]:
             return all([i.acceptable(args) for i in interpreters])
 
         def step(self, frame, scheme):
+            self.main_dimmer.step(frame, scheme)
             self.interpreter.step(frame, scheme)
 
         def exit(self, frame, scheme):
