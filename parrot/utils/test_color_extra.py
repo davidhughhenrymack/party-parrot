@@ -19,3 +19,20 @@ def test_color_distance_prefers_hue_over_luminance_for_saturated_colors():
     target = Color("green")
 
     assert color_distance(target, Color("lime")) < color_distance(target, Color("yellow"))
+
+
+def test_color_distance_prefers_saturation_match_over_closer_hue():
+    target = Color("red")
+
+    washed_out_close_hue = Color("red")
+    washed_out_close_hue.set_hue(0.05)
+    washed_out_close_hue.set_saturation(0.3)
+
+    saturated_larger_hue_miss = Color("red")
+    saturated_larger_hue_miss.set_hue(0.18)
+    saturated_larger_hue_miss.set_saturation(1.0)
+
+    assert color_distance(target, saturated_larger_hue_miss) < color_distance(
+        target,
+        washed_out_close_hue,
+    )

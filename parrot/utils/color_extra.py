@@ -17,11 +17,12 @@ def lerp_color(a: Color, b: Color, t: float) -> Color:
 
 
 def color_distance(a: Color, b: Color) -> float:
-    # Hue is what operators most notice on saturated fixture colors. Treat hue
-    # as circular so red near 0.0 and red near 1.0 still match each other.
+    # Treat hue as circular so red near 0.0 and red near 1.0 still match each
+    # other. Saturation is weighted heavily because washed-out wheel colors look
+    # more wrong than a modest hue miss at the requested saturation.
     return (
-        3.0 * hue_distance(a.hue, b.hue)
-        + 0.65 * abs(a.saturation - b.saturation)
+        2.0 * hue_distance(a.hue, b.hue)
+        + 2.0 * abs(a.saturation - b.saturation)
         + 0.35 * abs(a.luminance - b.luminance)
     )
 

@@ -9,6 +9,8 @@ const DEFAULT_INTERPRETATION_COLOR_PALETTE = [
 export default function InterpretationTreePage() {
   const [payload, setPayload] = useState(null);
   const [liveColorPalette, setLiveColorPalette] = useState(null);
+  const [config, setConfig] = useState({ theme_color_examples: [] });
+  const [controlState, setControlState] = useState({ theme_name: '' });
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -17,14 +19,17 @@ export default function InterpretationTreePage() {
     let ws = null;
 
     async function initialize() {
-      const [next, bootstrap] = await Promise.all([
+      const [next, bootstrap, nextConfig] = await Promise.all([
         fetchJson('/api/runtime/interpretation-tree'),
         fetchJson('/api/runtime/bootstrap'),
+        fetchJson('/api/config'),
       ]);
       if (disposed) {
         return;
       }
       setPayload(next);
+      setConfig({ theme_color_examples: nextConfig.theme_color_examples || [] });
+      setControlState(bootstrap.control_state || { theme_name: '' });
       setLiveColorPalette(readColorPaletteFromFixturePayload(bootstrap.fixture_runtime_state));
       connectWebSocket();
     }
@@ -39,7 +44,10 @@ export default function InterpretationTreePage() {
         } else if (message.type === 'fixture_runtime_state') {
           setLiveColorPalette(readColorPaletteFromFixturePayload(message.data));
         } else if (message.type === 'bootstrap') {
+          setControlState(message.data?.control_state || { theme_name: '' });
           setLiveColorPalette(readColorPaletteFromFixturePayload(message.data?.fixture_runtime_state));
+        } else if (message.type === 'control_state') {
+          setControlState(message.data || { theme_name: '' });
         }
       };
       ws.onclose = () => {
@@ -63,20 +71,30 @@ export default function InterpretationTreePage() {
     };
   }, []);
 
+  const colorPalette = liveColorPalette ?? DEFAULT_INTERPRETATION_COLOR_PALETTE;
+  const themeExampleByName = new Map(
+    (config.theme_color_examples || []).map((example) => [example.name, example]),
+  );
+  const selectedThemeExample = themeExampleByName.get(controlState.theme_name);
+  const selectedThemeAlwaysRainbow = selectedThemeExample?.always_rainbow === true;
+
   return (
     <main className="interpretation-page-shell">
       <header className="interpretation-page-header">
         <h1>Lighting Interpretation</h1>
       </header>
       <section className="interpretation-panel">
-        <div className="interpretation-color-scheme">
+        <div
+          className={`interpretation-color-scheme${selectedThemeAlwaysRainbow ? ' rainbow-gradient-bg' : ''}`}
+          style={{ '--interpretation-color-scheme-gradient': paletteToGradient(colorPalette) }}
+        >
           <span className="interpretation-color-scheme-label">Current color scheme</span>
           <span className="interpretation-color-scheme-swatches" aria-hidden="true">
-            {(liveColorPalette ?? DEFAULT_INTERPRETATION_COLOR_PALETTE).map((rgb, index) => (
+            {colorPalette.map((rgb, index) => (
               <span
                 key={index}
-                className="interpretation-color-scheme-swatch"
-                style={{ background: rgbTripleToCss(rgb) }}
+                className={`interpretation-color-scheme-swatch${index === 0 && selectedThemeAlwaysRainbow ? ' rainbow-hue-tile' : ''}`}
+                style={index === 0 && selectedThemeAlwaysRainbow ? undefined : { background: rgbTripleToCss(rgb) }}
               />
             ))}
           </span>
@@ -151,4 +169,9 @@ function rgbTripleToCss(rgb) {
   const g = Math.round(Math.max(0, Math.min(1, rgb[1])) * 255);
   const b = Math.round(Math.max(0, Math.min(1, rgb[2])) * 255);
   return `rgb(${r},${g},${b})`;
+}
+
+function paletteToGradient(palette) {
+  const colors = (palette || DEFAULT_INTERPRETATION_COLOR_PALETTE).map(rgbTripleToCss);
+  return `linear-gradient(135deg, ${colors.join(', ')})`;
 }
