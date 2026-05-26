@@ -1802,6 +1802,10 @@ label {
   background: radial-gradient(circle at top, #334155, #1f2937 70%);
 }
 
+.dense-viewport-shell-3d {
+  background: radial-gradient(circle at top, #07090f, #000 72%);
+}
+
 /* Keep three.js canvas clipped to the center column when the inspector opens (layout change has no window resize event). */
 .dense-viewport-shell canvas {
   display: block;

@@ -112,7 +112,7 @@ function createThreeSceneController({
   const DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.22;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1b2430);
+  scene.background = new THREE.Color(0x030407);
   scene.fog = new THREE.FogExp2(0x05070c, 0.018);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -258,19 +258,19 @@ function createThreeSceneController({
 
   const LIGHTING_PRESETS = {
     default: {
-      background: 0x1b2430,
+      background: 0x030407,
       ambient: { color: 0xffffff, intensity: 0.9 },
       directional: { color: 0xffffff, intensity: 1.0, x: 10, y: -14, z: 18 },
       floorColor: 0x13202d,
     },
     bright: {
-      background: 0x2a3444,
+      background: 0x07090d,
       ambient: { color: 0xffffff, intensity: 1.15 },
       directional: { color: 0xffffff, intensity: 0.65, x: 8, y: -12, z: 20 },
       floorColor: 0x1c2a3a,
     },
     contrast: {
-      background: 0x0c1016,
+      background: 0x020307,
       ambient: { color: 0xb8c4d4, intensity: 0.32 },
       directional: { color: 0xffffff, intensity: 1.55, x: 12, y: -16, z: 14 },
       floorColor: 0x0a121a,
@@ -297,6 +297,9 @@ function createThreeSceneController({
 
   const sceneContent = new THREE.Group();
   scene.add(sceneContent);
+  const danceFloorPeopleGroup = new THREE.Group();
+  danceFloorPeopleGroup.name = 'danceFloorPeopleCutouts';
+  scene.add(danceFloorPeopleGroup);
 
   /** World-space pivot for translating multiple fixtures together (not cleared with sceneContent). */
   const multiSelectPivot = new THREE.Group();
@@ -321,6 +324,22 @@ function createThreeSceneController({
   /** @type {AbortController | null} */
   let vjPreviewLoadAbortController = null;
   const djSilhouetteTexture = createDjSilhouetteTexture();
+  let danceFloorPersonTextures = [];
+  let danceFloorPersonTextureLoadStarted = false;
+
+  const DANCE_FLOOR_PERSON_STRIPS = [
+    [0.055, 0.205],
+    [0.145, 0.285],
+    [0.235, 0.415],
+    [0.375, 0.565],
+    [0.545, 0.695],
+    [0.655, 0.845],
+    [0.795, 0.985],
+  ];
+  const SQFT_PER_SQM = 10.7639;
+  const DANCE_FLOOR_PERSON_SQFT = 12;
+  const DANCE_FLOOR_MIN_PEOPLE = 7;
+  const DANCE_FLOOR_MAX_PEOPLE = 180;
 
   function setMaterialDimmed(material, dimmed) {
     if (!material) {
@@ -419,6 +438,7 @@ function createThreeSceneController({
 
     localState.venueScale = computeVenueScale(localState.venueSnapshot);
     syncFloorMeshFromSnapshot();
+    updateDanceFloorPeopleCutouts();
     resizeRenderer();
     orbitControls.target.copy(
       localState.currentView === 'perspective' ? getFloorCenterTarget() : (() => {
@@ -590,6 +610,181 @@ function createThreeSceneController({
     const texture = new THREE.TextureLoader().load('/api/assets/dj.png');
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
+  }
+
+  function keepLargestDarkComponent(imageData, darknessThreshold = 35) {
+    const { data, width, height } = imageData;
+    const total = width * height;
+    const dark = new Uint8Array(total);
+    const visited = new Uint8Array(total);
+    for (let i = 0; i < total; i += 1) {
+      const p = i * 4;
+      const darkness = 255 - (data[p] + data[p + 1] + data[p + 2]) / 3;
+      dark[i] = darkness > darknessThreshold ? 1 : 0;
+    }
+
+    let best = [];
+    const stack = [];
+    for (let i = 0; i < total; i += 1) {
+      if (!dark[i] || visited[i]) {
+        continue;
+      }
+      const component = [];
+      stack.push(i);
+      visited[i] = 1;
+      while (stack.length > 0) {
+        const current = stack.pop();
+        component.push(current);
+        const x = current % width;
+        const y = Math.floor(current / width);
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            if (dx === 0 && dy === 0) {
+              continue;
+            }
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
+              continue;
+            }
+            const ni = ny * width + nx;
+            if (dark[ni] && !visited[ni]) {
+              visited[ni] = 1;
+              stack.push(ni);
+            }
+          }
+        }
+      }
+      if (component.length > best.length) {
+        best = component;
+      }
+    }
+
+    const keep = new Uint8Array(total);
+    for (const i of best) {
+      keep[i] = 1;
+    }
+    for (let i = 0; i < total; i += 1) {
+      const p = i * 4;
+      if (!keep[i]) {
+        data[p + 3] = 0;
+        continue;
+      }
+      const darkness = 255 - (data[p] + data[p + 1] + data[p + 2]) / 3;
+      const alpha = Math.max(0, Math.min(255, (darkness - 18) * 4.2));
+      data[p] = 0;
+      data[p + 1] = 0;
+      data[p + 2] = 0;
+      data[p + 3] = alpha;
+    }
+    return imageData;
+  }
+
+  function loadDanceFloorPersonTextures() {
+    if (danceFloorPersonTextureLoadStarted) {
+      return;
+    }
+    danceFloorPersonTextureLoadStarted = true;
+    const img = new Image();
+    img.onload = () => {
+      danceFloorPersonTextures = DANCE_FLOOR_PERSON_STRIPS.map(([x0, x1], index) => {
+        const srcX = Math.floor(x0 * img.width);
+        const srcW = Math.max(1, Math.ceil((x1 - x0) * img.width));
+        const canvas = document.createElement('canvas');
+        canvas.width = 192;
+        canvas.height = 384;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, srcX, 0, srcW, img.height, 0, 0, canvas.width, canvas.height);
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(keepLargestDarkComponent(pixels), 0, 0);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.name = `dance-floor-person-${index}`;
+        return texture;
+      });
+      updateDanceFloorPeopleCutouts();
+    };
+    img.onerror = () => {
+      danceFloorPersonTextures = [];
+    };
+    img.src = '/api/assets/dance-floor-people.png';
+  }
+
+  function deterministicUnit(seed) {
+    const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  function danceFloorPersonPlacements(width, depth) {
+    const areaSqft = Math.max(0, width * depth * SQFT_PER_SQM);
+    const count = Math.max(
+      DANCE_FLOOR_MIN_PEOPLE,
+      Math.min(DANCE_FLOOR_MAX_PEOPLE, Math.round(areaSqft / DANCE_FLOOR_PERSON_SQFT)),
+    );
+    const aspect = Math.max(0.2, width / Math.max(depth, 0.2));
+    const cols = Math.max(1, Math.ceil(Math.sqrt(count * aspect)));
+    const rows = Math.max(1, Math.ceil(count / cols));
+    const placements = [];
+    for (let i = 0; i < count; i += 1) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const jx = (deterministicUnit(i + 1) - 0.5) * 0.44;
+      const jy = (deterministicUnit(i + 1009) - 0.5) * 0.44;
+      placements.push({
+        x: ((col + 0.5 + jx) / cols - 0.5) * 0.9,
+        y: ((row + 0.5 + jy) / rows - 0.5) * 0.9,
+        height: 1.55 + deterministicUnit(i + 2003) * 0.38,
+      });
+    }
+    return placements;
+  }
+
+  function updateDanceFloorPeopleCutouts() {
+    danceFloorPeopleGroup.clear();
+    if (!localState.venueSnapshot || !localState.venueScale || danceFloorPersonTextures.length === 0) {
+      return;
+    }
+    const floorObject = getSceneObject(localState.venueSnapshot, 'floor');
+    const center = floorObject
+      ? toScenePosition(floorObject.x, floorObject.y, floorObject.z)
+      : new THREE.Vector3(0, 0, 0);
+    const width = localState.venueScale.worldWidth;
+    const depth = localState.venueScale.worldDepth;
+    const floorTopZ = center.z + 0.05;
+
+    danceFloorPersonPlacements(width, depth).forEach((placement, index) => {
+      const texture = danceFloorPersonTextures[index % danceFloorPersonTextures.length];
+      const h = placement.height;
+      const w = h * 0.38;
+      const x = center.x + placement.x * width;
+      const y = center.y + placement.y * depth;
+      const material = new THREE.MeshBasicMaterial({
+        map: texture,
+        color: 0x050505,
+        transparent: true,
+        blending: THREE.CustomBlending,
+        blendEquation: THREE.AddEquation,
+        blendSrc: THREE.ZeroFactor,
+        blendDst: THREE.OneMinusSrcAlphaFactor,
+        blendSrcAlpha: THREE.ZeroFactor,
+        blendDstAlpha: THREE.OneFactor,
+        alphaTest: 0.04,
+        side: THREE.DoubleSide,
+        depthWrite: true,
+      });
+      const cutout = new THREE.Mesh(new THREE.PlaneGeometry(w, h), material);
+      cutout.position.set(x, y, floorTopZ + h / 2);
+      const faceToCenter = new THREE.Vector2(center.x - x, center.y - y);
+      const angle = faceToCenter.lengthSq() > 1e-6
+        ? Math.atan2(faceToCenter.x, -faceToCenter.y)
+        : 0;
+      cutout.rotation.order = 'ZXY';
+      cutout.rotation.z = angle;
+      cutout.rotation.x = Math.PI / 2;
+      cutout.userData = { isDanceFloorPersonCutout: true };
+      danceFloorPeopleGroup.add(cutout);
+    });
   }
 
   /**
@@ -2107,6 +2302,7 @@ function createThreeSceneController({
     localState.venueSnapshot = venueSnapshot;
     localState.venueScale = venueSnapshot ? computeVenueScale(venueSnapshot) : null;
     sceneContent.clear();
+    danceFloorPeopleGroup.clear();
     localState.entityMap.clear();
     localState.selectedEntityKey = null;
     localState.selectedFixtureIds = [];
@@ -2122,6 +2318,8 @@ function createThreeSceneController({
     }
 
     syncFloorMeshFromSnapshot();
+    loadDanceFloorPersonTextures();
+    updateDanceFloorPeopleCutouts();
 
     createVideoWallEntity(venueSnapshot.video_wall);
     createDjBoothEntity(

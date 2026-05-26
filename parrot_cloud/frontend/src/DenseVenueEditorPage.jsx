@@ -3679,7 +3679,7 @@ export default function DenseVenueEditorPage({ venueId }) {
           )}
         </aside>
 
-        <main className="dense-viewport-shell">
+        <main className={`dense-viewport-shell${currentView === 'perspective' ? ' dense-viewport-shell-3d' : ''}`}>
           <div className="floating-view-switcher" role="radiogroup" aria-label="Editor view">
             {['top', 'front', 'side', 'perspective'].map((viewName) => (
               <button
