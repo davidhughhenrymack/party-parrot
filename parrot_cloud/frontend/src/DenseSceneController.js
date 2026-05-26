@@ -24,6 +24,7 @@ export function createNoopSceneController(
     setSelection() { },
     setInteractionMode() { },
     setLightingMode() { },
+    setExpensiveEffects() { },
     setNamedPositionPreviewOverride() { },
     applyFixtureRuntimeState() { },
     destroy() { },
@@ -93,6 +94,11 @@ function createThreeSceneController({
     selectedEntityKey: null,
     /** @type {string[]} */
     selectedFixtureIds: [],
+    lightingMode: 'default',
+    expensiveEffects: {
+      bloom: true,
+      dynamicLighting: true,
+    },
     multiDragInitialPivot: null,
     multiDragInitialPositions: null,
     entityMap: new Map(),
@@ -255,28 +261,41 @@ function createThreeSceneController({
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
   directionalLight.position.set(10, -14, 18);
   scene.add(directionalLight);
+  const RUNTIME_DIRECTIONAL_LIGHT_COUNT = 10;
+  const runtimeDirectionalLights = Array.from({ length: RUNTIME_DIRECTIONAL_LIGHT_COUNT }, () => {
+    const light = new THREE.DirectionalLight(0xffffff, 0);
+    light.visible = false;
+    light.target.position.set(0, 0, 0);
+    scene.add(light);
+    scene.add(light.target);
+    return light;
+  });
 
   const LIGHTING_PRESETS = {
     default: {
       background: 0x030407,
+      editorBackground: 0x1b2430,
       ambient: { color: 0xffffff, intensity: 0.9 },
       directional: { color: 0xffffff, intensity: 1.0, x: 10, y: -14, z: 18 },
       floorColor: 0x13202d,
     },
     bright: {
       background: 0x07090d,
+      editorBackground: 0x2a3444,
       ambient: { color: 0xffffff, intensity: 1.15 },
       directional: { color: 0xffffff, intensity: 0.65, x: 8, y: -12, z: 20 },
       floorColor: 0x1c2a3a,
     },
     contrast: {
       background: 0x020307,
+      editorBackground: 0x0c1016,
       ambient: { color: 0xb8c4d4, intensity: 0.32 },
       directional: { color: 0xffffff, intensity: 1.55, x: 12, y: -16, z: 14 },
       floorColor: 0x0a121a,
     },
     night: {
       background: 0x05070c,
+      editorBackground: 0x05070c,
       ambient: { color: 0x4466aa, intensity: 0.22 },
       directional: { color: 0xffe8cc, intensity: 0.5, x: 6, y: -10, z: 12 },
       floorColor: 0x060a10,
@@ -284,14 +303,26 @@ function createThreeSceneController({
   };
 
   function setLightingMode(mode) {
+    localState.lightingMode = mode;
+    applyLightingPreset();
+  }
+
+  function applyLightingPreset() {
+    const mode = localState.lightingMode;
     const preset = LIGHTING_PRESETS[mode] ?? LIGHTING_PRESETS.default;
-    scene.background = new THREE.Color(preset.background);
+    const is3d = localState.currentView === 'perspective';
+    const dynamicLightingEnabled = localState.expensiveEffects.dynamicLighting;
+    const ambient3dScale = dynamicLightingEnabled ? 0.16 : 0.34;
+    const key3dScale = dynamicLightingEnabled ? 0.18 : 0.42;
+    scene.background = new THREE.Color(is3d ? preset.background : preset.editorBackground);
+    scene.fog = is3d ? new THREE.FogExp2(0x05070c, 0.018) : null;
     ambientLight.color.setHex(preset.ambient.color);
-    ambientLight.intensity = preset.ambient.intensity;
+    ambientLight.intensity = preset.ambient.intensity * (is3d ? ambient3dScale : 1.0);
     directionalLight.color.setHex(preset.directional.color);
-    directionalLight.intensity = preset.directional.intensity;
+    directionalLight.intensity = preset.directional.intensity * (is3d ? key3dScale : 1.0);
     directionalLight.position.set(preset.directional.x, preset.directional.y, preset.directional.z);
     floorMaterial.color.setHex(preset.floorColor);
+    floorMaterial.color.multiplyScalar(0.62);
     floorMaterial.needsUpdate = true;
   }
 
@@ -308,9 +339,12 @@ function createThreeSceneController({
 
   const floorMaterial = new THREE.MeshStandardMaterial({
     color: 0x13202d,
-    metalness: 0.05,
-    roughness: 0.92,
+    metalness: 0.0,
+    roughness: 1.0,
+    envMapIntensity: 0.0,
   });
+  floorMaterial.specularIntensity = 0.12;
+  floorMaterial.color.multiplyScalar(0.62);
   const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 0.08), floorMaterial);
   floorMesh.position.set(0, 0, -0.04);
   scene.add(floorMesh);
@@ -976,6 +1010,73 @@ function createThreeSceneController({
     });
   }
 
+  function updateRuntimeDirectionalLights(THREE) {
+    if (
+      localState.currentView !== 'perspective' ||
+      !localState.expensiveEffects.dynamicLighting
+    ) {
+      for (const light of runtimeDirectionalLights) {
+        light.visible = false;
+        light.intensity = 0;
+      }
+      return;
+    }
+
+    const activeBeams = [];
+    localState.entityMap.forEach((entity) => {
+      if (entity.type !== 'fixture' || entity.profile?.kind === 'mirrorball') {
+        return;
+      }
+      const ray = fixtureBeamRayWorld(entity, THREE);
+      const dim = Math.max(0, Math.min(1, entity.runtimeDimmerForStrobe ?? 0));
+      const gate = entity.runtimeStrobeGate ?? 1;
+      if (!ray || dim <= 1e-4 || gate <= 1e-4 || !Array.isArray(entity.runtimeRgb)) {
+        return;
+      }
+      activeBeams.push({
+        ...ray,
+        rgb: entity.runtimeRgb,
+        intensity: dim * gate,
+      });
+    });
+    activeBeams.sort((a, b) => b.intensity - a.intensity);
+
+    for (let i = 0; i < runtimeDirectionalLights.length; i += 1) {
+      const light = runtimeDirectionalLights[i];
+      const beam = activeBeams[i];
+      if (!beam) {
+        light.visible = false;
+        light.intensity = 0;
+        continue;
+      }
+      const [r, g, b] = beam.rgb;
+      light.visible = true;
+      light.color.setRGB(
+        Math.min(1, r + 0.04),
+        Math.min(1, g + 0.04),
+        Math.min(1, b + 0.04),
+      );
+      light.intensity = Math.min(1.35, 0.2 + beam.intensity * 1.15);
+      light.position.copy(beam.origin).addScaledVector(beam.dir, -2.5);
+      light.target.position.copy(beam.origin).addScaledVector(beam.dir, 9.0);
+      light.target.updateMatrixWorld();
+    }
+  }
+
+  function setExpensiveEffects(next) {
+    localState.expensiveEffects = {
+      ...localState.expensiveEffects,
+      ...next,
+    };
+    applyLightingPreset();
+    if (!localState.expensiveEffects.dynamicLighting) {
+      for (const light of runtimeDirectionalLights) {
+        light.visible = false;
+        light.intensity = 0;
+      }
+    }
+  }
+
   function renderFullscreenMaterial(material, target) {
     bloomQuad.material = material;
     renderer.setRenderTarget(target);
@@ -1524,6 +1625,7 @@ function createThreeSceneController({
     orbitControls.target.copy(viewName === 'perspective' ? floorCenterTarget : flatTarget);
     orbitControls.update();
     transformControls.camera = localState.activeCamera;
+    applyLightingPreset();
     syncInteractionMode();
   }
 
@@ -2572,6 +2674,7 @@ function createThreeSceneController({
         }
       }
     });
+    updateRuntimeDirectionalLights(THREE);
     updateMirrorballReflections(THREE);
     applySelectionVisuals();
 
@@ -2589,7 +2692,9 @@ function createThreeSceneController({
     renderer.autoClear = true;
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
-    renderBeamBloomLayer(camera);
+    if (localState.expensiveEffects.bloom) {
+      renderBeamBloomLayer(camera);
+    }
     renderer.autoClear = true;
     camera.layers.enableAll();
   }
@@ -2607,6 +2712,7 @@ function createThreeSceneController({
     setSelection,
     setInteractionMode,
     setLightingMode,
+    setExpensiveEffects,
     setNamedPositionPreviewOverride,
     applyFixtureRuntimeState,
     destroy() {

@@ -84,6 +84,23 @@ const DEFAULT_EDITOR_COLOR_PALETTE = [
   [0.32, 0.38, 0.46],
   [0.48, 0.52, 0.58],
 ];
+const EXPENSIVE_EFFECTS_STORAGE_KEY = 'party-parrot-editor-expensive-effects';
+const DEFAULT_EXPENSIVE_EFFECTS_ENABLED = true;
+
+function readStoredExpensiveEffects() {
+  if (typeof window === 'undefined') {
+    return DEFAULT_EXPENSIVE_EFFECTS_ENABLED;
+  }
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(EXPENSIVE_EFFECTS_STORAGE_KEY) || 'true');
+    if (typeof parsed === 'boolean') {
+      return parsed;
+    }
+    return parsed.bloom !== false && parsed.dynamicLighting !== false;
+  } catch {
+    return DEFAULT_EXPENSIVE_EFFECTS_ENABLED;
+  }
+}
 
 function readColorPaletteFromFixturePayload(data) {
   const p = data?.color_palette;
@@ -1734,6 +1751,7 @@ export default function DenseVenueEditorPage({ venueId }) {
   const [sceneControllerEpoch, setSceneControllerEpoch] = useState(0);
   const [editorMenuOpen, setEditorMenuOpen] = useState(false);
   const [editorMenuSection, setEditorMenuSection] = useState(null);
+  const [expensiveEffectsEnabled, setExpensiveEffectsEnabled] = useState(readStoredExpensiveEffects);
   const [activeNamedPositionEdit, setActiveNamedPositionEdit] = useState(null);
 
   /** Primary fixture for detail actions (last clicked in multi-select). */
@@ -1981,6 +1999,10 @@ export default function DenseVenueEditorPage({ venueId }) {
       }
       sceneControllerRef.current = controller;
       controller.setInteractionMode(interactionModeRef.current);
+      controller.setExpensiveEffects({
+        bloom: expensiveEffectsEnabled,
+        dynamicLighting: expensiveEffectsEnabled,
+      });
       setSceneControllerEpoch((n) => n + 1);
 
       const config = await fetchJson('/api/config');
@@ -2263,6 +2285,21 @@ export default function DenseVenueEditorPage({ venueId }) {
   useEffect(() => {
     sceneControllerRef.current?.setInteractionMode(interactionMode);
   }, [interactionMode]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        EXPENSIVE_EFFECTS_STORAGE_KEY,
+        JSON.stringify(expensiveEffectsEnabled),
+      );
+    } catch {
+      // Ignore storage failures; toggles still work for this session.
+    }
+    sceneControllerRef.current?.setExpensiveEffects({
+      bloom: expensiveEffectsEnabled,
+      dynamicLighting: expensiveEffectsEnabled,
+    });
+  }, [expensiveEffectsEnabled]);
 
   useEffect(() => {
     if (interactionMode !== 'pan' && interactionMode !== 'rotate') {
@@ -3358,6 +3395,18 @@ export default function DenseVenueEditorPage({ venueId }) {
                         </button>
                       </div>
                     ) : null}
+                    <div className="dense-editor-menu-section">
+                      <label className="dense-editor-menu-option dense-editor-menu-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={expensiveEffectsEnabled}
+                          onChange={(event) => {
+                            setExpensiveEffectsEnabled(event.target.checked);
+                          }}
+                        />
+                        <span>Expensive effects</span>
+                      </label>
+                    </div>
                     <div className="dense-editor-menu-section">
                       <button
                         type="button"

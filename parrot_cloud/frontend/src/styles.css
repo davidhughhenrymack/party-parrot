@@ -2636,6 +2636,24 @@ a.dense-editor-menu-external-link {
   justify-content: flex-start;
 }
 
+.dense-editor-menu-checkbox {
+  gap: 10px;
+  justify-content: flex-start;
+  margin: 4px 0;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.dense-editor-menu-checkbox input {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+}
+
+.dense-editor-menu-checkbox span {
+  flex: 0 1 auto;
+}
+
 .dense-venue-name-row {
   display: flex;
   align-items: flex-start;
