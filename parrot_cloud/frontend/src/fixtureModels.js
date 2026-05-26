@@ -182,8 +182,9 @@ export function beamOriginMovingHeadAimLocal(model) {
  * @param {import('three').MeshStandardMaterial} bodyMaterial
  * @returns {{ aimGroup?: import('three').Group, headPivotGroup?: import('three').Group, stripPanGroup?: import('three').Group, mirrorballBeamMaterials?: import('three').MeshBasicMaterial[], mirrorballBeamRecords?: { mesh: import('three').Mesh, material: import('three').MeshBasicMaterial, directionLocal: import('three').Vector3 }[], mirrorballBeamsGroup?: import('three').Group }}
  */
-export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, model, entityKey) {
+export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, model, entityKey, options = {}) {
   const userData = { entityKey };
+  const beamLayer = options.beamLayer;
 
   if (model.kind === 'mirrorball') {
     const r = model.sphereRadius;
@@ -212,11 +213,15 @@ export function addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, mo
         opacity: 0,
         side: THREE.DoubleSide,
         depthWrite: false,
+        fog: false,
       });
       beamMaterials.push(mat);
       const cone = new THREE.Mesh(new THREE.ConeGeometry(tipR, L, 6, 1, true), mat);
       cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
       cone.position.copy(dir.clone().multiplyScalar(r - L / 2));
+      if (Number.isInteger(beamLayer)) {
+        cone.layers.set(beamLayer);
+      }
       cone.userData = userData;
       beamSpinGroup.add(cone);
       beamRecords.push({

@@ -113,16 +113,97 @@ function createThreeSceneController({
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1b2430);
+  scene.fog = new THREE.FogExp2(0x05070c, 0.018);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   viewportEl.replaceChildren(renderer.domElement);
+  const BASE_RENDER_LAYER = 0;
+  const BEAM_RENDER_LAYER = 1;
 
   const perspectiveCamera = new THREE.PerspectiveCamera(48, 1, 0.1, 5000);
   const orthoCamera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 5000);
   /** Venue floor is Z-up; perspective editing uses Z-up. OrbitControls must be constructed with this basis. */
   perspectiveCamera.up.set(0, 0, 1);
   localState.activeCamera = perspectiveCamera;
+
+  const bloomTargetOptions = {
+    depthBuffer: false,
+    stencilBuffer: false,
+    format: THREE.RGBAFormat,
+    type: THREE.UnsignedByteType,
+  };
+  const beamLayerTarget = new THREE.WebGLRenderTarget(1, 1, {
+    ...bloomTargetOptions,
+    depthBuffer: true,
+  });
+  const bloomPingTarget = new THREE.WebGLRenderTarget(1, 1, bloomTargetOptions);
+  const bloomPongTarget = new THREE.WebGLRenderTarget(1, 1, bloomTargetOptions);
+  const bloomCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const bloomQuadGeometry = new THREE.PlaneGeometry(2, 2);
+  const bloomBlurMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      sourceTexture: { value: null },
+      texelSize: { value: new THREE.Vector2(1, 1) },
+      direction: { value: new THREE.Vector2(1, 0) },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D sourceTexture;
+      uniform vec2 texelSize;
+      uniform vec2 direction;
+      varying vec2 vUv;
+
+      void main() {
+        vec2 stepUv = texelSize * direction;
+        vec4 sum = texture2D(sourceTexture, vUv) * 0.227027;
+        sum += texture2D(sourceTexture, vUv + stepUv * 1.384615) * 0.316216;
+        sum += texture2D(sourceTexture, vUv - stepUv * 1.384615) * 0.316216;
+        sum += texture2D(sourceTexture, vUv + stepUv * 3.230769) * 0.070270;
+        sum += texture2D(sourceTexture, vUv - stepUv * 3.230769) * 0.070270;
+        gl_FragColor = sum;
+      }
+    `,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const bloomCompositeMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      bloomTexture: { value: bloomPongTarget.texture },
+      bloomStrength: { value: 2.05 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D bloomTexture;
+      uniform float bloomStrength;
+      varying vec2 vUv;
+
+      void main() {
+        vec3 glow = texture2D(bloomTexture, vUv).rgb * bloomStrength;
+        float alpha = clamp(max(max(glow.r, glow.g), glow.b), 0.0, 0.72);
+        gl_FragColor = vec4(glow, alpha);
+      }
+    `,
+    transparent: true,
+    blending: THREE.NormalBlending,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const bloomScene = new THREE.Scene();
+  const bloomQuad = new THREE.Mesh(bloomQuadGeometry, bloomBlurMaterial);
+  bloomScene.add(bloomQuad);
 
   const orbitControls = new OrbitControls(perspectiveCamera, renderer.domElement);
   orbitControls.enableDamping = true;
@@ -254,6 +335,13 @@ function createThreeSceneController({
     const width = viewportEl.clientWidth;
     const height = viewportEl.clientHeight;
     renderer.setSize(width, height);
+    const bloomScale = Math.max(0.35, Math.min(0.6, window.devicePixelRatio > 1 ? 0.45 : 0.55));
+    const bloomWidth = Math.max(1, Math.floor(width * bloomScale));
+    const bloomHeight = Math.max(1, Math.floor(height * bloomScale));
+    beamLayerTarget.setSize(bloomWidth, bloomHeight);
+    bloomPingTarget.setSize(bloomWidth, bloomHeight);
+    bloomPongTarget.setSize(bloomWidth, bloomHeight);
+    bloomBlurMaterial.uniforms.texelSize.value.set(1 / bloomWidth, 1 / bloomHeight);
 
     perspectiveCamera.aspect = width / height || 1;
     perspectiveCamera.updateProjectionMatrix();
@@ -691,6 +779,79 @@ function createThreeSceneController({
       }
       entity.runtimeMirrorballOpacity = strongest;
     });
+  }
+
+  function renderFullscreenMaterial(material, target) {
+    bloomQuad.material = material;
+    renderer.setRenderTarget(target);
+    renderer.clear(true, true, true);
+    renderer.render(bloomScene, bloomCamera);
+  }
+
+  function setSceneColorWrite(root, colorWrite) {
+    const changed = [];
+    root.traverse((object) => {
+      const materials = Array.isArray(object.material)
+        ? object.material
+        : object.material
+          ? [object.material]
+          : [];
+      for (const material of materials) {
+        if (material && material.colorWrite !== colorWrite) {
+          changed.push([material, material.colorWrite]);
+          material.colorWrite = colorWrite;
+        }
+      }
+    });
+    return () => {
+      for (const [material, previous] of changed) {
+        material.colorWrite = previous;
+      }
+    };
+  }
+
+  function renderBeamBloomLayer(camera) {
+    const savedBackground = scene.background;
+    const savedAutoClear = renderer.autoClear;
+    const savedClearColor = renderer.getClearColor(new THREE.Color()).clone();
+    const savedClearAlpha = renderer.getClearAlpha();
+    const savedRenderTarget = renderer.getRenderTarget();
+    const savedCameraLayerMask = camera.layers.mask;
+
+    scene.background = null;
+    renderer.autoClear = true;
+    renderer.setClearColor(0x000000, 0);
+    renderer.setRenderTarget(beamLayerTarget);
+    renderer.clear(true, true, true);
+
+    // Prime the offscreen depth buffer with solid geometry, without writing
+    // color, so bloomed beam pixels are occluded by tables, fixtures, walls, etc.
+    camera.layers.set(BASE_RENDER_LAYER);
+    const restoreColorWrite = setSceneColorWrite(scene, false);
+    renderer.render(scene, camera);
+    restoreColorWrite();
+
+    camera.layers.set(BEAM_RENDER_LAYER);
+    renderer.render(scene, camera);
+
+    bloomBlurMaterial.uniforms.sourceTexture.value = beamLayerTarget.texture;
+    bloomBlurMaterial.uniforms.direction.value.set(1, 0);
+    renderFullscreenMaterial(bloomBlurMaterial, bloomPingTarget);
+
+    bloomBlurMaterial.uniforms.sourceTexture.value = bloomPingTarget.texture;
+    bloomBlurMaterial.uniforms.direction.value.set(0, 1);
+    renderFullscreenMaterial(bloomBlurMaterial, bloomPongTarget);
+
+    bloomCompositeMaterial.uniforms.bloomTexture.value = bloomPongTarget.texture;
+    bloomQuad.material = bloomCompositeMaterial;
+    renderer.setRenderTarget(savedRenderTarget);
+    renderer.autoClear = false;
+    renderer.render(bloomScene, bloomCamera);
+
+    camera.layers.mask = savedCameraLayerMask;
+    scene.background = savedBackground;
+    renderer.setClearColor(savedClearColor, savedClearAlpha);
+    renderer.autoClear = savedAutoClear;
   }
 
   function updateFixtureBeamsToFloorClip(entity, floorNd, THREE) {
@@ -1529,7 +1690,14 @@ function createThreeSceneController({
     });
     const secondaryMaterials = [];
 
-    const placed = addFixtureOpaqueMeshes(THREE, runtimeAxesGroup, bodyMaterial, profile, fixture.id);
+    const placed = addFixtureOpaqueMeshes(
+      THREE,
+      runtimeAxesGroup,
+      bodyMaterial,
+      profile,
+      fixture.id,
+      { beamLayer: BEAM_RENDER_LAYER },
+    );
     const beamParent =
       placed.headPivotGroup ?? placed.aimGroup ?? placed.stripPanGroup ?? runtimeAxesGroup;
 
@@ -1561,6 +1729,7 @@ function createThreeSceneController({
         opacity: 0,
         side: THREE.DoubleSide,
         depthWrite: false,
+        fog: false,
       });
       // ConeGeometry: tip at +Y, base at -Y. Beam should be narrow at the lens and widen along the throw;
       // flip 180° so the tip sits on the lens (same convention as ArrowHelper cone).
@@ -1572,6 +1741,7 @@ function createThreeSceneController({
       coneMesh.position.set(0, beam.y + coneLength / 2, beam.z ?? 0);
       coneMesh.userData = { entityKey: fixture.id };
       beamParent.add(coneMesh);
+      coneMesh.layers.set(BEAM_RENDER_LAYER);
       coneMeshRef = coneMesh;
 
       // Prism splay group: 7 thinner cones splayed off-axis around the main beam.
@@ -1594,6 +1764,7 @@ function createThreeSceneController({
             opacity: 0,
             side: THREE.DoubleSide,
             depthWrite: false,
+            fog: false,
           });
           prismMaterialsRef.push(mat);
           const sub = new THREE.Mesh(
@@ -1603,6 +1774,7 @@ function createThreeSceneController({
           // Sub-cone's tip sits at the facet-group origin along its local +Y.
           sub.rotateX(Math.PI);
           sub.position.set(0, subL / 2, 0);
+          sub.layers.set(BEAM_RENDER_LAYER);
           prismSubMeshesRef.push(sub);
           const facetGroup = new THREE.Group();
           facetGroup.rotation.order = 'YXZ';
@@ -2214,7 +2386,14 @@ function createThreeSceneController({
 
     updateFixtureAnnotations();
 
-    renderer.render(scene, localState.activeCamera);
+    const camera = localState.activeCamera;
+    camera.layers.enableAll();
+    renderer.autoClear = true;
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
+    renderBeamBloomLayer(camera);
+    renderer.autoClear = true;
+    camera.layers.enableAll();
   }
   animate();
 
