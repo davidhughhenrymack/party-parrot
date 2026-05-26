@@ -260,9 +260,11 @@ def create_app() -> Flask:
 
     @app.patch("/api/control-state")
     def patch_control_state():
-        control_state = repository.update_control_state(request.get_json(force=True))
-        broadcast_venues()
-        broadcast_active_venue()
+        data = request.get_json(force=True) or {}
+        control_state = repository.update_control_state(data)
+        if "active_venue_id" in data:
+            broadcast_venues()
+            broadcast_active_venue()
         broadcast_control_state()
         return jsonify(control_state.to_dict())
 

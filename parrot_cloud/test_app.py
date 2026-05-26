@@ -403,6 +403,30 @@ def test_control_state_endpoints(client):
     assert mode_response.get_json()["mode"] == "rave"
 
 
+def test_control_state_mode_patch_broadcasts_only_control_state(client, monkeypatch):
+    broadcast_types = []
+    hub = client.application.config["venue_update_hub"]
+    monkeypatch.setattr(hub, "broadcast", lambda event: broadcast_types.append(event["type"]))
+
+    response = client.patch("/api/control-state", json={"mode": "rave"})
+
+    assert response.status_code == 200
+    assert broadcast_types == ["control_state"]
+
+
+def test_control_state_active_venue_patch_broadcasts_venue_updates(client, monkeypatch):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    active_venue_id = bootstrap["active_venue"]["summary"]["id"]
+    broadcast_types = []
+    hub = client.application.config["venue_update_hub"]
+    monkeypatch.setattr(hub, "broadcast", lambda event: broadcast_types.append(event["type"]))
+
+    response = client.patch("/api/control-state", json={"active_venue_id": active_venue_id})
+
+    assert response.status_code == 200
+    assert broadcast_types == ["venues", "venue_snapshot", "control_state"]
+
+
 def test_venue_crud_endpoint_flow(client):
     created = client.post("/api/venues", json={"name": "Warehouse Test"})
     assert created.status_code == 200
