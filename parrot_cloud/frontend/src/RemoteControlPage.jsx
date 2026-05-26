@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
+const LIGHTING_EFFECT_HOTKEYS = Object.freeze({
+  g: 'strobe',
+  j: 'big_blinder',
+});
+
 export default function RemoteControlPage() {
   const [config, setConfig] = useState({
     available_modes: [],
@@ -169,6 +174,12 @@ export default function RemoteControlPage() {
         return;
       }
       const key = event.key.toLowerCase();
+      const effect = LIGHTING_EFFECT_HOTKEYS[key];
+      if (effect) {
+        event.preventDefault();
+        void postJson('/api/effect', { effect });
+        return;
+      }
       const mode = (config.lighting_modes || []).find((candidate) => candidate.hotkey === key);
       if (!mode || mode.key === controlState.mode) {
         return;

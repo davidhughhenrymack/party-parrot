@@ -99,6 +99,10 @@ const DEFAULT_EDITOR_COLOR_PALETTE = [
 ];
 const EXPENSIVE_EFFECTS_STORAGE_KEY = 'party-parrot-editor-expensive-effects';
 const DEFAULT_EXPENSIVE_EFFECTS_ENABLED = true;
+const LIGHTING_EFFECT_HOTKEYS = Object.freeze({
+  g: 'strobe',
+  j: 'big_blinder',
+});
 
 function readStoredExpensiveEffects() {
   if (typeof window === 'undefined') {
@@ -304,6 +308,18 @@ async function postShiftTarget(target) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ target }),
+  });
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  return response.json();
+}
+
+async function postLightingEffect(effect) {
+  const response = await fetch('/api/effect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ effect }),
   });
   if (!response.ok) {
     throw new Error(await response.text());
@@ -2362,6 +2378,12 @@ export default function DenseVenueEditorPage({ venueId }) {
         return;
       }
       const key = event.key.toLowerCase();
+      const effect = LIGHTING_EFFECT_HOTKEYS[key];
+      if (effect) {
+        event.preventDefault();
+        void postLightingEffect(effect).catch(() => {});
+        return;
+      }
       const mode = (venueSnapshot?.lighting_modes || []).find(
         (candidate) => candidate.hotkey === key,
       );
