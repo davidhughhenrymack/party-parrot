@@ -229,50 +229,31 @@ class TestDimmersBeatChase:
 
     def test_dimmers_beat_chase_initialization(self):
         """Test DimmersBeatChase initialization"""
-        with patch("random.choice") as mock_choice:
-            mock_choice.return_value = FrameSignal.freq_high
-            interpreter = DimmersBeatChase(self.group, self.args)
-            assert interpreter.signal == FrameSignal.freq_high
-            assert interpreter.on == False
-
-    def test_dimmers_beat_chase_trigger(self):
-        """Test DimmersBeatChase triggers on beat"""
-        with patch("random.choice") as mock_choice, patch(
-            "random.randint"
-        ) as mock_randint:
-            mock_choice.return_value = FrameSignal.freq_high
-            mock_randint.return_value = 1  # Select fixture 1
-
-            interpreter = DimmersBeatChase(self.group, self.args)
-
-            # Create frame with high signal
-            frame_values = {FrameSignal.freq_high: 0.5}
-            timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
-            frame = Frame(frame_values, timeseries)
-            scheme = MagicMock()
-
-            interpreter.step(frame, scheme)
-
-            # Selected fixture should be bright, others should be off
-            self.fixture1.set_dimmer.assert_called_with(0)
-            self.fixture2.set_dimmer.assert_called_with(127.5)  # 0.5 * 255
-            self.fixture3.set_dimmer.assert_called_with(0)
-
-    def test_dimmers_beat_chase_no_signal(self):
-        """Test DimmersBeatChase with no signal"""
         interpreter = DimmersBeatChase(self.group, self.args)
+        assert interpreter.group == self.group
 
-        # Create frame with low signal
-        frame_values = {FrameSignal.freq_high: 0.1}
-        timeseries = {signal.name: [0.0] * 100 for signal in FrameSignal}
-        frame = Frame(frame_values, timeseries)
+    def test_dimmers_beat_chase_uses_beat_count(self):
+        """Test DimmersBeatChase advances from the central beat count."""
+        interpreter = DimmersBeatChase(self.group, self.args)
+        frame = Frame({}, beat_count=1)
         scheme = MagicMock()
 
         interpreter.step(frame, scheme)
 
-        # All fixtures should be off
         self.fixture1.set_dimmer.assert_called_with(0)
-        self.fixture2.set_dimmer.assert_called_with(0)
+        self.fixture2.set_dimmer.assert_called_with(255)
+        self.fixture3.set_dimmer.assert_called_with(0)
+
+    def test_dimmers_beat_chase_wraps_group(self):
+        """Beat counts beyond the group size wrap around."""
+        interpreter = DimmersBeatChase(self.group, self.args)
+        frame = Frame({}, beat_count=4)
+        scheme = MagicMock()
+
+        interpreter.step(frame, scheme)
+
+        self.fixture1.set_dimmer.assert_called_with(0)
+        self.fixture2.set_dimmer.assert_called_with(255)
         self.fixture3.set_dimmer.assert_called_with(0)
 
 

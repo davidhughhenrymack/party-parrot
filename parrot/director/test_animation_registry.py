@@ -307,6 +307,17 @@ def test_stab_pulse_registry_does_not_expose_signal_parameter():
     ]
 
 
+def test_beat_motion_animations_are_registered_and_buildable():
+    for key in ("BeatNod", "BeatPan"):
+        assert REGISTRY[key].category == "Movement"
+        factory = build_interpreter_factory(animation(key))
+        interp = factory(
+            [MovingHead(1, "moving", 16, [GoboWheelEntry("open", 0)])],
+            InterpreterArgs(True),
+        )
+        assert interp is not None
+
+
 def test_build_category_combo_randomizes_within_each_animation_category():
     assignments = [
         VenueAnimationAssignmentSpec(

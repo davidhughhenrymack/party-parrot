@@ -109,26 +109,13 @@ class SequenceFadeDimmers(InterpreterBase[T]):
 class DimmersBeatChase(InterpreterBase[T]):
     def __init__(self, group: list[T], args: InterpreterArgs):
         super().__init__(group, args)
-        self.signal = random.choice([FrameSignal.freq_high, FrameSignal.freq_low])
-        self.on = False
 
     def step(self, frame, scheme):
-
-        if frame[self.signal] > 0.3:
-            if not self.on:
-                self.bulb = random.randint(0, len(self.group) - 1)
-                self.on = True
-
-            for idx, fixture in enumerate(self.group):
-                if idx == self.bulb:
-                    fixture.set_dimmer(frame[self.signal] * 255)
-                else:
-                    fixture.set_dimmer(0)
-
-        else:
-            for fixture in self.group:
-                fixture.set_dimmer(0)
-            self.on = False
+        if not self.group:
+            return
+        active_idx = int(frame.beat_count) % len(self.group)
+        for idx, fixture in enumerate(self.group):
+            fixture.set_dimmer(255 if idx == active_idx else 0)
 
 
 @beartype

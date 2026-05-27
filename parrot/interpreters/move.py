@@ -78,6 +78,36 @@ class MoveNod(InterpreterBase):
 
 
 @beartype
+class BeatNod(InterpreterBase):
+    """Tilt adjacent fixtures to opposite sides, flipping once per four-beat bar."""
+
+    def __str__(self):
+        return f"Beat {Fore.GREEN}Nod{Style.RESET_ALL}"
+
+    def step(self, frame, scheme):
+        bar_side = (int(frame.beat_count) // 4) % 2
+        for idx, fixture in enumerate(self.group):
+            tilt_progress = float((bar_side + idx) % 2)
+            fixture.set_pan(128)
+            fixture.set_tilt(tilt_progress * 255.0)
+
+
+@beartype
+class BeatPan(InterpreterBase):
+    """Pan adjacent fixtures to opposite sides, flipping once per four-beat bar."""
+
+    def __str__(self):
+        return f"Beat {Fore.GREEN}Pan{Style.RESET_ALL}"
+
+    def step(self, frame, scheme):
+        bar_side = (int(frame.beat_count) // 4) % 2
+        for idx, fixture in enumerate(self.group):
+            pan_progress = float((bar_side + idx) % 2)
+            fixture.set_pan(pan_progress * 255.0)
+            fixture.set_tilt(128)
+
+
+@beartype
 class MoveFigureEight(InterpreterBase):
     """Lissajous figure-eight with an evenly spaced per-fixture phase.
 

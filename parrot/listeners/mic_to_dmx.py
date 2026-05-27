@@ -16,6 +16,7 @@ from beartype import beartype
 
 from parrot.director.director import Director
 from parrot.director.frame import Frame, FrameSignal
+from parrot.audio.beat_tracker import BeatTracker
 from parrot.director.mode import Mode
 from parrot.utils.dmx_utils import get_controller
 
@@ -83,6 +84,7 @@ class MicToDmx(object):
 
         self.state = State()
         self.signal_states = SignalStates()
+        self.beat_tracker = BeatTracker()
         self.runtime_client = None
 
         venue_service_url = getattr(args, "venue_service_url", None)
@@ -316,8 +318,18 @@ class MicToDmx(object):
                 -SPECTOGRAPH_BUFFER_SIZE:
             ]
 
+        beat_state = self.beat_tracker.update(
+            values[FrameSignal.freq_low], now=time.perf_counter()
+        )
+
         # Create frame with audio values
-        frame = Frame(values)
+        frame = Frame(
+            values,
+            bpm=beat_state.bpm,
+            beat=beat_state.beat,
+            beat_count=beat_state.beat_count,
+            bar_progress=beat_state.bar_progress,
+        )
 
         # Add signal states to the frame
         frame.extend(self.signal_states.get_states())

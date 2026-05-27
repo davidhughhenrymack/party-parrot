@@ -2,6 +2,8 @@ import pytest
 import math
 from unittest.mock import MagicMock
 from parrot.interpreters.move import (
+    BeatNod,
+    BeatPan,
     MoveCircles,
     MoveFan,
     MoveFigureEight,
@@ -61,6 +63,57 @@ class TestMoveInterpreters:
         self.fixture1.set_tilt.assert_called_once()
         self.fixture2.set_pan.assert_called_once_with(128)
         self.fixture2.set_tilt.assert_called_once()
+
+    def test_beat_nod_alternates_sides_by_fixture_for_bar(self):
+        self.frame.beat_count = 0
+        interpreter = BeatNod(self.fixtures, self.args)
+
+        interpreter.step(self.frame, self.scheme)
+
+        self.fixture1.set_pan.assert_called_once_with(128)
+        self.fixture1.set_tilt.assert_called_once_with(0.0)
+        self.fixture2.set_pan.assert_called_once_with(128)
+        self.fixture2.set_tilt.assert_called_once_with(255.0)
+
+    def test_beat_pan_alternates_sides_by_fixture_for_bar(self):
+        self.frame.beat_count = 0
+        interpreter = BeatPan(self.fixtures, self.args)
+
+        interpreter.step(self.frame, self.scheme)
+
+        self.fixture1.set_pan.assert_called_once_with(0.0)
+        self.fixture1.set_tilt.assert_called_once_with(128)
+        self.fixture2.set_pan.assert_called_once_with(255.0)
+        self.fixture2.set_tilt.assert_called_once_with(128)
+
+    def test_beat_pan_alternates_four_fixture_extremes(self):
+        fixtures = [MagicMock(spec=FixtureBase) for _ in range(4)]
+        self.frame.beat_count = 0
+        interpreter = BeatPan(fixtures, self.args)
+
+        interpreter.step(self.frame, self.scheme)
+
+        assert [fixture.set_pan.call_args[0][0] for fixture in fixtures] == [
+            0.0,
+            255.0,
+            0.0,
+            255.0,
+        ]
+
+    def test_beat_pan_switches_sides_once_per_bar(self):
+        self.frame.beat_count = 3
+        interpreter = BeatPan(self.fixtures, self.args)
+        interpreter.step(self.frame, self.scheme)
+        assert self.fixture1.set_pan.call_args[0][0] == 0.0
+        assert self.fixture2.set_pan.call_args[0][0] == 255.0
+
+        self.fixture1.reset_mock()
+        self.fixture2.reset_mock()
+        self.frame.beat_count = 4
+        interpreter.step(self.frame, self.scheme)
+
+        assert self.fixture1.set_pan.call_args[0][0] == 255.0
+        assert self.fixture2.set_pan.call_args[0][0] == 0.0
 
     def test_move_figure_eight(self):
         """Test MoveFigureEight interpreter"""

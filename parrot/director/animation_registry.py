@@ -43,6 +43,8 @@ from parrot.interpreters.mode_test_interpreters import (
     RigColorCycle,
 )
 from parrot.interpreters.move import (
+    BeatNod,
+    BeatPan,
     MoveCircles,
     MoveFan,
     MoveFigureEight,
@@ -268,6 +270,8 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "AllBulbs255", "All Bulbs Full", "Dimmer", AllBulbs255
     ),
     "FlashBeat": AnimationRegistryEntry("FlashBeat", "Flash Beat", "Dimmer", FlashBeat),
+    "BeatNod": AnimationRegistryEntry("BeatNod", "Beat Nod", "Movement", BeatNod),
+    "BeatPan": AnimationRegistryEntry("BeatPan", "Beat Pan", "Movement", BeatPan),
     "MoveCircles": AnimationRegistryEntry(
         "MoveCircles",
         "Circles",

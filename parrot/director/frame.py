@@ -24,10 +24,18 @@ class Frame:
         self,
         values: dict[FrameSignal, float],
         timeseries: dict[str, Union[list[float], np.ndarray]] = {},
+        bpm: float = 0.0,
+        beat: bool = False,
+        beat_count: int = 0,
+        bar_progress: float = 0.0,
     ):
         self.time = time.perf_counter()
         self.values = values
         self.timeseries: dict[str, Union[list[float], np.ndarray]] = timeseries
+        self.bpm = bpm
+        self.beat = beat
+        self.beat_count = beat_count
+        self.bar_progress = bar_progress
 
     def extend(self, additional_signals: dict[FrameSignal, float]):
         self.values.update(additional_signals)
@@ -38,4 +46,11 @@ class Frame:
         return self.values.get(__name, 0.0)
 
     def __mul__(self, factor):
-        return Frame({k: v * factor for k, v in self.values.items()}, self.timeseries)
+        return Frame(
+            {k: v * factor for k, v in self.values.items()},
+            self.timeseries,
+            self.bpm,
+            self.beat,
+            self.beat_count,
+            self.bar_progress,
+        )

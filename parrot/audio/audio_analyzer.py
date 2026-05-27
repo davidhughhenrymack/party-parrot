@@ -10,6 +10,7 @@ from typing import Optional, Dict, Callable
 
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.signal_states import SignalStates
+from parrot.audio.beat_tracker import BeatTracker
 
 # Audio constants
 THRESHOLD = 0  # dB
@@ -37,6 +38,7 @@ class AudioAnalyzer:
             signal_states: Optional signal states to include in frames
         """
         self.signal_states = signal_states or SignalStates()
+        self.beat_tracker = BeatTracker()
 
         # PyAudio setup
         self.pa = pyaudio.PyAudio()
@@ -151,7 +153,10 @@ class AudioAnalyzer:
             return None
 
     def process_spectrogram(
-        self, spectrogram_block: np.ndarray, num_idx_added: int
+        self,
+        spectrogram_block: np.ndarray,
+        num_idx_added: int,
+        now: float | None = None,
     ) -> Frame:
         """Process spectrogram data into a Frame with signal values
 
@@ -232,8 +237,16 @@ class AudioAnalyzer:
                 -SPECTOGRAPH_BUFFER_SIZE:
             ]
 
+        beat_state = self.beat_tracker.update(values[FrameSignal.freq_low], now=now)
+
         # Create frame with audio values
-        frame = Frame(values)
+        frame = Frame(
+            values,
+            bpm=beat_state.bpm,
+            beat=beat_state.beat,
+            beat_count=beat_state.beat_count,
+            bar_progress=beat_state.bar_progress,
+        )
 
         # Add signal states to the frame
         frame.extend(self.signal_states.get_states())

@@ -166,26 +166,24 @@ def test_headless_browser_basic_editor_flow(parrot_cloud_server):
             }}"""
         )
 
-        page.get_by_role("button", name="Animations").click()
+        page.get_by_role("radio", name="Animations").click()
         page.wait_for_selector(".animation-palette-panel")
         page.get_by_role("button", name="Dimmer Full").drag_to(
-            page.locator(".animation-destination", has_text="All Pars")
+            page.locator(".animation-destination", has_text="Pars")
         )
         page.get_by_role("button", name="Dimmer Off").drag_to(
-            page.locator(".animation-destination", has_text="All Pars")
+            page.locator(".animation-destination", has_text="Pars")
         )
-        page.locator(".animation-destination", has_text="All Pars").get_by_role(
-            "button", name="Randomize"
-        ).click()
         page.wait_for_function(
             f"""async () => {{
                 const response = await fetch('/api/venues/{venue_id}');
                 const data = await response.json();
-                return data.animation_assignments.some((assignment) =>
+                const parAssignments = data.animation_assignments.filter((assignment) =>
                     assignment.fixture_type === 'par' &&
-                    assignment.animation_spec.type === 'randomize' &&
-                    assignment.animation_spec.options.length >= 2
+                    assignment.animation_spec.type === 'animation'
                 );
+                const keys = parAssignments.map((assignment) => assignment.animation_spec.key);
+                return keys.includes('Dimmer255') && keys.includes('Dimmer0');
             }}"""
         )
 

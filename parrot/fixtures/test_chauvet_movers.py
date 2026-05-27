@@ -224,6 +224,9 @@ class TestChauvetSpot120_12Ch:
         assert "wood" in gobo_names
         assert "spiral" in gobo_names
 
+    def test_does_not_advertise_prism(self):
+        assert self.spot.supports_prism is False
+
 
 class TestChauvetSpot160_12Ch:
     def setup_method(self):
@@ -265,6 +268,9 @@ class TestChauvetSpot160_12Ch:
         assert max(reported_angles) <= 400.0 + 1.5
         # Confirm travel actually tracks the sweep across the narrowed band.
         assert max(reported_angles) - min(reported_angles) > 30.0
+
+    def test_does_not_advertise_prism(self):
+        assert self.spot.supports_prism is False
 
 
 class TestChauvetMove_9Ch:

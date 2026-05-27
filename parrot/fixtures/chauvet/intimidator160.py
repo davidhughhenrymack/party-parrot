@@ -49,6 +49,8 @@ gobo_wheel = [
 
 
 class ChauvetSpot160_12Ch(ChauvetMoverBase):
+    supports_prism = False
+
     def __init__(
         self,
         patch,

@@ -1,5 +1,6 @@
 """Tests for live fixture state serialization (Party Parrot Cloud preview)."""
 
+from parrot.fixtures.chauvet.intimidator110 import ChauvetSpot110_12Ch
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 from parrot.fixtures.motionstrip import Motionstrip38
@@ -55,19 +56,18 @@ def test_moving_head_angles():
     assert row is not None
     assert row["pan_deg"] == 90.0
     assert row["tilt_deg"] == 45.0
-    # Prism defaults: off + zero speed.
-    assert row["prism_on"] is False
-    assert row["prism_rotate_speed"] == 0.0
 
 
-def test_moving_head_prism_state_serialized():
-    spot = ChauvetSpot160_12Ch(1)
-    spot.cloud_spec_id = "mh-prism"
-    spot.set_prism(True, 0.4)
-    row = fixture_runtime_entry(spot)
-    assert row is not None
-    assert row["prism_on"] is True
-    assert row["prism_rotate_speed"] == 0.4
+def test_intimidators_omit_prism_state():
+    for cls in (ChauvetSpot110_12Ch, ChauvetSpot160_12Ch):
+        spot = cls(1)
+        spot.cloud_spec_id = "mh-no-prism"
+        spot.set_prism(True, 0.4)
+        row = fixture_runtime_entry(spot)
+        assert row is not None
+        assert "pan_deg" in row
+        assert "prism_on" not in row
+        assert "prism_rotate_speed" not in row
 
 
 def test_rogue_beam_r2_omits_prism_and_focus():

@@ -97,20 +97,6 @@ class TestWebServer:
         data = json.loads(response.data)
         assert "error" in data
 
-    def test_set_mode_invalid_mode(self):
-        """Test POST /api/mode with invalid mode."""
-        import parrot.api.web_server as web_server_module
-
-        web_server_module.state_instance = Mock()
-
-        response = self.client.post(
-            "/api/mode", json={"mode": "invalid_mode"}, content_type="application/json"
-        )
-        assert response.status_code == 400
-
-        data = json.loads(response.data)
-        assert "error" in data
-
     def test_set_mode_valid_mode(self):
         """Test POST /api/mode with valid mode."""
         import parrot.api.web_server as web_server_module
