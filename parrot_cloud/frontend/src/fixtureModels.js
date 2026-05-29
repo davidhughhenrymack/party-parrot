@@ -10,6 +10,7 @@ export const DESKTOP_CUBE_SIZE = 0.8;
 
 /** Venue editor 3D preview: stretch beam throw so cones read clearly at typical zoom. */
 const VENUE_EDITOR_BEAM_LENGTH_SCALE = 1.55;
+const MOVING_HEAD_CONE_LENGTH = 10.4;
 
 export function desktopBodySize() {
   return DESKTOP_CUBE_SIZE * 0.4;
@@ -143,7 +144,7 @@ export function resolveFixtureVisualModel(fixtureType) {
     return scaleVenueEditorBeamThrow({
       kind: 'moving_head',
       ...mh,
-      coneLength: 10.4,
+      coneLength: MOVING_HEAD_CONE_LENGTH,
       coneRadius: bs * 0.58,
     });
   }
@@ -160,7 +161,7 @@ export function resolveFixtureVisualModel(fixtureType) {
   return scaleVenueEditorBeamThrow({
     kind: 'bulb',
     ...par,
-    coneLength: 7.0,
+    coneLength: fixtureType === 'manual_dimmer_channel' ? MOVING_HEAD_CONE_LENGTH : 7.0,
     coneRadius: bs * 1.0,
   });
 }

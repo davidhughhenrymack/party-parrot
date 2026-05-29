@@ -7,6 +7,7 @@ import math
 
 from parrot.fixtures.moving_head import MovingHead
 from parrot.vj.moving_head_visual import pan_radians_for_render, tilt_radians_for_render
+from parrot.vj.renderers.beam_constants import MOVING_HEAD_BEAM_LENGTH
 from parrot.vj.renderers.base import (
     FixtureRenderer,
     quaternion_from_axis_angle,
@@ -249,7 +250,7 @@ class MovingHeadRenderer(FixtureRenderer):
                     )
 
                     if dimmer > 0.05:
-                        beam_length = 15.0
+                        beam_length = MOVING_HEAD_BEAM_LENGTH
                         beam_alpha = capped_alpha
                         # `supports_prism` / `supports_focus` let fixtures without
                         # a physical prism accessory (Chauvet Rogue Beam R2) or a

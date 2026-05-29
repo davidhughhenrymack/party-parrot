@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
+from contextlib import nullcontext
+
 import pytest
 import moderngl as mgl
 
+from parrot.fixtures.base import FixtureBase
 from parrot.fixtures.led_par import ParRGB
 from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 from parrot.fixtures.oultia.laser import TwoBeamLaser
@@ -14,8 +17,29 @@ from parrot.vj.renderers.mirrorball import MirrorballRenderer
 from parrot.vj.renderers.moving_head import MovingHeadRenderer
 from parrot.vj.renderers.laser import LaserRenderer
 from parrot.vj.renderers.motionstrip import MotionstripRenderer
+from parrot.vj.renderers.beam_constants import MOVING_HEAD_BEAM_LENGTH
 from parrot.utils.colour import Color
 from parrot.director.frame import Frame, FrameSignal
+
+
+class RecordingRoomRenderer:
+    def __init__(self):
+        self.cone_beams = []
+
+    def local_position(self, _position):
+        return nullcontext()
+
+    def local_rotation(self, _rotation):
+        return nullcontext()
+
+    def convert_2d_to_3d(self, x, y, z, _canvas_width, _canvas_height):
+        return (x, z, y)
+
+    def render_emission_circle(self, *_args, **_kwargs):
+        return None
+
+    def render_cone_beam(self, *args, **kwargs):
+        self.cone_beams.append({"args": args, **kwargs})
 
 
 def test_factory_creates_bulb_renderer():
@@ -141,6 +165,22 @@ def test_bulb_renderer_size():
     width, height = renderer.size
     assert width == 30.0
     assert height == 30.0
+
+
+def test_manual_dimmer_bulb_renderer_uses_mover_beam_length():
+    fixture = FixtureBase(1, "Manual Dimmer", 1)
+    fixture.cloud_fixture_type = "manual_dimmer_channel"
+    fixture.set_color(Color("white"))
+    fixture.set_dimmer(255)
+    room = RecordingRoomRenderer()
+    renderer = BulbRenderer(fixture, room_renderer=room)
+    frame = Frame({signal: 0.0 for signal in FrameSignal})
+    frame.time = 0.0
+
+    renderer.render_emissive(None, (500.0, 500.0), frame)
+
+    assert room.cone_beams
+    assert room.cone_beams[0]["length"] == MOVING_HEAD_BEAM_LENGTH
 
 
 def test_moving_head_renderer_size():

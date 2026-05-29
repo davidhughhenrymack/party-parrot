@@ -5,6 +5,7 @@ from typing import Optional, Any
 
 from parrot.fixtures.base import FixtureBase
 from parrot.vj.renderers.base import FixtureRenderer
+from parrot.vj.renderers.beam_constants import MOVING_HEAD_BEAM_LENGTH
 from parrot.director.frame import Frame
 
 
@@ -17,6 +18,11 @@ class BulbRenderer(FixtureRenderer):
 
     def _get_default_size(self) -> tuple[float, float]:
         return (30.0, 30.0)
+
+    def _beam_length(self) -> float:
+        if getattr(self.output_fixture(), "cloud_fixture_type", None) == "manual_dimmer_channel":
+            return MOVING_HEAD_BEAM_LENGTH
+        return 8.0
 
     def render_opaque(self, context, canvas_size: tuple[float, float], frame: Frame):
         """Render only the opaque Blinn-Phong parts (cube body)"""
@@ -89,7 +95,7 @@ class BulbRenderer(FixtureRenderer):
                 # Render beam if dimmer is significant
                 if dimmer > 0.05:
                     beam_direction = (0.0, 0.0, -1.0)
-                    beam_length = 8.0
+                    beam_length = self._beam_length()
                     beam_alpha = capped_alpha  # Use same alpha as bulb
                     self.room_renderer.render_cone_beam(
                         0.0,
