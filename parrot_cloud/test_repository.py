@@ -1,8 +1,25 @@
 import pytest
+from sqlalchemy import select
 
-from parrot_cloud.database import reset_database_state
+from parrot_cloud.database import create_session, reset_database_state
 from parrot_cloud.management import run_migrations
+from parrot_cloud.models import LightingModeModel, VenueAnimationAssignmentModel
 from parrot_cloud.repository import VenueRepository
+
+
+def _animation_keys_for_mode(snapshot, mode_key: str) -> list[str | None]:
+    return [
+        assignment.animation_spec.get("key")
+        for assignment in sorted(
+            (
+                assignment
+                for assignment in snapshot.animation_assignments
+                if assignment.lighting_mode_key == mode_key
+                and assignment.fixture_type is None
+            ),
+            key=lambda assignment: assignment.order_index,
+        )
+    ]
 
 
 @pytest.fixture
@@ -25,6 +42,8 @@ def test_seed_creates_demo_venue(venue_repository):
     assert len(bootstrap.active_venue.fixtures) == 0
     assert bootstrap.control_state.mode == "chill"
     assert [mode.key for mode in bootstrap.active_venue.lighting_modes] == [
+        "test",
+        "home",
         "chill",
         "rave",
         "stroby",
@@ -32,6 +51,8 @@ def test_seed_creates_demo_venue(venue_repository):
     assert {
         mode.key: mode.entry_seconds for mode in bootstrap.active_venue.lighting_modes
     } == {
+        "test": 0.5,
+        "home": 0.5,
         "chill": 3.0,
         "rave": 0.5,
         "stroby": 0.1,
@@ -40,6 +61,8 @@ def test_seed_creates_demo_venue(venue_repository):
         (assignment.lighting_mode_key, assignment.fixture_type)
         for assignment in bootstrap.active_venue.animation_assignments
     } >= {
+        ("test", None),
+        ("home", None),
         ("chill", "par"),
         ("chill", "moving_head"),
         ("rave", "par"),
@@ -47,6 +70,24 @@ def test_seed_creates_demo_venue(venue_repository):
         ("stroby", "par"),
         ("stroby", "moving_head"),
     }
+    assert _animation_keys_for_mode(bootstrap.active_venue, "test") == [
+        "Dimmer255",
+        "RigColorCycle",
+        "PanTiltAxisCheck",
+        "MoverNoGobo",
+        "PrismOff",
+        "FocusSmall",
+        "StrobeOff",
+    ]
+    assert _animation_keys_for_mode(bootstrap.active_venue, "home") == [
+        "Dimmer255",
+        "RigColorCycle",
+        "HomePanTilt",
+        "MoverNoGobo",
+        "PrismOff",
+        "FocusSmall",
+        "StrobeOff",
+    ]
     assert {
         scene_object.kind for scene_object in bootstrap.active_venue.scene_objects
     } == {
@@ -73,7 +114,7 @@ def test_animation_assignment_crud(venue_repository):
     assignment = next(
         a
         for a in created.animation_assignments
-        if a.animation_spec.get("key") == "Dimmer255"
+        if a.lighting_mode_key == "chill" and a.animation_spec.get("key") == "Dimmer255"
     )
     assert assignment.lighting_mode_key == "chill"
     assert assignment.fixture_index_filter == "odds"
@@ -125,6 +166,8 @@ def test_queer_prom_has_no_legacy_animation_assignments(venue_repository):
     snapshot = venue_repository.get_venue_snapshot(created.summary.id)
 
     assert [mode.key for mode in snapshot.lighting_modes] == [
+        "test",
+        "home",
         "chill",
         "rave",
         "stroby",
@@ -140,12 +183,16 @@ def test_queer_prom_has_no_legacy_animation_assignments(venue_repository):
         (assignment.lighting_mode_key, assignment.fixture_type)
         for assignment in snapshot.animation_assignments
     } >= {
+        ("test", None),
+        ("home", None),
         ("chill", "par"),
         ("chill", "moving_head"),
         ("rave", "par"),
         ("rave", "moving_head"),
         ("stroby", "par"),
         ("stroby", "moving_head"),
+        ("ethereal", "par"),
+        ("ethereal", "moving_head"),
     }
 
 
@@ -182,6 +229,62 @@ def test_seed_removes_existing_legacy_animations(venue_repository):
         assignment.animation_spec != {"type": "legacy_mode", "mode": "ethereal"}
         for assignment in queer_prom_snapshot.animation_assignments
     )
+
+
+def test_seed_converts_generated_test_home_stacks(venue_repository):
+    snapshot = venue_repository.get_active_venue_snapshot()
+    venue_id = snapshot.summary.id
+    for assignment in list(snapshot.animation_assignments):
+        if assignment.lighting_mode_key in {"test", "home"}:
+            venue_repository.delete_animation_assignment(venue_id, assignment.id)
+
+    with create_session() as session:
+        for mode_key in ("test", "home"):
+            mode = session.scalar(
+                select(LightingModeModel)
+                .where(LightingModeModel.venue_id == venue_id)
+                .where(LightingModeModel.key == mode_key)
+            )
+            assert mode is not None
+            session.add(
+                VenueAnimationAssignmentModel(
+                    venue_id=venue_id,
+                    lighting_mode_id=mode.id,
+                    fixture_group_name=None,
+                    fixture_type=None,
+                    order_index=0,
+                    animation_spec={
+                        "type": "combo",
+                        "children": [
+                            {"type": "animation", "key": "Dimmer255"},
+                            {"type": "animation", "key": "RigColorCycle"},
+                        ],
+                    },
+                )
+            )
+        session.commit()
+
+    venue_repository.ensure_seed_data()
+    converted = venue_repository.get_active_venue_snapshot()
+
+    assert _animation_keys_for_mode(converted, "test") == [
+        "Dimmer255",
+        "RigColorCycle",
+        "PanTiltAxisCheck",
+        "MoverNoGobo",
+        "PrismOff",
+        "FocusSmall",
+        "StrobeOff",
+    ]
+    assert _animation_keys_for_mode(converted, "home") == [
+        "Dimmer255",
+        "RigColorCycle",
+        "HomePanTilt",
+        "MoverNoGobo",
+        "PrismOff",
+        "FocusSmall",
+        "StrobeOff",
+    ]
 
 
 def test_seed_is_idempotent(venue_repository):

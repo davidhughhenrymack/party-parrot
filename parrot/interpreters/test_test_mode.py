@@ -2,13 +2,16 @@
 
 import math
 import unittest
-from unittest.mock import MagicMock
 
+from parrot.director.animation_registry import (
+    DEFAULT_HOME_ANIMATIONS,
+    DEFAULT_TEST_ANIMATIONS,
+)
 from parrot.director.color_scheme import ColorScheme
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.mode_dispatch import get_interpreter
 from parrot.director.mode import Mode
-from parrot.fixtures.led_par import Par
+from parrot.fixtures.led_par import ParRGB
 from parrot.fixtures.mirrorball import Mirrorball
 from parrot.fixtures.moving_head import MovingHead
 from parrot.interpreters.base import InterpreterArgs
@@ -19,6 +22,13 @@ from parrot.interpreters.mode_test_interpreters import (
     RigColorCycle,
 )
 from parrot.utils.colour import Color
+from parrot_cloud.domain import (
+    LightingModeSpec,
+    VenueAnimationAssignmentSpec,
+    VenueSnapshot,
+    VenueSummary,
+    VideoWallSpec,
+)
 
 
 def _empty_frame(t: float) -> Frame:
@@ -35,14 +45,62 @@ def _empty_frame(t: float) -> Frame:
     return f
 
 
+def _snapshot(mode_key: str, animation_specs: tuple[dict, ...]) -> VenueSnapshot:
+    return VenueSnapshot(
+        summary=VenueSummary(
+            id="venue",
+            slug="venue",
+            name="Venue",
+            archived=False,
+            active=True,
+            revision=1,
+        ),
+        floor_width=20.0,
+        floor_depth=15.0,
+        floor_height=10.0,
+        video_wall=VideoWallSpec(
+            x=0.0,
+            y=0.0,
+            z=0.0,
+            width=10.0,
+            height=6.0,
+            depth=0.25,
+            locked=False,
+        ),
+        fixtures=(),
+        lighting_modes=(
+            LightingModeSpec(
+                id="mode",
+                venue_id="venue",
+                key=mode_key,
+                label=mode_key.title(),
+                order_index=0,
+            ),
+        ),
+        animation_assignments=tuple(
+            VenueAnimationAssignmentSpec(
+                id=f"assignment-{index}",
+                venue_id="venue",
+                lighting_mode_id="mode",
+                lighting_mode_key=mode_key,
+                fixture_group_name=None,
+                fixture_type=None,
+                order_index=index,
+                animation_spec=animation_spec,
+            )
+            for index, animation_spec in enumerate(animation_specs)
+        ),
+    )
+
+
 class TestTestModeInterpreters(unittest.TestCase):
     def setUp(self):
-        self.scheme = ColorScheme(
-            Color("red"), Color("blue"), Color("white")
-        )
+        self.scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
         self.args = InterpreterArgs(True)
 
     def test_color_cycle_continuously_sweeps_rainbow_hue(self):
+        from unittest.mock import MagicMock
+
         mh1 = MagicMock(spec=MovingHead)
         mh2 = MagicMock(spec=MovingHead)
         group = [mh1, mh2]
@@ -60,6 +118,8 @@ class TestTestModeInterpreters(unittest.TestCase):
         self.assertAlmostEqual(second.hue, 1.0 / 3.0, places=3)
 
     def test_move_circle_sync_identical_pan_tilt(self):
+        from unittest.mock import MagicMock
+
         m1 = MagicMock(spec=MovingHead)
         m2 = MagicMock(spec=MovingHead)
         ms = MoveCircleSync([m1, m2], self.args, multiplier=1.0, phase=0.0)
@@ -74,6 +134,8 @@ class TestTestModeInterpreters(unittest.TestCase):
         m2.set_tilt.assert_called_once_with(expect_tilt)
 
     def test_home_pan_tilt_parks_movers_at_neutral(self):
+        from unittest.mock import MagicMock
+
         mh1 = MagicMock(spec=MovingHead)
         mh2 = MagicMock(spec=MovingHead)
         interp = HomePanTilt([mh1, mh2], self.args)
@@ -86,9 +148,14 @@ class TestTestModeInterpreters(unittest.TestCase):
         mh2.set_tilt.assert_called_once_with(128)
 
     def test_get_interpreter_test_mode_par(self):
-        p1 = MagicMock(spec=Par)
-        p2 = MagicMock(spec=Par)
-        interp = get_interpreter(Mode.test, [p1, p2], self.args)
+        p1 = ParRGB(1)
+        p2 = ParRGB(8)
+        interp = get_interpreter(
+            Mode.test,
+            [p1, p2],
+            self.args,
+            _snapshot("test", DEFAULT_TEST_ANIMATIONS),
+        )
         self.assertIn("RigColorCycle", str(interp))
         interp.step(_empty_frame(0.0), self.scheme)
 
@@ -131,6 +198,8 @@ class TestTestModeInterpreters(unittest.TestCase):
 
     def test_pan_tilt_axis_check_step_interpolates_on_fixtures(self):
         """step() should push the interpolated pan/tilt to every fixture in the group."""
+        from unittest.mock import MagicMock
+
         mh = MagicMock(spec=MovingHead)
         checker = PanTiltAxisCheck([mh], self.args)
         hold = PanTiltAxisCheck.HOLD_SECONDS
@@ -142,6 +211,8 @@ class TestTestModeInterpreters(unittest.TestCase):
 
     def test_pan_tilt_axis_check_wraps_modulo(self):
         """After one full cycle, time t = cycle is back at home start-of-hold."""
+        from unittest.mock import MagicMock
+
         mh = MagicMock(spec=MovingHead)
         checker = PanTiltAxisCheck([mh], self.args)
         full_cycle = (
@@ -155,22 +226,37 @@ class TestTestModeInterpreters(unittest.TestCase):
         from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 
         mh = ChauvetSpot160_12Ch(1)
-        interp = get_interpreter(Mode.test, [mh], self.args)
+        interp = get_interpreter(
+            Mode.test,
+            [mh],
+            self.args,
+            _snapshot("test", DEFAULT_TEST_ANIMATIONS),
+        )
         self.assertIn("PanTiltAxisCheck", str(interp))
 
     def test_get_interpreter_home_mode_moving_head_uses_home_pan_tilt(self):
         from parrot.fixtures.chauvet.intimidator160 import ChauvetSpot160_12Ch
 
         mh = ChauvetSpot160_12Ch(1)
-        interp = get_interpreter(Mode.home, [mh], self.args)
+        interp = get_interpreter(
+            Mode.home,
+            [mh],
+            self.args,
+            _snapshot("home", DEFAULT_HOME_ANIMATIONS),
+        )
         self.assertIn("HomePanTilt", str(interp))
         interp.step(_empty_frame(0.0), self.scheme)
 
     def test_get_interpreter_test_mode_mirrorball_full_dimmer(self):
-        mb = MagicMock(spec=Mirrorball)
-        interp = get_interpreter(Mode.test, [mb], self.args)
+        mb = Mirrorball(1)
+        interp = get_interpreter(
+            Mode.test,
+            [mb],
+            self.args,
+            _snapshot("test", DEFAULT_TEST_ANIMATIONS),
+        )
         interp.step(_empty_frame(0.0), self.scheme)
-        mb.set_dimmer.assert_called_with(255)
+        self.assertEqual(mb.get_dimmer(), 255)
 
 
 if __name__ == "__main__":

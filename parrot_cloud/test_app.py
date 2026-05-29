@@ -27,7 +27,9 @@ def test_bootstrap_endpoint_returns_active_venue(client):
     assert data["fixture_runtime_state"]["version"] == 1
     assert data["fixture_runtime_state"]["fixtures"] == []
     assert data.get("vj_preview") is None
-    assert {scene_object["kind"] for scene_object in data["active_venue"]["scene_objects"]} == {
+    assert {
+        scene_object["kind"] for scene_object in data["active_venue"]["scene_objects"]
+    } == {
         "floor",
         "video_wall",
         "dj_table",
@@ -44,12 +46,16 @@ def test_config_includes_theme_color_examples(client):
     assert [example["name"] for example in examples] == data["theme_names"]
     assert "Rainbow" in data["theme_names"]
     assert "Pride" not in data["theme_names"]
-    allow_rainbow_examples = [example for example in examples if example["allows_rainbow"]]
+    allow_rainbow_examples = [
+        example for example in examples if example["allows_rainbow"]
+    ]
     assert [example["name"] for example in allow_rainbow_examples] == [
         "Rainbow",
         "Tropical",
     ]
-    always_rainbow_examples = [example for example in examples if example["always_rainbow"]]
+    always_rainbow_examples = [
+        example for example in examples if example["always_rainbow"]
+    ]
     assert [example["name"] for example in always_rainbow_examples] == ["Rainbow"]
     for example in examples:
         assert isinstance(example["allows_rainbow"], bool)
@@ -246,7 +252,9 @@ def test_fixture_types_endpoint(client):
     assert "color_wheel" not in par_rgb
 
     rogue = next(
-        item for item in data["fixture_types"] if item["key"] == "chauvet_rogue_beam_r2x"
+        item
+        for item in data["fixture_types"]
+        if item["key"] == "chauvet_rogue_beam_r2x"
     )
     assert rogue["pan_angle_mode_degrees"] == 540
     assert rogue["tilt_angle_mode_degrees"] == 270
@@ -289,8 +297,14 @@ def test_animation_registry_and_assignment_endpoints(client):
             "animation_spec": {
                 "type": "weighted_randomize",
                 "options": [
-                    {"weight": 10, "animation": {"type": "animation", "key": "Dimmer0"}},
-                    {"weight": 90, "animation": {"type": "animation", "key": "Dimmer255"}},
+                    {
+                        "weight": 10,
+                        "animation": {"type": "animation", "key": "Dimmer0"},
+                    },
+                    {
+                        "weight": 90,
+                        "animation": {"type": "animation", "key": "Dimmer255"},
+                    },
                 ],
             }
         },
@@ -400,6 +414,9 @@ def test_config_endpoint_lists_supported_universes(client):
         {"value": "default", "label": "Enttec Pro"},
         {"value": "art1", "label": "Art-Net 1"},
     ]
+    assert "blackout" in data["available_modes"]
+    assert "test" in data["available_modes"]
+    assert "home" in data["available_modes"]
     assert "chill" in data["available_modes"]
     assert "prom_dmack" in data["available_vj_modes"]
     assert "prom_wufky" in data["available_vj_modes"]
@@ -448,7 +465,9 @@ def test_control_state_endpoints(client):
 def test_control_state_mode_patch_broadcasts_only_control_state(client, monkeypatch):
     broadcast_types = []
     hub = client.application.config["venue_update_hub"]
-    monkeypatch.setattr(hub, "broadcast", lambda event: broadcast_types.append(event["type"]))
+    monkeypatch.setattr(
+        hub, "broadcast", lambda event: broadcast_types.append(event["type"])
+    )
 
     response = client.patch("/api/control-state", json={"mode": "rave"})
 
@@ -461,9 +480,13 @@ def test_control_state_active_venue_patch_broadcasts_venue_updates(client, monke
     active_venue_id = bootstrap["active_venue"]["summary"]["id"]
     broadcast_types = []
     hub = client.application.config["venue_update_hub"]
-    monkeypatch.setattr(hub, "broadcast", lambda event: broadcast_types.append(event["type"]))
+    monkeypatch.setattr(
+        hub, "broadcast", lambda event: broadcast_types.append(event["type"])
+    )
 
-    response = client.patch("/api/control-state", json={"active_venue_id": active_venue_id})
+    response = client.patch(
+        "/api/control-state", json={"active_venue_id": active_venue_id}
+    )
 
     assert response.status_code == 200
     assert broadcast_types == ["venues", "venue_snapshot", "control_state"]
@@ -714,7 +737,7 @@ def test_group_name_wires_through_to_director_single_partition(client):
     assert grouped_ids == {"w-a", "w-b"}
     assert [getattr(f, "cloud_spec_id", None) for f in loose] == ["w-solo"]
 
-    # cloud_group_name must also be tagged on each member so DSL Group(...) matchers work.
+    # cloud_group_name must also be tagged on each member so DB group-scoped assignments work.
     for child in groups[0].fixtures:
         assert child.cloud_group_name == "Front wash"
     assert loose[0].cloud_group_name in (None, "")

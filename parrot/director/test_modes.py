@@ -1,16 +1,60 @@
 import unittest
-from unittest.mock import MagicMock
+
+from parrot.director.animation_registry import animation
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.mode_dispatch import get_interpreter
 from parrot.director.mode import Mode
 from parrot.interpreters.base import InterpreterArgs
-from parrot.fixtures.led_par import Par
-from parrot.fixtures.mirrorball import Mirrorball
-from parrot.fixtures.motionstrip import Motionstrip
+from parrot.fixtures.led_par import ParRGB
 from parrot.interpreters.dimmer import Dimmer0
 from parrot.director.color_scheme import ColorScheme
 from parrot.utils.colour import Color
-import random
+from parrot_cloud.domain import (
+    LightingModeSpec,
+    VenueAnimationAssignmentSpec,
+    VenueSnapshot,
+    VenueSummary,
+    VideoWallSpec,
+)
+
+
+def _snapshot(
+    key: str,
+    assignments: tuple[VenueAnimationAssignmentSpec, ...],
+) -> VenueSnapshot:
+    return VenueSnapshot(
+        summary=VenueSummary(
+            id="venue",
+            slug="venue",
+            name="Venue",
+            archived=False,
+            active=True,
+            revision=1,
+        ),
+        floor_width=20.0,
+        floor_depth=15.0,
+        floor_height=10.0,
+        video_wall=VideoWallSpec(
+            x=0.0,
+            y=0.0,
+            z=0.0,
+            width=10.0,
+            height=6.0,
+            depth=0.25,
+            locked=False,
+        ),
+        fixtures=(),
+        lighting_modes=(
+            LightingModeSpec(
+                id="mode",
+                venue_id="venue",
+                key=key,
+                label=key.title(),
+                order_index=0,
+            ),
+        ),
+        animation_assignments=assignments,
+    )
 
 
 class TestModes(unittest.TestCase):
@@ -38,178 +82,44 @@ class TestModes(unittest.TestCase):
             Color("red"), Color("blue"), Color("white")  # fg  # bg  # bg_contrast
         )
 
-        # Create some mock fixtures
-        self.par1 = MagicMock(spec=Par)
-        self.par2 = MagicMock(spec=Par)
-        self.par3 = MagicMock(spec=Par)
-        self.pars = [self.par1, self.par2, self.par3]
+    def test_non_blackout_modes_without_snapshot_fall_back_to_dimmer_zero(self):
+        par = ParRGB(1)
+        interpreter = get_interpreter(Mode.chill, [par], self.args)
 
-        self.strip1 = MagicMock(spec=Motionstrip)
-        self.strip2 = MagicMock(spec=Motionstrip)
-        self.strips = [self.strip1, self.strip2]
+        self.assertIsInstance(interpreter, Dimmer0)
+        interpreter.step(self.frame, self.scheme)
+        self.assertEqual(par.get_dimmer(), 0)
 
-        # Set up mock bulbs for Motionstrip fixtures
-        for strip in self.strips:
-            mock_bulbs = [
-                MagicMock(spec=Par),
-                MagicMock(spec=Par),
-                MagicMock(spec=Par),
-            ]  # 3 bulbs per strip
-            strip.get_bulbs.return_value = mock_bulbs
-            for bulb in mock_bulbs:
-                bulb.get_dimmer.return_value = 0.0
+    def test_blackout_is_hardwired_to_dimmer_zero(self):
+        par = ParRGB(1)
+        interpreter = get_interpreter(Mode.blackout, [par], self.args)
 
-        # Set initial dimmer values to 0
-        for fixture in self.pars + self.strips:
-            fixture.get_dimmer.return_value = 0.0
+        self.assertIsInstance(interpreter, Dimmer0)
+        interpreter.step(self.frame, self.scheme)
+        self.assertEqual(par.get_dimmer(), 0)
 
-        # Ensure consistent random behavior
-        random.seed(42)
+    def test_db_assignment_drives_matching_mode(self):
+        par = ParRGB(1)
+        snapshot = _snapshot(
+            "chill",
+            (
+                VenueAnimationAssignmentSpec(
+                    id="assignment",
+                    venue_id="venue",
+                    lighting_mode_id="mode",
+                    lighting_mode_key="chill",
+                    fixture_group_name=None,
+                    fixture_type="par",
+                    order_index=0,
+                    animation_spec=animation("Dimmer255"),
+                ),
+            ),
+        )
 
-    def test_chill_mode_interpreter(self):
-        """Test that chill mode returns valid interpreters"""
-        # Test with Par fixtures
-        interpreter = get_interpreter(Mode.chill, self.pars, self.args)
-        self.assertIsNotNone(interpreter)
-
-        # Should not crash when stepping
+        interpreter = get_interpreter(Mode.chill, [par], self.args, snapshot)
         interpreter.step(self.frame, self.scheme)
 
-        # Test with Motionstrip fixtures
-        interpreter = get_interpreter(Mode.chill, self.strips, self.args)
-        self.assertIsNotNone(interpreter)
-
-        # Should not crash when stepping
-        interpreter.step(self.frame, self.scheme)
-
-    def test_all_modes_have_interpreters(self):
-        """Test that all modes return valid interpreters for common fixtures"""
-        for mode in [
-            Mode.rave,
-            Mode.chill,
-            Mode.stroby,
-            Mode.blackout,
-            Mode.test,
-            Mode.home,
-            Mode.ethereal,
-        ]:
-            # Test with Par fixtures
-            interpreter = get_interpreter(mode, self.pars, self.args)
-            self.assertIsNotNone(interpreter)
-
-            # Should not crash when stepping
-            interpreter.step(self.frame, self.scheme)
-
-    def test_sheer_lights_are_silenced_in_chill(self):
-        """Sheer group stays dark in chill, including moving heads."""
-        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_20Ch,
-        )
-
-        sheer = ChauvetRogueHybridRH1_20Ch(1)
-        sheer.cloud_group_name = "sheer lights"
-        other = ChauvetRogueHybridRH1_20Ch(20)
-        other.cloud_group_name = None
-
-        interp = get_interpreter(Mode.chill, [sheer, other], self.args)
-        interp.step(self.frame, self.scheme)
-
-        assert sheer.get_dimmer() == 0
-
-    def test_rave_sheer_lights_randomize_prism_and_focus(self):
-        """Rave picks one focus and one prism state for the whole sheer group.
-
-        Per-group randomize (not per-fixture) means all sheer movers share the
-        chosen focus/prism, and rebuilding enough times visits both options in
-        each randomize call — that proves the DSL is actually picking, not frozen.
-        """
-        import random as _random
-        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_20Ch,
-        )
-
-        focus_picks: set[float] = set()
-        prism_picks: set[bool] = set()
-
-        for seed in range(400):
-            _random.seed(seed)
-            movers = [
-                ChauvetRogueHybridRH1_20Ch(1 + i * 20) for i in range(6)
-            ]
-            for m in movers:
-                m.cloud_group_name = "sheer lights"
-
-            interp = get_interpreter(Mode.rave, movers, self.args)
-            interp.step(self.frame, self.scheme)
-
-            focus_values = {m.get_focus() for m in movers}
-            prism_states = {m.get_prism()[0] for m in movers}
-
-            # Group-wise randomize: every mover in the group must agree.
-            assert len(focus_values) == 1, (
-                f"seed={seed}: expected one shared focus across the group, got {focus_values}"
-            )
-            assert len(prism_states) == 1, (
-                f"seed={seed}: expected one shared prism state across the group, got {prism_states}"
-            )
-
-            (focus,) = focus_values
-            (prism_on,) = prism_states
-            assert focus in (0.0, 1.0), f"seed={seed}: unexpected focus {focus}"
-            focus_picks.add(focus)
-            prism_picks.add(prism_on)
-
-        assert focus_picks == {0.0, 1.0}, (
-            f"randomize(FocusBig, FocusSmall) should visit both options; got {focus_picks}"
-        )
-        assert prism_picks == {True, False}, (
-            f"randomize(RotatePrism, PrismOff) should visit both options; got {prism_picks}"
-        )
-
-    def test_rave_sheer_lights_active_roughly_thirty_percent_of_reshuffles(self):
-        """Rave sheer movers should be dark ~70% of the time.
-
-        The outer matcher wraps the full combo in a 30/70 ``weighted_randomize``
-        against ``Dimmer0`` so the sheer lights feel like an occasional accent,
-        not a constant presence. We sample many seeds and assert the empirical
-        activation rate sits in a band around 30% — wide enough to absorb
-        normal variance but tight enough to catch a regression that flips the
-        weights, drops the gate entirely, or silences the sheers forever.
-        """
-        import random as _random
-        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_20Ch,
-        )
-
-        trials = 400
-        active = 0
-        for seed in range(trials):
-            _random.seed(seed)
-            movers = [
-                ChauvetRogueHybridRH1_20Ch(1 + i * 20) for i in range(4)
-            ]
-            for m in movers:
-                m.cloud_group_name = "sheer lights"
-
-            interp = get_interpreter(Mode.rave, movers, self.args)
-            # Step several frames so any combo that needs a few ticks to lift
-            # the dimmer (latched fades, chases, etc.) actually drives output.
-            for _ in range(8):
-                interp.step(self.frame, self.scheme)
-
-            # "Active" == at least one mover in the group lit up this pass.
-            # Dimmer0 keeps every fixture at 0; the combo lifts at least one.
-            if any(m.get_dimmer() > 0 for m in movers):
-                active += 1
-
-        rate = active / trials
-        # 30/70 weighted pick → expected mean 0.30, stdev ≈ sqrt(0.21/400) ≈ 0.023.
-        # Band [0.18, 0.42] is ~5σ — generous enough to be non-flaky, tight
-        # enough to fail if someone sets the weights to (50,50) or (10,90).
-        assert 0.18 <= rate <= 0.42, (
-            f"sheer-lights activation rate should be ~30%, got {rate:.2%} "
-            f"({active}/{trials})"
-        )
+        self.assertEqual(par.get_dimmer(), 255)
 
     def test_composite_interpreter_exposes_children_with_their_own_groups(self):
         """CompositeInterpreter.children must each carry the matched sub-group.
@@ -218,103 +128,42 @@ class TestModes(unittest.TestCase):
         group + the merged ``__str__``) so each partition prints its own row.
         """
         from parrot.director.mode_dispatch import CompositeInterpreter
-        from parrot.fixtures.chauvet.rogue_hybrid_rh1 import (
-            ChauvetRogueHybridRH1_20Ch,
-        )
         from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
 
-        sheer = ChauvetRogueHybridRH1_20Ch(1)
-        sheer.cloud_group_name = "sheer lights"
-        rogue = ChauvetRogueBeamR2X(20)
-        rogue.cloud_group_name = None
-        mirror = Mirrorball(40)
-
-        interp = get_interpreter(Mode.rave, [sheer, rogue, mirror], self.args)
-        assert isinstance(interp, CompositeInterpreter), (
-            "rave with mixed fixture classes should partition into a composite"
-        )
-        children = interp.children
-        # Every child's group must be a strict subset of the parent patch, and
-        # the union (by identity) must cover every fixture exactly once.
-        seen: list[int] = []
-        for child in children:
-            for f in child.group:
-                seen.append(id(f))
-            assert len(child.group) >= 1, "Composite children should never be empty"
-            assert len(child.group) < 3, (
-                f"Each child should be one partition, not the whole patch: {child.group}"
-            )
-        assert sorted(seen) == sorted([id(sheer), id(rogue), id(mirror)])
-
-    def test_rave_moving_head_and_par_pools_include_freq_high_variants(self):
-        """Rave mode should keep highs (hats/snares/vocals) in play, not just bass.
-
-        Sweeps many seeds over the rave ``MovingHead`` and ``Par`` randomize
-        pools. Each pool must land on a ``*High`` variant (``GentlePulseHigh`` /
-        ``StabPulseHigh``) at least once — this guards against regressions
-        that silently drop the freq_high entries and leave the rig reacting
-        only to freq_low / freq_all (which is kick-dominated in dance music).
-        """
-        import random as _random
-        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
-        from parrot.fixtures.led_par import ParRGB
-
-        trials = 200
-        mh_high_hits = 0
-        par_high_hits = 0
-        for seed in range(trials):
-            _random.seed(seed)
-            movers = [ChauvetRogueBeamR2X(1 + i * 20) for i in range(3)]
-            for m in movers:
-                m.cloud_group_name = None
-            mh_interp = get_interpreter(Mode.rave, movers, self.args)
-            if "High" in str(mh_interp):
-                mh_high_hits += 1
-
-            _random.seed(seed + 10_000)
-            pars = [ParRGB(100 + i * 8) for i in range(3)]
-            par_interp = get_interpreter(Mode.rave, pars, self.args)
-            if "High" in str(par_interp):
-                par_high_hits += 1
-
-        assert mh_high_hits > 0, (
-            "rave MovingHead pool never picked a freq_high-signalled variant "
-            f"across {trials} seeds — highs have no reliable home in the rig"
-        )
-        assert par_high_hits > 0, (
-            "rave Par pool never picked a freq_high-signalled variant "
-            f"across {trials} seeds"
+        front = ChauvetRogueBeamR2X(1)
+        front.cloud_group_name = "front"
+        rear = ChauvetRogueBeamR2X(20)
+        rear.cloud_group_name = "rear"
+        snapshot = _snapshot(
+            "rave",
+            (
+                VenueAnimationAssignmentSpec(
+                    id="front",
+                    venue_id="venue",
+                    lighting_mode_id="mode",
+                    lighting_mode_key="rave",
+                    fixture_group_name="front",
+                    fixture_type="moving_head",
+                    order_index=0,
+                    animation_spec=animation("Dimmer255"),
+                ),
+                VenueAnimationAssignmentSpec(
+                    id="rear",
+                    venue_id="venue",
+                    lighting_mode_id="mode",
+                    lighting_mode_key="rave",
+                    fixture_group_name="rear",
+                    fixture_type="moving_head",
+                    order_index=1,
+                    animation_spec=animation("Dimmer0"),
+                ),
+            ),
         )
 
-    def test_mirrorball_resolves_before_par_not_test_rig_cycle(self):
-        """Mirrorball subclasses Par; mode must use the Mirrorball row, not Par animations."""
-        mb = Mirrorball(88)
-        chill = get_interpreter(Mode.chill, [mb], self.args)
-        self.assertIsInstance(chill.interpreter, Dimmer0)
-        chill.step(self.frame, self.scheme)
-        self.assertEqual(mb.get_dimmer(), 0)
+        interp = get_interpreter(Mode.rave, [front, rear], self.args, snapshot)
 
-        mb2 = Mirrorball(89)
-        test_interp = get_interpreter(Mode.test, [mb2], self.args)
-        test_interp.step(self.frame, self.scheme)
-        self.assertEqual(mb2.get_dimmer(), 255)
-
-    def test_track_rogue_home_mode_aims_at_mirrorball_named_position(self):
-        from parrot.fixtures.chauvet.rogue_beam_r2 import ChauvetRogueBeamR2X
-
-        rogue = ChauvetRogueBeamR2X(1)
-        rogue.cloud_group_name = "track"
-        rogue.named_positions = {"Mirrorball": (144.5, 77.25)}
-
-        interp = get_interpreter(Mode.home, [rogue], self.args)
-        interp.step(self.frame, self.scheme)
-
-        self.assertIn("MirrorballPosition", str(interp))
-        self.assertEqual(rogue.get_dimmer(), 255)
-        self.assertEqual(rogue.values[0], 144)
-        self.assertEqual(rogue.values[1], int(0.5 * 255))
-        self.assertEqual(rogue.values[2], 77)
-        self.assertEqual(rogue.values[3], int(0.25 * 255))
+        self.assertIsInstance(interp, CompositeInterpreter)
+        self.assertEqual([child.group for child in interp.children], [[front], [rear]])
 
 
 if __name__ == "__main__":

@@ -169,7 +169,7 @@ def create_app() -> Flask:
             if active_venue is not None
             else []
         )
-        utility_modes = [mode.name for mode in MODES_BY_HYPE if mode.name in {"test", "blackout", "home"}]
+        utility_modes = [mode.name for mode in MODES_BY_HYPE if mode.name == "blackout"]
         return jsonify(
             {
                 "fixture_types": list_fixture_types(),
@@ -277,7 +277,7 @@ def create_app() -> Flask:
             if active_venue is not None
             else []
         )
-        utility_modes = [mode.name for mode in MODES_BY_HYPE if mode.name in {"test", "blackout", "home"}]
+        utility_modes = [mode.name for mode in MODES_BY_HYPE if mode.name == "blackout"]
         return jsonify(
             {
                 "mode": control_state.mode,

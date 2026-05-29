@@ -44,10 +44,12 @@ from parrot_cloud.seeds import SeedVenueDefinition, build_seed_venues
 from parrot.utils.dmx_utils import Universe
 from parrot.vj.vj_mode import parse_vj_mode_string
 from parrot.director.animation_registry import (
+    DEFAULT_HOME_ANIMATIONS,
     DEFAULT_MOVING_LIGHT_ANIMATION,
     DEFAULT_PAR_ANIMATION,
     DEFAULT_STROBY_MOVING_LIGHT_ANIMATION,
     DEFAULT_STROBY_PAR_ANIMATION,
+    DEFAULT_TEST_ANIMATIONS,
 )
 
 LEGACY_PLAN_UNITS_PER_METER = 50.0
@@ -60,12 +62,16 @@ DJ_SILHOUETTE_BEHIND_TABLE_EXTRA_M = 0.0
 DJ_SILHOUETTE_CLEARANCE_BELOW_TABLE_TOP_M = 0.08
 DISPLAY_MODE_VALUES = {"venue", "dmx_heatmap", "vj"}
 DEFAULT_EDITABLE_LIGHTING_MODES: tuple[tuple[str, str], ...] = (
+    ("test", "Test"),
+    ("home", "Home"),
     ("chill", "Chill"),
     ("rave", "Rave"),
     ("stroby", "Stroby"),
 )
 DEFAULT_LIGHTING_MODE_ENTRY_SECONDS: dict[str, float] = {
     "ethereal": 3.0,
+    "test": 0.5,
+    "home": 0.5,
     "chill": 3.0,
     "rave": 0.5,
     "stroby": 0.1,
@@ -83,6 +89,8 @@ def _fixture_index_filter_or_none(value: object) -> str | None:
 
 
 DEFAULT_LIGHTING_MODE_ANIMATION_ROWS = {
+    "test": tuple((None, spec) for spec in DEFAULT_TEST_ANIMATIONS),
+    "home": tuple((None, spec) for spec in DEFAULT_HOME_ANIMATIONS),
     "chill": (
         ("par", DEFAULT_PAR_ANIMATION),
         ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
@@ -95,8 +103,12 @@ DEFAULT_LIGHTING_MODE_ANIMATION_ROWS = {
         ("par", DEFAULT_STROBY_PAR_ANIMATION),
         ("moving_head", DEFAULT_STROBY_MOVING_LIGHT_ANIMATION),
     ),
+    "ethereal": (
+        ("par", DEFAULT_PAR_ANIMATION),
+        ("moving_head", DEFAULT_MOVING_LIGHT_ANIMATION),
+    ),
 }
-UTILITY_LIGHTING_MODE_KEYS: tuple[str, ...] = ("test", "blackout", "home")
+UTILITY_LIGHTING_MODE_KEYS: tuple[str, ...] = ("blackout",)
 
 
 def _is_manual_dimmer_channel_type(fixture_type: str) -> bool:
@@ -136,6 +148,18 @@ def _lighting_mode_label_from_key(key: str) -> str:
 
 def _lighting_mode_entry_seconds_from_key(key: str) -> float:
     return DEFAULT_LIGHTING_MODE_ENTRY_SECONDS.get(key, 2.0)
+
+
+def _default_lighting_modes_for_venue(
+    venue: VenueModel,
+) -> list[tuple[str, str]]:
+    modes = list(DEFAULT_EDITABLE_LIGHTING_MODES)
+    is_queer_prom = (
+        "queer-prom" in venue.slug.casefold() or "queer prom" in venue.name.casefold()
+    )
+    if is_queer_prom:
+        modes.append(("ethereal", "Ethereal"))
+    return modes
 
 
 def _normalize_entry_seconds(value: object) -> float:
@@ -1231,28 +1255,48 @@ class VenueRepository:
         return mode
 
     def _ensure_lighting_modes(self, session, venue: VenueModel) -> None:
+        default_modes = _default_lighting_modes_for_venue(venue)
         if venue.lighting_modes:
             removed_mode_keys = self._remove_legacy_default_mode_assignments(
                 session, venue
             )
+            modes_by_key = {mode.key: mode for mode in venue.lighting_modes}
+            created_default_mode = False
+            next_order_index = (
+                max((mode.order_index for mode in venue.lighting_modes), default=-1) + 1
+            )
+            for key, label in default_modes:
+                if key in modes_by_key:
+                    continue
+                row = LightingModeModel(
+                    venue_id=venue.id,
+                    key=key,
+                    label=label,
+                    order_index=next_order_index,
+                    editable=True,
+                    entry_seconds=_lighting_mode_entry_seconds_from_key(key),
+                )
+                next_order_index += 1
+                session.add(row)
+                modes_by_key[key] = row
+                created_default_mode = True
+            session.flush()
+            converted_stack_mode_keys = self._remove_generated_stack_mode_assignments(
+                session,
+                venue,
+                modes_by_key,
+            )
             self._seed_default_animation_assignments(
                 session,
                 venue,
-                {mode.key: mode for mode in venue.lighting_modes},
-                only_mode_keys=removed_mode_keys,
+                modes_by_key,
             )
+            if removed_mode_keys or converted_stack_mode_keys or created_default_mode:
+                self._touch_venue(venue)
             return
 
-        modes = list(DEFAULT_EDITABLE_LIGHTING_MODES)
-        is_queer_prom = (
-            "queer-prom" in venue.slug.casefold()
-            or "queer prom" in venue.name.casefold()
-        )
-        if is_queer_prom:
-            modes.append(("ethereal", "Ethereal"))
-
         created: dict[str, LightingModeModel] = {}
-        for order_index, (key, label) in enumerate(modes):
+        for order_index, (key, label) in enumerate(default_modes):
             row = LightingModeModel(
                 venue_id=venue.id,
                 key=key,
@@ -1285,6 +1329,34 @@ class VenueRepository:
             self._touch_venue(venue)
         return removed_mode_keys
 
+    def _remove_generated_stack_mode_assignments(
+        self,
+        session,
+        venue: VenueModel,
+        modes_by_key: dict[str, LightingModeModel],
+    ) -> set[str]:
+        """Replace early generated test/home Stack rows with editable rows."""
+        converted_mode_keys: set[str] = set()
+        for mode_key in ("test", "home"):
+            mode = modes_by_key.get(mode_key)
+            if mode is None:
+                continue
+            assignments = session.scalars(
+                select(VenueAnimationAssignmentModel)
+                .where(VenueAnimationAssignmentModel.venue_id == venue.id)
+                .where(VenueAnimationAssignmentModel.lighting_mode_id == mode.id)
+            ).all()
+            if len(assignments) != 1:
+                continue
+            assignment = assignments[0]
+            if assignment.animation_spec.get("type") != "combo":
+                continue
+            converted_mode_keys.add(mode_key)
+            session.delete(assignment)
+        if converted_mode_keys:
+            session.flush()
+        return converted_mode_keys
+
     def _seed_default_animation_assignments(
         self,
         session,
@@ -1293,9 +1365,9 @@ class VenueRepository:
         *,
         only_mode_keys: set[str] | None = None,
     ) -> None:
-        mode_keys = set(DEFAULT_LIGHTING_MODE_ANIMATION_ROWS)
+        mode_keys = list(DEFAULT_LIGHTING_MODE_ANIMATION_ROWS)
         if only_mode_keys is not None:
-            mode_keys &= only_mode_keys
+            mode_keys = [key for key in mode_keys if key in only_mode_keys]
 
         for mode_key in mode_keys:
             mode = modes_by_key.get(mode_key)

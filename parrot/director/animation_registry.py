@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Any, Type
+from typing import Any
 
 from beartype import beartype
 
 from parrot.director.frame import FrameSignal
-from parrot.director.mode import Mode
 from parrot.fixtures.base import FixtureWithBulbs
 from parrot.interpreters.base import (
     AnyColor,
@@ -166,7 +165,9 @@ def _param(
     max_value: int | float | None = None,
     step: int | float | None = None,
 ) -> AnimationParameter:
-    return AnimationParameter(key, label, value_type, default, min_value, max_value, step)
+    return AnimationParameter(
+        key, label, value_type, default, min_value, max_value, step
+    )
 
 
 def _identity(value: float) -> float:
@@ -201,7 +202,9 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
     ),
     "Dimmer0": AnimationRegistryEntry("Dimmer0", "Dimmer Off", "Dimmer", Dimmer0),
     "Dimmer30": AnimationRegistryEntry("Dimmer30", "Dimmer 30", "Dimmer", Dimmer30),
-    "Dimmer255": AnimationRegistryEntry("Dimmer255", "Dimmer Full", "Dimmer", Dimmer255),
+    "Dimmer255": AnimationRegistryEntry(
+        "Dimmer255", "Dimmer Full", "Dimmer", Dimmer255
+    ),
     "DimmerFadeIn": AnimationRegistryEntry(
         "DimmerFadeIn",
         "Fade In",
@@ -233,7 +236,11 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Sequence Fade",
         "Dimmer",
         SequenceFadeDimmers,
-        (_param("min", "Minimum Dimmer", "number", 0, min_value=0, max_value=255, step=1),),
+        (
+            _param(
+                "min", "Minimum Dimmer", "number", 0, min_value=0, max_value=255, step=1
+            ),
+        ),
     ),
     "StabPulse": AnimationRegistryEntry(
         "StabPulse",
@@ -265,7 +272,9 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
     "DimmerFadeLatched4s": AnimationRegistryEntry(
         "DimmerFadeLatched4s", "Latched Fade 4s", "Dimmer", DimmerFadeLatched4s
     ),
-    "LaserLatch": AnimationRegistryEntry("LaserLatch", "Laser Latch", "Dimmer", LaserLatch),
+    "LaserLatch": AnimationRegistryEntry(
+        "LaserLatch", "Laser Latch", "Dimmer", LaserLatch
+    ),
     "AllBulbs255": AnimationRegistryEntry(
         "AllBulbs255", "All Bulbs Full", "Dimmer", AllBulbs255
     ),
@@ -304,7 +313,11 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         (_param("position_name", "Position", "named_position", ""),),
     ),
     "MoveNod": AnimationRegistryEntry(
-        "MoveNod", "Nod", "Movement", MoveNod, (_param("multiplier", "Speed", "number", 1.0, min_value=0, step=0.05),)
+        "MoveNod",
+        "Nod",
+        "Movement",
+        MoveNod,
+        (_param("multiplier", "Speed", "number", 1.0, min_value=0, step=0.05),),
     ),
     "MoveSmoothWalk": AnimationRegistryEntry(
         "MoveSmoothWalk",
@@ -321,11 +334,19 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         FocusSinePhased,
         (_param("period_seconds", "Period", "number", 14.0, min_value=0.1, step=0.1),),
     ),
-    "FocusSmall": AnimationRegistryEntry("FocusSmall", "Tight Focus", "Focus", FocusSmall),
-    "MoverGobo": AnimationRegistryEntry(
-        "MoverGobo", "Set Gobo", "Gobo", MoverGobo, (_param("gobo", "Gobo", "string", "open"),)
+    "FocusSmall": AnimationRegistryEntry(
+        "FocusSmall", "Tight Focus", "Focus", FocusSmall
     ),
-    "MoverNoGobo": AnimationRegistryEntry("MoverNoGobo", "No Gobo", "Gobo", MoverNoGobo),
+    "MoverGobo": AnimationRegistryEntry(
+        "MoverGobo",
+        "Set Gobo",
+        "Gobo",
+        MoverGobo,
+        (_param("gobo", "Gobo", "string", "open"),),
+    ),
+    "MoverNoGobo": AnimationRegistryEntry(
+        "MoverNoGobo", "No Gobo", "Gobo", MoverNoGobo
+    ),
     "MoverRandomGobo": AnimationRegistryEntry(
         "MoverRandomGobo", "Random Gobo", "Gobo", MoverRandomGobo
     ),
@@ -336,7 +357,15 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         RotatingGobo,
         (
             _param("slot", "Gobo Wheel Slot", "number", 1, min_value=0, step=1),
-            _param("rotate_speed", "Speed", "number", 0.3, min_value=-1, max_value=1, step=0.05),
+            _param(
+                "rotate_speed",
+                "Speed",
+                "number",
+                0.3,
+                min_value=-1,
+                max_value=1,
+                step=0.05,
+            ),
         ),
     ),
     "PrismOff": AnimationRegistryEntry("PrismOff", "Prism Off", "Prism", PrismOff),
@@ -345,21 +374,51 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Rotate Prism",
         "Prism",
         RotatePrism,
-        (_param("rotate_speed", "Speed", "number", 0.25, min_value=-1, max_value=1, step=0.05),),
+        (
+            _param(
+                "rotate_speed",
+                "Speed",
+                "number",
+                0.25,
+                min_value=-1,
+                max_value=1,
+                step=0.05,
+            ),
+        ),
     ),
     "StrobeChannelSustained": AnimationRegistryEntry(
         "StrobeChannelSustained",
         "Strobe Channel",
         "Strobe",
         StrobeChannelSustained,
-        (_param("strobe_value", "Speed", "number", 220, min_value=0, max_value=255, step=1),),
+        (
+            _param(
+                "strobe_value",
+                "Speed",
+                "number",
+                220,
+                min_value=0,
+                max_value=255,
+                step=1,
+            ),
+        ),
     ),
     "StrobeHighSustained": AnimationRegistryEntry(
         "StrobeHighSustained",
         "High Strobe",
         "Strobe",
         StrobeHighSustained,
-        (_param("strobe_value", "Speed", "number", 220, min_value=0, max_value=255, step=1),),
+        (
+            _param(
+                "strobe_value",
+                "Speed",
+                "number",
+                220,
+                min_value=0,
+                max_value=255,
+                step=1,
+            ),
+        ),
     ),
     "StrobeOff": AnimationRegistryEntry("StrobeOff", "Strobe Off", "Strobe", StrobeOff),
     "StrobeOn": AnimationRegistryEntry(
@@ -367,10 +426,24 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "Strobe On",
         "Strobe",
         StrobeOn,
-        (_param("strobe_value", "Speed", "number", 220, min_value=0, max_value=255, step=1),),
+        (
+            _param(
+                "strobe_value",
+                "Speed",
+                "number",
+                220,
+                min_value=0,
+                max_value=255,
+                step=1,
+            ),
+        ),
     ),
     "Spin": AnimationRegistryEntry(
-        "Spin", "Spin", "Movement", Spin, (_param("speed", "Speed", "number", 50, min_value=0, max_value=255, step=1),)
+        "Spin",
+        "Spin",
+        "Movement",
+        Spin,
+        (_param("speed", "Speed", "number", 50, min_value=0, max_value=255, step=1),),
     ),
     "RotosphereSpinColor": AnimationRegistryEntry(
         "RotosphereSpinColor", "Rotosphere Spin Color", "Movement", RotosphereSpinColor
@@ -380,17 +453,20 @@ REGISTRY: dict[str, AnimationRegistryEntry] = {
         "RigColorCycle", "Rig Color Cycle", "Utility", RigColorCycle
     ),
     "HomePanTilt": AnimationRegistryEntry(
-        "HomePanTilt", "Home Pan/Tilt", "Utility", HomePanTilt
+        "HomePanTilt", "Home Pan/Tilt", "Movement", HomePanTilt
     ),
     "PanTiltAxisCheck": AnimationRegistryEntry(
-        "PanTiltAxisCheck", "Pan/Tilt Axis Check", "Utility", PanTiltAxisCheck
+        "PanTiltAxisCheck", "Pan/Tilt Axis Check", "Movement", PanTiltAxisCheck
     ),
 }
 
 
 def animation_registry_payload() -> JsonDict:
     return {
-        "animations": [entry.to_dict() for entry in sorted(REGISTRY.values(), key=lambda e: (e.category, e.label))],
+        "animations": [
+            entry.to_dict()
+            for entry in sorted(REGISTRY.values(), key=lambda e: (e.category, e.label))
+        ],
         "combinators": [
             {"type": "combo", "label": "Stack"},
             {"type": "randomize", "label": "Randomize"},
@@ -420,8 +496,7 @@ def weighted_randomize_spec(*options: tuple[int, JsonDict]) -> JsonDict:
     return {
         "type": "weighted_randomize",
         "options": [
-            {"weight": int(weight), "animation": spec}
-            for weight, spec in options
+            {"weight": int(weight), "animation": spec} for weight, spec in options
         ],
     }
 
@@ -436,10 +511,6 @@ def for_bulbs_spec(*children: JsonDict) -> JsonDict:
 
 def with_args_spec(name: str, key: str, **params: object) -> JsonDict:
     return {"type": "with_args", "name": name, "key": key, "params": dict(params)}
-
-
-def legacy_mode_spec(mode_key: str) -> JsonDict:
-    return {"type": "legacy_mode", "mode": mode_key}
 
 
 def _coerce_param(key: str, value: object) -> object:
@@ -473,8 +544,12 @@ def _auto_for_bulbs(interpreter: type[InterpreterBase]) -> type[InterpreterBase]
 
     class AutoForBulbs(InterpreterBase):
         def __new__(cls, group, args):
-            fixture_group = [fixture for fixture in group if not is_multi_bulb_fixture(fixture)]
-            bulb_group = [fixture for fixture in group if is_multi_bulb_fixture(fixture)]
+            fixture_group = [
+                fixture for fixture in group if not is_multi_bulb_fixture(fixture)
+            ]
+            bulb_group = [
+                fixture for fixture in group if is_multi_bulb_fixture(fixture)
+            ]
             if not bulb_group:
                 return interpreter(group, args)
             if not fixture_group:
@@ -484,24 +559,16 @@ def _auto_for_bulbs(interpreter: type[InterpreterBase]) -> type[InterpreterBase]
         def __init__(self, group, args):
             super().__init__(group, args)
             self._fixture_group = [
-                fixture
-                for fixture in group
-                if not is_multi_bulb_fixture(fixture)
+                fixture for fixture in group if not is_multi_bulb_fixture(fixture)
             ]
             self._bulb_group = [
-                fixture
-                for fixture in group
-                if is_multi_bulb_fixture(fixture)
+                fixture for fixture in group if is_multi_bulb_fixture(fixture)
             ]
             self._fixture_interpreter = (
-                interpreter(self._fixture_group, args)
-                if self._fixture_group
-                else None
+                interpreter(self._fixture_group, args) if self._fixture_group else None
             )
             self._bulb_interpreter = (
-                bulb_interpreter(self._bulb_group, args)
-                if self._bulb_group
-                else None
+                bulb_interpreter(self._bulb_group, args) if self._bulb_group else None
             )
 
         @classmethod
@@ -561,45 +628,69 @@ def build_interpreter_factory(spec: JsonDict) -> type[InterpreterBase]:
         entry = REGISTRY[key]
         return _maybe_auto_for_bulbs(
             entry,
-            with_args(str(spec.get("name", key)), entry.interpreter, **entry.params_with_defaults(spec.get("params", {}))),
+            with_args(
+                str(spec.get("name", key)),
+                entry.interpreter,
+                **entry.params_with_defaults(spec.get("params", {})),
+            ),
         )
     if expression_type == "combo":
-        return combo(*(build_interpreter_factory(dict(child)) for child in spec.get("children", [])))
+        return combo(
+            *(
+                build_interpreter_factory(dict(child))
+                for child in spec.get("children", [])
+            )
+        )
     if expression_type == "randomize":
-        return randomize(*(build_interpreter_factory(dict(child)) for child in spec.get("options", [])))
+        return randomize(
+            *(
+                build_interpreter_factory(dict(child))
+                for child in spec.get("options", [])
+            )
+        )
     if expression_type == "weighted_randomize":
         weighted = []
         for item in spec.get("options", []):
             row = dict(item)
-            weighted.append((int(row["weight"]), build_interpreter_factory(dict(row["animation"]))))
+            weighted.append(
+                (int(row["weight"]), build_interpreter_factory(dict(row["animation"])))
+            )
         return weighted_randomize(*weighted)
     if expression_type == "signal_switch":
         return signal_switch(build_interpreter_factory(dict(spec["animation"])))
     if expression_type == "for_bulbs":
-        return for_bulbs(*(build_interpreter_factory(dict(child)) for child in spec.get("children", [])))
-    if expression_type == "legacy_mode":
-        from parrot.director.mode_interpretations import mode_interpretations
-        from parrot.interpreters.randomize import randomize as legacy_randomize
-
-        mode = Mode[str(spec["mode"])]
-        legacy_options: list[Type[InterpreterBase]] = []
-        for options in mode_interpretations.get(mode, {}).values():
-            legacy_options.extend(options)
-        if not legacy_options:
-            return Dimmer0
-        return legacy_randomize(*legacy_options)
+        return for_bulbs(
+            *(
+                build_interpreter_factory(dict(child))
+                for child in spec.get("children", [])
+            )
+        )
     raise ValueError(f"Unknown animation expression type: {expression_type}")
 
 
 DEFAULT_PAR_ANIMATION = combo_spec(
     animation("ColorBg"),
-    signal_switch_spec(randomize_spec(animation("SequenceFadeDimmers"), animation("GentlePulse"), animation("Twinkle"))),
+    signal_switch_spec(
+        randomize_spec(
+            animation("SequenceFadeDimmers"),
+            animation("GentlePulse"),
+            animation("Twinkle"),
+        )
+    ),
 )
 
 DEFAULT_MOVING_LIGHT_ANIMATION = combo_spec(
     animation("ColorBg"),
-    signal_switch_spec(randomize_spec(animation("SequenceFadeDimmers"), animation("GentlePulse"), animation("StabPulse"))),
-    randomize_spec(animation("MoveCircles"), animation("MoveNod"), animation("MoveFan")),
+    signal_switch_spec(
+        randomize_spec(
+            animation("SequenceFadeDimmers"),
+            animation("GentlePulse"),
+            animation("StabPulse"),
+        )
+    ),
+    randomize_spec(
+        animation("MoveCircles"), animation("MoveNod"), animation("MoveFan")
+    ),
     randomize_spec(animation("MoverRandomGobo"), animation("MoverNoGobo")),
     randomize_spec(animation("RotatePrism"), animation("PrismOff")),
 )
@@ -607,14 +698,41 @@ DEFAULT_MOVING_LIGHT_ANIMATION = combo_spec(
 DEFAULT_STROBY_PAR_ANIMATION = combo_spec(
     randomize_spec(animation("StrobeChannelSustained"), animation("Noop")),
     animation("AnyColor"),
-    signal_switch_spec(randomize_spec(animation("StabPulse"), animation("LightningStab"))),
+    signal_switch_spec(
+        randomize_spec(animation("StabPulse"), animation("LightningStab"))
+    ),
 )
 
 DEFAULT_STROBY_MOVING_LIGHT_ANIMATION = combo_spec(
     randomize_spec(animation("StrobeChannelSustained"), animation("Noop")),
     animation("AnyColor"),
-    signal_switch_spec(randomize_spec(animation("StabPulse"), animation("LightningStab"))),
-    randomize_spec(animation("MoveCircles"), animation("MoveNod"), animation("MoveFan")),
-    weighted_randomize_spec((10, animation("RotatePrism")), (90, animation("PrismOff"))),
+    signal_switch_spec(
+        randomize_spec(animation("StabPulse"), animation("LightningStab"))
+    ),
+    randomize_spec(
+        animation("MoveCircles"), animation("MoveNod"), animation("MoveFan")
+    ),
+    weighted_randomize_spec(
+        (10, animation("RotatePrism")), (90, animation("PrismOff"))
+    ),
 )
 
+DEFAULT_TEST_ANIMATIONS = (
+    animation("Dimmer255"),
+    animation("RigColorCycle"),
+    animation("PanTiltAxisCheck"),
+    animation("MoverNoGobo"),
+    animation("PrismOff"),
+    animation("FocusSmall"),
+    animation("StrobeOff"),
+)
+
+DEFAULT_HOME_ANIMATIONS = (
+    animation("Dimmer255"),
+    animation("RigColorCycle"),
+    animation("HomePanTilt"),
+    animation("MoverNoGobo"),
+    animation("PrismOff"),
+    animation("FocusSmall"),
+    animation("StrobeOff"),
+)

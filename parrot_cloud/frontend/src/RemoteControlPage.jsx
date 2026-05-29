@@ -93,7 +93,7 @@ export default function RemoteControlPage() {
           setConfig((current) => ({
             ...current,
             available_modes: [
-              ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
+              ...current.available_modes.filter((mode) => mode === 'blackout'),
               ...(payload.data.lighting_modes || []).map((mode) => mode.key),
             ],
             lighting_modes: payload.data.lighting_modes || [],
@@ -130,7 +130,7 @@ export default function RemoteControlPage() {
       setConfig((current) => ({
         ...current,
         available_modes: [
-          ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
+          ...current.available_modes.filter((mode) => mode === 'blackout'),
           ...(bootstrap.active_venue?.lighting_modes || []).map((mode) => mode.key),
         ],
         lighting_modes: bootstrap.active_venue?.lighting_modes || [],
@@ -402,8 +402,8 @@ export default function RemoteControlPage() {
 /** Short tap = one-shot effect (~0.35s server-side); hold = signal stays at 1 until release. */
 const REMOTE_EFFECT_TAP_MS = 280;
 const REMOTE_HIDDEN_EFFECTS = new Set(['rainbow', 'chase']);
-const REMOTE_UTILITY_MODES = new Set(['test', 'home']);
-const REMOTE_UTILITY_MODE_ORDER = ['test', 'home'];
+const REMOTE_UTILITY_MODES = new Set();
+const REMOTE_UTILITY_MODE_ORDER = [];
 
 function orderRemoteLightingModes(modes) {
   const normal = [];

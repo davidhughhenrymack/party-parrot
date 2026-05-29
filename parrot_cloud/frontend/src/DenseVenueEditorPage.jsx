@@ -213,9 +213,6 @@ function summarizeAnimationSpec(spec) {
   if (spec.type === 'for_bulbs') {
     return `For Bulbs (${(spec.children || []).length})`;
   }
-  if (spec.type === 'legacy_mode') {
-    return `Legacy ${spec.mode}`;
-  }
   return spec.type || 'Animation';
 }
 
@@ -3263,7 +3260,7 @@ export default function DenseVenueEditorPage({ venueId }) {
     setRemoteConfig((current) => ({
       ...current,
       available_modes: [
-        ...current.available_modes.filter((mode) => ['test', 'blackout', 'home'].includes(mode)),
+        ...current.available_modes.filter((mode) => mode === 'blackout'),
         ...nextModes,
       ],
     }));

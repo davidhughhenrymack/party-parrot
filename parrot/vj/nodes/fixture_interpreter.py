@@ -49,11 +49,10 @@ class FixtureInterpreterNode(
     re-created on every generate() call so it can respond to Mode shifts in
     the wider render graph.
 
-    `Mode.ethereal` is defined in `parrot.director.mode_interpretations`: mirrorball
-    fades in; fixtures in the venue group named ``Sheer lights`` (case-insensitive)
-    get the Sheer look; everything else is dimmer 0. The VJ path passes the full
-    patch list and uses a composite interpreter; the main director partitions
-    into one interpreter per role.
+    Venue animation assignments can target different fixture scopes. The VJ
+    path passes the full patch list and uses a composite interpreter when
+    assignments partition the fixtures; the main director partitions into one
+    interpreter per cloud group first.
     """
 
     def __init__(

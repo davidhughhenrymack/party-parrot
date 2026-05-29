@@ -5,6 +5,11 @@ import tempfile
 import shutil
 import os
 from parrot.director.director import Director
+from parrot.director.animation_registry import (
+    DEFAULT_HOME_ANIMATIONS,
+    DEFAULT_MOVING_LIGHT_ANIMATION,
+    DEFAULT_TEST_ANIMATIONS,
+)
 from parrot.state import State
 from parrot.director.frame import Frame, FrameSignal
 from parrot.director.mode import Mode
@@ -12,6 +17,13 @@ from parrot.fixtures.base import FixtureGroup
 from parrot.fixtures.led_par import ParRGB
 from parrot.fixtures.mirrorball import Mirrorball
 from parrot.fixtures.chauvet import ChauvetSpot160_12Ch
+from parrot_cloud.domain import (
+    LightingModeSpec,
+    VenueAnimationAssignmentSpec,
+    VenueSnapshot,
+    VenueSummary,
+    VideoWallSpec,
+)
 
 
 class TestDirector(unittest.TestCase):
@@ -111,7 +123,9 @@ class TestDirector(unittest.TestCase):
         manual_group = get_manual_group(self.state.venue)
         self.assertIsNotNone(manual_group, "mtn_lotus should have manual fixtures")
 
-        with patch.object(manual_group, 'render', wraps=manual_group.render) as mock_render:
+        with patch.object(
+            manual_group, "render", wraps=manual_group.render
+        ) as mock_render:
             self.director.render(mock_dmx)
             mock_render.assert_called_once_with(mock_dmx)
 
@@ -119,22 +133,7 @@ class TestDirector(unittest.TestCase):
 
 
 class TestDirectorTestModeDispatch(unittest.TestCase):
-    """Regression guard for the per-cloud-group dispatch invariant.
-
-    The director partitions the runtime patch by ``cloud_group_name`` and
-    runs the mode DSL once per bucket, so:
-
-    1. A cloud group that mixes a mirrorball with moving heads dispatches
-       via :class:`CompositeInterpreter` so each class gets its own
-       interpreter pack (the original bug: moving heads silently inherited
-       the mirrorball's ``Dimmer255 + RigColorCycle`` and never received
-       ``PanTiltAxisCheck``, so the physical heads did not move).
-
-    2. Two separately-named cloud groups of the same fixture class get
-       independent random picks rather than collapsing onto one row
-       (the follow-up user report: "TRACK" and "TRUSS MOVERS" were being
-       lumped together under one ``MovingHead`` interpreter).
-    """
+    """Regression guards for DB-backed per-cloud-group dispatch."""
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
@@ -160,11 +159,14 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
         while stack:
             node = stack.pop()
             picked = getattr(node, "interpreter", None)
+            switched = getattr(node, "interp_std", None)
             children = getattr(node, "interpreters", None)
             if children is not None:
                 stack.extend(children)
             elif picked is not None:
                 stack.append(picked)
+            elif switched is not None:
+                stack.append(switched)
             else:
                 leaves.append(node)
         return leaves
@@ -212,19 +214,74 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
         self.state._runtime_patch = list(fixtures)
         self.state._runtime_manual_group = None
 
+    @staticmethod
+    def _animations_for_mode(mode):
+        key = mode.name if isinstance(mode, Mode) else str(mode)
+        if key == "test":
+            return DEFAULT_TEST_ANIMATIONS
+        if key == "home":
+            return DEFAULT_HOME_ANIMATIONS
+        return (DEFAULT_MOVING_LIGHT_ANIMATION,)
+
+    @classmethod
+    def _snapshot_for_mode(cls, mode):
+        key = mode.name if isinstance(mode, Mode) else str(mode)
+        return VenueSnapshot(
+            summary=VenueSummary(
+                id="venue",
+                slug="venue",
+                name="Venue",
+                archived=False,
+                active=True,
+                revision=1,
+            ),
+            floor_width=20.0,
+            floor_depth=15.0,
+            floor_height=10.0,
+            video_wall=VideoWallSpec(
+                x=0.0,
+                y=0.0,
+                z=0.0,
+                width=10.0,
+                height=6.0,
+                depth=0.25,
+                locked=False,
+            ),
+            fixtures=(),
+            lighting_modes=(
+                LightingModeSpec(
+                    id="mode",
+                    venue_id="venue",
+                    key=key,
+                    label=key.title(),
+                    order_index=0,
+                ),
+            ),
+            animation_assignments=tuple(
+                VenueAnimationAssignmentSpec(
+                    id=f"assignment-{index}",
+                    venue_id="venue",
+                    lighting_mode_id="mode",
+                    lighting_mode_key=key,
+                    fixture_group_name=None,
+                    fixture_type=None,
+                    order_index=index,
+                    animation_spec=animation_spec,
+                )
+                for index, animation_spec in enumerate(cls._animations_for_mode(mode))
+            ),
+        )
+
     def _director_for_mode(self, mode, fixtures):
         self._install_runtime_patch(fixtures)
+        self.state._runtime_venue_snapshot = self._snapshot_for_mode(mode)
         self.state.set_mode(mode)
         director = Director(self.state)
         return director
 
-    def test_heterogeneous_cloud_group_is_one_bucket_with_composite(self):
+    def test_heterogeneous_cloud_group_is_one_bucket_with_one_assignment(self):
         """A mixed cloud group stays in one top-level bucket (preserving its
-        group identity in the printed tree and snapshot), but the dispatcher
-        returns a :class:`CompositeInterpreter` so each class still gets its
-        own interpreter row."""
-        from parrot.director.mode_dispatch import CompositeInterpreter
-
+        group identity in the printed tree and snapshot)."""
         mirrorball, movers, group = self._build_heterogeneous_cloud_group()
         director = self._director_for_mode(Mode.test, [group])
 
@@ -236,11 +293,10 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
         )
 
         self.assertEqual(len(director.interpreters), 1)
-        composite = director.interpreters[0]
-        self.assertIsInstance(composite, CompositeInterpreter)
-        child_groups = [set(id(f) for f in c.group) for c in composite.children]
-        self.assertIn({id(mirrorball)}, child_groups)
-        self.assertIn(set(id(m) for m in movers), child_groups)
+        self.assertEqual(
+            set(id(f) for f in director.interpreters[0].group),
+            set(id(f) for f in [mirrorball, *movers]),
+        )
 
     def test_test_mode_applies_pan_tilt_axis_check_to_moving_heads(self):
         """In ``Mode.test`` the moving heads must receive
@@ -250,26 +306,21 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
         _, movers, group = self._build_heterogeneous_cloud_group()
         director = self._director_for_mode(Mode.test, [group])
 
-        leaves = self._leaves_for_group(director, movers)
-        self.assertIsNotNone(leaves, "movers partition missing from composite")
+        leaves = self._collect_leaves(director.interpreters[0])
         leaf_names = {type(leaf).__name__ for leaf in leaves}
         self.assertIn("PanTiltAxisCheck", leaf_names)
         self.assertIn("Dimmer255", leaf_names)
         self.assertIn("RigColorCycle", leaf_names)
 
-    def test_test_mode_does_not_apply_pan_tilt_to_mirrorball(self):
-        """The mirrorball has no pan/tilt motors, so its row must stay on
-        the ``Dimmer255 + RigColorCycle`` combo and never pick up
-        ``PanTiltAxisCheck`` (doing so would try to call ``set_pan`` on it)."""
+    def test_test_mode_all_fixtures_assignment_includes_rig_color_cycle(self):
+        """The seeded test-mode assignment is intentionally shared by the whole bucket."""
         mirrorball, _, group = self._build_heterogeneous_cloud_group()
         director = self._director_for_mode(Mode.test, [group])
 
-        leaves = self._leaves_for_group(director, [mirrorball])
-        self.assertIsNotNone(leaves, "mirrorball partition missing from composite")
+        leaves = self._collect_leaves(director.interpreters[0])
         leaf_names = {type(leaf).__name__ for leaf in leaves}
         self.assertIn("Dimmer255", leaf_names)
         self.assertIn("RigColorCycle", leaf_names)
-        self.assertNotIn("PanTiltAxisCheck", leaf_names)
 
     def test_test_mode_interpreter_drives_all_pan_tilt_extremes(self):
         """Drive the mover interpreter across one full ``PanTiltAxisCheck``
@@ -296,12 +347,9 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
             m.set_pan = lambda v, _m=m: pan_seen[id(_m)].add(v)
             m.set_tilt = lambda v, _m=m: tilt_seen[id(_m)].add(v)
 
-        # The heterogeneous cloud group dispatches to a CompositeInterpreter;
-        # the mover-class child is the one we want to drive directly.
-        composite = director.interpreters[0]
+        leaves = self._collect_leaves(director.interpreters[0])
         mover_interp = next(
-            c for c in self._composite_children(composite)
-            if set(id(f) for f in c.group) == set(id(m) for m in movers)
+            leaf for leaf in leaves if isinstance(leaf, PanTiltAxisCheck)
         )
         scheme = ColorScheme(Color("red"), Color("blue"), Color("white"))
 
@@ -325,23 +373,22 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
             mover_interp.step(frame, scheme)
 
         expected_pans = {127.0} | {float(pan) for pan, _ in PanTiltAxisCheck.EXTREMES}
-        expected_tilts = {127.0} | {float(tilt) for _, tilt in PanTiltAxisCheck.EXTREMES}
+        expected_tilts = {127.0} | {
+            float(tilt) for _, tilt in PanTiltAxisCheck.EXTREMES
+        }
         for m in movers:
             self.assertEqual(
-                pan_seen[id(m)], expected_pans,
+                pan_seen[id(m)],
+                expected_pans,
                 f"{m} missing pan extremes; saw {pan_seen[id(m)]}",
             )
             self.assertEqual(
-                tilt_seen[id(m)], expected_tilts,
+                tilt_seen[id(m)],
+                expected_tilts,
                 f"{m} missing tilt extremes; saw {tilt_seen[id(m)]}",
             )
 
-    def test_ungrouped_mirrorball_gets_its_own_interpreter_partition(self):
-        """Sanity: even though both the mirrorball and the par land in the
-        single "ungrouped" bucket, the dispatcher must still partition by
-        class so the mirrorball does not fall into the ``Par`` bucket (it
-        is a ``Par`` subclass) and end up with the par interpreter.
-        """
+    def test_ungrouped_mirrorball_and_par_share_all_fixtures_assignment(self):
         mirrorball = Mirrorball(237)
         par = ParRGB(100)
         director = self._director_for_mode(Mode.test, [mirrorball, par])
@@ -350,21 +397,14 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
         self.assertEqual(len(director.fixture_groups), 1)
         self.assertEqual(director.fixture_group_names, [None])
 
-        mb_leaves = self._leaves_for_group(director, [mirrorball])
-        par_leaves = self._leaves_for_group(director, [par])
-        self.assertIsNotNone(mb_leaves)
-        self.assertIsNotNone(par_leaves)
-        # The two partitions must be different interpreter leaves — if the
-        # dispatcher collapsed them onto one row they would share identity.
-        self.assertNotEqual(
-            {type(leaf).__name__ for leaf in mb_leaves},
-            {type(leaf).__name__ for leaf in par_leaves}.union({"PanTiltAxisCheck"}),
+        self.assertEqual(
+            set(id(f) for f in director.interpreters[0].group),
+            {id(mirrorball), id(par)},
         )
 
     def test_same_class_in_two_cloud_groups_gets_independent_buckets(self):
         """Two separately-named cloud groups of the same fixture class must
-        produce two distinct buckets (and therefore two independent random
-        picks from the mode DSL). This is the TRACK / TRUSS MOVERS case."""
+        produce two distinct buckets."""
         import random as _random
 
         _random.seed(0)
@@ -386,9 +426,7 @@ class TestDirectorTestModeDispatch(unittest.TestCase):
 
         # Each bucket's interpreter binds to exactly the members of that
         # cloud group; they are distinct objects, i.e. picked independently.
-        bucket_by_name = dict(
-            zip(director.fixture_group_names, director.interpreters)
-        )
+        bucket_by_name = dict(zip(director.fixture_group_names, director.interpreters))
         self.assertEqual(
             set(id(f) for f in bucket_by_name["track"].group),
             set(id(m) for m in track_movers),
