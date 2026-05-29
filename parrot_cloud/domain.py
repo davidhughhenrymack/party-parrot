@@ -292,6 +292,7 @@ class VenueAnimationAssignmentSpec:
     fixture_type: str | None
     order_index: int
     animation_spec: JsonDict
+    fixture_index_filter: str | None = None
 
     def to_dict(self) -> JsonDict:
         return {
@@ -301,6 +302,7 @@ class VenueAnimationAssignmentSpec:
             "lighting_mode_key": self.lighting_mode_key,
             "fixture_group_name": self.fixture_group_name,
             "fixture_type": self.fixture_type,
+            "fixture_index_filter": self.fixture_index_filter,
             "order_index": self.order_index,
             "animation_spec": dict(self.animation_spec),
         }
@@ -324,6 +326,11 @@ class VenueAnimationAssignmentSpec:
             ),
             order_index=int(data.get("order_index", 0)),
             animation_spec=dict(data.get("animation_spec", {})),
+            fixture_index_filter=(
+                str(data["fixture_index_filter"])
+                if data.get("fixture_index_filter") not in (None, "", "all")
+                else None
+            ),
         )
 
 
@@ -354,8 +361,12 @@ class VenueSnapshot:
             "floor_height": self.floor_height,
             "video_wall": self.video_wall.to_dict(),
             "fixtures": [fixture.to_dict() for fixture in self.fixtures],
-            "scene_objects": [scene_object.to_dict() for scene_object in self.scene_objects],
-            "named_positions": [position.to_dict() for position in self.named_positions],
+            "scene_objects": [
+                scene_object.to_dict() for scene_object in self.scene_objects
+            ],
+            "named_positions": [
+                position.to_dict() for position in self.named_positions
+            ],
             "fixture_named_positions": [
                 position.to_dict() for position in self.fixture_named_positions
             ],
@@ -401,7 +412,11 @@ class VenueSnapshot:
 
     def scene_object(self, kind: str) -> SceneObjectSpec | None:
         return next(
-            (scene_object for scene_object in self.scene_objects if scene_object.kind == kind),
+            (
+                scene_object
+                for scene_object in self.scene_objects
+                if scene_object.kind == kind
+            ),
             None,
         )
 
@@ -435,9 +450,7 @@ class ControlState:
         if isinstance(raw_mfd, dict):
             for k, v in raw_mfd.items():
                 try:
-                    manual_fixture_dimmers[str(k)] = max(
-                        0.0, min(1.0, float(v))
-                    )
+                    manual_fixture_dimmers[str(k)] = max(0.0, min(1.0, float(v)))
                 except (TypeError, ValueError):
                     continue
         return cls(
@@ -452,7 +465,11 @@ class ControlState:
             display_mode=str(
                 data.get(
                     "display_mode",
-                    "venue" if bool(data.get("show_fixture_mode", False)) else "dmx_heatmap",
+                    (
+                        "venue"
+                        if bool(data.get("show_fixture_mode", False))
+                        else "dmx_heatmap"
+                    ),
                 )
             ),
             show_waveform=bool(data.get("show_waveform", True)),
@@ -479,9 +496,7 @@ class RuntimeBootstrap:
             ),
             "control_state": self.control_state.to_dict(),
             "fixture_runtime_state": dict(self.fixture_runtime_state),
-            "vj_preview": (
-                None if self.vj_preview is None else dict(self.vj_preview)
-            ),
+            "vj_preview": (None if self.vj_preview is None else dict(self.vj_preview)),
         }
 
     @classmethod

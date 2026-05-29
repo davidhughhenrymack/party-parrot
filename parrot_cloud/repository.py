@@ -70,6 +70,18 @@ DEFAULT_LIGHTING_MODE_ENTRY_SECONDS: dict[str, float] = {
     "rave": 0.5,
     "stroby": 0.1,
 }
+FIXTURE_INDEX_FILTERS: frozenset[str] = frozenset({"odds", "evens"})
+
+
+def _fixture_index_filter_or_none(value: object) -> str | None:
+    if value in (None, "", "all"):
+        return None
+    normalized = str(value).strip().casefold()
+    if normalized not in FIXTURE_INDEX_FILTERS:
+        raise ValueError(f"Unsupported fixture index filter: {value}")
+    return normalized
+
+
 DEFAULT_LIGHTING_MODE_ANIMATION_ROWS = {
     "chill": (
         ("par", DEFAULT_PAR_ANIMATION),
@@ -188,7 +200,9 @@ def _merge_pan_tilt_range_into_options(
     resend the entire options blob.
     """
     base: dict[str, object] = (
-        dict(explicit_options) if explicit_options is not None else dict(existing_options)
+        dict(explicit_options)
+        if explicit_options is not None
+        else dict(existing_options)
     )
     base.update(range_overrides)
     return base
@@ -282,7 +296,11 @@ class VenueRepository:
             entry: dict[str, object] = {"id": str(item["id"])}
             if "dimmer" in item:
                 entry["dimmer"] = float(max(0.0, min(1.0, float(item["dimmer"]))))
-            if "rgb" in item and isinstance(item["rgb"], list) and len(item["rgb"]) >= 3:
+            if (
+                "rgb" in item
+                and isinstance(item["rgb"], list)
+                and len(item["rgb"]) >= 3
+            ):
                 rgb = item["rgb"]
                 entry["rgb"] = [
                     float(max(0.0, min(1.0, float(rgb[0])))),
@@ -310,7 +328,11 @@ class VenueRepository:
                     b: dict[str, object] = {}
                     if "dimmer" in bulb:
                         b["dimmer"] = float(max(0.0, min(1.0, float(bulb["dimmer"]))))
-                    if "rgb" in bulb and isinstance(bulb["rgb"], list) and len(bulb["rgb"]) >= 3:
+                    if (
+                        "rgb" in bulb
+                        and isinstance(bulb["rgb"], list)
+                        and len(bulb["rgb"]) >= 3
+                    ):
                         br = bulb["rgb"]
                         b["rgb"] = [
                             float(max(0.0, min(1.0, float(br[0])))),
@@ -368,9 +390,7 @@ class VenueRepository:
         vj_blob = self._vj_preview_jpeg
         vj_ts = self._vj_preview_updated_at
         vj_preview = (
-            None
-            if vj_blob is None or vj_ts is None
-            else {"updated_at": float(vj_ts)}
+            None if vj_blob is None or vj_ts is None else {"updated_at": float(vj_ts)}
         )
         return RuntimeBootstrap(
             venues=venues,
@@ -382,7 +402,9 @@ class VenueRepository:
 
     def get_control_state(self) -> ControlState:
         with _session_scope() as session:
-            return self._control_state_from_model(self._get_or_create_control_state(session))
+            return self._control_state_from_model(
+                self._get_or_create_control_state(session)
+            )
 
     def update_control_state(self, data: dict[str, object]) -> ControlState:
         with _session_scope() as session:
@@ -391,16 +413,17 @@ class VenueRepository:
             if "mode" in data and data["mode"] is not None:
                 control_state.mode = str(data["mode"])
             if "vj_mode" in data and data["vj_mode"] is not None:
-                control_state.vj_mode = parse_vj_mode_string(
-                    str(data["vj_mode"])
-                ).value
+                control_state.vj_mode = parse_vj_mode_string(str(data["vj_mode"])).value
             if "theme_name" in data and data["theme_name"] is not None:
                 control_state.theme_name = str(data["theme_name"])
             if "display_mode" in data and data["display_mode"] is not None:
                 control_state.display_mode = self._normalize_display_mode(
                     str(data["display_mode"])
                 )
-            if "manual_fixture_dimmers" in data and data["manual_fixture_dimmers"] is not None:
+            if (
+                "manual_fixture_dimmers" in data
+                and data["manual_fixture_dimmers"] is not None
+            ):
                 incoming = data["manual_fixture_dimmers"]
                 if not isinstance(incoming, dict):
                     raise TypeError("manual_fixture_dimmers must be a JSON object")
@@ -412,9 +435,7 @@ class VenueRepository:
                 control_state.show_waveform = bool(data["show_waveform"])
             if "show_fixture_mode" in data:
                 control_state.display_mode = (
-                    "venue"
-                    if bool(data["show_fixture_mode"])
-                    else "dmx_heatmap"
+                    "venue" if bool(data["show_fixture_mode"]) else "dmx_heatmap"
                 )
             if "active_venue_id" in data:
                 active_venue_id = data["active_venue_id"]
@@ -493,7 +514,9 @@ class VenueRepository:
                     )
                 )
                 if existing is not None:
-                    raise ValueError(f"Named position already exists: {normalized_name}")
+                    raise ValueError(
+                        f"Named position already exists: {normalized_name}"
+                    )
                 row.name = normalized_name
                 self._touch_all_venues(session)
             session.flush()
@@ -535,7 +558,9 @@ class VenueRepository:
                 order_index=order_index,
                 editable=True,
                 entry_seconds=_normalize_entry_seconds(
-                    data.get("entry_seconds", _lighting_mode_entry_seconds_from_key(key))
+                    data.get(
+                        "entry_seconds", _lighting_mode_entry_seconds_from_key(key)
+                    )
                 ),
                 hotkey=(
                     _normalize_lighting_mode_hotkey(data["hotkey"])
@@ -584,7 +609,9 @@ class VenueRepository:
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
-    def delete_lighting_mode(self, venue_id: str, lighting_mode_id: str) -> VenueSnapshot:
+    def delete_lighting_mode(
+        self, venue_id: str, lighting_mode_id: str
+    ) -> VenueSnapshot:
         with _session_scope() as session:
             venue = session.get(VenueModel, venue_id)
             if venue is None:
@@ -610,7 +637,9 @@ class VenueRepository:
             if venue is None:
                 raise KeyError(f"Venue not found: {venue_id}")
             self._ensure_lighting_modes(session, venue)
-            lighting_mode = self._resolve_lighting_mode_for_animation(session, venue_id, data)
+            lighting_mode = self._resolve_lighting_mode_for_animation(
+                session, venue_id, data
+            )
             spec = data.get("animation_spec")
             if not isinstance(spec, dict):
                 raise TypeError("animation_spec must be a JSON object")
@@ -629,7 +658,12 @@ class VenueRepository:
                     and str(fixture_type) not in ("par", "moving_head")
                     else (str(fixture_type) if fixture_type not in (None, "") else None)
                 ),
-                order_index=int(data.get("order_index", len(venue.animation_assignments))),
+                fixture_index_filter=_fixture_index_filter_or_none(
+                    data.get("fixture_index_filter")
+                ),
+                order_index=int(
+                    data.get("order_index", len(venue.animation_assignments))
+                ),
                 animation_spec=dict(spec),
             )
             session.add(assignment)
@@ -668,6 +702,10 @@ class VenueRepository:
                     if raw_type not in (None, "")
                     and str(raw_type) not in ("par", "moving_head")
                     else (str(raw_type) if raw_type not in (None, "") else None)
+                )
+            if "fixture_index_filter" in data:
+                assignment.fixture_index_filter = _fixture_index_filter_or_none(
+                    data.get("fixture_index_filter")
                 )
             if "order_index" in data and data["order_index"] is not None:
                 assignment.order_index = int(data["order_index"])
@@ -842,7 +880,9 @@ class VenueRepository:
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
-    def update_video_wall(self, venue_id: str, data: dict[str, object]) -> VenueSnapshot:
+    def update_video_wall(
+        self, venue_id: str, data: dict[str, object]
+    ) -> VenueSnapshot:
         with _session_scope() as session:
             venue = session.get(VenueModel, venue_id)
             if venue is None:
@@ -898,14 +938,18 @@ class VenueRepository:
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
-    def add_fixture(self, venue_id: str, fixture_data: dict[str, object]) -> VenueSnapshot:
+    def add_fixture(
+        self, venue_id: str, fixture_data: dict[str, object]
+    ) -> VenueSnapshot:
         with _session_scope() as session:
             venue = session.get(VenueModel, venue_id)
             if venue is None:
                 raise KeyError(f"Venue not found: {venue_id}")
 
             next_order = len(venue.fixtures)
-            fixture_type_str = normalize_fixture_type_key(str(fixture_data["fixture_type"]))
+            fixture_type_str = normalize_fixture_type_key(
+                str(fixture_data["fixture_type"])
+            )
             if _is_manual_dimmer_channel_type(fixture_type_str):
                 is_manual = True
             else:
@@ -980,7 +1024,11 @@ class VenueRepository:
                         setattr(
                             fixture,
                             key,
-                            None if value in (None, "") else normalize_fixture_type_key(str(value)),
+                            (
+                                None
+                                if value in (None, "")
+                                else normalize_fixture_type_key(str(value))
+                            ),
                         )
                     elif key == "name":
                         if value in (None, ""):
@@ -991,7 +1039,11 @@ class VenueRepository:
                         setattr(
                             fixture,
                             key,
-                            None if value in (None, "") and key != "fixture_type" else value,
+                            (
+                                None
+                                if value in (None, "") and key != "fixture_type"
+                                else value
+                            ),
                         )
 
             for key in ("is_manual",):
@@ -1093,7 +1145,9 @@ class VenueRepository:
 
     def _upsert_seed(self, seed: SeedVenueDefinition) -> None:
         with _session_scope() as session:
-            venue = session.scalar(select(VenueModel).where(VenueModel.slug == seed.slug))
+            venue = session.scalar(
+                select(VenueModel).where(VenueModel.slug == seed.slug)
+            )
             if venue is None:
                 venue = VenueModel(
                     slug=seed.slug,
@@ -1178,7 +1232,9 @@ class VenueRepository:
 
     def _ensure_lighting_modes(self, session, venue: VenueModel) -> None:
         if venue.lighting_modes:
-            removed_mode_keys = self._remove_legacy_default_mode_assignments(session, venue)
+            removed_mode_keys = self._remove_legacy_default_mode_assignments(
+                session, venue
+            )
             self._seed_default_animation_assignments(
                 session,
                 venue,
@@ -1340,6 +1396,7 @@ class VenueRepository:
             lighting_mode_key="" if lighting_mode is None else lighting_mode.key,
             fixture_group_name=assignment.fixture_group_name,
             fixture_type=assignment.fixture_type,
+            fixture_index_filter=assignment.fixture_index_filter,
             order_index=assignment.order_index,
             animation_spec=dict(assignment.animation_spec or {}),
         )
@@ -1347,14 +1404,24 @@ class VenueRepository:
     def _snapshot_from_model(self, venue: VenueModel) -> VenueSnapshot:
         scene_objects = tuple(
             self._scene_object_from_model(scene_object)
-            for scene_object in sorted(venue.scene_objects, key=lambda item: item.order_index)
+            for scene_object in sorted(
+                venue.scene_objects, key=lambda item: item.order_index
+            )
         )
         floor_object = next(
-            (scene_object for scene_object in scene_objects if scene_object.kind == "floor"),
+            (
+                scene_object
+                for scene_object in scene_objects
+                if scene_object.kind == "floor"
+            ),
             None,
         )
         video_wall_object = next(
-            (scene_object for scene_object in scene_objects if scene_object.kind == "video_wall"),
+            (
+                scene_object
+                for scene_object in scene_objects
+                if scene_object.kind == "video_wall"
+            ),
             None,
         )
         fixtures = tuple(
@@ -1401,9 +1468,14 @@ class VenueRepository:
             for assignment in sorted(
                 venue.animation_assignments,
                 key=lambda item: (
-                    item.lighting_mode.order_index if item.lighting_mode is not None else 0,
+                    (
+                        item.lighting_mode.order_index
+                        if item.lighting_mode is not None
+                        else 0
+                    ),
                     item.fixture_group_name or "",
                     item.fixture_type or "",
+                    item.fixture_index_filter or "",
                     item.order_index,
                 ),
             )
@@ -1422,9 +1494,21 @@ class VenueRepository:
                 else venue.floor_height
             ),
             video_wall=VideoWallSpec(
-                x=video_wall_object.x if video_wall_object is not None else venue.video_wall_x,
-                y=video_wall_object.y if video_wall_object is not None else venue.video_wall_y,
-                z=video_wall_object.z if video_wall_object is not None else venue.video_wall_z,
+                x=(
+                    video_wall_object.x
+                    if video_wall_object is not None
+                    else venue.video_wall_x
+                ),
+                y=(
+                    video_wall_object.y
+                    if video_wall_object is not None
+                    else venue.video_wall_y
+                ),
+                z=(
+                    video_wall_object.z
+                    if video_wall_object is not None
+                    else venue.video_wall_z
+                ),
                 width=(
                     video_wall_object.width
                     if video_wall_object is not None
@@ -1454,7 +1538,9 @@ class VenueRepository:
             animation_assignments=animation_assignments,
         )
 
-    def _control_state_from_model(self, control_state: ControlStateModel) -> ControlState:
+    def _control_state_from_model(
+        self, control_state: ControlStateModel
+    ) -> ControlState:
         raw_mfd = getattr(control_state, "manual_fixture_dimmers", None) or {}
         manual_fixture_dimmers: dict[str, float] = {}
         if isinstance(raw_mfd, dict):
@@ -1512,9 +1598,13 @@ class VenueRepository:
         if control_state.active_venue_id:
             venue = session.get(VenueModel, control_state.active_venue_id)
         if venue is None:
-            venue = session.scalar(select(VenueModel).where(VenueModel.active.is_(True)))
+            venue = session.scalar(
+                select(VenueModel).where(VenueModel.active.is_(True))
+            )
         if venue is None:
-            venue = session.scalar(select(VenueModel).order_by(VenueModel.name).limit(1))
+            venue = session.scalar(
+                select(VenueModel).order_by(VenueModel.name).limit(1)
+            )
         if venue is not None and control_state.active_venue_id != venue.id:
             self._set_active_venue(session, control_state, venue.id)
         return venue
@@ -1544,13 +1634,17 @@ class VenueRepository:
             suffix += 1
 
     def _ensure_scene_objects(self, session, venue: VenueModel) -> None:
-        existing_by_kind = {scene_object.kind: scene_object for scene_object in venue.scene_objects}
+        existing_by_kind = {
+            scene_object.kind: scene_object for scene_object in venue.scene_objects
+        }
         defaults = self._default_scene_objects(venue)
         for order_index, scene_object_spec in enumerate(defaults):
             scene_object = existing_by_kind.get(scene_object_spec.kind)
             created = False
             if scene_object is None:
-                scene_object = SceneObjectModel(id=scene_object_spec.id, venue_id=venue.id)
+                scene_object = SceneObjectModel(
+                    id=scene_object_spec.id, venue_id=venue.id
+                )
                 session.add(scene_object)
                 venue.scene_objects.append(scene_object)
                 created = True
@@ -1559,7 +1653,9 @@ class VenueRepository:
             # Only apply default geometry when inserting a new row. Existing objects (e.g. dj_table
             # with empty options) must not be overwritten on unrelated updates (video wall, etc.).
             if created:
-                self._apply_scene_object_spec(scene_object, scene_object_spec, order_index)
+                self._apply_scene_object_spec(
+                    scene_object, scene_object_spec, order_index
+                )
             scene_object.order_index = order_index
         self._normalize_metric_scene_units(venue)
         self._sync_legacy_scene_fields(venue)
@@ -1623,7 +1719,9 @@ class VenueRepository:
     def _upsert_scene_objects(
         self, venue: VenueModel, scene_objects: tuple[SceneObjectSpec, ...]
     ) -> None:
-        existing_by_id = {scene_object.id: scene_object for scene_object in venue.scene_objects}
+        existing_by_id = {
+            scene_object.id: scene_object for scene_object in venue.scene_objects
+        }
         seed_ids = {scene_object.id for scene_object in scene_objects}
         for scene_object in list(venue.scene_objects):
             if scene_object.id not in seed_ids:
@@ -1636,7 +1734,9 @@ class VenueRepository:
                     venue_id=venue.id,
                 )
                 venue.scene_objects.append(scene_object_model)
-            self._apply_scene_object_spec(scene_object_model, scene_object_spec, order_index)
+            self._apply_scene_object_spec(
+                scene_object_model, scene_object_spec, order_index
+            )
         self._sync_legacy_scene_fields(venue)
 
     def _apply_scene_object_spec(
@@ -1665,7 +1765,9 @@ class VenueRepository:
                 return scene_object
         raise KeyError(f"Scene object not found: {kind}")
 
-    def _scene_object_from_model(self, scene_object: SceneObjectModel) -> SceneObjectSpec:
+    def _scene_object_from_model(
+        self, scene_object: SceneObjectModel
+    ) -> SceneObjectSpec:
         return SceneObjectSpec(
             id=scene_object.id,
             kind=scene_object.kind,
@@ -1684,7 +1786,11 @@ class VenueRepository:
 
     def _sync_legacy_scene_fields(self, venue: VenueModel) -> None:
         floor_object = next(
-            (scene_object for scene_object in venue.scene_objects if scene_object.kind == "floor"),
+            (
+                scene_object
+                for scene_object in venue.scene_objects
+                if scene_object.kind == "floor"
+            ),
             None,
         )
         if floor_object is not None:
@@ -1713,7 +1819,11 @@ class VenueRepository:
 
     def _normalize_metric_scene_units(self, venue: VenueModel) -> None:
         floor_object = next(
-            (scene_object for scene_object in venue.scene_objects if scene_object.kind == "floor"),
+            (
+                scene_object
+                for scene_object in venue.scene_objects
+                if scene_object.kind == "floor"
+            ),
             None,
         )
         if floor_object is None or float(floor_object.width) <= 100.0:

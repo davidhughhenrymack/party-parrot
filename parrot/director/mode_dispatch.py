@@ -203,6 +203,7 @@ def _fixture_type_matches(scope_type: str | None, fixture: FixtureBase) -> bool:
 def _assignment_matches(
     assignment: VenueAnimationAssignmentSpec,
     fixture: FixtureBase,
+    group_index: int,
 ) -> bool:
     if assignment.fixture_group_name is not None:
         if (
@@ -210,27 +211,26 @@ def _assignment_matches(
             != assignment.fixture_group_name.casefold()
         ):
             return False
+    if assignment.fixture_index_filter == "odds" and group_index % 2 != 1:
+        return False
+    if assignment.fixture_index_filter == "evens" and group_index % 2 != 0:
+        return False
     return _fixture_type_matches(assignment.fixture_type, fixture)
 
 
 def _assignment_sort_key(
     assignment: VenueAnimationAssignmentSpec,
-) -> tuple[int, str, str, int]:
-    if (
-        assignment.fixture_group_name is not None
-        and assignment.fixture_type is not None
-    ):
-        specificity = 0
-    elif assignment.fixture_group_name is not None:
-        specificity = 1
-    elif assignment.fixture_type is not None:
-        specificity = 2
-    else:
-        specificity = 3
+) -> tuple[int, str, str, str, int]:
+    specificity = (
+        (0 if assignment.fixture_group_name is not None else 4)
+        + (0 if assignment.fixture_type is not None else 2)
+        + (0 if assignment.fixture_index_filter is not None else 1)
+    )
     return (
         specificity,
         assignment.fixture_group_name or "",
         assignment.fixture_type or "",
+        assignment.fixture_index_filter or "",
         assignment.order_index,
     )
 
@@ -259,11 +259,16 @@ def _uses_legacy_reference(assignments: list[VenueAnimationAssignmentSpec]) -> b
 def _group_assignments_by_scope(
     assignments: list[VenueAnimationAssignmentSpec],
 ) -> list[tuple[VenueAnimationAssignmentSpec, list[VenueAnimationAssignmentSpec]]]:
-    grouped: dict[tuple[str | None, str | None], list[VenueAnimationAssignmentSpec]] = (
-        {}
-    )
+    grouped: dict[
+        tuple[str | None, str | None, str | None],
+        list[VenueAnimationAssignmentSpec],
+    ] = {}
     for assignment in sorted(assignments, key=_assignment_sort_key):
-        key = (assignment.fixture_group_name, assignment.fixture_type)
+        key = (
+            assignment.fixture_group_name,
+            assignment.fixture_type,
+            assignment.fixture_index_filter,
+        )
         grouped.setdefault(key, []).append(assignment)
     out = []
     for rows in grouped.values():
@@ -411,8 +416,19 @@ def get_interpreter(
     items = _group_assignments_by_scope(assignments)
     children: list[InterpreterBase] = []
     remaining = list(fixture_group)
+    group_index_by_fixture_id = {
+        id(fixture): idx for idx, fixture in enumerate(fixture_group)
+    }
     for representative, scoped_assignments in items:
-        matched = [f for f in remaining if _assignment_matches(representative, f)]
+        matched = [
+            f
+            for f in remaining
+            if _assignment_matches(
+                representative,
+                f,
+                group_index_by_fixture_id[id(f)],
+            )
+        ]
         if not matched:
             continue
         matched_ids = {id(f) for f in matched}

@@ -7,6 +7,26 @@ const isTestMode = isViewportWebGlDisabledForTests();
 const FEET_PER_METER = 3.280839895;
 const ROTATION_STEP_DEGREES = 45;
 const BUILT_IN_FIXTURE_TYPE_TARGETS = new Set(['moving_head', 'par']);
+const FIXTURE_INDEX_FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'odds', label: 'Odds' },
+  { value: 'evens', label: 'Evens' },
+];
+const FIXTURE_INDEX_FILTER_LABELS = new Map(FIXTURE_INDEX_FILTERS.map((filter) => [filter.value, filter.label]));
+
+function customTargetLabel(target, fixtureTypeLabelByKey) {
+  const fixtureTypeLabel = target.fixtureType
+    ? fixtureTypeLabelByKey.get(target.fixtureType) || target.fixtureType
+    : 'All fixtures';
+  const scopeLabel = target.groupName ? `${target.groupName} · ${fixtureTypeLabel}` : fixtureTypeLabel;
+  const fixtureIndexFilter = target.fixtureIndexFilter || 'all';
+  const filterLabel = FIXTURE_INDEX_FILTER_LABELS.get(fixtureIndexFilter) || 'All';
+  return fixtureIndexFilter === 'all' ? scopeLabel : `${scopeLabel} · ${filterLabel}`;
+}
+
+function customTargetKey(groupName, fixtureType, fixtureIndexFilter) {
+  return `${groupName || ''}:${fixtureType || ''}:${fixtureIndexFilter || 'all'}`;
+}
 
 // Moving-head pan/tilt geometry. Pan spans 540° physical (0–540 in stored
 // degrees); the UI treats 270° as "forward" and lets the user set left/right
@@ -1034,7 +1054,11 @@ function AnimationEditorPanel({
   const modes = venueSnapshot?.lighting_modes || [];
   const assignments = venueSnapshot?.animation_assignments || [];
   const namedPositions = venueSnapshot?.named_positions || [];
-  const [customTargetDraft, setCustomTargetDraft] = useState({ groupName: '', fixtureType: '' });
+  const [customTargetDraft, setCustomTargetDraft] = useState({
+    groupName: '',
+    fixtureType: '',
+    fixtureIndexFilter: 'all',
+  });
   const [customTargets, setCustomTargets] = useState([]);
   const [addTargetModalOpen, setAddTargetModalOpen] = useState(false);
   const [addModeModalOpen, setAddModeModalOpen] = useState(false);
@@ -1075,46 +1099,66 @@ function AnimationEditorPanel({
   );
   const destinationGroups = useMemo(() => {
     const fixtureTypeTargets = [
-      { key: 'all', label: 'All', fixture_group_name: null, fixture_type: null },
-      { key: 'moving_head', label: 'Movers', fixture_group_name: null, fixture_type: 'moving_head' },
-      { key: 'par', label: 'Pars', fixture_group_name: null, fixture_type: 'par' },
+      { key: 'all', label: 'All', fixture_group_name: null, fixture_type: null, fixture_index_filter: null },
+      { key: 'moving_head', label: 'Movers', fixture_group_name: null, fixture_type: 'moving_head', fixture_index_filter: null },
+      { key: 'par', label: 'Pars', fixture_group_name: null, fixture_type: 'par', fixture_index_filter: null },
     ];
     const groupTargets = groupNames.map((groupName) => ({
       key: `group:${groupName}`,
       label: groupName,
       fixture_group_name: groupName,
       fixture_type: null,
+      fixture_index_filter: null,
     }));
     const definedTargetPairs = new Map();
     for (const target of customTargets) {
-      if (!target.groupName && BUILT_IN_FIXTURE_TYPE_TARGETS.has(target.fixtureType)) {
+      const fixtureIndexFilter = target.fixtureIndexFilter || 'all';
+      if (
+        fixtureIndexFilter === 'all' &&
+        ((!target.groupName && (!target.fixtureType || BUILT_IN_FIXTURE_TYPE_TARGETS.has(target.fixtureType))) ||
+          (target.groupName && !target.fixtureType))
+      ) {
         continue;
       }
-      definedTargetPairs.set(`${target.groupName || ''}:${target.fixtureType}`, target);
+      definedTargetPairs.set(
+        customTargetKey(target.groupName, target.fixtureType, fixtureIndexFilter),
+        { ...target, fixtureIndexFilter },
+      );
     }
     for (const assignment of assignments) {
+      const fixtureIndexFilter = assignment.fixture_index_filter || 'all';
       if (
         assignment.lighting_mode_key === selectedModeKey &&
-        assignment.fixture_type &&
-        (assignment.fixture_group_name || !BUILT_IN_FIXTURE_TYPE_TARGETS.has(assignment.fixture_type))
+        !(
+          assignment.fixture_group_name &&
+          !assignment.fixture_type &&
+          fixtureIndexFilter === 'all'
+        ) &&
+        (assignment.fixture_group_name ||
+          fixtureIndexFilter !== 'all' ||
+          (assignment.fixture_type && !BUILT_IN_FIXTURE_TYPE_TARGETS.has(assignment.fixture_type)))
       ) {
-        definedTargetPairs.set(`${assignment.fixture_group_name || ''}:${assignment.fixture_type}`, {
+        definedTargetPairs.set(customTargetKey(assignment.fixture_group_name, assignment.fixture_type, fixtureIndexFilter), {
           groupName: assignment.fixture_group_name || '',
-          fixtureType: assignment.fixture_type,
+          fixtureType: assignment.fixture_type || '',
+          fixtureIndexFilter,
         });
       }
     }
     const definedTargets = [...definedTargetPairs.values()]
-      .filter((target) => (!target.groupName || groupNames.includes(target.groupName)) && venueFixtureTypes.includes(target.fixtureType))
+      .filter(
+        (target) =>
+          (!target.groupName || groupNames.includes(target.groupName)) &&
+          (!target.fixtureType || venueFixtureTypes.includes(target.fixtureType)),
+      )
       .map((target) => ({
         key: target.groupName
-          ? `custom:${target.groupName}:type:${target.fixtureType}`
-          : `custom:type:${target.fixtureType}`,
-        label: target.groupName
-          ? `${target.groupName} · ${fixtureTypeLabelByKey.get(target.fixtureType) || target.fixtureType}`
-          : fixtureTypeLabelByKey.get(target.fixtureType) || target.fixtureType,
+          ? `custom:${target.groupName}:type:${target.fixtureType}:index:${target.fixtureIndexFilter}`
+          : `custom:type:${target.fixtureType}:index:${target.fixtureIndexFilter}`,
+        label: customTargetLabel(target, fixtureTypeLabelByKey),
         fixture_group_name: target.groupName || null,
-        fixture_type: target.fixtureType,
+        fixture_type: target.fixtureType || null,
+        fixture_index_filter: target.fixtureIndexFilter === 'all' ? null : target.fixtureIndexFilter,
       }));
     return [
       { key: 'fixture-type', title: 'Fixture Type', targets: fixtureTypeTargets },
@@ -1127,7 +1171,8 @@ function AnimationEditorPanel({
     modeAssignments.filter(
       (a) =>
         (a.fixture_group_name || null) === destination.fixture_group_name &&
-        (a.fixture_type || null) === destination.fixture_type,
+        (a.fixture_type || null) === destination.fixture_type &&
+        (a.fixture_index_filter || null) === destination.fixture_index_filter,
     );
 
   function handleDragStart(event, entry) {
@@ -1159,6 +1204,7 @@ function AnimationEditorPanel({
       lighting_mode_key: selectedModeKey,
       fixture_group_name: destination.fixture_group_name,
       fixture_type: destination.fixture_type,
+      fixture_index_filter: destination.fixture_index_filter,
       animation_spec: spec,
     });
   }
@@ -1314,20 +1360,27 @@ function AnimationEditorPanel({
   function handleAddCustomTarget() {
     const groupName = customTargetDraft.groupName;
     const fixtureType = customTargetDraft.fixtureType;
-    if (!fixtureType) {
-      return;
-    }
-    if (!groupName && BUILT_IN_FIXTURE_TYPE_TARGETS.has(fixtureType)) {
-      setCustomTargetDraft({ groupName: '', fixtureType: '' });
+    const fixtureIndexFilter = customTargetDraft.fixtureIndexFilter;
+    if (
+      fixtureIndexFilter === 'all' &&
+      ((!groupName && (!fixtureType || BUILT_IN_FIXTURE_TYPE_TARGETS.has(fixtureType))) ||
+        (groupName && !fixtureType))
+    ) {
+      setCustomTargetDraft({ groupName: '', fixtureType: '', fixtureIndexFilter: 'all' });
       setAddTargetModalOpen(false);
       return;
     }
-    const key = `${groupName || ''}:${fixtureType}`;
-    if (customTargets.some((target) => `${target.groupName || ''}:${target.fixtureType}` === key)) {
+    const key = `${groupName || ''}:${fixtureType}:${fixtureIndexFilter}`;
+    if (
+      customTargets.some(
+        (target) =>
+          customTargetKey(target.groupName, target.fixtureType, target.fixtureIndexFilter) === key,
+      )
+    ) {
       return;
     }
-    setCustomTargets((targets) => [...targets, { groupName, fixtureType }]);
-    setCustomTargetDraft({ groupName: '', fixtureType: '' });
+    setCustomTargets((targets) => [...targets, { groupName, fixtureType, fixtureIndexFilter }]);
+    setCustomTargetDraft({ groupName: '', fixtureType: '', fixtureIndexFilter: 'all' });
     setAddTargetModalOpen(false);
   }
 
@@ -1703,7 +1756,7 @@ function AnimationEditorPanel({
                 setCustomTargetDraft((draft) => ({ ...draft, fixtureType: event.target.value }))
               }
             >
-              <option value="">Choose a fixture type</option>
+              <option value="">All fixtures</option>
               {venueFixtureTypes.map((fixtureType) => (
                 <option key={fixtureType} value={fixtureType}>
                   {fixtureTypeLabelByKey.get(fixtureType) || fixtureType}
@@ -1711,13 +1764,33 @@ function AnimationEditorPanel({
               ))}
             </select>
           </label>
+          <fieldset className="animation-target-index-filter">
+            <legend>Fixture idx filter</legend>
+            <div className="animation-target-index-options">
+              {FIXTURE_INDEX_FILTERS.map((filter) => (
+                <label key={filter.value}>
+                  <input
+                    type="radio"
+                    name="animation-target-index-filter"
+                    value={filter.value}
+                    checked={customTargetDraft.fixtureIndexFilter === filter.value}
+                    onChange={(event) =>
+                      setCustomTargetDraft((draft) => ({
+                        ...draft,
+                        fixtureIndexFilter: event.target.value,
+                      }))
+                    }
+                  />
+                  <span>{filter.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="modal-actions">
             <button type="button" className="secondary-button" onClick={() => setAddTargetModalOpen(false)}>
               Cancel
             </button>
-            <button type="submit" disabled={!customTargetDraft.fixtureType}>
-              Add Target
-            </button>
+            <button type="submit">Add Target</button>
           </div>
         </form>
       </Modal>

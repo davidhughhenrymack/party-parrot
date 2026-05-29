@@ -3,7 +3,16 @@ from __future__ import annotations
 from datetime import datetime
 import uuid
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from parrot_cloud.database import Base
@@ -17,7 +26,9 @@ class VenueModel(Base):
     __tablename__ = "venues"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
-    slug: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True)
+    slug: Mapped[str] = mapped_column(
+        String(128), unique=True, nullable=False, index=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -72,7 +83,10 @@ class FixtureModel(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     venue_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("venues.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     fixture_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -104,7 +118,10 @@ class LightingModeModel(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     venue_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("venues.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     label: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -126,7 +143,10 @@ class VenueAnimationAssignmentModel(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     venue_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("venues.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     lighting_mode_id: Mapped[str] = mapped_column(
         String(36),
@@ -135,7 +155,10 @@ class VenueAnimationAssignmentModel(Base):
         index=True,
     )
     fixture_group_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    fixture_type: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    fixture_type: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
+    fixture_index_filter: Mapped[str | None] = mapped_column(String(16), nullable=True)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     animation_spec: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 
@@ -149,7 +172,9 @@ class NamedPositionModel(Base):
     __tablename__ = "named_positions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
-    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    name: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True, index=True
+    )
 
     fixture_positions: Mapped[list["FixtureNamedPositionModel"]] = relationship(
         back_populates="named_position",
@@ -169,10 +194,16 @@ class FixtureNamedPositionModel(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
     venue_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("venues.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     fixture_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("fixtures.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("fixtures.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     named_position_id: Mapped[str] = mapped_column(
         String(36),
@@ -195,7 +226,10 @@ class SceneObjectModel(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     venue_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("venues.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("venues.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     kind: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -228,7 +262,9 @@ class ControlStateModel(Base):
         String(32), nullable=False, default="dmx_heatmap"
     )
     manual_dimmer: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    manual_fixture_dimmers: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    manual_fixture_dimmers: Mapped[dict] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
     hype_limiter: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     show_waveform: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     show_fixture_mode: Mapped[bool] = mapped_column(

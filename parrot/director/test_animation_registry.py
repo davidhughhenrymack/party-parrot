@@ -11,7 +11,11 @@ from parrot.director.animation_registry import (
 from parrot.director.frame import FrameSignal
 from parrot.director.frame import Frame
 from parrot.director.mode import Mode
-from parrot.director.mode_dispatch import _build_category_combo, get_interpreter
+from parrot.director.mode_dispatch import (
+    CompositeInterpreter,
+    _build_category_combo,
+    get_interpreter,
+)
 from parrot.director.color_scheme import ColorScheme
 from parrot.fixtures.base import GoboWheelEntry
 from parrot.fixtures.motionstrip import Motionstrip38
@@ -162,6 +166,66 @@ def test_database_assignments_support_modes_not_in_python_enum():
     assert isinstance(interp, SignalSwitchInterpreter)
     assert isinstance(interp.interp_std, SequenceDimmers)
     assert interp.group == pars
+
+
+def test_database_assignments_filter_by_fixture_index_in_group():
+    pars = [ParRGB(1), ParRGB(8), ParRGB(15), ParRGB(22)]
+    for fixture in pars:
+        fixture.cloud_group_name = "track"
+        fixture.cloud_fixture_type = "par"
+    snapshot = VenueSnapshot(
+        summary=VenueSummary(
+            id="venue",
+            slug="venue",
+            name="Venue",
+            archived=False,
+            active=True,
+            revision=1,
+        ),
+        floor_width=20.0,
+        floor_depth=15.0,
+        floor_height=10.0,
+        video_wall=VideoWallSpec(
+            x=0.0,
+            y=0.0,
+            z=0.0,
+            width=10.0,
+            height=6.0,
+            depth=0.25,
+            locked=False,
+        ),
+        fixtures=(),
+        lighting_modes=(
+            LightingModeSpec(
+                id="mode",
+                venue_id="venue",
+                key="chill",
+                label="Chill",
+                order_index=0,
+            ),
+        ),
+        animation_assignments=(
+            VenueAnimationAssignmentSpec(
+                id="assignment",
+                venue_id="venue",
+                lighting_mode_id="mode",
+                lighting_mode_key="chill",
+                fixture_group_name="track",
+                fixture_type="par",
+                order_index=0,
+                animation_spec=animation("SequenceDimmers"),
+                fixture_index_filter="odds",
+            ),
+        ),
+    )
+
+    interp = get_interpreter(Mode.chill, pars, InterpreterArgs(True), snapshot)
+
+    assert isinstance(interp, CompositeInterpreter)
+    odds_child = next(
+        child for child in interp.children if isinstance(child, SignalSwitchInterpreter)
+    )
+    assert odds_child.group == [pars[1], pars[3]]
 
 
 def test_registry_defaults_are_applied_to_bare_animation_specs():

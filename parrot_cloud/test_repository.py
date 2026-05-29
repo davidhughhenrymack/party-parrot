@@ -30,8 +30,7 @@ def test_seed_creates_demo_venue(venue_repository):
         "stroby",
     ]
     assert {
-        mode.key: mode.entry_seconds
-        for mode in bootstrap.active_venue.lighting_modes
+        mode.key: mode.entry_seconds for mode in bootstrap.active_venue.lighting_modes
     } == {
         "chill": 3.0,
         "rave": 0.5,
@@ -48,7 +47,9 @@ def test_seed_creates_demo_venue(venue_repository):
         ("stroby", "par"),
         ("stroby", "moving_head"),
     }
-    assert {scene_object.kind for scene_object in bootstrap.active_venue.scene_objects} == {
+    assert {
+        scene_object.kind for scene_object in bootstrap.active_venue.scene_objects
+    } == {
         "floor",
         "video_wall",
         "dj_table",
@@ -65,6 +66,7 @@ def test_animation_assignment_crud(venue_repository):
         {
             "lighting_mode_key": "chill",
             "fixture_type": "par",
+            "fixture_index_filter": "odds",
             "animation_spec": {"type": "animation", "key": "Dimmer255"},
         },
     )
@@ -74,14 +76,22 @@ def test_animation_assignment_crud(venue_repository):
         if a.animation_spec.get("key") == "Dimmer255"
     )
     assert assignment.lighting_mode_key == "chill"
+    assert assignment.fixture_index_filter == "odds"
 
     updated = venue_repository.update_animation_assignment(
         active_snapshot.summary.id,
         assignment.id,
-        {"animation_spec": {"type": "randomize", "options": [{"type": "animation", "key": "Dimmer0"}]}},
+        {
+            "fixture_index_filter": "evens",
+            "animation_spec": {
+                "type": "randomize",
+                "options": [{"type": "animation", "key": "Dimmer0"}],
+            },
+        },
     )
     changed = next(a for a in updated.animation_assignments if a.id == assignment.id)
     assert changed.animation_spec["type"] == "randomize"
+    assert changed.fixture_index_filter == "evens"
 
     deleted = venue_repository.delete_animation_assignment(
         active_snapshot.summary.id,
@@ -227,7 +237,10 @@ def test_fixture_crud_updates_snapshot(venue_repository):
             "options": {},
         },
     )
-    assert any(fixture.id == "integration-test-fixture" for fixture in created_snapshot.fixtures)
+    assert any(
+        fixture.id == "integration-test-fixture"
+        for fixture in created_snapshot.fixtures
+    )
 
     updated_snapshot = venue_repository.update_fixture(
         active_snapshot.summary.id,
@@ -247,7 +260,8 @@ def test_fixture_crud_updates_snapshot(venue_repository):
         "integration-test-fixture",
     )
     assert not any(
-        fixture.id == "integration-test-fixture" for fixture in deleted_snapshot.fixtures
+        fixture.id == "integration-test-fixture"
+        for fixture in deleted_snapshot.fixtures
     )
 
 
@@ -508,8 +522,7 @@ def test_named_positions_seed_and_fixture_assignment_roundtrip(venue_repository)
         mirrorball.id,
     )
     assert not any(
-        p.fixture_id == "named-position-rogue"
-        for p in deleted.fixture_named_positions
+        p.fixture_id == "named-position-rogue" for p in deleted.fixture_named_positions
     )
 
 

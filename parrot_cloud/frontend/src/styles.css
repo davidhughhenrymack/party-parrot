@@ -1089,6 +1089,29 @@ label {
   margin-top: 0;
 }
 
+.animation-target-index-filter {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.animation-target-index-filter legend {
+  margin-bottom: 6px;
+  color: #8b949e;
+  font-size: 12px;
+}
+
+.animation-target-index-options {
+  display: flex;
+  gap: 10px;
+}
+
+.animation-target-index-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .animation-palette-panel {
   flex: 0 0 340px;
   position: sticky;
