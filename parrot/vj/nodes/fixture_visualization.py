@@ -2,12 +2,11 @@
 
 from beartype import beartype
 
-from parrot.graph.BaseInterpretationNode import BaseInterpretationNode, Vibe
+from parrot.graph.BaseInterpretationNode import Vibe
 from parrot.graph.BaseInterpretationNode import format_node_status
 from parrot.director.director import Director
-from parrot.director.frame import Frame, FrameSignal
+from parrot.director.frame import Frame
 from parrot.director.color_scheme import ColorScheme
-from parrot.director.mode import Mode
 from parrot.vj.nodes.canvas_effect_base import GenerativeEffectBase
 from parrot.fixtures.base import FixtureBase, FixtureGroup
 from parrot.vj.renderers.factory import create_renderer
@@ -183,7 +182,7 @@ class FixtureVisualization(GenerativeEffectBase):
                 context, self.composite_shader
             )
 
-    def _build_room_scene_layout(self) -> dict[str, dict[str, float | tuple[float, float, float]]]:
+    def _build_room_scene_layout(self) -> dict[str, object]:
         snapshot = self.state.runtime_venue_snapshot
         if snapshot is None:
             return {}
@@ -295,6 +294,31 @@ class FixtureVisualization(GenerativeEffectBase):
                 "rotation_x": dj_table.rotation_x,
                 "rotation_y": dj_table.rotation_y,
                 "rotation_z": dj_table.rotation_z,
+            }
+
+        staging_sections = [
+            scene_object
+            for scene_object in snapshot.scene_objects
+            if scene_object.kind == "staging_section"
+        ]
+        if staging_sections:
+            layout["staging_sections"] = {
+                "sections": tuple(
+                    {
+                        "position": to_room_position(
+                            section.x,
+                            section.y,
+                            max(section.z - (section.height / 2.0), 0.0),
+                        ),
+                        "width": max(section.width, 0.1),
+                        "height": max(section.height, 0.05),
+                        "depth": max(section.depth, 0.1),
+                        "rotation_x": section.rotation_x,
+                        "rotation_y": section.rotation_y,
+                        "rotation_z": section.rotation_z,
+                    }
+                    for section in staging_sections
+                )
             }
 
         return layout
@@ -663,6 +687,10 @@ class FixtureVisualization(GenerativeEffectBase):
 
         # Render floor grid
         self.room_renderer.render_floor()
+
+        # Render user-configured stage blocks before fixtures so beams and bodies
+        # depth-test against them like the DJ booth.
+        self.room_renderer.render_staging_sections()
 
         # Render DJ booth (table and figure)
         self.room_renderer.render_dj_booth()

@@ -399,6 +399,49 @@ def test_video_wall_update_does_not_reset_dj_table_scene_object(venue_repository
     assert dj_after.rotation_z == dj_before.rotation_z
 
 
+def test_staging_sections_scene_object_crud(venue_repository):
+    snapshot = venue_repository.get_active_venue_snapshot()
+    venue_id = snapshot.summary.id
+
+    created = venue_repository.create_scene_object(
+        venue_id,
+        {
+            "kind": "staging_section",
+            "x": 1.0,
+            "y": -2.0,
+            "z": 0.3048,
+            "width": 2.4384,
+            "depth": 1.2192,
+            "height": 0.6096,
+        },
+    )
+    staging = next(
+        scene_object
+        for scene_object in created.scene_objects
+        if scene_object.kind == "staging_section"
+    )
+    assert staging.width == 2.4384
+    assert staging.depth == 1.2192
+    assert staging.height == 0.6096
+
+    updated = venue_repository.update_scene_object_by_id(
+        venue_id,
+        staging.id,
+        {"x": 3.0, "width": 3.6576, "rotation_z": 0.5},
+    )
+    changed = next(
+        scene_object
+        for scene_object in updated.scene_objects
+        if scene_object.id == staging.id
+    )
+    assert changed.x == 3.0
+    assert changed.width == 3.6576
+    assert changed.rotation_z == 0.5
+
+    deleted = venue_repository.delete_scene_object_by_id(venue_id, staging.id)
+    assert all(scene_object.id != staging.id for scene_object in deleted.scene_objects)
+
+
 def test_active_venue_persists_across_seed_runs(venue_repository):
     bootstrap = venue_repository.get_runtime_bootstrap()
     demo_id = bootstrap.active_venue.summary.id

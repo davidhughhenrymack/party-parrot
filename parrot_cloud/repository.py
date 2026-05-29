@@ -962,6 +962,91 @@ class VenueRepository:
             session.refresh(venue)
             return self._snapshot_from_model(venue)
 
+    def create_scene_object(
+        self, venue_id: str, data: dict[str, object]
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            self._ensure_scene_objects(session, venue)
+            kind = str(data.get("kind", "")).strip()
+            if kind != "staging_section":
+                raise ValueError(f"Unsupported scene object kind: {kind}")
+            next_order = (
+                max((scene_object.order_index for scene_object in venue.scene_objects), default=-1)
+                + 1
+            )
+            scene_object = SceneObjectModel(
+                id=str(data.get("id") or uuid.uuid4()),
+                venue_id=venue_id,
+                order_index=next_order,
+                kind=kind,
+                x=float(data.get("x", 0.0)),
+                y=float(data.get("y", 0.0)),
+                z=float(data.get("z", 0.0)),
+                width=float(data.get("width", 1.2192)),
+                height=float(data.get("height", 0.3048)),
+                depth=float(data.get("depth", 1.2192)),
+                rotation_x=float(data.get("rotation_x", 0.0)),
+                rotation_y=float(data.get("rotation_y", 0.0)),
+                rotation_z=float(data.get("rotation_z", 0.0)),
+                locked=bool(data.get("locked", False)),
+                options=dict(data.get("options", {})),
+            )
+            session.add(scene_object)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def update_scene_object_by_id(
+        self, venue_id: str, scene_object_id: str, data: dict[str, object]
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            self._ensure_scene_objects(session, venue)
+            scene_object = session.get(SceneObjectModel, scene_object_id)
+            if scene_object is None or scene_object.venue_id != venue_id:
+                raise KeyError(f"Scene object not found: {scene_object_id}")
+
+            for key in ("x", "y", "z", "width", "height", "depth"):
+                if key in data and data[key] is not None:
+                    setattr(scene_object, key, float(data[key]))
+            for key in ("rotation_x", "rotation_y", "rotation_z"):
+                if key in data and data[key] is not None:
+                    setattr(scene_object, key, float(data[key]))
+            if "locked" in data:
+                scene_object.locked = bool(data["locked"])
+            if "options" in data and data["options"] is not None:
+                scene_object.options = dict(data["options"])
+
+            self._sync_legacy_scene_fields(venue)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
+    def delete_scene_object_by_id(
+        self, venue_id: str, scene_object_id: str
+    ) -> VenueSnapshot:
+        with _session_scope() as session:
+            venue = session.get(VenueModel, venue_id)
+            if venue is None:
+                raise KeyError(f"Venue not found: {venue_id}")
+            scene_object = session.get(SceneObjectModel, scene_object_id)
+            if scene_object is None or scene_object.venue_id != venue_id:
+                raise KeyError(f"Scene object not found: {scene_object_id}")
+            if scene_object.kind != "staging_section":
+                raise ValueError(f"Scene object {scene_object.kind!r} cannot be deleted")
+            session.delete(scene_object)
+            self._touch_venue(venue)
+            session.flush()
+            session.refresh(venue)
+            return self._snapshot_from_model(venue)
+
     def add_fixture(
         self, venue_id: str, fixture_data: dict[str, object]
     ) -> VenueSnapshot:

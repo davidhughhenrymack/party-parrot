@@ -545,11 +545,56 @@ def create_app() -> Flask:
 
     @app.patch("/api/venues/<venue_id>/scene-objects/<scene_object_kind>")
     def patch_scene_object(venue_id: str, scene_object_kind: str):
-        snapshot = repository.update_scene_object(
-            venue_id,
-            scene_object_kind,
-            request.get_json(force=True),
-        )
+        try:
+            snapshot = repository.update_scene_object(
+                venue_id,
+                scene_object_kind,
+                request.get_json(force=True),
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.post("/api/venues/<venue_id>/scene-objects")
+    def create_scene_object(venue_id: str):
+        try:
+            snapshot = repository.create_scene_object(
+                venue_id,
+                request.get_json(force=True),
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.patch("/api/venues/<venue_id>/scene-objects/by-id/<scene_object_id>")
+    def patch_scene_object_by_id(venue_id: str, scene_object_id: str):
+        try:
+            snapshot = repository.update_scene_object_by_id(
+                venue_id,
+                scene_object_id,
+                request.get_json(force=True),
+            )
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+        broadcast_venue_snapshot(snapshot)
+        return jsonify(snapshot.to_dict())
+
+    @app.delete("/api/venues/<venue_id>/scene-objects/by-id/<scene_object_id>")
+    def delete_scene_object_by_id(venue_id: str, scene_object_id: str):
+        try:
+            snapshot = repository.delete_scene_object_by_id(venue_id, scene_object_id)
+        except KeyError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         broadcast_venue_snapshot(snapshot)
         return jsonify(snapshot.to_dict())
 

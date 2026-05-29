@@ -182,6 +182,7 @@ function createThreeSceneController({
   const bloomCompositeMaterial = new THREE.ShaderMaterial({
     uniforms: {
       bloomTexture: { value: bloomPongTarget.texture },
+      beamMaskTexture: { value: beamLayerTarget.texture },
       bloomStrength: { value: 2.05 },
     },
     vertexShader: `
@@ -193,11 +194,15 @@ function createThreeSceneController({
     `,
     fragmentShader: `
       uniform sampler2D bloomTexture;
+      uniform sampler2D beamMaskTexture;
       uniform float bloomStrength;
       varying vec2 vUv;
 
       void main() {
+        vec3 maskColor = texture2D(beamMaskTexture, vUv).rgb;
+        float beamMask = smoothstep(0.002, 0.02, max(max(maskColor.r, maskColor.g), maskColor.b));
         vec3 glow = texture2D(bloomTexture, vUv).rgb * bloomStrength;
+        glow *= beamMask;
         float alpha = clamp(max(max(glow.r, glow.g), glow.b), 0.0, 0.72);
         gl_FragColor = vec4(glow, alpha);
       }
@@ -1165,6 +1170,7 @@ function createThreeSceneController({
     renderFullscreenMaterial(bloomBlurMaterial, bloomPongTarget);
 
     bloomCompositeMaterial.uniforms.bloomTexture.value = bloomPongTarget.texture;
+    bloomCompositeMaterial.uniforms.beamMaskTexture.value = beamLayerTarget.texture;
     bloomQuad.material = bloomCompositeMaterial;
     renderer.setRenderTarget(savedRenderTarget);
     renderer.autoClear = false;
@@ -1442,7 +1448,12 @@ function createThreeSceneController({
     }
 
     localState.selectedFixtureIds = [];
-    const entityKey = selection.type === 'dj_booth' ? 'dj_booth' : 'video_wall';
+    const entityKey =
+      selection.type === 'dj_booth'
+        ? 'dj_booth'
+        : selection.type === 'staging_section'
+          ? selection.sceneObjectId
+          : 'video_wall';
     const entity = localState.entityMap.get(entityKey);
     if (!entity) {
       clearSelection({ notifyParent });
@@ -1455,6 +1466,8 @@ function createThreeSceneController({
     if (notifyParent) {
       if (entity.type === 'dj_booth') {
         onSelectionChange({ type: 'dj_booth' });
+      } else if (entity.type === 'staging_section') {
+        onSelectionChange({ type: 'staging_section', sceneObjectId: entity.sceneObject.id });
       } else {
         onSelectionChange({ type: 'video_wall' });
       }
@@ -1599,6 +1612,8 @@ function createThreeSceneController({
       }
     } else if (entity.type === 'dj_booth') {
       setSelection({ type: 'dj_booth' });
+    } else if (entity.type === 'staging_section') {
+      setSelection({ type: 'staging_section', sceneObjectId: entity.sceneObject.id });
     } else {
       setSelection({ type: 'video_wall' });
     }
@@ -2520,6 +2535,49 @@ function createThreeSceneController({
     });
   }
 
+  function createStagingSectionEntity(sceneObject) {
+    const entityKey = sceneObject.id;
+    const group = new THREE.Group();
+    group.position.copy(toScenePosition(sceneObject.x, sceneObject.y, sceneObject.z));
+    group.rotation.set(
+      sceneObject.rotation_x || 0,
+      sceneObject.rotation_y || 0,
+      sceneObject.rotation_z || 0
+    );
+    group.userData = { entityKey };
+
+    const width = Math.max(sceneObject.width, 0.2);
+    const depth = Math.max(sceneObject.depth, 0.2);
+    const height = Math.max(sceneObject.height, 0.05);
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(width, depth, height),
+      floorMaterial
+    );
+    body.userData = { entityKey };
+    group.add(body);
+
+    const hitMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(width, depth, Math.max(height, 0.2)),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.001,
+        depthWrite: false,
+      })
+    );
+    hitMesh.userData = { entityKey };
+    group.add(hitMesh);
+
+    sceneContent.add(group);
+    localState.entityMap.set(entityKey, {
+      type: 'staging_section',
+      group,
+      bodyMaterial: floorMaterial,
+      secondaryMaterials: [],
+      sceneObject,
+    });
+  }
+
   function applyBootstrap(venueSnapshot) {
     const previousSelectedEntityKey = localState.selectedEntityKey;
     const previousFixtureSelectionIds =
@@ -2572,6 +2630,9 @@ function createThreeSceneController({
       getSceneObject(venueSnapshot, 'dj_table'),
       getSceneObject(venueSnapshot, 'dj_cutout')
     );
+    (venueSnapshot.scene_objects || [])
+      .filter((sceneObject) => sceneObject.kind === 'staging_section')
+      .forEach(createStagingSectionEntity);
     venueSnapshot.fixtures.forEach(createFixtureEntity);
     resizeRenderer();
     setView(localState.currentView);
@@ -2706,6 +2767,21 @@ function createThreeSceneController({
         x: domainPosition.x,
         y: domainPosition.y,
         z: domainPosition.z,
+      });
+    } else if (entity.type === 'staging_section') {
+      await onSceneObjectTransform({
+        type: 'staging_section',
+        objects: [
+          {
+            id: entity.sceneObject.id,
+            x: domainPosition.x,
+            y: domainPosition.y,
+            z: domainPosition.z,
+            rotation_x: rotation.x,
+            rotation_y: rotation.y,
+            rotation_z: rotation.z,
+          },
+        ],
       });
     } else if (entity.type === 'dj_booth') {
       const newTable = {

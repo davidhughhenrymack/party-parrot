@@ -1842,6 +1842,45 @@ label {
   font-size: 13px;
 }
 
+.dense-empty-hint {
+  margin: 8px 0 0;
+  color: #8b949e;
+  font-size: 12px;
+}
+
+.staging-section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 8px;
+}
+
+.staging-section-row {
+  width: 100%;
+}
+
+.dense-sidebar .staging-section-list .staging-section-row {
+  padding: 5px 8px 5px 0;
+}
+
+.staging-dimension-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.staging-dimension-grid-inspector {
+  margin-top: 8px;
+}
+
+.staging-dimension-grid .compact-label {
+  gap: 4px;
+}
+
+.staging-dimension-grid .compact-label input {
+  min-width: 0;
+}
+
 .dense-viewport-shell {
   position: relative;
   height: 100vh;

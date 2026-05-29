@@ -168,9 +168,10 @@ class Room3DRenderer:
                 "rotation_y": 0.0,
                 "rotation_z": 0.0,
             },
+            "staging_sections": {"sections": ()},
         }
 
-    def set_scene_layout(self, scene_layout: dict[str, dict[str, float | tuple[float, float, float]]]) -> None:
+    def set_scene_layout(self, scene_layout: dict[str, object]) -> None:
         self.scene_layout = {
             **self._build_default_scene_layout(),
             **scene_layout,
@@ -179,7 +180,7 @@ class Room3DRenderer:
             self._release_floor_geometry()
             self._setup_floor_geometry()
 
-    def get_scene_object(self, kind: str) -> dict[str, float | tuple[float, float, float]]:
+    def get_scene_object(self, kind: str) -> dict[str, object]:
         return dict(self.scene_layout.get(kind, {}))
 
     def _setup_shaders(self):
@@ -1013,6 +1014,31 @@ class Room3DRenderer:
                 normal=normal,
                 use_alpha=True,
             )
+
+    def render_staging_sections(self):
+        """Render user-configured staging section cuboids."""
+        staging = self.scene_layout.get("staging_sections", {})
+        sections = staging.get("sections", ()) if isinstance(staging, dict) else ()
+        color = self.floor_color
+        for section in sections:
+            if not isinstance(section, dict):
+                continue
+            rotation = self._quaternion_from_euler_xyz(
+                float(section.get("rotation_x", 0.0)),
+                float(section.get("rotation_y", 0.0)),
+                float(section.get("rotation_z", 0.0)),
+            )
+            with self.local_position(tuple(section.get("position", (0.0, 0.0, 0.0)))):
+                with self.local_rotation(rotation):
+                    self.render_rectangular_box(
+                        0.0,
+                        0.0,
+                        0.0,
+                        color,
+                        float(section.get("width", 1.0)),
+                        float(section.get("height", 0.3)),
+                        float(section.get("depth", 1.0)),
+                    )
 
     def render_floor(self):
         """Render the floor quad and grid lines with lighting."""

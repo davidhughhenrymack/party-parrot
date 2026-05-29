@@ -612,6 +612,49 @@ def test_scene_object_patch_endpoint(client):
     assert dj_table["z"] == 3.5
 
 
+def test_staging_section_scene_object_endpoints(client):
+    bootstrap = client.get("/api/bootstrap").get_json()
+    venue_id = bootstrap["active_venue"]["summary"]["id"]
+
+    created_response = client.post(
+        f"/api/venues/{venue_id}/scene-objects",
+        json={
+            "kind": "staging_section",
+            "width": 2.4384,
+            "depth": 1.2192,
+            "height": 0.3048,
+        },
+    )
+    assert created_response.status_code == 200
+    staging = next(
+        scene_object
+        for scene_object in created_response.get_json()["scene_objects"]
+        if scene_object["kind"] == "staging_section"
+    )
+
+    patched_response = client.patch(
+        f"/api/venues/{venue_id}/scene-objects/by-id/{staging['id']}",
+        json={"x": 2.0, "height": 0.6096},
+    )
+    assert patched_response.status_code == 200
+    patched = next(
+        scene_object
+        for scene_object in patched_response.get_json()["scene_objects"]
+        if scene_object["id"] == staging["id"]
+    )
+    assert patched["x"] == 2.0
+    assert patched["height"] == 0.6096
+
+    deleted_response = client.delete(
+        f"/api/venues/{venue_id}/scene-objects/by-id/{staging['id']}"
+    )
+    assert deleted_response.status_code == 200
+    assert all(
+        scene_object["id"] != staging["id"]
+        for scene_object in deleted_response.get_json()["scene_objects"]
+    )
+
+
 def test_patch_video_wall_does_not_reset_dj_table_position(client):
     bootstrap = client.get("/api/bootstrap").get_json()
     venue_id = bootstrap["active_venue"]["summary"]["id"]

@@ -6,6 +6,11 @@ import { isViewportWebGlDisabledForTests } from './viewportTestMode.js';
 const isTestMode = isViewportWebGlDisabledForTests();
 const FEET_PER_METER = 3.280839895;
 const ROTATION_STEP_DEGREES = 45;
+const STAGING_WIDTH_LENGTH_STEP_FEET = 4;
+const STAGING_HEIGHT_STEP_FEET = 1;
+const DEFAULT_STAGING_WIDTH_FEET = 8;
+const DEFAULT_STAGING_LENGTH_FEET = 4;
+const DEFAULT_STAGING_HEIGHT_FEET = 1;
 const BUILT_IN_FIXTURE_TYPE_TARGETS = new Set(['moving_head', 'par']);
 const FIXTURE_INDEX_FILTERS = [
   { value: 'all', label: 'All' },
@@ -1835,6 +1840,7 @@ export default function DenseVenueEditorPage({ venueId }) {
     groupName: null,
   });
   const [selectedKind, setSelectedKind] = useState(null);
+  const [selectedSceneObjectId, setSelectedSceneObjectId] = useState(null);
   const [selectedFixtureIds, setSelectedFixtureIds] = useState([]);
   const [venueNameDraft, setVenueNameDraft] = useState('');
   const [floorValues, setFloorValues] = useState({
@@ -1926,6 +1932,9 @@ export default function DenseVenueEditorPage({ venueId }) {
     if (!venueSnapshot || !selectedKind) {
       return null;
     }
+    if (selectedKind === 'staging_section') {
+      return venueSnapshot.scene_objects.find((sceneObject) => sceneObject.id === selectedSceneObjectId) ?? null;
+    }
     if (selectedKind === 'video_wall') {
       return venueSnapshot.scene_objects.find((sceneObject) => sceneObject.kind === 'video_wall') ?? null;
     }
@@ -1933,7 +1942,14 @@ export default function DenseVenueEditorPage({ venueId }) {
       return venueSnapshot.scene_objects.find((sceneObject) => sceneObject.kind === 'dj_table') ?? null;
     }
     return null;
-  }, [selectedKind, venueSnapshot]);
+  }, [selectedKind, selectedSceneObjectId, venueSnapshot]);
+
+  const stagingSections = useMemo(
+    () => (venueSnapshot?.scene_objects || [])
+      .filter((sceneObject) => sceneObject.kind === 'staging_section')
+      .sort((a, b) => a.id.localeCompare(b.id)),
+    [venueSnapshot],
+  );
 
   useEffect(() => {
     const modes = venueSnapshot?.lighting_modes || [];
@@ -1969,8 +1985,12 @@ export default function DenseVenueEditorPage({ venueId }) {
     if (selectedKind === 'dj_booth') {
       return 'DJ booth';
     }
+    if (selectedKind === 'staging_section') {
+      const index = stagingSections.findIndex((section) => section.id === selectedSceneObjectId);
+      return index >= 0 ? `Staging ${index + 1}` : 'Staging section';
+    }
     return '';
-  }, [selectedKind, selectedFixtureIds, selectedFixture]);
+  }, [selectedKind, selectedFixtureIds, selectedFixture, selectedSceneObjectId, stagingSections]);
 
   const venueSummary = useMemo(
     () => venueSummaries.find((venue) => venue.id === venueId) ?? null,
@@ -2025,6 +2045,7 @@ export default function DenseVenueEditorPage({ venueId }) {
         onSelectionChange: handleSelectionChange,
         onFixtureContextMenu: ({ fixture, x, y }) => {
           setSelectedKind('fixture');
+          setSelectedSceneObjectId(null);
           setSelectedFixtureIds([fixture.id]);
           setContextMenu({
             visible: true,
@@ -2095,19 +2116,22 @@ export default function DenseVenueEditorPage({ venueId }) {
           setVenueSnapshot(snapshot);
         },
         onSceneObjectTransform: async (payload) => {
-          if (!venueRef.current || payload.type !== 'dj_booth') {
+          if (!venueRef.current) {
             return;
           }
           let lastSnapshot = null;
           for (const sceneObject of payload.objects) {
-            lastSnapshot = await apiPatchSceneObject(venueRef.current.summary.id, sceneObject.kind, {
+            const patch = {
               x: sceneObject.x,
               y: sceneObject.y,
               z: sceneObject.z,
               rotation_x: sceneObject.rotation_x,
               rotation_y: sceneObject.rotation_y,
               rotation_z: sceneObject.rotation_z,
-            });
+            };
+            lastSnapshot = sceneObject.id
+              ? await apiPatchSceneObjectById(venueRef.current.summary.id, sceneObject.id, patch)
+              : await apiPatchSceneObject(venueRef.current.summary.id, sceneObject.kind, patch);
           }
           if (lastSnapshot) {
             setVenueSnapshot(lastSnapshot);
@@ -2610,10 +2634,15 @@ export default function DenseVenueEditorPage({ venueId }) {
         { type: 'fixture', fixtureIds: selectedFixtureIds },
         { notifyParent: false },
       );
+    } else if (selectedKind === 'staging_section' && selectedSceneObjectId) {
+      sceneControllerRef.current?.setSelection(
+        { type: 'staging_section', sceneObjectId: selectedSceneObjectId },
+        { notifyParent: false },
+      );
     } else if (selectedKind !== 'video_wall' && selectedKind !== 'dj_booth') {
       sceneControllerRef.current?.setSelection(null, { notifyParent: false });
     }
-  }, [selectedFixtureIds, selectedKind]);
+  }, [selectedFixtureIds, selectedKind, selectedSceneObjectId]);
 
   useEffect(() => {
     if (
@@ -2735,6 +2764,14 @@ export default function DenseVenueEditorPage({ venueId }) {
           setSelectedKind(null);
         }
       }
+      if (
+        selectedKind === 'staging_section' &&
+        selectedSceneObjectId &&
+        !snapshot.scene_objects.some((sceneObject) => sceneObject.id === selectedSceneObjectId)
+      ) {
+        setSelectedKind(null);
+        setSelectedSceneObjectId(null);
+      }
     } catch (error) {
       console.error('Failed to load venue snapshot:', error);
       setVenueSnapshot(null);
@@ -2744,11 +2781,13 @@ export default function DenseVenueEditorPage({ venueId }) {
   function handleSelectionChange(selection) {
     if (!selection) {
       setSelectedKind(null);
+      setSelectedSceneObjectId(null);
       setSelectedFixtureIds([]);
       return;
     }
     if (selection.type === 'fixture') {
       setSelectedKind('fixture');
+      setSelectedSceneObjectId(null);
       const ids =
         Array.isArray(selection.fixtureIds) && selection.fixtureIds.length > 0
           ? selection.fixtureIds
@@ -2760,11 +2799,78 @@ export default function DenseVenueEditorPage({ venueId }) {
       return;
     }
     setSelectedFixtureIds([]);
+    setSelectedSceneObjectId(selection.sceneObjectId || null);
     setSelectedKind(selection.type);
+  }
+
+  function selectStagingSection(sectionId) {
+    setSelectedKind('staging_section');
+    setSelectedSceneObjectId(sectionId);
+    setSelectedFixtureIds([]);
+    sceneControllerRef.current?.setSelection(
+      { type: 'staging_section', sceneObjectId: sectionId },
+      { notifyParent: false },
+    );
+  }
+
+  async function handleAddStagingSection() {
+    if (!venueSnapshot) {
+      return;
+    }
+    const height = feetToMeters(DEFAULT_STAGING_HEIGHT_FEET);
+    const previousIds = new Set(stagingSections.map((section) => section.id));
+    const snap = await apiCreateSceneObject(venueSnapshot.summary.id, {
+      kind: 'staging_section',
+      x: 0,
+      y: 0,
+      z: height / 2,
+      width: feetToMeters(DEFAULT_STAGING_WIDTH_FEET),
+      depth: feetToMeters(DEFAULT_STAGING_LENGTH_FEET),
+      height,
+      options: {},
+    });
+    setVenueSnapshot(snap);
+    const created = (snap.scene_objects || []).find(
+      (sceneObject) => sceneObject.kind === 'staging_section' && !previousIds.has(sceneObject.id),
+    );
+    if (created) {
+      selectStagingSection(created.id);
+    }
+  }
+
+  async function handleUpdateStagingSectionDimension(section, field, rawFeet) {
+    if (!venueSnapshot) {
+      return;
+    }
+    const feet = Number(rawFeet);
+    if (!Number.isFinite(feet) || feet <= 0) {
+      return;
+    }
+    const step = field === 'height' ? STAGING_HEIGHT_STEP_FEET : STAGING_WIDTH_LENGTH_STEP_FEET;
+    const snappedFeet = Math.max(step, Math.round(feet / step) * step);
+    const patch = { [field]: feetToMeters(snappedFeet) };
+    if (field === 'height') {
+      patch.z = feetToMeters(snappedFeet) / 2;
+    }
+    const snap = await apiPatchSceneObjectById(venueSnapshot.summary.id, section.id, patch);
+    setVenueSnapshot(snap);
+  }
+
+  async function handleDeleteStagingSection(sectionId) {
+    if (!venueSnapshot) {
+      return;
+    }
+    const snap = await apiDeleteSceneObjectById(venueSnapshot.summary.id, sectionId);
+    setVenueSnapshot(snap);
+    if (selectedKind === 'staging_section' && selectedSceneObjectId === sectionId) {
+      setSelectedKind(null);
+      setSelectedSceneObjectId(null);
+    }
   }
 
   function handleFixtureListRowClick(fixture, event) {
     setSelectedKind('fixture');
+    setSelectedSceneObjectId(null);
     const flat = fixturesInPanelOrder;
     const clickedIndex = flat.findIndex((f) => f.id === fixture.id);
     if (clickedIndex < 0) {
@@ -2969,6 +3075,7 @@ export default function DenseVenueEditorPage({ venueId }) {
 
   function handleFixtureGroupHeaderClick(groupedFixtures) {
     setSelectedKind('fixture');
+    setSelectedSceneObjectId(null);
     const idSet = new Set(groupedFixtures.map((f) => f.id));
     const ordered = fixturesInPanelOrder.filter((f) => idSet.has(f.id));
     if (ordered.length === 0) {
@@ -3082,6 +3189,15 @@ export default function DenseVenueEditorPage({ venueId }) {
       return;
     }
 
+    if (selectedKind === 'staging_section' && selectedSceneObject) {
+      const nextRotation = normalizeRightAngleRadians((selectedSceneObject[`rotation_${axis}`] || 0) + deltaRadians);
+      const snap = await apiPatchSceneObjectById(venueSnapshot.summary.id, selectedSceneObject.id, {
+        [`rotation_${axis}`]: nextRotation,
+      });
+      setVenueSnapshot(snap);
+      return;
+    }
+
     if (selectedKind === 'dj_booth') {
       const djTableSceneObject = venueSnapshot.scene_objects.find((sceneObject) => sceneObject.kind === 'dj_table');
       if (!djTableSceneObject) {
@@ -3125,6 +3241,14 @@ export default function DenseVenueEditorPage({ venueId }) {
 
     if (selectedKind === 'video_wall') {
       const snap = await apiPatchSceneObject(venueSnapshot.summary.id, 'video_wall', {
+        [`rotation_${axis}`]: nextRotation,
+      });
+      setVenueSnapshot(snap);
+      return;
+    }
+
+    if (selectedKind === 'staging_section' && selectedSceneObject) {
+      const snap = await apiPatchSceneObjectById(venueSnapshot.summary.id, selectedSceneObject.id, {
         [`rotation_${axis}`]: nextRotation,
       });
       setVenueSnapshot(snap);
@@ -3362,6 +3486,28 @@ export default function DenseVenueEditorPage({ venueId }) {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+    });
+  }
+
+  async function apiCreateSceneObject(targetVenueId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/scene-objects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiPatchSceneObjectById(targetVenueId, sceneObjectId, data) {
+    return fetchJson(`/api/venues/${targetVenueId}/scene-objects/by-id/${encodeURIComponent(sceneObjectId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function apiDeleteSceneObjectById(targetVenueId, sceneObjectId) {
+    return fetchJson(`/api/venues/${targetVenueId}/scene-objects/by-id/${encodeURIComponent(sceneObjectId)}`, {
+      method: 'DELETE',
     });
   }
 
@@ -3931,6 +4077,42 @@ export default function DenseVenueEditorPage({ venueId }) {
               </label>
             </div>
           </div>
+
+          <div className="panel dense-panel">
+            <div className="dense-section-header">
+              <h3>Staging</h3>
+              <button
+                type="button"
+                className="dense-lights-add-icon"
+                aria-label="Add staging section"
+                disabled={!venueSnapshot}
+                onClick={() => void handleAddStagingSection()}
+              >
+                +
+              </button>
+            </div>
+            {stagingSections.length === 0 ? (
+              <p className="dense-empty-hint">No staging sections</p>
+            ) : (
+              <div className="staging-section-list">
+                {stagingSections.map((section, index) => {
+                  const selected = selectedKind === 'staging_section' && selectedSceneObjectId === section.id;
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                      className={`fixture-row dense-fixture-row staging-section-row${selected ? ' active-choice' : ''}`}
+                      onClick={() => selectStagingSection(section.id)}
+                    >
+                      <span className="dense-fixture-main">
+                        <span className="dense-fixture-name">{`Stage ${index + 1}`}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
             </>
           )}
         </aside>
@@ -4070,6 +4252,15 @@ export default function DenseVenueEditorPage({ venueId }) {
                       </button>
                     </>
                   ) : null}
+                  {selectedKind === 'staging_section' && selectedSceneObject ? (
+                    <button
+                      type="button"
+                      className="small-button danger-button"
+                      onClick={() => void handleDeleteStagingSection(selectedSceneObject.id)}
+                    >
+                      Delete
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="small-button secondary-button"
@@ -4120,6 +4311,67 @@ export default function DenseVenueEditorPage({ venueId }) {
               </div>
             ) : null}
 
+            {selectedKind === 'staging_section' && selectedSceneObject ? (
+              <div className="panel dense-panel">
+                <div className="dense-section-header">
+                  <h3>Size</h3>
+                </div>
+                <div className="staging-dimension-grid staging-dimension-grid-inspector">
+                  <label className="compact-label">
+                    <span>W</span>
+                    <input
+                      key={`${selectedSceneObject.id}-width-${selectedSceneObject.width}`}
+                      type="number"
+                      step={STAGING_WIDTH_LENGTH_STEP_FEET}
+                      min={STAGING_WIDTH_LENGTH_STEP_FEET}
+                      defaultValue={Math.round(metersToFeet(selectedSceneObject.width))}
+                      onBlur={(event) => void handleUpdateStagingSectionDimension(selectedSceneObject, 'width', event.currentTarget.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.currentTarget.blur();
+                        }
+                      }}
+                    />
+                    <span className="compact-suffix">ft</span>
+                  </label>
+                  <label className="compact-label">
+                    <span>L</span>
+                    <input
+                      key={`${selectedSceneObject.id}-depth-${selectedSceneObject.depth}`}
+                      type="number"
+                      step={STAGING_WIDTH_LENGTH_STEP_FEET}
+                      min={STAGING_WIDTH_LENGTH_STEP_FEET}
+                      defaultValue={Math.round(metersToFeet(selectedSceneObject.depth))}
+                      onBlur={(event) => void handleUpdateStagingSectionDimension(selectedSceneObject, 'depth', event.currentTarget.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.currentTarget.blur();
+                        }
+                      }}
+                    />
+                    <span className="compact-suffix">ft</span>
+                  </label>
+                  <label className="compact-label">
+                    <span>H</span>
+                    <input
+                      key={`${selectedSceneObject.id}-height-${selectedSceneObject.height}`}
+                      type="number"
+                      step={STAGING_HEIGHT_STEP_FEET}
+                      min={STAGING_HEIGHT_STEP_FEET}
+                      defaultValue={Math.round(metersToFeet(selectedSceneObject.height))}
+                      onBlur={(event) => void handleUpdateStagingSectionDimension(selectedSceneObject, 'height', event.currentTarget.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.currentTarget.blur();
+                        }
+                      }}
+                    />
+                    <span className="compact-suffix">ft</span>
+                  </label>
+                </div>
+              </div>
+            ) : null}
+
             <div className="panel dense-panel">
               <div className="dense-section-header">
                 <h3>Rotation</h3>
@@ -4137,7 +4389,7 @@ export default function DenseVenueEditorPage({ venueId }) {
                       -45°
                     </button>
                     <input
-                      key={`${selectedKind}-${selectedFixtureId || selectedSceneObject?.kind || 'none'}-${axis}-${degrees}`}
+                      key={`${selectedKind}-${selectedFixtureId || selectedSceneObject?.id || selectedSceneObject?.kind || 'none'}-${axis}-${degrees}`}
                       type="number"
                       className="rotation-value rotation-value-input"
                       defaultValue={degrees}
