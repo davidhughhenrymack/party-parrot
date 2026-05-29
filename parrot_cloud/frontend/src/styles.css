@@ -1897,6 +1897,12 @@ label {
   font-size: 13px;
 }
 
+.rotation-value-input {
+  width: 58px;
+  min-width: 58px;
+  padding: 4px 6px;
+}
+
 .pan-tilt-range-panel {
   /* Wide enough for two pan sliders + compact value columns; cap on small viewports */
   min-width: 480px;

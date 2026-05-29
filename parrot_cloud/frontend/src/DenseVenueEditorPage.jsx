@@ -3096,6 +3096,52 @@ export default function DenseVenueEditorPage({ venueId }) {
     }
   }
 
+  async function handleSetSelectionRotation(axis, rawDegrees) {
+    if (!venueSnapshot || !selectedKind) {
+      return;
+    }
+    if (String(rawDegrees).trim() === '') {
+      return;
+    }
+    const degrees = Number(rawDegrees);
+    if (!Number.isFinite(degrees)) {
+      return;
+    }
+    const nextRotation = degreesToRadians(degrees);
+
+    if (selectedKind === 'fixture') {
+      if (selectedFixtureIds.length === 0) {
+        return;
+      }
+      let snapshot = venueSnapshot;
+      for (const id of selectedFixtureIds) {
+        snapshot = await apiPatchFixture(venueSnapshot.summary.id, id, {
+          [`rotation_${axis}`]: nextRotation,
+        });
+      }
+      setVenueSnapshot(snapshot);
+      return;
+    }
+
+    if (selectedKind === 'video_wall') {
+      const snap = await apiPatchSceneObject(venueSnapshot.summary.id, 'video_wall', {
+        [`rotation_${axis}`]: nextRotation,
+      });
+      setVenueSnapshot(snap);
+      return;
+    }
+
+    if (selectedKind === 'dj_booth') {
+      await apiPatchSceneObject(venueSnapshot.summary.id, 'dj_table', {
+        [`rotation_${axis}`]: nextRotation,
+      });
+      const snap = await apiPatchSceneObject(venueSnapshot.summary.id, 'dj_cutout', {
+        [`rotation_${axis}`]: nextRotation,
+      });
+      setVenueSnapshot(snap);
+    }
+  }
+
   /**
    * Apply a partial pan/tilt range patch (any subset of the four keys) to every
    * selected moving-head fixture. Non-moving-head fixtures in the selection are
@@ -4083,13 +4129,33 @@ export default function DenseVenueEditorPage({ venueId }) {
                   selectedKind === 'fixture'
                     ? selectedFixture?.[`rotation_${axis}`] || 0
                     : selectedSceneObject?.[`rotation_${axis}`] || 0;
+                const degrees = Math.round(radiansToDegrees(radians));
                 return (
                   <div key={axis} className="rotation-row">
                     <span className={`rotation-axis rotation-axis-${axis}`}>{axis.toUpperCase()}</span>
                     <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, -1)}>
                       -45°
                     </button>
-                    <span className="rotation-value">{Math.round(radiansToDegrees(radians))}°</span>
+                    <input
+                      key={`${selectedKind}-${selectedFixtureId || selectedSceneObject?.kind || 'none'}-${axis}-${degrees}`}
+                      type="number"
+                      className="rotation-value rotation-value-input"
+                      defaultValue={degrees}
+                      step="1"
+                      aria-label={`${axis.toUpperCase()} rotation degrees`}
+                      onBlur={(event) => {
+                        if (event.currentTarget.value.trim() === '') {
+                          event.currentTarget.value = String(degrees);
+                          return;
+                        }
+                        void handleSetSelectionRotation(axis, event.currentTarget.value);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.currentTarget.blur();
+                        }
+                      }}
+                    />
                     <button type="button" className="small-button secondary-button" onClick={() => void handleRotateSelection(axis, 1)}>
                       +45°
                     </button>
